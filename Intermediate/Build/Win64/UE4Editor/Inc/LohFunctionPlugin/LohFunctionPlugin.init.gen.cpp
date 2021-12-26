@@ -21,7 +21,7 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0x80022432,
+				0xA99B7A49,
 				0xEE54BA9A,
 				METADATA_PARAMS(nullptr, 0)
 			};

@@ -9,9 +9,9 @@
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct FLGPGridSystemEvent;
-struct FIntVector;
 struct FVector;
 struct FRotator;
+struct FIntVector;
 #ifdef LOHFUNCTIONPLUGIN_LFPGridSystem_generated_h
 #error "LFPGridSystem.generated.h already included, missing '#pragma once' in LFPGridSystem.h"
 #endif
@@ -29,8 +29,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	virtual void UpdateEvent_Implementation(FLGPGridSystemEvent const& Data); \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execGetGridWorldLocationWithIndex); \
 	DECLARE_FUNCTION(execGetGridWorldLocation); \
 	DECLARE_FUNCTION(execGetLocationData); \
+	DECLARE_FUNCTION(execGetGridData); \
 	DECLARE_FUNCTION(execUnmarkLocations); \
 	DECLARE_FUNCTION(execUnmarkLocation); \
 	DECLARE_FUNCTION(execMarkLocations); \
@@ -43,8 +45,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execGetGridWorldLocationWithIndex); \
 	DECLARE_FUNCTION(execGetGridWorldLocation); \
 	DECLARE_FUNCTION(execGetLocationData); \
+	DECLARE_FUNCTION(execGetGridData); \
 	DECLARE_FUNCTION(execUnmarkLocations); \
 	DECLARE_FUNCTION(execUnmarkLocation); \
 	DECLARE_FUNCTION(execMarkLocations); \

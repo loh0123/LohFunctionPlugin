@@ -38,47 +38,19 @@ void ULFPGridSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	SyncEvent();
 }
 
-bool ULFPGridSystem::IsLocationMarked(const FVector Location)
+bool ULFPGridSystem::MarkLocation_Internal(FIntVector Locations, const int32& Data, const bool& FlipX, const bool& FlipY, const bool& FlipZ, const FIntVector& MaxRange, const FIntVector& MinRange)
 {
-	FIntVector GridLoc = WordlLocationToGridLocation(Location);
+	if (FlipX) { Locations.X = (MaxRange.X - Locations.X) + MinRange.X; }
+	if (FlipY) { Locations.Y = (MaxRange.Y - Locations.Y) + MinRange.Y; }
+	if (FlipZ) { Locations.Z = (MaxRange.Z - Locations.Z) + MinRange.Z; }
 
-	if (!IsLocationValid(GridLoc)) return false;
+	if (!IsLocationValid_Internal(Locations)) return false;
 
-	SyncEvent();
-
-	return GridData[GridLocationToIndex(GridLoc)] != INDEX_NONE;
-}
-
-bool ULFPGridSystem::IsLocationsMarked(const TArray<FVector>& Locations)
-{
-	SyncEvent();
-
-	for (int32 i = 0; i < Locations.Num(); i++)
-	{
-		FIntVector GridLoc = WordlLocationToGridLocation(Locations[i]);
-
-		if (!IsLocationValid(GridLoc)) continue;
-
-		if (GridData[GridLocationToIndex(GridLoc)] != INDEX_NONE)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool ULFPGridSystem::MarkLocation(const FVector Location, const int32 Data)
-{
-	FIntVector GridLoc = WordlLocationToGridLocation(Location);
-
-	if (!IsLocationValid(GridLoc)) return false;
-
-	int32 Index = GridEvent.AddIndex.IndexOfByKey(GridLocationToIndex(GridLoc));
+	int32 Index = GridEvent.AddIndex.IndexOfByKey(GridLocationToIndex(Locations));
 
 	if (Index == INDEX_NONE)
 	{
-		GridEvent.AddIndex.Emplace(GridLocationToIndex(GridLoc));
+		GridEvent.AddIndex.Emplace(GridLocationToIndex(Locations));
 		GridEvent.AddData.Emplace(Data);
 	}
 	else
@@ -86,35 +58,27 @@ bool ULFPGridSystem::MarkLocation(const FVector Location, const int32 Data)
 		GridEvent.AddData[Index] = Data;
 	}
 
-	GridEvent.RemoveIndex.RemoveSingle(GridLocationToIndex(GridLoc));
+	GridEvent.RemoveIndex.RemoveSingle(GridLocationToIndex(Locations));
 
 	IsEventDirty = true;
 
 	return true;
 }
 
-bool ULFPGridSystem::MarkLocations(const TArray<FVector>& Locations, const int32 Data)
+bool ULFPGridSystem::UnmarkLocation_Internal(FIntVector Locations, const bool& FlipX, const bool& FlipY, const bool& FlipZ, const FIntVector& MaxRange, const FIntVector& MinRange)
 {
-	for (const FVector& Item : Locations)
+	if (FlipX) { Locations.X = (MaxRange.X - Locations.X) + MinRange.X; }
+	if (FlipY) { Locations.Y = (MaxRange.Y - Locations.Y) + MinRange.Y; }
+	if (FlipZ) { Locations.Z = (MaxRange.Z - Locations.Z) + MinRange.Z; }
+
+	if (!IsLocationValid_Internal(Locations)) return false;
+
+	if (!GridEvent.RemoveIndex.Contains(GridLocationToIndex(Locations)))
 	{
-		MarkLocation(Item, Data);
+		GridEvent.RemoveIndex.Emplace(GridLocationToIndex(Locations));
 	}
 
-	return Locations.Num() > 0;
-}
-
-bool ULFPGridSystem::UnmarkLocation(const FVector Location)
-{
-	FIntVector GridLoc = WordlLocationToGridLocation(Location);
-
-	if (!IsLocationValid(GridLoc)) return false;
-
-	if (!GridEvent.RemoveIndex.Contains(GridLocationToIndex(GridLoc)))
-	{
-		GridEvent.RemoveIndex.Emplace(GridLocationToIndex(GridLoc));
-	}
-
-	int32 Index = GridEvent.AddIndex.IndexOfByKey(GridLocationToIndex(GridLoc));
+	int32 Index = GridEvent.AddIndex.IndexOfByKey(GridLocationToIndex(Locations));
 
 	if (Index != INDEX_NONE)
 	{
@@ -127,11 +91,103 @@ bool ULFPGridSystem::UnmarkLocation(const FVector Location)
 	return true;
 }
 
-bool ULFPGridSystem::UnmarkLocations(const TArray<FVector>& Locations)
+void ULFPGridSystem::GetMaxRange(const TArray<FVector>& Locations, const FVector& Offset, TArray<FIntVector>& ReturnConv, FIntVector& Max, FIntVector& Min)
 {
+	ReturnConv.Empty(Locations.Num());
+	Max = FIntVector(0);
+	Min = FIntVector(INT_MAX);
+
 	for (const FVector& Item : Locations)
 	{
-		UnmarkLocation(Item);
+		const int32 Index = ReturnConv.Add(WordlLocationToGridLocation(Item + Offset));
+
+		if (Max.X < ReturnConv[Index].X) Max.X = ReturnConv[Index].X;
+		if (Max.Y < ReturnConv[Index].Y) Max.Y = ReturnConv[Index].Y;
+		if (Max.Z < ReturnConv[Index].Z) Max.Z = ReturnConv[Index].Z;
+
+		if (Min.X > ReturnConv[Index].X) Min.X = ReturnConv[Index].X;
+		if (Min.Y > ReturnConv[Index].Y) Min.Y = ReturnConv[Index].Y;
+		if (Min.Z > ReturnConv[Index].Z) Min.Z = ReturnConv[Index].Z;
+	}
+
+	return;
+}
+
+bool ULFPGridSystem::IsLocationMarked(const FVector Location)
+{
+	FIntVector GridLoc = WordlLocationToGridLocation(Location);
+
+	if (!IsLocationValid_Internal(GridLoc)) return false;
+
+	SyncEvent();
+
+	return GridData[GridLocationToIndex(GridLoc)] != INDEX_NONE;
+}
+
+bool ULFPGridSystem::IsLocationsMarked(const TArray<FVector>& Locations, const FVector& Offset, const bool FlipX, const bool FlipY, const bool FlipZ)
+{
+	SyncEvent();
+
+	TArray<FIntVector> ConvArray;
+	FIntVector MaxData;
+	FIntVector MinData;
+
+	GetMaxRange(Locations, Offset, ConvArray, MaxData, MinData);
+
+	for (int32 i = 0; i < Locations.Num(); i++)
+	{
+		if (FlipX) { ConvArray[i].X = (MaxData.X - ConvArray[i].X) + MinData.X; }
+		if (FlipY) { ConvArray[i].Y = (MaxData.Y - ConvArray[i].Y) + MinData.Y; }
+		if (FlipZ) { ConvArray[i].Z = (MaxData.Z - ConvArray[i].Z) + MinData.Z; }
+
+		if (!IsLocationValid_Internal(ConvArray[i])) continue;
+
+		if (GridData[GridLocationToIndex(ConvArray[i])] != INDEX_NONE)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ULFPGridSystem::MarkLocation(const FVector Location, const int32 Data)
+{
+	return MarkLocation_Internal(WordlLocationToGridLocation(Location), Data, false, false, false, FIntVector(0), FIntVector(0));
+}
+
+bool ULFPGridSystem::MarkLocations(const TArray<FVector>& Locations, const FVector& Offset, const int32 Data, const bool FlipX, const bool FlipY, const bool FlipZ)
+{
+	TArray<FIntVector> ConvArray;
+	FIntVector MaxData;
+	FIntVector MinData;
+
+	GetMaxRange(Locations, Offset, ConvArray, MaxData, MinData);
+	
+	for (const FIntVector& Item : ConvArray)
+	{
+		MarkLocation_Internal(Item, Data, FlipX, FlipY, FlipZ, MaxData, MinData);
+	}
+
+	return Locations.Num() > 0;
+}
+
+bool ULFPGridSystem::UnmarkLocation(const FVector Location)
+{
+	return UnmarkLocation_Internal(WordlLocationToGridLocation(Location), false, false, false, FIntVector(0), FIntVector(0));
+}
+
+bool ULFPGridSystem::UnmarkLocations(const TArray<FVector>& Locations, const FVector& Offset, const bool FlipX, const bool FlipY, const bool FlipZ)
+{
+	TArray<FIntVector> ConvArray;
+	FIntVector MaxData;
+	FIntVector MinData;
+
+	GetMaxRange(Locations, Offset, ConvArray, MaxData, MinData);
+
+	for (const FIntVector& Item : ConvArray)
+	{
+		UnmarkLocation_Internal(Item, FlipX, FlipY, FlipZ, MaxData, MinData);
 	}
 
 	return Locations.Num() > 0;
@@ -141,7 +197,7 @@ int32 ULFPGridSystem::GetLocationData(const FVector Location)
 {
 	FIntVector GridLoc = WordlLocationToGridLocation(Location);
 
-	if (!IsLocationValid(GridLoc)) return INDEX_NONE;
+	if (!IsLocationValid_Internal(GridLoc)) return INDEX_NONE;
 
 	SyncEvent();
 
@@ -150,7 +206,7 @@ int32 ULFPGridSystem::GetLocationData(const FVector Location)
 
 bool ULFPGridSystem::GetGridWorldLocation(const FIntVector Location, FVector& ReturnLocation, FRotator& ReturnRotation) const
 {
-	if (!IsLocationValid(Location)) return false;
+	if (!IsLocationValid_Internal(Location)) return false;
 
 	ReturnRotation = FRotator(0);
 
@@ -160,7 +216,7 @@ bool ULFPGridSystem::GetGridWorldLocation(const FIntVector Location, FVector& Re
 			ReturnLocation = FVector(Location.X * GridGap.X, Location.Y * GridGap.Y, Location.Z * GridGap.Z);
 			break;
 		case ELFPGridType::Hexagon:
-			ReturnLocation = FVector(Location.X * GridGap.X, (Location.Y * GridGap.Y) + ((Location.X + 1) % 2 == 0 ? 0.0f : GridGap.Y * 0.5f), Location.Z * GridGap.Z);
+			ReturnLocation = FVector(Location.X * GridGap.X, (Location.Y * GridGap.Y) + ((Location.X + 1) % 2 == 1 ? 0.0f : GridGap.Y * 0.5f), Location.Z * GridGap.Z);
 			break;
 		case ELFPGridType::Triangle:
 			ReturnLocation = FVector(Location.X * (GridGap.X * 0.5), Location.Y * GridGap.Y, Location.Z * GridGap.Z);
@@ -168,7 +224,14 @@ bool ULFPGridSystem::GetGridWorldLocation(const FIntVector Location, FVector& Re
 			break;
 	}
 
+	ReturnLocation += GetComponentLocation();
+
 	return true;
+}
+
+bool ULFPGridSystem::GetGridWorldLocationWithIndex(const int32 Index, FVector& ReturnLocation, FRotator& ReturnRotation) const
+{
+	return GetGridWorldLocation(IndexToGridLocation(Index), ReturnLocation, ReturnRotation);
 }
 
 void ULFPGridSystem::UpdateEvent_Implementation(const FLGPGridSystemEvent& Data)
