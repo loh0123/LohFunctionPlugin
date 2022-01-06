@@ -55,11 +55,11 @@ public:
 
 private:
 
-	FORCEINLINE bool MarkLocation_Internal(FIntVector Locations, const int32& Data, const bool& FlipX, const bool& FlipY, const bool& FlipZ, const FIntVector& MaxRange, const FIntVector& MinRange);
+	FORCEINLINE bool MarkLocation_Internal(FIntVector Locations, const int32& Data);
 
-	FORCEINLINE bool UnmarkLocation_Internal(FIntVector Locations, const bool& FlipX, const bool& FlipY, const bool& FlipZ, const FIntVector& MaxRange, const FIntVector& MinRange);
+	FORCEINLINE bool UnmarkLocation_Internal(FIntVector Locations);
 
-	FORCEINLINE void GetMaxRange(const TArray<FVector>& Locations, const FVector& Offset, TArray<FIntVector>& ReturnConv, FIntVector& Max, FIntVector& Min);
+	FORCEINLINE void GetMaxRange(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset, TArray<FIntVector>& ReturnConv, FIntVector& Max, FIntVector& Min);
 
 public:
 
@@ -78,44 +78,15 @@ public:
 		return (Location.GetMin() >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z);
 	}
 
-	FORCEINLINE int32 GridLocationToIndex(const FIntVector& Location) const
-	{
-		return Location.X + (Location.Y * GridSize.X) + (Location.Z * (GridSize.X * GridSize.Y));
-	}
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE int32 GridLocationToIndex(const FIntVector& Location) const;
 
-	FORCEINLINE FIntVector IndexToGridLocation(const int32& Index) const
-	{
-		FIntVector ReturnData;
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FIntVector IndexToGridLocation(const int32& Index) const;
 
-		ReturnData.Z = Index / (GridSize.X * GridSize.Y);
-		ReturnData.Y = (Index / GridSize.X) - (ReturnData.Z * GridSize.Y);
-		ReturnData.X = (Index - (ReturnData.Y * GridSize.X)) - (ReturnData.Z * (GridSize.X * GridSize.Y));
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FIntVector WordlLocationToGridLocation(const FVector& Location) const;
 
-		return ReturnData;
-	}
-
-	FORCEINLINE FIntVector WordlLocationToGridLocation(const FVector& Location) const
-	{
-		if (Location.GetMin() < 0.0f) return FIntVector(-1);
-
-		FVector LocalLocation;
-
-		switch (GridType)
-		{
-		case ELFPGridType::Rectangular:
-			LocalLocation = (Location - GetComponentLocation()) / GridGap;
-			break;
-		case ELFPGridType::Hexagon:
-			LocalLocation = (Location - GetComponentLocation()) / GridGap;
-			if ((FMath::FloorToInt(LocalLocation.X) + 1) % 2 == 0) LocalLocation.Y -= 0.5f;
-			break;
-		case ELFPGridType::Triangle:
-			LocalLocation = (Location - GetComponentLocation()) / (GridGap * FVector(0.5, 1, 1));
-			break;
-		}
-
-		return FIntVector(FMath::FloorToInt(LocalLocation.X), FMath::FloorToInt(LocalLocation.Y), FMath::FloorToInt(LocalLocation.Z));
-	}
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE bool IsLocationValid(const FVector Location) { return IsLocationValid_Internal(WordlLocationToGridLocation(Location)); }
@@ -124,20 +95,20 @@ public:
 		FORCEINLINE bool IsLocationMarked(const FVector Location);
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsLocationsMarked(const TArray<FVector>& Locations, const FVector& Offset, const bool FlipX, const bool FlipY, const bool FlipZ);
+		FORCEINLINE bool IsLocationsMarked(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset, const bool MarkInvalid = false);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
 		FORCEINLINE bool MarkLocation(const FVector Location, const int32 Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
-		FORCEINLINE bool MarkLocations(const TArray<FVector>& Locations, const FVector& Offset, const int32 Data, const bool FlipX, const bool FlipY, const bool FlipZ);
+		FORCEINLINE bool MarkLocations(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset, const int32 Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
 		FORCEINLINE bool UnmarkLocation(const FVector Location);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
-		FORCEINLINE bool UnmarkLocations(const TArray<FVector>& Locations, const FVector& Offset, const bool FlipX, const bool FlipY, const bool FlipZ);
+		FORCEINLINE bool UnmarkLocations(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset);
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
@@ -151,6 +122,16 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE bool GetGridWorldLocationWithIndex(const int32 Index, FVector& ReturnLocation, FRotator& ReturnRotation) const;
+
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
+		FORCEINLINE bool TryFitTemplate(const TArray<FVector>& Template, const FVector& Offset, FIntVector& NeedRotation, const bool CanRotateX, const bool CanRotateY, const bool CanRotateZ);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
+		FORCEINLINE bool TryFitTemplates(const TArray<FVector>& Template, const TArray<FVector>& Offsets, FVector& FitOffset, FIntVector& NeedRotation, const bool CanRotateX, const bool CanRotateY, const bool CanRotateZ);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
+		FORCEINLINE bool TryFitTemplateNear(const TArray<FVector>& Template, const FVector& Offset, const FIntVector& CheckSize, FVector& FitOffset, FIntVector& NeedRotation, const bool CanRotateX, const bool CanRotateY, const bool CanRotateZ);
 
 
 	UFUNCTION(NetMulticast, Reliable, Server)

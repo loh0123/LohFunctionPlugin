@@ -2,3 +2,4 @@
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/LFPGridSystem.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/LohFunctionPlugin.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/LohFunctionPluginBPLibrary.cpp"
+#include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Terrain/LFPTerrainSystem.cpp"

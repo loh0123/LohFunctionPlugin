@@ -10,8 +10,8 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct FLGPGridSystemEvent;
 struct FVector;
-struct FRotator;
 struct FIntVector;
+struct FRotator;
 #ifdef LOHFUNCTIONPLUGIN_LFPGridSystem_generated_h
 #error "LFPGridSystem.generated.h already included, missing '#pragma once' in LFPGridSystem.h"
 #endif
@@ -29,6 +29,9 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	virtual void UpdateEvent_Implementation(FLGPGridSystemEvent const& Data); \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execTryFitTemplateNear); \
+	DECLARE_FUNCTION(execTryFitTemplates); \
+	DECLARE_FUNCTION(execTryFitTemplate); \
 	DECLARE_FUNCTION(execGetGridWorldLocationWithIndex); \
 	DECLARE_FUNCTION(execGetGridWorldLocation); \
 	DECLARE_FUNCTION(execGetLocationData); \
@@ -39,12 +42,18 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	DECLARE_FUNCTION(execMarkLocation); \
 	DECLARE_FUNCTION(execIsLocationsMarked); \
 	DECLARE_FUNCTION(execIsLocationMarked); \
-	DECLARE_FUNCTION(execIsLocationValid);
+	DECLARE_FUNCTION(execIsLocationValid); \
+	DECLARE_FUNCTION(execWordlLocationToGridLocation); \
+	DECLARE_FUNCTION(execIndexToGridLocation); \
+	DECLARE_FUNCTION(execGridLocationToIndex);
 
 
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execTryFitTemplateNear); \
+	DECLARE_FUNCTION(execTryFitTemplates); \
+	DECLARE_FUNCTION(execTryFitTemplate); \
 	DECLARE_FUNCTION(execGetGridWorldLocationWithIndex); \
 	DECLARE_FUNCTION(execGetGridWorldLocation); \
 	DECLARE_FUNCTION(execGetLocationData); \
@@ -55,7 +64,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	DECLARE_FUNCTION(execMarkLocation); \
 	DECLARE_FUNCTION(execIsLocationsMarked); \
 	DECLARE_FUNCTION(execIsLocationMarked); \
-	DECLARE_FUNCTION(execIsLocationValid);
+	DECLARE_FUNCTION(execIsLocationValid); \
+	DECLARE_FUNCTION(execWordlLocationToGridLocation); \
+	DECLARE_FUNCTION(execIndexToGridLocation); \
+	DECLARE_FUNCTION(execGridLocationToIndex);
 
 
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_EVENT_PARMS \

@@ -7,3 +7,6 @@ C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin\P
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/LohFunctionPluginBPLibrary.cpp
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin\Public\LohFunctionPluginBPLibrary.h
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LohFunctionPluginBPLibrary.generated.h
+C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Terrain/LFPTerrainSystem.cpp
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin\Public\Terrain/LFPTerrainSystem.h
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPTerrainSystem.generated.h
