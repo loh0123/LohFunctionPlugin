@@ -265,22 +265,25 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPTerrainDa
 	}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition_MetaData[] = {
+		{ "Category", "LGPTerrainData" },
 		{ "ModuleRelativePath", "Public/Terrain/LFPTerrainSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition = { "GridPosition", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, GridPosition), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition = { "GridPosition", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, GridPosition), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset_MetaData[] = {
+		{ "Category", "LGPTerrainData" },
 		{ "ModuleRelativePath", "Public/Terrain/LFPTerrainSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset = { "Offset", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, Offset), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset = { "Offset", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, Offset), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID_MetaData[] = {
+		{ "Category", "LGPTerrainData" },
 		{ "ModuleRelativePath", "Public/Terrain/LFPTerrainSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID = { "TerrainID", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, TerrainID), METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID = { "TerrainID", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLGPTerrainData, TerrainID), METADATA_PARAMS(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_TerrainID_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLGPTerrainData_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_GridPosition,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLGPTerrainData_Statics::NewProp_Offset,
@@ -314,7 +317,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPTerrainDa
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FLGPTerrainData_Hash() { return 3709739595U; }
+	uint32 Get_Z_Construct_UScriptStruct_FLGPTerrainData_Hash() { return 615771361U; }
 	DEFINE_FUNCTION(ULFPTerrainSystem::execUpdateEvent)
 	{
 		P_GET_STRUCT(FLGPTerrainSystemEvent,Z_Param_Data);

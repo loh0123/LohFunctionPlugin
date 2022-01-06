@@ -29,7 +29,10 @@ void ULFPTerrainSystem::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	if (IsEventDirty)
+	{
+		UpdateEvent(TerrainEvent);
+	}
 }
 
 FIntVector ULFPTerrainSystem::WorldToTerrainLocation(FVector Location) const
@@ -51,7 +54,7 @@ bool ULFPTerrainSystem::IsTerrainLocationValid(FIntVector Location) const
 
 bool ULFPTerrainSystem::AddTerrain(const FLGPTerrainData Data)
 {
-	if (IsTerrainLocationValid(Data.GridPosition)) return false;
+	if (!IsTerrainLocationValid(Data.GridPosition)) return false;
 
 	TerrainEvent.RemoveList.RemoveSingleSwap(Data.GridPosition);
 
@@ -64,7 +67,7 @@ bool ULFPTerrainSystem::AddTerrain(const FLGPTerrainData Data)
 
 bool ULFPTerrainSystem::RemoveTerrain(const FIntVector GridPosition)
 {
-	if (IsTerrainLocationValid(GridPosition)) return false;
+	if (!IsTerrainLocationValid(GridPosition)) return false;
 
 	TerrainEvent.AddList.RemoveSingleSwap(GridPosition);
 
@@ -77,7 +80,7 @@ bool ULFPTerrainSystem::RemoveTerrain(const FIntVector GridPosition)
 
 bool ULFPTerrainSystem::GetTerrain(const FIntVector GridPosition, FLGPTerrainData& ReturnData)
 {
-	if (IsTerrainLocationValid(GridPosition)) return false;
+	if (!IsTerrainLocationValid(GridPosition)) return false;
 
 	if (IsEventDirty) UpdateEvent(TerrainEvent);
 
@@ -88,6 +91,8 @@ bool ULFPTerrainSystem::GetTerrain(const FIntVector GridPosition, FLGPTerrainDat
 
 void ULFPTerrainSystem::UpdateEvent_Implementation(const FLGPTerrainSystemEvent& Data)
 {
+	IsEventDirty = false;
+
 	for (const FLGPTerrainData& Item : Data.AddList)
 	{
 		TerrainData[GridLocationToIndex(Item.GridPosition)] = Item;
@@ -102,8 +107,6 @@ void ULFPTerrainSystem::UpdateEvent_Implementation(const FLGPTerrainSystemEvent&
 	OnRemoveTerrain.Broadcast(TerrainEvent.RemoveList);
 
 	TerrainEvent = FLGPTerrainSystemEvent();
-
-	IsEventDirty = false;
 
 	return;
 }

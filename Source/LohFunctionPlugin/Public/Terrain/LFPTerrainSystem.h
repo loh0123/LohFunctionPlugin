@@ -16,11 +16,11 @@ public:
 	FLGPTerrainData() {}
 	FLGPTerrainData(FIntVector Pos) : GridPosition(Pos) {}
 
-	UPROPERTY() FIntVector GridPosition = FIntVector(-1);
+	UPROPERTY(BlueprintReadWrite, EditAnywhere) FIntVector GridPosition = FIntVector(-1);
 
-	UPROPERTY() FVector Offset = FVector(0);
+	UPROPERTY(BlueprintReadWrite, EditAnywhere) FVector Offset = FVector(0);
 
-	UPROPERTY() int32 TerrainID = -1;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere) int32 TerrainID = -1;
 
 	FORCEINLINE bool operator==(const FLGPTerrainData& Other) const
 	{
