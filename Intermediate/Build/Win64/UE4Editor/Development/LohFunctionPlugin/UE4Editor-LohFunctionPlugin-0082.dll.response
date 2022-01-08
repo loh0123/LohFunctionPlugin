@@ -66,7 +66,7 @@
 "setupapi.lib"
 "dwmapi.lib"
 "imm32.lib"
-/OUT:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Binaries\Win64\UE4Editor-LohFunctionPlugin-0001.dll"
-/IMPLIB:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\UE4Editor-LohFunctionPlugin-0001.suppressed.lib"
-/PDB:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Binaries\Win64\UE4Editor-LohFunctionPlugin-0001.pdb"
+/OUT:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Binaries\Win64\UE4Editor-LohFunctionPlugin-0082.dll"
+/IMPLIB:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\UE4Editor-LohFunctionPlugin-0082.suppressed.lib"
+/PDB:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Binaries\Win64\UE4Editor-LohFunctionPlugin-0082.pdb"
 /ignore:4078

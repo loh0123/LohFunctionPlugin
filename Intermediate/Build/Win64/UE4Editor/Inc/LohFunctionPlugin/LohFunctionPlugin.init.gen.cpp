@@ -27,8 +27,8 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 				SingletonFuncArray,
 				UE_ARRAY_COUNT(SingletonFuncArray),
 				PKG_CompiledIn | 0x00000000,
-				0xF09738B8,
-				0x71B2D22B,
+				0xB801B78A,
+				0x6747B780,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UE4CodeGen_Private::ConstructUPackage(ReturnPackage, PackageParams);

@@ -5,10 +5,14 @@
 			"LFPGridSystem.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginBPLibrary.cpp.obj",
+			"LFPMazeLibrary.cpp.obj",
+			"LFPNoiseLibrary.cpp.obj",
 			"LFPTerrainSystem.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"LFPGridSystem.gen.cpp.obj",
+			"LFPMazeLibrary.gen.cpp.obj",
+			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFPTerrainSystem.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginBPLibrary.gen.cpp.obj"
