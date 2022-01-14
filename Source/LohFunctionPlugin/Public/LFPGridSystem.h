@@ -25,15 +25,15 @@ public:
 
 	FLGPGridSystemEvent() {}
 
-	UPROPERTY()
-		TArray<int32> AddIndex;
+	UPROPERTY() TArray<int32> AddIndex;
 
-	UPROPERTY()
-		TArray<int32> AddData;
+	UPROPERTY() TArray<int32> AddData;
 
-	UPROPERTY()
-		TArray<int32> RemoveIndex;
+	UPROPERTY() TArray<int32> RemoveIndex;
 };
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPGridUpdateEvent, const FLGPGridSystemEvent&, Data);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -52,6 +52,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPGridSystem | Event")
+		FLFPGridUpdateEvent OnUpdateGrid;
 
 private:
 
@@ -83,6 +86,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE FIntVector IndexToGridLocation(const int32& Index) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE int32 WordlLocationToIndex(const FVector& Location) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE FIntVector WordlLocationToGridLocation(const FVector& Location) const;
@@ -132,6 +138,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
 		FORCEINLINE bool TryFitTemplateNear(const TArray<FVector>& Template, const FVector& Offset, const FIntVector& CheckSize, FVector& FitOffset, FIntVector& NeedRotation, const bool CanRotateX, const bool CanRotateY, const bool CanRotateZ);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
+		FORCEINLINE TArray<int32> RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const FRandomStream& Seed);
 
 
 	UFUNCTION(NetMulticast, Reliable, Server)

@@ -29,12 +29,16 @@ struct FLFPMazeStartData
 
 	FLFPMazeStartData() {}
 	FLFPMazeStartData(const FIntVector Loc, const TArray<int32>& Open) : GraphLocation(Loc), OpenConnection(Open) {}
+	FLFPMazeStartData(const FIntVector Loc, const bool Block) : GraphLocation(Loc), IsBlock(Block) {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FIntVector GraphLocation;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<int32> OpenConnection;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		bool IsBlock;
 };
 
 USTRUCT(BlueprintType)
@@ -61,7 +65,7 @@ class LOHFUNCTIONPLUGIN_API ULFPMazeLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
-		static FLFPMazeTable CreateMazeStartData(const FIntVector MazeSize);
+		static FLFPMazeTable CreateMazeStartData(const FIntVector MazeSize, const TSet<int32>& BlockID);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
 		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const FRandomStream& Seed);

@@ -9,8 +9,9 @@
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct FLGPGridSystemEvent;
-struct FVector;
 struct FIntVector;
+struct FRandomStream;
+struct FVector;
 struct FRotator;
 #ifdef LOHFUNCTIONPLUGIN_LFPGridSystem_generated_h
 #error "LFPGridSystem.generated.h already included, missing '#pragma once' in LFPGridSystem.h"
@@ -24,11 +25,25 @@ struct FRotator;
 
 template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSystemEvent>();
 
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_36_DELEGATE \
+struct _Script_LohFunctionPlugin_eventLFPGridUpdateEvent_Parms \
+{ \
+	FLGPGridSystemEvent Data; \
+}; \
+static inline void FLFPGridUpdateEvent_DelegateWrapper(const FMulticastScriptDelegate& LFPGridUpdateEvent, FLGPGridSystemEvent const& Data) \
+{ \
+	_Script_LohFunctionPlugin_eventLFPGridUpdateEvent_Parms Parms; \
+	Parms.Data=Data; \
+	LFPGridUpdateEvent.ProcessMulticastDelegate<UObject>(&Parms); \
+}
+
+
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_SPARSE_DATA
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_RPC_WRAPPERS \
 	virtual void UpdateEvent_Implementation(FLGPGridSystemEvent const& Data); \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execRandomGridIndex); \
 	DECLARE_FUNCTION(execTryFitTemplateNear); \
 	DECLARE_FUNCTION(execTryFitTemplates); \
 	DECLARE_FUNCTION(execTryFitTemplate); \
@@ -44,6 +59,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	DECLARE_FUNCTION(execIsLocationMarked); \
 	DECLARE_FUNCTION(execIsLocationValid); \
 	DECLARE_FUNCTION(execWordlLocationToGridLocation); \
+	DECLARE_FUNCTION(execWordlLocationToIndex); \
 	DECLARE_FUNCTION(execIndexToGridLocation); \
 	DECLARE_FUNCTION(execGridLocationToIndex);
 
@@ -51,6 +67,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execRandomGridIndex); \
 	DECLARE_FUNCTION(execTryFitTemplateNear); \
 	DECLARE_FUNCTION(execTryFitTemplates); \
 	DECLARE_FUNCTION(execTryFitTemplate); \
@@ -66,6 +83,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLGPGridSyst
 	DECLARE_FUNCTION(execIsLocationMarked); \
 	DECLARE_FUNCTION(execIsLocationValid); \
 	DECLARE_FUNCTION(execWordlLocationToGridLocation); \
+	DECLARE_FUNCTION(execWordlLocationToIndex); \
 	DECLARE_FUNCTION(execIndexToGridLocation); \
 	DECLARE_FUNCTION(execGridLocationToIndex);
 

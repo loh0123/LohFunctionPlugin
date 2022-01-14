@@ -120,6 +120,11 @@ FIntVector ULFPGridSystem::IndexToGridLocation(const int32& Index) const
 	return ReturnData;
 }
 
+int32 ULFPGridSystem::WordlLocationToIndex(const FVector& Location) const
+{
+	return GridLocationToIndex(WordlLocationToGridLocation(Location));
+}
+
 FIntVector ULFPGridSystem::WordlLocationToGridLocation(const FVector& Location) const
 {
 	if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
@@ -309,8 +314,44 @@ bool ULFPGridSystem::TryFitTemplateNear(const TArray<FVector>& Template, const F
 	return false;
 }
 
+TArray<int32> ULFPGridSystem::RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const FRandomStream& Seed)
+{
+	TArray<int32> ReturnData;
+
+	FIntVector Size = FIntVector(GridSize.X / SectionSize.X, GridSize.Y / SectionSize.Y, GridSize.Z / SectionSize.Z);
+
+	// Setup Unvist List For Visit Check
+	TArray<int32> UnVisit;
+	// Reserve List To Fill Faster
+	UnVisit.Reserve(GridData.Num());
+	// Fill Unvisit List With Index
+	for (int32 Z = 0; Z < GridSize.Z; Z += SectionSize.Z)
+	for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
+	for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
+	{
+		UnVisit.Add(GridLocationToIndex(FIntVector(X, Y, Z)));
+	}	
+
+	// Shuffle Array Item
+	for (int32 i = 0; i < UnVisit.Num(); i++)
+	{
+		UnVisit.Swap(i, Seed.RandRange(0, UnVisit.Num() - 1));
+	}
+
+	ReturnData.Reserve(Amount);
+
+	for (int32 i = 0; i < Amount; i++)
+	{
+		ReturnData.Add(UnVisit.Pop());
+	}
+
+	return ReturnData;
+}
+
 void ULFPGridSystem::UpdateEvent_Implementation(const FLGPGridSystemEvent& Data)
 {
+	IsEventDirty = false;
+
 	for (int32 i = 0; i < Data.AddData.Num(); i++)
 	{
 		GridData[Data.AddIndex[i]] = Data.AddData[i];
@@ -321,9 +362,9 @@ void ULFPGridSystem::UpdateEvent_Implementation(const FLGPGridSystemEvent& Data)
 		GridData[Data.RemoveIndex[i]] = INDEX_NONE;
 	}
 
-	GridEvent = FLGPGridSystemEvent();
+	OnUpdateGrid.Broadcast(Data);
 
-	IsEventDirty = false;
+	GridEvent = FLGPGridSystemEvent();
 
 	return;
 }

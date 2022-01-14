@@ -3,7 +3,7 @@
 
 #include "Math/LFPMazeLibrary.h"
 
-FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize)
+FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize, const TSet<int32>& BlockID)
 {
     FLFPMazeTable MazeTable;
 
@@ -17,15 +17,17 @@ FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize)
     {
         FIntVector Location = FIntVector(X, Y, Z);
 
+        if (BlockID.Contains(Index)) { MazeTable.StartData.Add(FLFPMazeStartData(Location, true)); Index++; continue; }
+
         TArray<int32> Open;
         Open.Reserve(6);
 
-        if (X - 1 >= 0)         Open.Emplace(Index - 1);
-        if (X + 1 < MazeSize.X) Open.Emplace(Index + 1);
-        if (Y - 1 >= 0)         Open.Emplace(Index - MazeSize.X);
-        if (Y + 1 < MazeSize.Y) Open.Emplace(Index + MazeSize.X);
-        if (Z - 1 >= 0)         Open.Emplace(Index - (MazeSize.X * MazeSize.Y));
-        if (Z + 1 < MazeSize.Z) Open.Emplace(Index + (MazeSize.X * MazeSize.Y));
+        if (!BlockID.Contains(Index - 1)                            && X - 1 >= 0)         Open.Emplace(Index - 1);
+        if (!BlockID.Contains(Index + 1)                            && X + 1 < MazeSize.X) Open.Emplace(Index + 1);
+        if (!BlockID.Contains(Index - MazeSize.X)                   && Y - 1 >= 0)         Open.Emplace(Index - MazeSize.X);
+        if (!BlockID.Contains(Index + MazeSize.X)                   && Y + 1 < MazeSize.Y) Open.Emplace(Index + MazeSize.X);
+        if (!BlockID.Contains(Index - (MazeSize.X * MazeSize.Y))    && Z - 1 >= 0)         Open.Emplace(Index - (MazeSize.X * MazeSize.Y));
+        if (!BlockID.Contains(Index + (MazeSize.X * MazeSize.Y))    && Z + 1 < MazeSize.Z) Open.Emplace(Index + (MazeSize.X * MazeSize.Y));
 
         MazeTable.StartData.Add(FLFPMazeStartData(Location, Open));
 
@@ -86,28 +88,26 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
 
             CurrentIndex = ChooseIndex;
         }
-        else if (MazeTable.MazeData[CurrentIndex].ParentIndex != -1)
+        else
         {
             if (MazeTable.MazeData[CurrentIndex].OpenList.Num() == 1)
             {
                 MazeTable.DeadEnd.Add(CurrentIndex);
             }
 
-            CurrentIndex = MazeTable.MazeData[CurrentIndex].ParentIndex;
-        }
-        else if (OpenIndex.Num() != 0)
-        {
-            if (MazeTable.MazeData[CurrentIndex].OpenList.Num() == 1)
+            if (MazeTable.MazeData[CurrentIndex].ParentIndex != -1)
             {
-                MazeTable.DeadEnd.Add(CurrentIndex);
+                CurrentIndex = MazeTable.MazeData[CurrentIndex].ParentIndex;
             }
-
-            // Get First Item In List
-            for (const int32 Item : UnVisit)
+            else if (UnVisit.Num() != 0)
             {
-                CurrentIndex = Item;
+                // Get First Item In List
+                for (const int32 Item : UnVisit)
+                {
+                    CurrentIndex = Item;
 
-                break;
+                    break;
+                }
             }
         }
     }
