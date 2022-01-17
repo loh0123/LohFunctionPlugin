@@ -90,9 +90,6 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
         for (int32 i = 0; i < OpenIndex.Num(); i++)
             OpenIndex.Swap(i, Seed.RandHelper(OpenIndex.Num() - 1));
 
-
-        int32 AddedNextIndex = 0;
-
         // Add To Next Visit
         for (const int32 Item : OpenIndex)
         {
@@ -102,19 +99,91 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
 
                 MazeTable.MazeData[Item].ParentIndex = CurrentIndex;
                 MazeTable.MazeData[Item].WalkCount = MazeTable.MazeData[CurrentIndex].WalkCount + 1;
-
-                AddedNextIndex++;
             }
-        }
-
-        // If All Neighbour Is Visit
-        if (AddedNextIndex == 0 && MazeTable.MazeData[CurrentIndex].OpenList.Num() == 1)
-        {
-            MazeTable.DeadEnd.Add(CurrentIndex);
         }
 
         // Next Index
         CurrentIndex = NextVisitList.Num() > 0 ? *NextVisitList.begin() : -1;
+    }
+
+    for (int32 i = 0; i < MazeTable.MazeData.Num(); i++)
+        if (MazeTable.MazeData[i].OpenList.Num() == 1)
+            MazeTable.DeadEnd.Add(i);
+
+    return true;
+}
+
+bool ULFPMazeLibrary::RemoveMazeDeadEnd(UPARAM(Ref)FLFPMazeTable& MazeTable, const int32 Amount, const FRandomStream& Seed)
+{
+    if (MazeTable.MazeData.Num() == 0 || Amount <= 0) return false;
+
+    for (int32 i = 0; i < Amount; i++)
+    {
+        if (MazeTable.DeadEnd.Num() == 0) break;
+
+        int32 CurrentIndex = MazeTable.DeadEnd.Pop();
+
+        TArray<int32> OpenIndex = MazeTable.StartData[CurrentIndex].OpenConnection;
+
+        OpenIndex.Remove(MazeTable.MazeData[CurrentIndex].OpenList[0]);
+
+        int32 ChooseIndex = OpenIndex[Seed.RandHelper(OpenIndex.Num() - 1)];
+
+        MazeTable.MazeData[CurrentIndex].OpenList.Add(ChooseIndex);
+        MazeTable.MazeData[ChooseIndex].OpenList.Add(CurrentIndex);
+
+        MazeTable.DeadEnd.RemoveSingleSwap(ChooseIndex);
+    }
+
+    return true;
+}
+
+bool ULFPMazeLibrary::GenerateMazeArea(UPARAM(Ref)FLFPMazeTable& MazeTable)
+{
+    if (MazeTable.MazeData.Num() == 0) return false;
+
+    // Setup Unvist List For Visit Check
+    TSet<int32> UnVisit;
+
+    for (int32 i = 0; i < MazeTable.MazeData.Num(); i++)
+        if (MazeTable.MazeData[i].OpenList.Num() <= 2 && MazeTable.MazeData[i].OpenList.Num() != 0) UnVisit.Add(i);
+
+    int32 CurrentIndex = -1;
+
+    while (UnVisit.Num() != 0)
+    {
+        if (CurrentIndex == -1)
+            CurrentIndex = *UnVisit.begin();
+
+        UnVisit.Remove(CurrentIndex);
+
+        if (MazeTable.MazeData[CurrentIndex].AreaID == -1)
+        {
+            MazeTable.MazeData[CurrentIndex].AreaID = MazeTable.MazeArea.Add(FLFPMazeArea());
+        }
+
+        MazeTable.MazeArea[MazeTable.MazeData[CurrentIndex].AreaID].Cell.Add(CurrentIndex);
+
+        bool bHasNext = false;
+
+        for (const int32 Item : MazeTable.MazeData[CurrentIndex].OpenList)
+        {
+            if (MazeTable.MazeData[Item].OpenList.Num() <= 2 && UnVisit.Contains(Item))
+            {
+                MazeTable.MazeData[Item].AreaID = MazeTable.MazeData[CurrentIndex].AreaID;
+
+                CurrentIndex = Item;
+
+                bHasNext = true;
+
+                break;
+            }
+        }
+
+        if (!bHasNext)
+        {
+            CurrentIndex = -1;
+        }
     }
 
     return true;

@@ -19,6 +19,9 @@ struct FLFPMazeData
 		int32 ParentIndex = -1;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		int32 AreaID = -1;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<int32> OpenList;
 };
 
@@ -42,6 +45,15 @@ struct FLFPMazeStartData
 };
 
 USTRUCT(BlueprintType)
+struct FLFPMazeArea
+{
+	GENERATED_USTRUCT_BODY()
+
+		UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TArray<int32> Cell;
+};
+
+USTRUCT(BlueprintType)
 struct FLFPMazeTable
 {
 	GENERATED_USTRUCT_BODY()
@@ -54,6 +66,9 @@ struct FLFPMazeTable
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<int32> DeadEnd;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TArray<FLFPMazeArea> MazeArea;
 };
 
 /**
@@ -69,4 +84,10 @@ class LOHFUNCTIONPLUGIN_API ULFPMazeLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
 		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const FRandomStream& Seed);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
+		static bool RemoveMazeDeadEnd(UPARAM(Ref) FLFPMazeTable& MazeTable, const int32 Amount, const FRandomStream& Seed);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
+		static bool GenerateMazeArea(UPARAM(Ref) FLFPMazeTable& MazeTable);
 };
