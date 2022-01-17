@@ -43,6 +43,7 @@ static inline void FLFPGridUpdateEvent_DelegateWrapper(const FMulticastScriptDel
 	virtual void UpdateEvent_Implementation(FLGPGridSystemEvent const& Data); \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execGetAreaIndex); \
 	DECLARE_FUNCTION(execRandomGridIndex); \
 	DECLARE_FUNCTION(execTryFitTemplateNear); \
 	DECLARE_FUNCTION(execTryFitTemplates); \
@@ -55,7 +56,9 @@ static inline void FLFPGridUpdateEvent_DelegateWrapper(const FMulticastScriptDel
 	DECLARE_FUNCTION(execUnmarkLocation); \
 	DECLARE_FUNCTION(execMarkLocations); \
 	DECLARE_FUNCTION(execMarkLocation); \
-	DECLARE_FUNCTION(execIsLocationsMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationsMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationValid); \
 	DECLARE_FUNCTION(execIsLocationMarked); \
 	DECLARE_FUNCTION(execIsLocationValid); \
 	DECLARE_FUNCTION(execWordlLocationToGridLocation); \
@@ -67,6 +70,7 @@ static inline void FLFPGridUpdateEvent_DelegateWrapper(const FMulticastScriptDel
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_LFPGridSystem_h_42_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execUpdateEvent); \
+	DECLARE_FUNCTION(execGetAreaIndex); \
 	DECLARE_FUNCTION(execRandomGridIndex); \
 	DECLARE_FUNCTION(execTryFitTemplateNear); \
 	DECLARE_FUNCTION(execTryFitTemplates); \
@@ -79,7 +83,9 @@ static inline void FLFPGridUpdateEvent_DelegateWrapper(const FMulticastScriptDel
 	DECLARE_FUNCTION(execUnmarkLocation); \
 	DECLARE_FUNCTION(execMarkLocations); \
 	DECLARE_FUNCTION(execMarkLocation); \
-	DECLARE_FUNCTION(execIsLocationsMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationsMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationMarked); \
+	DECLARE_FUNCTION(execIsWorldLocationValid); \
 	DECLARE_FUNCTION(execIsLocationMarked); \
 	DECLARE_FUNCTION(execIsLocationValid); \
 	DECLARE_FUNCTION(execWordlLocationToGridLocation); \

@@ -76,10 +76,6 @@ public:
 		return;
 	}
 
-	FORCEINLINE bool IsLocationValid_Internal(const FIntVector& Location) const
-	{
-		return (Location.GetMin() >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z);
-	}
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE int32 GridLocationToIndex(const FIntVector& Location) const;
@@ -95,13 +91,20 @@ public:
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsLocationValid(const FVector Location) { return IsLocationValid_Internal(WordlLocationToGridLocation(Location)); }
+		FORCEINLINE bool IsLocationValid(const FIntVector& Location) const { return (Location.GetMin() >= 0 && Location.X < GridSize.X&& Location.Y < GridSize.Y&& Location.Z < GridSize.Z); }
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsLocationMarked(const FVector Location);
+		FORCEINLINE bool IsLocationMarked(const FIntVector& Location);
+
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsLocationsMarked(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset, const bool MarkInvalid = false);
+		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return IsLocationValid(WordlLocationToGridLocation(Location)); }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE bool IsWorldLocationMarked(const FVector Location);
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE bool IsWorldLocationsMarked(const TArray<FVector>& Locations, const FIntVector& Rotation, const FVector& Offset, const bool MarkInvalid = false);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
@@ -141,7 +144,11 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
-		FORCEINLINE TArray<int32> RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const FRandomStream& Seed);
+		FORCEINLINE TArray<int32> RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const bool ReturnCenterIndex, const FRandomStream& Seed);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
+		FORCEINLINE TArray<int32> GetAreaIndex(const int32 CenterIndex, const FIntVector AreaSize);
 
 
 	UFUNCTION(NetMulticast, Reliable, Server)

@@ -246,14 +246,24 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		P_THIS->UpdateEvent_Implementation(Z_Param_Data);
 		P_NATIVE_END;
 	}
+	DEFINE_FUNCTION(ULFPGridSystem::execGetAreaIndex)
+	{
+		P_GET_PROPERTY(FIntProperty,Z_Param_CenterIndex);
+		P_GET_STRUCT(FIntVector,Z_Param_AreaSize);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(TArray<int32>*)Z_Param__Result=P_THIS->GetAreaIndex(Z_Param_CenterIndex,Z_Param_AreaSize);
+		P_NATIVE_END;
+	}
 	DEFINE_FUNCTION(ULFPGridSystem::execRandomGridIndex)
 	{
 		P_GET_PROPERTY(FIntProperty,Z_Param_Amount);
 		P_GET_STRUCT(FIntVector,Z_Param_SectionSize);
+		P_GET_UBOOL(Z_Param_ReturnCenterIndex);
 		P_GET_STRUCT_REF(FRandomStream,Z_Param_Out_Seed);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(TArray<int32>*)Z_Param__Result=P_THIS->RandomGridIndex(Z_Param_Amount,Z_Param_SectionSize,Z_Param_Out_Seed);
+		*(TArray<int32>*)Z_Param__Result=P_THIS->RandomGridIndex(Z_Param_Amount,Z_Param_SectionSize,Z_Param_ReturnCenterIndex,Z_Param_Out_Seed);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execTryFitTemplateNear)
@@ -371,7 +381,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		*(bool*)Z_Param__Result=P_THIS->MarkLocation(Z_Param_Location,Z_Param_Data);
 		P_NATIVE_END;
 	}
-	DEFINE_FUNCTION(ULFPGridSystem::execIsLocationsMarked)
+	DEFINE_FUNCTION(ULFPGridSystem::execIsWorldLocationsMarked)
 	{
 		P_GET_TARRAY_REF(FVector,Z_Param_Out_Locations);
 		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_Rotation);
@@ -379,23 +389,39 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		P_GET_UBOOL(Z_Param_MarkInvalid);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=P_THIS->IsLocationsMarked(Z_Param_Out_Locations,Z_Param_Out_Rotation,Z_Param_Out_Offset,Z_Param_MarkInvalid);
+		*(bool*)Z_Param__Result=P_THIS->IsWorldLocationsMarked(Z_Param_Out_Locations,Z_Param_Out_Rotation,Z_Param_Out_Offset,Z_Param_MarkInvalid);
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(ULFPGridSystem::execIsWorldLocationMarked)
+	{
+		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(bool*)Z_Param__Result=P_THIS->IsWorldLocationMarked(Z_Param_Location);
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(ULFPGridSystem::execIsWorldLocationValid)
+	{
+		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(bool*)Z_Param__Result=P_THIS->IsWorldLocationValid(Z_Param_Location);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execIsLocationMarked)
 	{
-		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_Location);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=P_THIS->IsLocationMarked(Z_Param_Location);
+		*(bool*)Z_Param__Result=P_THIS->IsLocationMarked(Z_Param_Out_Location);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execIsLocationValid)
 	{
-		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_Location);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=P_THIS->IsLocationValid(Z_Param_Location);
+		*(bool*)Z_Param__Result=P_THIS->IsLocationValid(Z_Param_Out_Location);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execWordlLocationToGridLocation)
@@ -441,6 +467,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	{
 		UClass* Class = ULFPGridSystem::StaticClass();
 		static const FNameNativePtrPair Funcs[] = {
+			{ "GetAreaIndex", &ULFPGridSystem::execGetAreaIndex },
 			{ "GetGridData", &ULFPGridSystem::execGetGridData },
 			{ "GetGridWorldLocation", &ULFPGridSystem::execGetGridWorldLocation },
 			{ "GetGridWorldLocationWithIndex", &ULFPGridSystem::execGetGridWorldLocationWithIndex },
@@ -448,8 +475,10 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 			{ "GridLocationToIndex", &ULFPGridSystem::execGridLocationToIndex },
 			{ "IndexToGridLocation", &ULFPGridSystem::execIndexToGridLocation },
 			{ "IsLocationMarked", &ULFPGridSystem::execIsLocationMarked },
-			{ "IsLocationsMarked", &ULFPGridSystem::execIsLocationsMarked },
 			{ "IsLocationValid", &ULFPGridSystem::execIsLocationValid },
+			{ "IsWorldLocationMarked", &ULFPGridSystem::execIsWorldLocationMarked },
+			{ "IsWorldLocationsMarked", &ULFPGridSystem::execIsWorldLocationsMarked },
+			{ "IsWorldLocationValid", &ULFPGridSystem::execIsWorldLocationValid },
 			{ "MarkLocation", &ULFPGridSystem::execMarkLocation },
 			{ "MarkLocations", &ULFPGridSystem::execMarkLocations },
 			{ "RandomGridIndex", &ULFPGridSystem::execRandomGridIndex },
@@ -463,6 +492,66 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 			{ "WordlLocationToIndex", &ULFPGridSystem::execWordlLocationToIndex },
 		};
 		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
+	}
+	struct Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics
+	{
+		struct LFPGridSystem_eventGetAreaIndex_Parms
+		{
+			int32 CenterIndex;
+			FIntVector AreaSize;
+			TArray<int32> ReturnValue;
+		};
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_CenterIndex_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_CenterIndex;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_AreaSize_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_AreaSize;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_ReturnValue_Inner;
+		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex = { "CenterIndex", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, CenterIndex), METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize = { "AreaSize", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, AreaSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue_Inner = { "ReturnValue", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, ReturnValue), EArrayPropertyFlags::None, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPGridSystem" },
+		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "GetAreaIndex", nullptr, nullptr, sizeof(LFPGridSystem_eventGetAreaIndex_Parms), Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::FuncParams);
+		}
+		return ReturnFunction;
 	}
 	struct Z_Construct_UFunction_ULFPGridSystem_GetGridData_Statics
 	{
@@ -755,7 +844,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	{
 		struct LFPGridSystem_eventIsLocationMarked_Parms
 		{
-			FVector Location;
+			FIntVector Location;
 			bool ReturnValue;
 		};
 #if WITH_METADATA
@@ -775,7 +864,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationMarked_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationMarked_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_Location_MetaData)) };
 	void Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::NewProp_ReturnValue_SetBit(void* Obj)
 	{
 		((LFPGridSystem_eventIsLocationMarked_Parms*)Obj)->ReturnValue = 1;
@@ -791,7 +880,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsLocationMarked", nullptr, nullptr, sizeof(LFPGridSystem_eventIsLocationMarked_Parms), Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::Function_MetaDataParams)) };
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsLocationMarked", nullptr, nullptr, sizeof(LFPGridSystem_eventIsLocationMarked_Parms), Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked_Statics::Function_MetaDataParams)) };
 	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked()
 	{
 		static UFunction* ReturnFunction = nullptr;
@@ -801,9 +890,109 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		}
 		return ReturnFunction;
 	}
-	struct Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics
+	struct Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics
 	{
-		struct LFPGridSystem_eventIsLocationsMarked_Parms
+		struct LFPGridSystem_eventIsLocationValid_Parms
+		{
+			FIntVector Location;
+			bool ReturnValue;
+		};
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_Location;
+		static void NewProp_ReturnValue_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationValid_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData)) };
+	void Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((LFPGridSystem_eventIsLocationValid_Parms*)Obj)->ReturnValue = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsLocationValid_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPGridSystem" },
+		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsLocationValid", nullptr, nullptr, sizeof(LFPGridSystem_eventIsLocationValid_Parms), Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsLocationValid()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics
+	{
+		struct LFPGridSystem_eventIsWorldLocationMarked_Parms
+		{
+			FVector Location;
+			bool ReturnValue;
+		};
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_Location;
+		static void NewProp_ReturnValue_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_Location_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsWorldLocationMarked_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_Location_MetaData)) };
+	void Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((LFPGridSystem_eventIsWorldLocationMarked_Parms*)Obj)->ReturnValue = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsWorldLocationMarked_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_Location,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPGridSystem" },
+		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsWorldLocationMarked", nullptr, nullptr, sizeof(LFPGridSystem_eventIsWorldLocationMarked_Parms), Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics
+	{
+		struct LFPGridSystem_eventIsWorldLocationsMarked_Parms
 		{
 			TArray<FVector> Locations;
 			FIntVector Rotation;
@@ -837,68 +1026,68 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 #endif
 		static const UE4CodeGen_Private::FFunctionParams FuncParams;
 	};
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations_Inner = { "Locations", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations_Inner = { "Locations", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations = { "Locations", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationsMarked_Parms, Locations), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations_MetaData)) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations = { "Locations", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsWorldLocationsMarked_Parms, Locations), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations_MetaData)) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Rotation_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Rotation_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Rotation = { "Rotation", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationsMarked_Parms, Rotation), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Rotation_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Rotation_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Rotation = { "Rotation", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsWorldLocationsMarked_Parms, Rotation), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Rotation_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Rotation_MetaData)) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Offset_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Offset_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Offset = { "Offset", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationsMarked_Parms, Offset), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Offset_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Offset_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Offset = { "Offset", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsWorldLocationsMarked_Parms, Offset), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Offset_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Offset_MetaData)) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	void Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid_SetBit(void* Obj)
+	void Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid_SetBit(void* Obj)
 	{
-		((LFPGridSystem_eventIsLocationsMarked_Parms*)Obj)->MarkInvalid = 1;
+		((LFPGridSystem_eventIsWorldLocationsMarked_Parms*)Obj)->MarkInvalid = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid = { "MarkInvalid", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsLocationsMarked_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid_MetaData)) };
-	void Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid = { "MarkInvalid", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsWorldLocationsMarked_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid_MetaData)) };
+	void Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_ReturnValue_SetBit(void* Obj)
 	{
-		((LFPGridSystem_eventIsLocationsMarked_Parms*)Obj)->ReturnValue = 1;
+		((LFPGridSystem_eventIsWorldLocationsMarked_Parms*)Obj)->ReturnValue = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsLocationsMarked_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
-	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::PropPointers[] = {
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations_Inner,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Locations,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Rotation,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_Offset,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_MarkInvalid,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::NewProp_ReturnValue,
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsWorldLocationsMarked_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Locations,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Rotation,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_Offset,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_MarkInvalid,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::Function_MetaDataParams[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
 		{ "CPP_Default_MarkInvalid", "false" },
 		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsLocationsMarked", nullptr, nullptr, sizeof(LFPGridSystem_eventIsLocationsMarked_Parms), Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::Function_MetaDataParams)) };
-	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked()
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsWorldLocationsMarked", nullptr, nullptr, sizeof(LFPGridSystem_eventIsWorldLocationsMarked_Parms), Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked()
 	{
 		static UFunction* ReturnFunction = nullptr;
 		if (!ReturnFunction)
 		{
-			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked_Statics::FuncParams);
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked_Statics::FuncParams);
 		}
 		return ReturnFunction;
 	}
-	struct Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics
+	struct Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics
 	{
-		struct LFPGridSystem_eventIsLocationValid_Parms
+		struct LFPGridSystem_eventIsWorldLocationValid_Parms
 		{
 			FVector Location;
 			bool ReturnValue;
@@ -916,33 +1105,33 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		static const UE4CodeGen_Private::FFunctionParams FuncParams;
 	};
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_Location_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsLocationValid_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location_MetaData)) };
-	void Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventIsWorldLocationValid_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_Location_MetaData)) };
+	void Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_ReturnValue_SetBit(void* Obj)
 	{
-		((LFPGridSystem_eventIsLocationValid_Parms*)Obj)->ReturnValue = 1;
+		((LFPGridSystem_eventIsWorldLocationValid_Parms*)Obj)->ReturnValue = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsLocationValid_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
-	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers[] = {
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_Location,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::NewProp_ReturnValue,
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventIsWorldLocationValid_Parms), &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_Location,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
 		{ "ModuleRelativePath", "Public/LFPGridSystem.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsLocationValid", nullptr, nullptr, sizeof(LFPGridSystem_eventIsLocationValid_Parms), Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::Function_MetaDataParams)) };
-	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsLocationValid()
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridSystem, nullptr, "IsWorldLocationValid", nullptr, nullptr, sizeof(LFPGridSystem_eventIsWorldLocationValid_Parms), Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid()
 	{
 		static UFunction* ReturnFunction = nullptr;
 		if (!ReturnFunction)
 		{
-			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsLocationValid_Statics::FuncParams);
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid_Statics::FuncParams);
 		}
 		return ReturnFunction;
 	}
@@ -1103,6 +1292,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		{
 			int32 Amount;
 			FIntVector SectionSize;
+			bool ReturnCenterIndex;
 			FRandomStream Seed;
 			TArray<int32> ReturnValue;
 		};
@@ -1114,6 +1304,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_SectionSize_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_SectionSize;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ReturnCenterIndex_MetaData[];
+#endif
+		static void NewProp_ReturnCenterIndex_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnCenterIndex;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Seed_MetaData[];
 #endif
@@ -1139,6 +1334,16 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize = { "SectionSize", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventRandomGridIndex_Parms, SectionSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize_MetaData)) };
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_SetBit(void* Obj)
+	{
+		((LFPGridSystem_eventRandomGridIndex_Parms*)Obj)->ReturnCenterIndex = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex = { "ReturnCenterIndex", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventRandomGridIndex_Parms), &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Seed_MetaData[] = {
 		{ "NativeConst", "" },
 	};
@@ -1149,6 +1354,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Amount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Seed,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnValue_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnValue,
@@ -1856,18 +2062,21 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPGridSystem_Statics::FuncInfo[] = {
+		{ &Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex, "GetAreaIndex" }, // 1923942107
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridData, "GetGridData" }, // 4255532305
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridWorldLocation, "GetGridWorldLocation" }, // 3193985413
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridWorldLocationWithIndex, "GetGridWorldLocationWithIndex" }, // 1385035453
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetLocationData, "GetLocationData" }, // 3081736711
 		{ &Z_Construct_UFunction_ULFPGridSystem_GridLocationToIndex, "GridLocationToIndex" }, // 1613141414
 		{ &Z_Construct_UFunction_ULFPGridSystem_IndexToGridLocation, "IndexToGridLocation" }, // 801803888
-		{ &Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked, "IsLocationMarked" }, // 3524257873
-		{ &Z_Construct_UFunction_ULFPGridSystem_IsLocationsMarked, "IsLocationsMarked" }, // 3564864521
-		{ &Z_Construct_UFunction_ULFPGridSystem_IsLocationValid, "IsLocationValid" }, // 2159388669
+		{ &Z_Construct_UFunction_ULFPGridSystem_IsLocationMarked, "IsLocationMarked" }, // 275843352
+		{ &Z_Construct_UFunction_ULFPGridSystem_IsLocationValid, "IsLocationValid" }, // 443145984
+		{ &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationMarked, "IsWorldLocationMarked" }, // 1409621729
+		{ &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationsMarked, "IsWorldLocationsMarked" }, // 1059627315
+		{ &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid, "IsWorldLocationValid" }, // 1438412387
 		{ &Z_Construct_UFunction_ULFPGridSystem_MarkLocation, "MarkLocation" }, // 2107939844
 		{ &Z_Construct_UFunction_ULFPGridSystem_MarkLocations, "MarkLocations" }, // 3929842548
-		{ &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex, "RandomGridIndex" }, // 64649540
+		{ &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex, "RandomGridIndex" }, // 3792048932
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplate, "TryFitTemplate" }, // 3500389390
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplateNear, "TryFitTemplateNear" }, // 673480265
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplates, "TryFitTemplates" }, // 2274225222
@@ -1976,7 +2185,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPGridSystem, 1020687882);
+	IMPLEMENT_CLASS(ULFPGridSystem, 56333812);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPGridSystem>()
 	{
 		return ULFPGridSystem::StaticClass();

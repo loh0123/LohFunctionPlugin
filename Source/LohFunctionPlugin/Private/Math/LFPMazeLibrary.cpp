@@ -11,6 +11,8 @@ FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize, co
 
     int32 Index = 0;
 
+    int32 JumpZ = MazeSize.X * MazeSize.Y;
+
     for (int32 Z = 0; Z < MazeSize.Z; Z++)
     for (int32 Y = 0; Y < MazeSize.Y; Y++)
     for (int32 X = 0; X < MazeSize.X; X++)
@@ -22,12 +24,12 @@ FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize, co
         TArray<int32> Open;
         Open.Reserve(6);
 
-        if (!BlockID.Contains(Index - 1)                            && X - 1 >= 0)         Open.Emplace(Index - 1);
-        if (!BlockID.Contains(Index + 1)                            && X + 1 < MazeSize.X) Open.Emplace(Index + 1);
-        if (!BlockID.Contains(Index - MazeSize.X)                   && Y - 1 >= 0)         Open.Emplace(Index - MazeSize.X);
-        if (!BlockID.Contains(Index + MazeSize.X)                   && Y + 1 < MazeSize.Y) Open.Emplace(Index + MazeSize.X);
-        if (!BlockID.Contains(Index - (MazeSize.X * MazeSize.Y))    && Z - 1 >= 0)         Open.Emplace(Index - (MazeSize.X * MazeSize.Y));
-        if (!BlockID.Contains(Index + (MazeSize.X * MazeSize.Y))    && Z + 1 < MazeSize.Z) Open.Emplace(Index + (MazeSize.X * MazeSize.Y));
+        if (!BlockID.Contains(Index - 1)            && X - 1 >= 0)         Open.Emplace(Index - 1);
+        if (!BlockID.Contains(Index + 1)            && X + 1 < MazeSize.X) Open.Emplace(Index + 1);
+        if (!BlockID.Contains(Index - MazeSize.X)   && Y - 1 >= 0)         Open.Emplace(Index - MazeSize.X);
+        if (!BlockID.Contains(Index + MazeSize.X)   && Y + 1 < MazeSize.Y) Open.Emplace(Index + MazeSize.X);
+        if (!BlockID.Contains(Index - JumpZ)        && Z - 1 >= 0)         Open.Emplace(Index - JumpZ);
+        if (!BlockID.Contains(Index + JumpZ)        && Z + 1 < MazeSize.Z) Open.Emplace(Index + JumpZ);
 
         MazeTable.StartData.Add(FLFPMazeStartData(Location, Open));
 
@@ -41,75 +43,78 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
 {
     if (MazeTable.StartData.Num() == 0) return false;
 
-    int32 CurrentIndex = Seed.RandRange(0, MazeTable.StartData.Num() - 1);
-
     // Setup Unvist List For Visit Check
     TSet<int32> UnVisit;
-    // Reserve List To Fill Faster
-    UnVisit.Reserve(MazeTable.StartData.Num());
-    // Fill Unvisit List With Index
-    for (int32 i = 0; i < MazeTable.StartData.Num(); i++)
-        UnVisit.Add(i);
+    {
+        TArray<int32> UnVisitArray;
+
+        UnVisitArray.Reserve(MazeTable.StartData.Num());
+
+        for (int32 i = 0; i < MazeTable.StartData.Num(); i++)
+            if (!MazeTable.StartData[i].IsBlock) UnVisitArray.Add(i);
+
+        for (int32 i = 0; i < UnVisitArray.Num(); i++)
+            UnVisitArray.Swap(i, Seed.RandHelper(UnVisitArray.Num() - 1));
+
+        UnVisit.Append(UnVisitArray);
+    }
 
     // Fill Output Data With EmptyMazeData
     MazeTable.MazeData.Init(FLFPMazeData(), MazeTable.StartData.Num());
 
+    TSet<int32> NextVisitList;
+
+    int32 CurrentIndex = -1;
+
     while (UnVisit.Num() != 0)
     {
-        //Remove Current Index For List
-        UnVisit.Remove(CurrentIndex);
+        // Get First Item In List
+        if (CurrentIndex == -1)
+            CurrentIndex = *UnVisit.begin();
 
+        //Mark As Visit
+        UnVisit.Remove(CurrentIndex);
+        NextVisitList.Remove(CurrentIndex);
+
+        // Connect To Parent If Valid
+        if (MazeTable.MazeData[CurrentIndex].ParentIndex != -1)
+        {
+            MazeTable.MazeData[CurrentIndex].OpenList.Add(MazeTable.MazeData[CurrentIndex].ParentIndex);
+            MazeTable.MazeData[MazeTable.MazeData[CurrentIndex].ParentIndex].OpenList.Add(CurrentIndex);
+        }
+
+        // Fill Open List
         TArray<int32> OpenIndex = MazeTable.StartData[CurrentIndex].OpenConnection;
 
-        int32 ChooseIndex = -1;
+        // Swap Open List
+        for (int32 i = 0; i < OpenIndex.Num(); i++)
+            OpenIndex.Swap(i, Seed.RandHelper(OpenIndex.Num() - 1));
 
-        // Find Choose Index
-        while (OpenIndex.Num() != 0)
+
+        int32 AddedNextIndex = 0;
+
+        // Add To Next Visit
+        for (const int32 Item : OpenIndex)
         {
-            int32 RandInd = Seed.RandRange(0, OpenIndex.Num() - 1);
-
-            if (UnVisit.Contains(OpenIndex[RandInd]))
+            if (UnVisit.Contains(Item))
             {
-                ChooseIndex = OpenIndex[RandInd];
+                NextVisitList.Add(Item);
 
-                break;
+                MazeTable.MazeData[Item].ParentIndex = CurrentIndex;
+                MazeTable.MazeData[Item].WalkCount = MazeTable.MazeData[CurrentIndex].WalkCount + 1;
+
+                AddedNextIndex++;
             }
-
-            OpenIndex.RemoveAtSwap(RandInd);
         }
 
-        if (ChooseIndex != -1)
+        // If All Neighbour Is Visit
+        if (AddedNextIndex == 0 && MazeTable.MazeData[CurrentIndex].OpenList.Num() == 1)
         {
-            MazeTable.MazeData[CurrentIndex].OpenList.Add(ChooseIndex);
-            MazeTable.MazeData[ChooseIndex].OpenList.Add(CurrentIndex);
-
-            MazeTable.MazeData[ChooseIndex].ParentIndex = CurrentIndex;
-            MazeTable.MazeData[ChooseIndex].WalkCount = MazeTable.MazeData[CurrentIndex].WalkCount + 1;
-
-            CurrentIndex = ChooseIndex;
+            MazeTable.DeadEnd.Add(CurrentIndex);
         }
-        else
-        {
-            if (MazeTable.MazeData[CurrentIndex].OpenList.Num() == 1)
-            {
-                MazeTable.DeadEnd.Add(CurrentIndex);
-            }
 
-            if (MazeTable.MazeData[CurrentIndex].ParentIndex != -1)
-            {
-                CurrentIndex = MazeTable.MazeData[CurrentIndex].ParentIndex;
-            }
-            else if (UnVisit.Num() != 0)
-            {
-                // Get First Item In List
-                for (const int32 Item : UnVisit)
-                {
-                    CurrentIndex = Item;
-
-                    break;
-                }
-            }
-        }
+        // Next Index
+        CurrentIndex = NextVisitList.Num() > 0 ? *NextVisitList.begin() : -1;
     }
 
     return true;

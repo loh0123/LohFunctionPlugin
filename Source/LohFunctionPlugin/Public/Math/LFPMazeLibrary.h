@@ -32,13 +32,13 @@ struct FLFPMazeStartData
 	FLFPMazeStartData(const FIntVector Loc, const bool Block) : GraphLocation(Loc), IsBlock(Block) {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		FIntVector GraphLocation;
+		FIntVector GraphLocation = FIntVector(0);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<int32> OpenConnection;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool IsBlock;
+		bool IsBlock = false;
 };
 
 USTRUCT(BlueprintType)
