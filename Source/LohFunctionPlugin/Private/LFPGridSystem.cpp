@@ -323,13 +323,11 @@ bool ULFPGridSystem::TryFitTemplateNear(const TArray<FVector>& Template, const F
 	return false;
 }
 
-TArray<int32> ULFPGridSystem::RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const bool ReturnCenterIndex, const FRandomStream& Seed)
+TArray<int32> ULFPGridSystem::RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const TSet<int32>& IgnoreIndexs, const FRandomStream& Seed)
 {
 	TArray<int32> ReturnData;
 
 	if (SectionSize.GetMin() <= 0) return ReturnData;
-
-	FIntVector HalfSize = SectionSize / 2;
 
 	FIntVector Size = FIntVector(GridSize.X / SectionSize.X, GridSize.Y / SectionSize.Y, GridSize.Z / SectionSize.Z);
 
@@ -342,7 +340,9 @@ TArray<int32> ULFPGridSystem::RandomGridIndex(const int32 Amount, const FIntVect
 	for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
 	for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
 	{
-		UnVisit.Add(GridLocationToIndex(ReturnCenterIndex ? FIntVector(X, Y, Z) + HalfSize : FIntVector(X, Y, Z)));
+		int32 Index = GridLocationToIndex(FIntVector(X, Y, Z));
+
+		if (!IgnoreIndexs.Contains(Index)) UnVisit.Add(Index);
 	}	
 
 	// Shuffle Array Item
@@ -361,9 +361,9 @@ TArray<int32> ULFPGridSystem::RandomGridIndex(const int32 Amount, const FIntVect
 	return ReturnData;
 }
 
-TArray<int32> ULFPGridSystem::GetAreaIndex(const int32 CenterIndex, const FIntVector AreaSize)
+TArray<int32> ULFPGridSystem::GetAreaIndex(const int32 Index, const FIntVector Offset, const FIntVector AreaSize)
 {
-	FIntVector StartLoc = IndexToGridLocation(CenterIndex);
+	FIntVector StartLoc = IndexToGridLocation(Index) + Offset;
 	TArray<int32> ReturnData;
 
 	ReturnData.Reserve(((AreaSize.X * AreaSize.Y * AreaSize.Z) * 2) + 1);

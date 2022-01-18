@@ -248,22 +248,23 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execGetAreaIndex)
 	{
-		P_GET_PROPERTY(FIntProperty,Z_Param_CenterIndex);
+		P_GET_PROPERTY(FIntProperty,Z_Param_Index);
+		P_GET_STRUCT(FIntVector,Z_Param_Offset);
 		P_GET_STRUCT(FIntVector,Z_Param_AreaSize);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(TArray<int32>*)Z_Param__Result=P_THIS->GetAreaIndex(Z_Param_CenterIndex,Z_Param_AreaSize);
+		*(TArray<int32>*)Z_Param__Result=P_THIS->GetAreaIndex(Z_Param_Index,Z_Param_Offset,Z_Param_AreaSize);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execRandomGridIndex)
 	{
 		P_GET_PROPERTY(FIntProperty,Z_Param_Amount);
 		P_GET_STRUCT(FIntVector,Z_Param_SectionSize);
-		P_GET_UBOOL(Z_Param_ReturnCenterIndex);
+		P_GET_TSET_REF(int32,Z_Param_Out_IgnoreIndexs);
 		P_GET_STRUCT_REF(FRandomStream,Z_Param_Out_Seed);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(TArray<int32>*)Z_Param__Result=P_THIS->RandomGridIndex(Z_Param_Amount,Z_Param_SectionSize,Z_Param_ReturnCenterIndex,Z_Param_Out_Seed);
+		*(TArray<int32>*)Z_Param__Result=P_THIS->RandomGridIndex(Z_Param_Amount,Z_Param_SectionSize,Z_Param_Out_IgnoreIndexs,Z_Param_Out_Seed);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPGridSystem::execTryFitTemplateNear)
@@ -497,14 +498,19 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	{
 		struct LFPGridSystem_eventGetAreaIndex_Parms
 		{
-			int32 CenterIndex;
+			int32 Index;
+			FIntVector Offset;
 			FIntVector AreaSize;
 			TArray<int32> ReturnValue;
 		};
 #if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_CenterIndex_MetaData[];
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Index_MetaData[];
 #endif
-		static const UE4CodeGen_Private::FIntPropertyParams NewProp_CenterIndex;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_Index;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Offset_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_Offset;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_AreaSize_MetaData[];
 #endif
@@ -518,11 +524,17 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		static const UE4CodeGen_Private::FFunctionParams FuncParams;
 	};
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Index_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex = { "CenterIndex", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, CenterIndex), METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Index = { "Index", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, Index), METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Index_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Index_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Offset_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Offset = { "Offset", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, Offset), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Offset_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Offset_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize_MetaData[] = {
 		{ "NativeConst", "" },
@@ -532,7 +544,8 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue_Inner = { "ReturnValue", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventGetAreaIndex_Parms, ReturnValue), EArrayPropertyFlags::None, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::PropPointers[] = {
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_CenterIndex,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Index,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_Offset,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_AreaSize,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex_Statics::NewProp_ReturnValue,
@@ -1292,7 +1305,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		{
 			int32 Amount;
 			FIntVector SectionSize;
-			bool ReturnCenterIndex;
+			TSet<int32> IgnoreIndexs;
 			FRandomStream Seed;
 			TArray<int32> ReturnValue;
 		};
@@ -1304,11 +1317,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_SectionSize_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_SectionSize;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_IgnoreIndexs_ElementProp;
 #if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ReturnCenterIndex_MetaData[];
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_IgnoreIndexs_MetaData[];
 #endif
-		static void NewProp_ReturnCenterIndex_SetBit(void* Obj);
-		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnCenterIndex;
+		static const UE4CodeGen_Private::FSetPropertyParams NewProp_IgnoreIndexs;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Seed_MetaData[];
 #endif
@@ -1333,16 +1346,13 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	};
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize = { "SectionSize", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventRandomGridIndex_Parms, SectionSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs_ElementProp = { "IgnoreIndexs", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	void Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_SetBit(void* Obj)
-	{
-		((LFPGridSystem_eventRandomGridIndex_Parms*)Obj)->ReturnCenterIndex = 1;
-	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex = { "ReturnCenterIndex", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridSystem_eventRandomGridIndex_Parms), &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex_MetaData)) };
+	const UE4CodeGen_Private::FSetPropertyParams Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs = { "IgnoreIndexs", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridSystem_eventRandomGridIndex_Parms, IgnoreIndexs), METADATA_PARAMS(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Seed_MetaData[] = {
 		{ "NativeConst", "" },
@@ -1354,7 +1364,8 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Amount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_SectionSize,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnCenterIndex,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs_ElementProp,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_IgnoreIndexs,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_Seed,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnValue_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex_Statics::NewProp_ReturnValue,
@@ -2062,7 +2073,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPGridSystem_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex, "GetAreaIndex" }, // 1923942107
+		{ &Z_Construct_UFunction_ULFPGridSystem_GetAreaIndex, "GetAreaIndex" }, // 4241788827
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridData, "GetGridData" }, // 4255532305
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridWorldLocation, "GetGridWorldLocation" }, // 3193985413
 		{ &Z_Construct_UFunction_ULFPGridSystem_GetGridWorldLocationWithIndex, "GetGridWorldLocationWithIndex" }, // 1385035453
@@ -2076,7 +2087,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		{ &Z_Construct_UFunction_ULFPGridSystem_IsWorldLocationValid, "IsWorldLocationValid" }, // 1438412387
 		{ &Z_Construct_UFunction_ULFPGridSystem_MarkLocation, "MarkLocation" }, // 2107939844
 		{ &Z_Construct_UFunction_ULFPGridSystem_MarkLocations, "MarkLocations" }, // 3929842548
-		{ &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex, "RandomGridIndex" }, // 3792048932
+		{ &Z_Construct_UFunction_ULFPGridSystem_RandomGridIndex, "RandomGridIndex" }, // 3859278170
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplate, "TryFitTemplate" }, // 3500389390
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplateNear, "TryFitTemplateNear" }, // 673480265
 		{ &Z_Construct_UFunction_ULFPGridSystem_TryFitTemplates, "TryFitTemplates" }, // 2274225222
@@ -2185,7 +2196,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLGPGridSyste
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPGridSystem, 56333812);
+	IMPLEMENT_CLASS(ULFPGridSystem, 3489926226);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPGridSystem>()
 	{
 		return ULFPGridSystem::StaticClass();

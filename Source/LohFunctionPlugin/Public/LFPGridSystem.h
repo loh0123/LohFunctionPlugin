@@ -144,11 +144,11 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
-		FORCEINLINE TArray<int32> RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const bool ReturnCenterIndex, const FRandomStream& Seed);
+		FORCEINLINE TArray<int32> RandomGridIndex(const int32 Amount, const FIntVector SectionSize, const TSet<int32>& IgnoreIndexs, const FRandomStream& Seed);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridSystem")
-		FORCEINLINE TArray<int32> GetAreaIndex(const int32 CenterIndex, const FIntVector AreaSize);
+		FORCEINLINE TArray<int32> GetAreaIndex(const int32 Index, const FIntVector Offset, const FIntVector AreaSize);
 
 
 	UFUNCTION(NetMulticast, Reliable, Server)
