@@ -83,7 +83,7 @@ class LOHFUNCTIONPLUGIN_API ULFPMazeLibrary : public UBlueprintFunctionLibrary
 		static FLFPMazeTable CreateMazeStartData(const FIntVector MazeSize, const TSet<int32>& BlockID);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
-		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const FRandomStream& Seed);
+		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const TSet<int32>& PreConnection, const FRandomStream& Seed);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
 		static bool RemoveMazeDeadEnd(UPARAM(Ref) FLFPMazeTable& MazeTable, const int32 Amount, const FRandomStream& Seed);

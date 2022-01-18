@@ -88,8 +88,8 @@ class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 		static FVector MixLerpDirection(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FLFPNearbyVectorData GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location);
+		static FLFPNearbyVectorData GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const bool IgnoreZ, const FVector Location);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static void GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, TArray<FLFPNearbyVectorData>& ReturnData);
+		static void GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool IgnoreZ, TArray<FLFPNearbyVectorData>& ReturnData);
 };

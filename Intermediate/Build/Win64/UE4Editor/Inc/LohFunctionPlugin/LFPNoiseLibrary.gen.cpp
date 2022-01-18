@@ -319,19 +319,21 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_IgnoreZ);
 		P_GET_TARRAY_REF(FLFPNearbyVectorData,Z_Param_Out_ReturnData);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		ULFPNoiseLibrary::GetNearbyVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_Out_ReturnData);
+		ULFPNoiseLibrary::GetNearbyVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_IgnoreZ,Z_Param_Out_ReturnData);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetNearbySingleVectorNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
+		P_GET_UBOOL(Z_Param_IgnoreZ);
 		P_GET_STRUCT(FVector,Z_Param_Location);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FLFPNearbyVectorData*)Z_Param__Result=ULFPNoiseLibrary::GetNearbySingleVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(FLFPNearbyVectorData*)Z_Param__Result=ULFPNoiseLibrary::GetNearbySingleVectorNoise(Z_Param_Out_NoiseTable,Z_Param_IgnoreZ,Z_Param_Location);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execMixLerpDirection)
@@ -780,6 +782,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		struct LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms
 		{
 			FLFPNoiseTable NoiseTable;
+			bool IgnoreZ;
 			FVector Location;
 			FLFPNearbyVectorData ReturnValue;
 		};
@@ -787,6 +790,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_NoiseTable_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_NoiseTable;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_IgnoreZ_MetaData[];
+#endif
+		static void NewProp_IgnoreZ_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_IgnoreZ;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
@@ -805,6 +813,16 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_NoiseTable = { "NoiseTable", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms, NoiseTable), Z_Construct_UScriptStruct_FLFPNoiseTable, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_NoiseTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_NoiseTable_MetaData)) };
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms*)Obj)->IgnoreZ = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ = { "IgnoreZ", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location_MetaData[] = {
 		{ "NativeConst", "" },
 	};
@@ -813,6 +831,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FLFPNearbyVectorData, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_NoiseTable,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_ReturnValue,
 	};
@@ -838,6 +857,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		{
 			FLFPNoiseTable NoiseTable;
 			FVector Location;
+			bool IgnoreZ;
 			TArray<FLFPNearbyVectorData> ReturnData;
 		};
 #if WITH_METADATA
@@ -848,6 +868,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_IgnoreZ_MetaData[];
+#endif
+		static void NewProp_IgnoreZ_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_IgnoreZ;
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_ReturnData_Inner;
 		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_ReturnData;
 		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
@@ -868,11 +893,22 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 	};
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms*)Obj)->IgnoreZ = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ = { "IgnoreZ", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_MetaData)) };
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData_Inner = { "ReturnData", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNearbyVectorData, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData = { "ReturnData", nullptr, (EPropertyFlags)0x0010000000000180, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms, ReturnData), EArrayPropertyFlags::None, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_NoiseTable,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_Location,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData,
 	};
@@ -1166,8 +1202,8 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise, "GetLerpDirectionNoise" }, // 1493224991
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise, "GetLerpNoise" }, // 2482865396
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise, "GetLerpVectorNoise" }, // 2732020856
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise, "GetNearbySingleVectorNoise" }, // 1142507571
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise, "GetNearbyVectorNoise" }, // 3612369342
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise, "GetNearbySingleVectorNoise" }, // 3318343696
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise, "GetNearbyVectorNoise" }, // 515163792
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise, "GetVectorNoise" }, // 396939191
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection, "MixLerpDirection" }, // 1176295088
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise, "MixLerpNoise" }, // 835776864
@@ -1207,7 +1243,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPNoiseMixT
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPNoiseLibrary, 2884859835);
+	IMPLEMENT_CLASS(ULFPNoiseLibrary, 687615601);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPNoiseLibrary>()
 	{
 		return ULFPNoiseLibrary::StaticClass();

@@ -39,7 +39,7 @@ FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize, co
     return MazeTable;
 }
 
-bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, const FRandomStream& Seed)
+bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, const TSet<int32>& PreConnection, const FRandomStream& Seed)
 {
     if (MazeTable.StartData.Num() == 0) return false;
 
@@ -64,7 +64,32 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
 
     TSet<int32> NextVisitList;
 
-    int32 CurrentIndex = -1;
+    NextVisitList.Reserve(PreConnection.Num() * 26);
+
+    // Add All Pre Connection Room
+    for (const int32 Item : PreConnection)
+    {
+        UnVisit.Remove(Item);
+
+        for (const int32 OpenIndex : MazeTable.StartData[Item].OpenConnection)
+        {
+            if (PreConnection.Contains(OpenIndex))
+            {
+                MazeTable.MazeData[Item].OpenList.Add(OpenIndex);
+                MazeTable.MazeData[OpenIndex].OpenList.Add(Item);
+            }
+            else
+            {
+                NextVisitList.Add(OpenIndex);
+
+                MazeTable.MazeData[OpenIndex].ParentIndex = Item;
+                MazeTable.MazeData[OpenIndex].WalkCount = 1;
+            }
+        }
+    }
+
+
+    int32 CurrentIndex = NextVisitList.Num() > 0 ? *NextVisitList.begin() : -1;;
 
     while (UnVisit.Num() != 0)
     {
@@ -117,15 +142,16 @@ bool ULFPMazeLibrary::RemoveMazeDeadEnd(UPARAM(Ref)FLFPMazeTable& MazeTable, con
 {
     if (MazeTable.MazeData.Num() == 0 || Amount <= 0) return false;
 
+    if (MazeTable.DeadEnd.Num() != 0)
     for (int32 i = 0; i < Amount; i++)
     {
-        if (MazeTable.DeadEnd.Num() == 0) break;
-
         int32 CurrentIndex = MazeTable.DeadEnd.Pop();
 
         TArray<int32> OpenIndex = MazeTable.StartData[CurrentIndex].OpenConnection;
 
         OpenIndex.Remove(MazeTable.MazeData[CurrentIndex].OpenList[0]);
+
+        if (OpenIndex.Num() == 0) continue;
 
         int32 ChooseIndex = OpenIndex[Seed.RandHelper(OpenIndex.Num() - 1)];
 

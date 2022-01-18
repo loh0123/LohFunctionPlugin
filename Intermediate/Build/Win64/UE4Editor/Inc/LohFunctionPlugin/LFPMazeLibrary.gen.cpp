@@ -503,10 +503,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	DEFINE_FUNCTION(ULFPMazeLibrary::execGenerateMazeData)
 	{
 		P_GET_STRUCT_REF(FLFPMazeTable,Z_Param_Out_MazeTable);
+		P_GET_TSET_REF(int32,Z_Param_Out_PreConnection);
 		P_GET_STRUCT_REF(FRandomStream,Z_Param_Out_Seed);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=ULFPMazeLibrary::GenerateMazeData(Z_Param_Out_MazeTable,Z_Param_Out_Seed);
+		*(bool*)Z_Param__Result=ULFPMazeLibrary::GenerateMazeData(Z_Param_Out_MazeTable,Z_Param_Out_PreConnection,Z_Param_Out_Seed);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPMazeLibrary::execCreateMazeStartData)
@@ -636,10 +637,16 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		struct LFPMazeLibrary_eventGenerateMazeData_Parms
 		{
 			FLFPMazeTable MazeTable;
+			TSet<int32> PreConnection;
 			FRandomStream Seed;
 			bool ReturnValue;
 		};
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeTable;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_PreConnection_ElementProp;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_PreConnection_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FSetPropertyParams NewProp_PreConnection;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Seed_MetaData[];
 #endif
@@ -653,6 +660,13 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		static const UE4CodeGen_Private::FFunctionParams FuncParams;
 	};
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_MazeTable = { "MazeTable", nullptr, (EPropertyFlags)0x0010000008000180, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGenerateMazeData_Parms, MazeTable), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_ElementProp = { "PreConnection", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FSetPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection = { "PreConnection", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGenerateMazeData_Parms, PreConnection), METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_Seed_MetaData[] = {
 		{ "NativeConst", "" },
@@ -666,6 +680,8 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPMazeLibrary_eventGenerateMazeData_Parms), &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_MazeTable,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_ElementProp,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_Seed,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_ReturnValue,
 	};
@@ -772,7 +788,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPMazeLibrary_Statics::FuncInfo[] = {
 		{ &Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData, "CreateMazeStartData" }, // 2944273491
 		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea, "GenerateMazeArea" }, // 1913663866
-		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData, "GenerateMazeData" }, // 1197283529
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData, "GenerateMazeData" }, // 4292066112
 		{ &Z_Construct_UFunction_ULFPMazeLibrary_RemoveMazeDeadEnd, "RemoveMazeDeadEnd" }, // 676199115
 	};
 #if WITH_METADATA
@@ -809,7 +825,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPMazeLibrary, 776852041);
+	IMPLEMENT_CLASS(ULFPMazeLibrary, 1816489660);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPMazeLibrary>()
 	{
 		return ULFPMazeLibrary::StaticClass();
