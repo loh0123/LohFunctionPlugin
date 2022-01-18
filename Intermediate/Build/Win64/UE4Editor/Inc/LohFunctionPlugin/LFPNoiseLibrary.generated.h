@@ -10,6 +10,7 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct FLFPNoiseTable;
 struct FVector;
+struct FLFPNearbyVectorData;
 struct FLFPNoiseMixTable;
 struct FIntVector;
 struct FRandomStream;
@@ -17,6 +18,13 @@ struct FRandomStream;
 #error "LFPNoiseLibrary.generated.h already included, missing '#pragma once' in LFPNoiseLibrary.h"
 #endif
 #define LOHFUNCTIONPLUGIN_LFPNoiseLibrary_generated_h
+
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_34_GENERATED_BODY \
+	friend struct Z_Construct_UScriptStruct_FLFPNearbyVectorData_Statics; \
+	LOHFUNCTIONPLUGIN_API static class UScriptStruct* StaticStruct();
+
+
+template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPNearbyVectorData>();
 
 #define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_25_GENERATED_BODY \
 	friend struct Z_Construct_UScriptStruct_FLFPNoiseTable_Statics; \
@@ -32,9 +40,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPNoiseTab
 
 template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPNoiseMixTable>();
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_SPARSE_DATA
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_RPC_WRAPPERS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_SPARSE_DATA
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_RPC_WRAPPERS \
  \
+	DECLARE_FUNCTION(execGetNearbyVectorNoise); \
+	DECLARE_FUNCTION(execGetNearbySingleVectorNoise); \
 	DECLARE_FUNCTION(execMixLerpDirection); \
 	DECLARE_FUNCTION(execMixLerpVector); \
 	DECLARE_FUNCTION(execMixLerpNoise); \
@@ -47,8 +57,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPNoiseMix
 	DECLARE_FUNCTION(execCreateNoiseTable);
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_RPC_WRAPPERS_NO_PURE_DECLS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_RPC_WRAPPERS_NO_PURE_DECLS \
  \
+	DECLARE_FUNCTION(execGetNearbyVectorNoise); \
+	DECLARE_FUNCTION(execGetNearbySingleVectorNoise); \
 	DECLARE_FUNCTION(execMixLerpDirection); \
 	DECLARE_FUNCTION(execMixLerpVector); \
 	DECLARE_FUNCTION(execMixLerpNoise); \
@@ -61,7 +73,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPNoiseMix
 	DECLARE_FUNCTION(execCreateNoiseTable);
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_INCLASS_NO_PURE_DECLS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesULFPNoiseLibrary(); \
 	friend struct Z_Construct_UClass_ULFPNoiseLibrary_Statics; \
@@ -70,7 +82,7 @@ public: \
 	DECLARE_SERIALIZER(ULFPNoiseLibrary)
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_INCLASS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_INCLASS \
 private: \
 	static void StaticRegisterNativesULFPNoiseLibrary(); \
 	friend struct Z_Construct_UClass_ULFPNoiseLibrary_Statics; \
@@ -79,7 +91,7 @@ public: \
 	DECLARE_SERIALIZER(ULFPNoiseLibrary)
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_STANDARD_CONSTRUCTORS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API ULFPNoiseLibrary(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ULFPNoiseLibrary) \
@@ -92,7 +104,7 @@ private: \
 public:
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_ENHANCED_CONSTRUCTORS \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API ULFPNoiseLibrary(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
@@ -105,28 +117,28 @@ public: \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ULFPNoiseLibrary)
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_PRIVATE_PROPERTY_OFFSET
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_34_PROLOG
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_GENERATED_BODY_LEGACY \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_PRIVATE_PROPERTY_OFFSET
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_55_PROLOG
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_GENERATED_BODY_LEGACY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_PRIVATE_PROPERTY_OFFSET \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_SPARSE_DATA \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_RPC_WRAPPERS \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_INCLASS \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_STANDARD_CONSTRUCTORS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_PRIVATE_PROPERTY_OFFSET \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_SPARSE_DATA \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_RPC_WRAPPERS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_INCLASS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_STANDARD_CONSTRUCTORS \
 public: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
-#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_GENERATED_BODY \
+#define PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_PRIVATE_PROPERTY_OFFSET \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_SPARSE_DATA \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_RPC_WRAPPERS_NO_PURE_DECLS \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_INCLASS_NO_PURE_DECLS \
-	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_37_ENHANCED_CONSTRUCTORS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_PRIVATE_PROPERTY_OFFSET \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_SPARSE_DATA \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_RPC_WRAPPERS_NO_PURE_DECLS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_INCLASS_NO_PURE_DECLS \
+	PluginLab_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_58_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 

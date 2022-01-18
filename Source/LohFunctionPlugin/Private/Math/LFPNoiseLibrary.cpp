@@ -24,9 +24,9 @@ float ULFPNoiseLibrary::GetFloatNoise(const FLFPNoiseTable& NoiseTable, const FI
 		return 0.0f;
 	}
 
-	float a = NoiseTable.NoiseData[Location.X % 256];
-	float b = NoiseTable.NoiseData[(Location.Y + 64) % 256];
-	float c = NoiseTable.NoiseData[(Location.Z + 128) % 256];
+	float a = NoiseTable.NoiseData[(Location.X < 0 ? 256 - FMath::Abs(Location.X) : Location.X) % 256];
+	float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
+	float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
 	return NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256];
 }
@@ -38,9 +38,9 @@ FVector ULFPNoiseLibrary::GetVectorNoise(const FLFPNoiseTable& NoiseTable, const
 		return FVector(0, 0, 0);
 	}
 
-	float a = NoiseTable.NoiseData[Location.X % 256];
-	float b = NoiseTable.NoiseData[(Location.Y + 64) % 256];
-	float c = NoiseTable.NoiseData[(Location.Z + 128) % 256];
+	float a = NoiseTable.NoiseData[(Location.X < 0 ? 256 - FMath::Abs(Location.X) : Location.X) % 256];
+	float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
+	float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
 	return FVector(NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256], NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 16) % 256], NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 32) % 256]);
 }
@@ -52,9 +52,9 @@ FVector ULFPNoiseLibrary::GetDirectionNoise(const FLFPNoiseTable& NoiseTable, co
 		return FVector(0, 0, 0);
 	}
 
-	float a = NoiseTable.NoiseData[Location.X % 256];
-	float b = NoiseTable.NoiseData[(Location.Y + 64) % 256];
-	float c = NoiseTable.NoiseData[(Location.Z + 128) % 256];
+	float a = NoiseTable.NoiseData[(Location.X < 0 ? 256 - FMath::Abs(Location.X) : Location.X) % 256];
+	float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
+	float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
 	return UKismetMathLibrary::GetForwardVector(FRotator(NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256] * 360, NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 16) % 256] * 360, NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 32) % 256] * 360));
 }
@@ -132,4 +132,69 @@ FVector ULFPNoiseLibrary::MixLerpDirection(const FLFPNoiseTable& NoiseTable, FVe
 	}
 
 	return ReturnValue;
+}
+
+FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location)
+{
+	FLFPNearbyVectorData Data;
+
+	FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
+
+	FVector Local = Location - FVector(GridLocation);
+
+	int32 StartZ = Local.Z <= 0.5f ? -1 : 0;
+	int32 StartY = Local.Y <= 0.5f ? -1 : 0;
+	int32 StartX = Local.X <= 0.5f ? -1 : 0;
+
+	for (int32 Z = StartZ; Z <= StartZ + 1; Z++)
+	for (int32 Y = StartY; Y <= StartY + 1; Y++)
+	for (int32 X = StartX; X <= StartX + 1; X++)
+	{
+		FIntVector CurrentLocation = GridLocation + FIntVector(X, Y, Z);
+		FVector CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation);
+
+		FLFPNearbyVectorData CurrentData(
+			FVector::Dist(Location, FVector(CurrentLocation) + CurrentNoiseDirection),
+			CurrentLocation,
+			CurrentNoiseDirection
+		);
+
+		if (Data.NearbyDistance < 0 || CurrentData < Data)
+		{
+			Data = CurrentData;
+		}
+	}
+
+	return Data;
+}
+
+void ULFPNoiseLibrary::GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, TArray<FLFPNearbyVectorData>& ReturnData)
+{
+	FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
+
+	FVector Local = Location - FVector(GridLocation);
+
+	int32 StartZ = Local.Z <= 0.5f ? -1 : 0;
+	int32 StartY = Local.Y <= 0.5f ? -1 : 0;
+	int32 StartX = Local.X <= 0.5f ? -1 : 0;
+
+	ReturnData.Empty(8);
+
+	for (int32 Z = StartZ; Z <= StartZ + 1; Z++)
+	for (int32 Y = StartY; Y <= StartY + 1; Y++)
+	for (int32 X = StartX; X <= StartX + 1; X++)
+	{
+		FIntVector CurrentLocation = GridLocation + FIntVector(X, Y, Z);
+		FVector CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation);
+
+		ReturnData.Add(FLFPNearbyVectorData(
+			FVector::Dist(Location, FVector(CurrentLocation) + CurrentNoiseDirection),
+			CurrentLocation,
+			CurrentNoiseDirection
+		));
+	}
+
+	ReturnData.Sort();
+
+	return;
 }
