@@ -13,17 +13,77 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeLFPMazeLibrary() {}
 // Cross Module References
-	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeTable();
+	LOHFUNCTIONPLUGIN_API UEnum* Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType();
 	UPackage* Z_Construct_UPackage__Script_LohFunctionPlugin();
+	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeTable();
+	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FIntVector();
 	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeStartData();
 	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeData();
-	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeArea();
-	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FIntVector();
 	LOHFUNCTIONPLUGIN_API UClass* Z_Construct_UClass_ULFPMazeLibrary_NoRegister();
 	LOHFUNCTIONPLUGIN_API UClass* Z_Construct_UClass_ULFPMazeLibrary();
 	ENGINE_API UClass* Z_Construct_UClass_UBlueprintFunctionLibrary();
+	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FIntPoint();
 	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FRandomStream();
 // End Cross Module References
+	static UEnum* EMazeCellType_StaticEnum()
+	{
+		static UEnum* Singleton = nullptr;
+		if (!Singleton)
+		{
+			Singleton = GetStaticEnum(Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType, Z_Construct_UPackage__Script_LohFunctionPlugin(), TEXT("EMazeCellType"));
+		}
+		return Singleton;
+	}
+	template<> LOHFUNCTIONPLUGIN_API UEnum* StaticEnum<EMazeCellType>()
+	{
+		return EMazeCellType_StaticEnum();
+	}
+	static FCompiledInDeferEnum Z_CompiledInDeferEnum_UEnum_EMazeCellType(EMazeCellType_StaticEnum, TEXT("/Script/LohFunctionPlugin"), TEXT("EMazeCellType"), false, nullptr, nullptr);
+	uint32 Get_Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType_Hash() { return 754166857U; }
+	UEnum* Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType()
+	{
+#if WITH_HOT_RELOAD
+		UPackage* Outer = Z_Construct_UPackage__Script_LohFunctionPlugin();
+		static UEnum* ReturnEnum = FindExistingEnumIfHotReloadOrDynamic(Outer, TEXT("EMazeCellType"), 0, Get_Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType_Hash(), false);
+#else
+		static UEnum* ReturnEnum = nullptr;
+#endif // WITH_HOT_RELOAD
+		if (!ReturnEnum)
+		{
+			static const UE4CodeGen_Private::FEnumeratorParam Enumerators[] = {
+				{ "EMazeCellType::Maze_Open", (int64)EMazeCellType::Maze_Open },
+				{ "EMazeCellType::Maze_Close", (int64)EMazeCellType::Maze_Close },
+				{ "EMazeCellType::Maze_Room", (int64)EMazeCellType::Maze_Room },
+			};
+#if WITH_METADATA
+			const UE4CodeGen_Private::FMetaDataPairParam Enum_MetaDataParams[] = {
+				{ "BlueprintType", "true" },
+				{ "Maze_Close.DisplayName", "Close" },
+				{ "Maze_Close.Name", "EMazeCellType::Maze_Close" },
+				{ "Maze_Open.DisplayName", "Open" },
+				{ "Maze_Open.Name", "EMazeCellType::Maze_Open" },
+				{ "Maze_Room.DisplayName", "Room" },
+				{ "Maze_Room.Name", "EMazeCellType::Maze_Room" },
+				{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+			};
+#endif
+			static const UE4CodeGen_Private::FEnumParams EnumParams = {
+				(UObject*(*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
+				nullptr,
+				"EMazeCellType",
+				"EMazeCellType",
+				Enumerators,
+				UE_ARRAY_COUNT(Enumerators),
+				RF_Public|RF_Transient|RF_MarkAsNative,
+				EEnumFlags::None,
+				UE4CodeGen_Private::EDynamicType::NotDynamic,
+				(uint8)UEnum::ECppForm::EnumClass,
+				METADATA_PARAMS(Enum_MetaDataParams, UE_ARRAY_COUNT(Enum_MetaDataParams))
+			};
+			UE4CodeGen_Private::ConstructUEnum(ReturnEnum, EnumParams);
+		}
+		return ReturnEnum;
+	}
 class UScriptStruct* FLFPMazeTable::StaticStruct()
 {
 	static class UScriptStruct* Singleton = NULL;
@@ -52,6 +112,10 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeTable
 		static const UE4CodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
 #endif
 		static void* NewStructOps();
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_MazeSize_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeSize;
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_StartData_Inner;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_StartData_MetaData[];
@@ -67,11 +131,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeTable
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_DeadEnd_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_DeadEnd;
-		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeArea_Inner;
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_RoomSize_Inner;
 #if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_MazeArea_MetaData[];
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_RoomSize_MetaData[];
 #endif
-		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_MazeArea;
+		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_RoomSize;
 		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
 		static const UE4CodeGen_Private::FStructParams ReturnStructParams;
 	};
@@ -85,6 +149,13 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeTable
 	{
 		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FLFPMazeTable>();
 	}
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeSize_MetaData[] = {
+		{ "Category", "LFPMazeTable" },
+		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeSize = { "MazeSize", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, MazeSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeSize_MetaData)) };
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData_Inner = { "StartData", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPMazeStartData, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData_MetaData[] = {
@@ -93,39 +164,40 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeTable
 	};
 #endif
 	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData = { "StartData", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, StartData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData_MetaData)) };
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_Inner = { "MazeData", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPMazeData, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_Inner = { "MazeData", nullptr, (EPropertyFlags)0x0000000000020000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPMazeData, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_MetaData[] = {
 		{ "Category", "LFPMazeTable" },
 		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData = { "MazeData", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, MazeData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_MetaData)) };
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_Inner = { "DeadEnd", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData = { "MazeData", nullptr, (EPropertyFlags)0x0010000000020015, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, MazeData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_Inner = { "DeadEnd", nullptr, (EPropertyFlags)0x0000000000020000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_MetaData[] = {
 		{ "Category", "LFPMazeTable" },
 		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd = { "DeadEnd", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, DeadEnd), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_MetaData)) };
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea_Inner = { "MazeArea", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPMazeArea, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd = { "DeadEnd", nullptr, (EPropertyFlags)0x0010000000020015, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, DeadEnd), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize_Inner = { "RoomSize", nullptr, (EPropertyFlags)0x0000000000020000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize_MetaData[] = {
 		{ "Category", "LFPMazeTable" },
 		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea = { "MazeArea", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, MazeArea), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea_MetaData)) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize = { "RoomSize", nullptr, (EPropertyFlags)0x0010000000020015, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeTable, RoomSize), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPMazeTable_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeSize,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_StartData,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeData,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_DeadEnd,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea_Inner,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_MazeArea,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeTable_Statics::NewProp_RoomSize,
 	};
 	const UE4CodeGen_Private::FStructParams Z_Construct_UScriptStruct_FLFPMazeTable_Statics::ReturnStructParams = {
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
@@ -155,94 +227,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeTable
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeTable_Hash() { return 141946911U; }
-class UScriptStruct* FLFPMazeArea::StaticStruct()
-{
-	static class UScriptStruct* Singleton = NULL;
-	if (!Singleton)
-	{
-		extern LOHFUNCTIONPLUGIN_API uint32 Get_Z_Construct_UScriptStruct_FLFPMazeArea_Hash();
-		Singleton = GetStaticStruct(Z_Construct_UScriptStruct_FLFPMazeArea, Z_Construct_UPackage__Script_LohFunctionPlugin(), TEXT("LFPMazeArea"), sizeof(FLFPMazeArea), Get_Z_Construct_UScriptStruct_FLFPMazeArea_Hash());
-	}
-	return Singleton;
-}
-template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPMazeArea>()
-{
-	return FLFPMazeArea::StaticStruct();
-}
-static FCompiledInDeferStruct Z_CompiledInDeferStruct_UScriptStruct_FLFPMazeArea(FLFPMazeArea::StaticStruct, TEXT("/Script/LohFunctionPlugin"), TEXT("LFPMazeArea"), false, nullptr, nullptr);
-static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeArea
-{
-	FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeArea()
-	{
-		UScriptStruct::DeferCppStructOps<FLFPMazeArea>(FName(TEXT("LFPMazeArea")));
-	}
-} ScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeArea;
-	struct Z_Construct_UScriptStruct_FLFPMazeArea_Statics
-	{
-#if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
-#endif
-		static void* NewStructOps();
-		static const UE4CodeGen_Private::FIntPropertyParams NewProp_Cell_Inner;
-#if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Cell_MetaData[];
-#endif
-		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Cell;
-		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
-		static const UE4CodeGen_Private::FStructParams ReturnStructParams;
-	};
-#if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeArea_Statics::Struct_MetaDataParams[] = {
-		{ "BlueprintType", "true" },
-		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
-	};
-#endif
-	void* Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewStructOps()
-	{
-		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FLFPMazeArea>();
-	}
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell_Inner = { "Cell", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
-#if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell_MetaData[] = {
-		{ "Category", "LFPMazeArea" },
-		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
-	};
-#endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell = { "Cell", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeArea, Cell), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell_MetaData)) };
-	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPMazeArea_Statics::PropPointers[] = {
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell_Inner,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeArea_Statics::NewProp_Cell,
-	};
-	const UE4CodeGen_Private::FStructParams Z_Construct_UScriptStruct_FLFPMazeArea_Statics::ReturnStructParams = {
-		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
-		nullptr,
-		&NewStructOps,
-		"LFPMazeArea",
-		sizeof(FLFPMazeArea),
-		alignof(FLFPMazeArea),
-		Z_Construct_UScriptStruct_FLFPMazeArea_Statics::PropPointers,
-		UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeArea_Statics::PropPointers),
-		RF_Public|RF_Transient|RF_MarkAsNative,
-		EStructFlags(0x00000001),
-		METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeArea_Statics::Struct_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeArea_Statics::Struct_MetaDataParams))
-	};
-	UScriptStruct* Z_Construct_UScriptStruct_FLFPMazeArea()
-	{
-#if WITH_HOT_RELOAD
-		extern uint32 Get_Z_Construct_UScriptStruct_FLFPMazeArea_Hash();
-		UPackage* Outer = Z_Construct_UPackage__Script_LohFunctionPlugin();
-		static UScriptStruct* ReturnStruct = FindExistingStructIfHotReloadOrDynamic(Outer, TEXT("LFPMazeArea"), sizeof(FLFPMazeArea), Get_Z_Construct_UScriptStruct_FLFPMazeArea_Hash(), false);
-#else
-		static UScriptStruct* ReturnStruct = nullptr;
-#endif
-		if (!ReturnStruct)
-		{
-			UE4CodeGen_Private::ConstructUScriptStruct(ReturnStruct, Z_Construct_UScriptStruct_FLFPMazeArea_Statics::ReturnStructParams);
-		}
-		return ReturnStruct;
-	}
-	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeArea_Hash() { return 713902846U; }
+	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeTable_Hash() { return 4010512229U; }
 class UScriptStruct* FLFPMazeStartData::StaticStruct()
 {
 	static class UScriptStruct* Singleton = NULL;
@@ -280,11 +265,15 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeStart
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_OpenConnection_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_OpenConnection;
+		static const UE4CodeGen_Private::FBytePropertyParams NewProp_CellType_Underlying;
 #if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_IsBlock_MetaData[];
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_CellType_MetaData[];
 #endif
-		static void NewProp_IsBlock_SetBit(void* Obj);
-		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_IsBlock;
+		static const UE4CodeGen_Private::FEnumPropertyParams NewProp_CellType;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_CellID_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_CellID;
 		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
 		static const UE4CodeGen_Private::FStructParams ReturnStructParams;
 	};
@@ -313,22 +302,28 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeStart
 	};
 #endif
 	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_OpenConnection = { "OpenConnection", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeStartData, OpenConnection), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_OpenConnection_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_OpenConnection_MetaData)) };
+	const UE4CodeGen_Private::FBytePropertyParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Byte, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, nullptr, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock_MetaData[] = {
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType_MetaData[] = {
 		{ "Category", "LFPMazeStartData" },
 		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
 	};
 #endif
-	void Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock_SetBit(void* Obj)
-	{
-		((FLFPMazeStartData*)Obj)->IsBlock = 1;
-	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock = { "IsBlock", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(FLFPMazeStartData), &Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock_SetBit, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock_MetaData)) };
+	const UE4CodeGen_Private::FEnumPropertyParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType = { "CellType", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeStartData, CellType), Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellID_MetaData[] = {
+		{ "Category", "LFPMazeStartData" },
+		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellID = { "CellID", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeStartData, CellID), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellID_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellID_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_GraphLocation,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_OpenConnection_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_OpenConnection,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_IsBlock,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType_Underlying,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellType,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::NewProp_CellID,
 	};
 	const UE4CodeGen_Private::FStructParams Z_Construct_UScriptStruct_FLFPMazeStartData_Statics::ReturnStructParams = {
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
@@ -358,7 +353,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeStart
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeStartData_Hash() { return 3031122482U; }
+	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeStartData_Hash() { return 3353761067U; }
 class UScriptStruct* FLFPMazeData::StaticStruct()
 {
 	static class UScriptStruct* Singleton = NULL;
@@ -395,10 +390,6 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ParentIndex_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FIntPropertyParams NewProp_ParentIndex;
-#if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_AreaID_MetaData[];
-#endif
-		static const UE4CodeGen_Private::FIntPropertyParams NewProp_AreaID;
 		static const UE4CodeGen_Private::FIntPropertyParams NewProp_OpenList_Inner;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_OpenList_MetaData[];
@@ -431,13 +422,6 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	};
 #endif
 	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_ParentIndex = { "ParentIndex", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeData, ParentIndex), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_ParentIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_ParentIndex_MetaData)) };
-#if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_AreaID_MetaData[] = {
-		{ "Category", "LFPMazeData" },
-		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
-	};
-#endif
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_AreaID = { "AreaID", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPMazeData, AreaID), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_AreaID_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_AreaID_MetaData)) };
 	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_OpenList_Inner = { "OpenList", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_OpenList_MetaData[] = {
@@ -449,7 +433,6 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPMazeData_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_WalkCount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_ParentIndex,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_AreaID,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_OpenList_Inner,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPMazeData_Statics::NewProp_OpenList,
 	};
@@ -481,13 +464,35 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeData_Hash() { return 4165723562U; }
-	DEFINE_FUNCTION(ULFPMazeLibrary::execGenerateMazeArea)
+	uint32 Get_Z_Construct_UScriptStruct_FLFPMazeData_Hash() { return 3977096029U; }
+	DEFINE_FUNCTION(ULFPMazeLibrary::execGetMazeCellNeighbourByType)
 	{
 		P_GET_STRUCT_REF(FLFPMazeTable,Z_Param_Out_MazeTable);
+		P_GET_PROPERTY(FIntProperty,Z_Param_Index);
+		P_GET_ENUM(EMazeCellType,Z_Param_Type);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=ULFPMazeLibrary::GenerateMazeArea(Z_Param_Out_MazeTable);
+		*(TArray<int32>*)Z_Param__Result=ULFPMazeLibrary::GetMazeCellNeighbourByType(Z_Param_Out_MazeTable,Z_Param_Index,EMazeCellType(Z_Param_Type));
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(ULFPMazeLibrary::execSetMazeCellID)
+	{
+		P_GET_STRUCT_REF(FLFPMazeTable,Z_Param_Out_MazeTable);
+		P_GET_TARRAY(int32,Z_Param_Indexs);
+		P_GET_PROPERTY(FIntProperty,Z_Param_ID);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(bool*)Z_Param__Result=ULFPMazeLibrary::SetMazeCellID(Z_Param_Out_MazeTable,Z_Param_Indexs,Z_Param_ID);
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(ULFPMazeLibrary::execSetMazeCellType)
+	{
+		P_GET_STRUCT_REF(FLFPMazeTable,Z_Param_Out_MazeTable);
+		P_GET_TARRAY(int32,Z_Param_Indexs);
+		P_GET_ENUM(EMazeCellType,Z_Param_Type);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(bool*)Z_Param__Result=ULFPMazeLibrary::SetMazeCellType(Z_Param_Out_MazeTable,Z_Param_Indexs,EMazeCellType(Z_Param_Type));
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPMazeLibrary::execRemoveMazeDeadEnd)
@@ -504,19 +509,19 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	{
 		P_GET_STRUCT_REF(FLFPMazeTable,Z_Param_Out_MazeTable);
 		P_GET_TSET_REF(int32,Z_Param_Out_PreConnection);
+		P_GET_STRUCT(FIntPoint,Z_Param_RoomExit);
 		P_GET_STRUCT_REF(FRandomStream,Z_Param_Out_Seed);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(bool*)Z_Param__Result=ULFPMazeLibrary::GenerateMazeData(Z_Param_Out_MazeTable,Z_Param_Out_PreConnection,Z_Param_Out_Seed);
+		*(bool*)Z_Param__Result=ULFPMazeLibrary::GenerateMazeData(Z_Param_Out_MazeTable,Z_Param_Out_PreConnection,Z_Param_RoomExit,Z_Param_Out_Seed);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPMazeLibrary::execCreateMazeStartData)
 	{
 		P_GET_STRUCT(FIntVector,Z_Param_MazeSize);
-		P_GET_TSET_REF(int32,Z_Param_Out_BlockID);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FLFPMazeTable*)Z_Param__Result=ULFPMazeLibrary::CreateMazeStartData(Z_Param_MazeSize,Z_Param_Out_BlockID);
+		*(FLFPMazeTable*)Z_Param__Result=ULFPMazeLibrary::CreateMazeStartData(Z_Param_MazeSize);
 		P_NATIVE_END;
 	}
 	void ULFPMazeLibrary::StaticRegisterNativesULFPMazeLibrary()
@@ -524,9 +529,11 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		UClass* Class = ULFPMazeLibrary::StaticClass();
 		static const FNameNativePtrPair Funcs[] = {
 			{ "CreateMazeStartData", &ULFPMazeLibrary::execCreateMazeStartData },
-			{ "GenerateMazeArea", &ULFPMazeLibrary::execGenerateMazeArea },
 			{ "GenerateMazeData", &ULFPMazeLibrary::execGenerateMazeData },
+			{ "GetMazeCellNeighbourByType", &ULFPMazeLibrary::execGetMazeCellNeighbourByType },
 			{ "RemoveMazeDeadEnd", &ULFPMazeLibrary::execRemoveMazeDeadEnd },
+			{ "SetMazeCellID", &ULFPMazeLibrary::execSetMazeCellID },
+			{ "SetMazeCellType", &ULFPMazeLibrary::execSetMazeCellType },
 		};
 		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
 	}
@@ -535,18 +542,12 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		struct LFPMazeLibrary_eventCreateMazeStartData_Parms
 		{
 			FIntVector MazeSize;
-			TSet<int32> BlockID;
 			FLFPMazeTable ReturnValue;
 		};
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_MazeSize_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeSize;
-		static const UE4CodeGen_Private::FIntPropertyParams NewProp_BlockID_ElementProp;
-#if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_BlockID_MetaData[];
-#endif
-		static const UE4CodeGen_Private::FSetPropertyParams NewProp_BlockID;
 		static const UE4CodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -560,18 +561,9 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 	};
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_MazeSize = { "MazeSize", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventCreateMazeStartData_Parms, MazeSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_MazeSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_MazeSize_MetaData)) };
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID_ElementProp = { "BlockID", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
-#if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif
-	const UE4CodeGen_Private::FSetPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID = { "BlockID", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventCreateMazeStartData_Parms, BlockID), METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID_MetaData)) };
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventCreateMazeStartData_Parms, ReturnValue), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_MazeSize,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID_ElementProp,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_BlockID,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
@@ -580,7 +572,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "CreateMazeStartData", nullptr, nullptr, sizeof(LFPMazeLibrary_eventCreateMazeStartData_Parms), Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04C42401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::Function_MetaDataParams)) };
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "CreateMazeStartData", nullptr, nullptr, sizeof(LFPMazeLibrary_eventCreateMazeStartData_Parms), Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04842401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData_Statics::Function_MetaDataParams)) };
 	UFunction* Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData()
 	{
 		static UFunction* ReturnFunction = nullptr;
@@ -590,54 +582,13 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		}
 		return ReturnFunction;
 	}
-	struct Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics
-	{
-		struct LFPMazeLibrary_eventGenerateMazeArea_Parms
-		{
-			FLFPMazeTable MazeTable;
-			bool ReturnValue;
-		};
-		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeTable;
-		static void NewProp_ReturnValue_SetBit(void* Obj);
-		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
-		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
-#if WITH_METADATA
-		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
-#endif
-		static const UE4CodeGen_Private::FFunctionParams FuncParams;
-	};
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_MazeTable = { "MazeTable", nullptr, (EPropertyFlags)0x0010000008000180, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGenerateMazeArea_Parms, MazeTable), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(nullptr, 0) };
-	void Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_ReturnValue_SetBit(void* Obj)
-	{
-		((LFPMazeLibrary_eventGenerateMazeArea_Parms*)Obj)->ReturnValue = 1;
-	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPMazeLibrary_eventGenerateMazeArea_Parms), &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
-	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::PropPointers[] = {
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_MazeTable,
-		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::NewProp_ReturnValue,
-	};
-#if WITH_METADATA
-	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::Function_MetaDataParams[] = {
-		{ "Category", "LFPMathLibrary | Maze" },
-		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
-	};
-#endif
-	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "GenerateMazeArea", nullptr, nullptr, sizeof(LFPMazeLibrary_eventGenerateMazeArea_Parms), Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04442401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::Function_MetaDataParams)) };
-	UFunction* Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea()
-	{
-		static UFunction* ReturnFunction = nullptr;
-		if (!ReturnFunction)
-		{
-			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea_Statics::FuncParams);
-		}
-		return ReturnFunction;
-	}
 	struct Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics
 	{
 		struct LFPMazeLibrary_eventGenerateMazeData_Parms
 		{
 			FLFPMazeTable MazeTable;
 			TSet<int32> PreConnection;
+			FIntPoint RoomExit;
 			FRandomStream Seed;
 			bool ReturnValue;
 		};
@@ -647,6 +598,10 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_PreConnection_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FSetPropertyParams NewProp_PreConnection;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_RoomExit_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_RoomExit;
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Seed_MetaData[];
 #endif
@@ -668,6 +623,12 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 #endif
 	const UE4CodeGen_Private::FSetPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection = { "PreConnection", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGenerateMazeData_Parms, PreConnection), METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_MetaData)) };
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_RoomExit_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_RoomExit = { "RoomExit", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGenerateMazeData_Parms, RoomExit), Z_Construct_UScriptStruct_FIntPoint, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_RoomExit_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_RoomExit_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_Seed_MetaData[] = {
 		{ "NativeConst", "" },
 	};
@@ -682,6 +643,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_MazeTable,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection_ElementProp,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_PreConnection,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_RoomExit,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_Seed,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::NewProp_ReturnValue,
 	};
@@ -698,6 +660,81 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		if (!ReturnFunction)
 		{
 			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics
+	{
+		struct LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms
+		{
+			FLFPMazeTable MazeTable;
+			int32 Index;
+			EMazeCellType Type;
+			TArray<int32> ReturnValue;
+		};
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_MazeTable_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeTable;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Index_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_Index;
+		static const UE4CodeGen_Private::FBytePropertyParams NewProp_Type_Underlying;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Type_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FEnumPropertyParams NewProp_Type;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_ReturnValue_Inner;
+		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_MazeTable_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_MazeTable = { "MazeTable", nullptr, (EPropertyFlags)0x0010000008000182, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms, MazeTable), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_MazeTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_MazeTable_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Index_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Index = { "Index", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms, Index), METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Index_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Index_MetaData)) };
+	const UE4CodeGen_Private::FBytePropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Byte, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, nullptr, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FEnumPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type = { "Type", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms, Type), Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_ReturnValue_Inner = { "ReturnValue", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms, ReturnValue), EArrayPropertyFlags::None, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_MazeTable,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Index,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type_Underlying,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_Type,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_ReturnValue_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPMathLibrary | Maze" },
+		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "GetMazeCellNeighbourByType", nullptr, nullptr, sizeof(LFPMazeLibrary_eventGetMazeCellNeighbourByType_Parms), Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14442401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType_Statics::FuncParams);
 		}
 		return ReturnFunction;
 	}
@@ -767,6 +804,149 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		}
 		return ReturnFunction;
 	}
+	struct Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics
+	{
+		struct LFPMazeLibrary_eventSetMazeCellID_Parms
+		{
+			FLFPMazeTable MazeTable;
+			TArray<int32> Indexs;
+			int32 ID;
+			bool ReturnValue;
+		};
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeTable;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_Indexs_Inner;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Indexs_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Indexs;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ID_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_ID;
+		static void NewProp_ReturnValue_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_MazeTable = { "MazeTable", nullptr, (EPropertyFlags)0x0010000008000180, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellID_Parms, MazeTable), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs_Inner = { "Indexs", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs = { "Indexs", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellID_Parms, Indexs), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ID_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ID = { "ID", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellID_Parms, ID), METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ID_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ID_MetaData)) };
+	void Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((LFPMazeLibrary_eventSetMazeCellID_Parms*)Obj)->ReturnValue = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPMazeLibrary_eventSetMazeCellID_Parms), &Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_MazeTable,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_Indexs,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ID,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPMathLibrary | Maze" },
+		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "SetMazeCellID", nullptr, nullptr, sizeof(LFPMazeLibrary_eventSetMazeCellID_Parms), Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04442401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics
+	{
+		struct LFPMazeLibrary_eventSetMazeCellType_Parms
+		{
+			FLFPMazeTable MazeTable;
+			TArray<int32> Indexs;
+			EMazeCellType Type;
+			bool ReturnValue;
+		};
+		static const UE4CodeGen_Private::FStructPropertyParams NewProp_MazeTable;
+		static const UE4CodeGen_Private::FIntPropertyParams NewProp_Indexs_Inner;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Indexs_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Indexs;
+		static const UE4CodeGen_Private::FBytePropertyParams NewProp_Type_Underlying;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Type_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FEnumPropertyParams NewProp_Type;
+		static void NewProp_ReturnValue_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+		static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_MazeTable = { "MazeTable", nullptr, (EPropertyFlags)0x0010000008000180, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellType_Parms, MazeTable), Z_Construct_UScriptStruct_FLFPMazeTable, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs_Inner = { "Indexs", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs = { "Indexs", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellType_Parms, Indexs), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs_MetaData)) };
+	const UE4CodeGen_Private::FBytePropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Byte, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, nullptr, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UE4CodeGen_Private::FEnumPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type = { "Type", nullptr, (EPropertyFlags)0x0010000000000082, UE4CodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPMazeLibrary_eventSetMazeCellType_Parms, Type), Z_Construct_UEnum_LohFunctionPlugin_EMazeCellType, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type_MetaData)) };
+	void Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((LFPMazeLibrary_eventSetMazeCellType_Parms*)Obj)->ReturnValue = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPMazeLibrary_eventSetMazeCellType_Parms), &Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_MazeTable,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs_Inner,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Indexs,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type_Underlying,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_Type,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPMathLibrary | Maze" },
+		{ "Comment", "//UFUNCTION(BlueprintCallable, Category = \"LFPMathLibrary | Maze\")\n//\x09static bool GenerateMazeArea(UPARAM(Ref) FLFPMazeTable& MazeTable);\n" },
+		{ "ModuleRelativePath", "Public/Math/LFPMazeLibrary.h" },
+		{ "ToolTip", "UFUNCTION(BlueprintCallable, Category = \"LFPMathLibrary | Maze\")\n       static bool GenerateMazeArea(UPARAM(Ref) FLFPMazeTable& MazeTable);" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPMazeLibrary, nullptr, "SetMazeCellType", nullptr, nullptr, sizeof(LFPMazeLibrary_eventSetMazeCellType_Parms), Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04442401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
 	UClass* Z_Construct_UClass_ULFPMazeLibrary_NoRegister()
 	{
 		return ULFPMazeLibrary::StaticClass();
@@ -786,10 +966,12 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPMazeLibrary_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData, "CreateMazeStartData" }, // 2944273491
-		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeArea, "GenerateMazeArea" }, // 1913663866
-		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData, "GenerateMazeData" }, // 4292066112
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_CreateMazeStartData, "CreateMazeStartData" }, // 2833974586
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_GenerateMazeData, "GenerateMazeData" }, // 3429440127
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_GetMazeCellNeighbourByType, "GetMazeCellNeighbourByType" }, // 4084929738
 		{ &Z_Construct_UFunction_ULFPMazeLibrary_RemoveMazeDeadEnd, "RemoveMazeDeadEnd" }, // 676199115
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellID, "SetMazeCellID" }, // 2245063142
+		{ &Z_Construct_UFunction_ULFPMazeLibrary_SetMazeCellType, "SetMazeCellType" }, // 1285849166
 	};
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPMazeLibrary_Statics::Class_MetaDataParams[] = {
@@ -825,7 +1007,7 @@ static struct FScriptStruct_LohFunctionPlugin_StaticRegisterNativesFLFPMazeData
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPMazeLibrary, 1816489660);
+	IMPLEMENT_CLASS(ULFPMazeLibrary, 2984760373);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPMazeLibrary>()
 	{
 		return ULFPMazeLibrary::StaticClass();

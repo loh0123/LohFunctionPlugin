@@ -11,7 +11,6 @@
 #endif
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
-	LOHFUNCTIONPLUGIN_API UFunction* Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPGridUpdateEvent__DelegateSignature();
 	LOHFUNCTIONPLUGIN_API UFunction* Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPTerrainAddEvent__DelegateSignature();
 	LOHFUNCTIONPLUGIN_API UFunction* Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPTerrainRemoveEvent__DelegateSignature();
 	UPackage* Z_Construct_UPackage__Script_LohFunctionPlugin()
@@ -20,7 +19,6 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 		if (!ReturnPackage)
 		{
 			static UObject* (*const SingletonFuncArray[])() = {
-				(UObject* (*)())Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPGridUpdateEvent__DelegateSignature,
 				(UObject* (*)())Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPTerrainAddEvent__DelegateSignature,
 				(UObject* (*)())Z_Construct_UDelegateFunction_LohFunctionPlugin_LFPTerrainRemoveEvent__DelegateSignature,
 			};
@@ -29,8 +27,8 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 				SingletonFuncArray,
 				UE_ARRAY_COUNT(SingletonFuncArray),
 				PKG_CompiledIn | 0x00000000,
-				0x3F722221,
-				0xE9C7FB36,
+				0x038840C0,
+				0x25574A8A,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UE4CodeGen_Private::ConstructUPackage(ReturnPackage, PackageParams);

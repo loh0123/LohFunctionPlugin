@@ -7,6 +7,14 @@
 #include "LFPMazeLibrary.generated.h"
 
 
+UENUM(BlueprintType)
+enum class EMazeCellType : uint8
+{
+	Maze_Open	UMETA(DisplayName = "Open"),
+	Maze_Close	UMETA(DisplayName = "Close"),
+	Maze_Room	UMETA(DisplayName = "Room"),
+};
+
 USTRUCT(BlueprintType)
 struct FLFPMazeData
 {
@@ -19,9 +27,6 @@ struct FLFPMazeData
 		int32 ParentIndex = -1;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		int32 AreaID = -1;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<int32> OpenList;
 };
 
@@ -32,7 +37,7 @@ struct FLFPMazeStartData
 
 	FLFPMazeStartData() {}
 	FLFPMazeStartData(const FIntVector Loc, const TArray<int32>& Open) : GraphLocation(Loc), OpenConnection(Open) {}
-	FLFPMazeStartData(const FIntVector Loc, const bool Block) : GraphLocation(Loc), IsBlock(Block) {}
+	FLFPMazeStartData(const FIntVector Loc, const TArray<int32>& Open, EMazeCellType Type) : GraphLocation(Loc), OpenConnection(Open), CellType(Type) {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FIntVector GraphLocation = FIntVector(0);
@@ -41,16 +46,10 @@ struct FLFPMazeStartData
 		TArray<int32> OpenConnection;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool IsBlock = false;
-};
+		EMazeCellType CellType = EMazeCellType::Maze_Open;
 
-USTRUCT(BlueprintType)
-struct FLFPMazeArea
-{
-	GENERATED_USTRUCT_BODY()
-
-		UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		TArray<int32> Cell;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		int32 CellID = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -59,16 +58,19 @@ struct FLFPMazeTable
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		FIntVector MazeSize = FIntVector(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<FLFPMazeStartData> StartData;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 		TArray<FLFPMazeData> MazeData;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 		TArray<int32> DeadEnd;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		TArray<FLFPMazeArea> MazeArea;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+		TArray<FIntVector> RoomSize;
 };
 
 /**
@@ -80,14 +82,23 @@ class LOHFUNCTIONPLUGIN_API ULFPMazeLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
-		static FLFPMazeTable CreateMazeStartData(const FIntVector MazeSize, const TSet<int32>& BlockID);
+		static FLFPMazeTable CreateMazeStartData(const FIntVector MazeSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
-		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const TSet<int32>& PreConnection, const FRandomStream& Seed);
+		static bool GenerateMazeData(UPARAM(Ref) FLFPMazeTable& MazeTable, const TSet<int32>& PreConnection, const FIntPoint RoomExit, const FRandomStream& Seed);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
 		static bool RemoveMazeDeadEnd(UPARAM(Ref) FLFPMazeTable& MazeTable, const int32 Amount, const FRandomStream& Seed);
 
+	//UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
+	//	static bool GenerateMazeArea(UPARAM(Ref) FLFPMazeTable& MazeTable);
+
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
-		static bool GenerateMazeArea(UPARAM(Ref) FLFPMazeTable& MazeTable);
+		static bool SetMazeCellType(UPARAM(Ref) FLFPMazeTable& MazeTable, const TArray<int32> Indexs, const EMazeCellType Type);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Maze")
+		static bool SetMazeCellID(UPARAM(Ref) FLFPMazeTable& MazeTable, const TArray<int32> Indexs, const int32 ID);
+
+	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Maze")
+		static TArray<int32> GetMazeCellNeighbourByType(const FLFPMazeTable& MazeTable, const int32 Index, const EMazeCellType Type);
 };

@@ -2,7 +2,7 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.cpp.obj": [
-			"LFPGridSystem.cpp.obj",
+			"LFPGridArrayHelper.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginBPLibrary.cpp.obj",
 			"LFPMazeLibrary.cpp.obj",
@@ -10,7 +10,7 @@
 			"LFPTerrainSystem.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
-			"LFPGridSystem.gen.cpp.obj",
+			"LFPGridArrayHelper.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFPTerrainSystem.gen.cpp.obj",
