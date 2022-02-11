@@ -10,8 +10,8 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct FLFPMazeTable;
 enum class EMazeCellType : uint8;
-struct FRandomStream;
 struct FIntPoint;
+struct FRandomStream;
 struct FIntVector;
 #ifdef LOHFUNCTIONPLUGIN_LFPMazeLibrary_generated_h
 #error "LFPMazeLibrary.generated.h already included, missing '#pragma once' in LFPMazeLibrary.h"
@@ -45,6 +45,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPMazeData
 	DECLARE_FUNCTION(execGetMazeCellNeighbourByType); \
 	DECLARE_FUNCTION(execSetMazeCellID); \
 	DECLARE_FUNCTION(execSetMazeCellType); \
+	DECLARE_FUNCTION(execGenerateMazeArea); \
 	DECLARE_FUNCTION(execRemoveMazeDeadEnd); \
 	DECLARE_FUNCTION(execGenerateMazeData); \
 	DECLARE_FUNCTION(execCreateMazeStartData);
@@ -55,6 +56,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPMazeData
 	DECLARE_FUNCTION(execGetMazeCellNeighbourByType); \
 	DECLARE_FUNCTION(execSetMazeCellID); \
 	DECLARE_FUNCTION(execSetMazeCellType); \
+	DECLARE_FUNCTION(execGenerateMazeArea); \
 	DECLARE_FUNCTION(execRemoveMazeDeadEnd); \
 	DECLARE_FUNCTION(execGenerateMazeData); \
 	DECLARE_FUNCTION(execCreateMazeStartData);

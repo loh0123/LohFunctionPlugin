@@ -2,6 +2,7 @@
 
 
 #include "Math/LFPMazeLibrary.h"
+#include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 
 FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize)
 {
@@ -225,6 +226,79 @@ bool ULFPMazeLibrary::RemoveMazeDeadEnd(UPARAM(Ref)FLFPMazeTable& MazeTable, con
 
         if (MazeTable.DeadEnd.RemoveSingleSwap(ChooseIndex) == 1)
             i++;
+    }
+
+    return true;
+}
+
+bool ULFPMazeLibrary::GenerateMazeArea(UPARAM(Ref)FLFPMazeTable& MazeTable, const FIntPoint AreaSize, const FRandomStream& Seed)
+{
+    if (MazeTable.StartData.Num() == 0 || AreaSize.X <= 0 || AreaSize.Y <= 0) return false;
+
+    int32 AreaID = 0;
+    int32 AreaCount = Seed.RandRange(AreaSize.X, AreaSize.Y);
+
+    TArray<int32> NextVisitList;
+    NextVisitList.Reserve(MazeTable.StartData.Num());
+
+    // Setup Unvist List For Visit Check
+    TSet<int32> UnVisit;
+    {
+        TArray<int32> UnVisitArray;
+
+        UnVisitArray.Reserve(MazeTable.StartData.Num());
+
+        for (int32 i = 0; i < MazeTable.StartData.Num(); i++)
+            if (MazeTable.StartData[i].CellType == EMazeCellType::Maze_Open)
+                UnVisitArray.Add(i);
+
+        for (int32 i = 0; i < UnVisitArray.Num(); i++)
+            UnVisitArray.Swap(i, Seed.RandHelper(UnVisitArray.Num() - 1));
+
+        UnVisit.Append(UnVisitArray);
+    }
+
+    while (UnVisit.Num() > 0)
+    {
+        if (NextVisitList.Num() == 0)
+        {
+            NextVisitList.Add(*UnVisit.begin());
+            UnVisit.Remove(NextVisitList[0]);
+        }
+
+        if (MazeTable.MazeData.Num() == 0)
+        {
+            // Fill Out For Maze
+        }
+        else
+        {
+            const int32 CurrentIndex = NextVisitList.Pop(false);
+
+            // Fill Open List
+            TArray<int32> OpenIndex = MazeTable.MazeData[CurrentIndex].OpenList;
+
+            // Swap Array
+            for (int32 i = 0; i < OpenIndex.Num(); i++)
+                OpenIndex.Swap(i, Seed.RandHelper(OpenIndex.Num() - 1));
+
+            // Add To Next Visit
+            for (const int32 Item : OpenIndex)
+            {
+                if (UnVisit.Contains(Item))
+                {
+                    NextVisitList.Add(Item);
+                    UnVisit.Remove(CurrentIndex);
+                    MazeTable.StartData[Item].CellID = AreaID;
+                }
+
+                if (--AreaCount == 0)
+                {
+                    NextVisitList.Empty(MazeTable.StartData.Num());
+                    AreaID++;
+                    break;
+                }
+            }
+        }
     }
 
     return true;

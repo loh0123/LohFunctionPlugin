@@ -2,6 +2,8 @@
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPGridArrayHelper.gen.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPMazeLibrary.gen.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPNoiseLibrary.gen.cpp"
+#include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPRandomTickHelper.gen.cpp"
+#include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFProceduralRoomLibrary.gen.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPTerrainSystem.gen.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LohFunctionPlugin.init.gen.cpp"
 #include "C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LohFunctionPluginBPLibrary.gen.cpp"
