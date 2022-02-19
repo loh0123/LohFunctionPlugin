@@ -27,7 +27,7 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 				SingletonFuncArray,
 				UE_ARRAY_COUNT(SingletonFuncArray),
 				PKG_CompiledIn | 0x00000000,
-				0x5D68C568,
+				0xE5279E7C,
 				0xBBD102DA,
 				METADATA_PARAMS(nullptr, 0)
 			};

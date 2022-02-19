@@ -2,8 +2,8 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.cpp.obj": [
-			"LFPTickManager.cpp.obj",
 			"LFPGridArrayHelper.cpp.obj",
+			"LFPTickManager.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginBPLibrary.cpp.obj",
 			"LFPMazeLibrary.cpp.obj",

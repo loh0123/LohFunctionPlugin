@@ -30,12 +30,10 @@ void ULFPTickManager::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (TickActorList.Num() == 0) return;
+	if (TickActorList.Num() == 0 || CurrentCallCount != 0) return;
 
 	if (CurrentTickDelay <= 0.0f)
-	{
 		SendTick();
-	}
 	else
 		CurrentTickDelay -= DeltaTime;
 }
@@ -55,7 +53,7 @@ int32 ULFPTickManager::SendTick()
 
 void ULFPTickManager::SendTickInternal()
 {
-	for (int32 Index = 0; Index < FMath::Min(TickPerCall, TickCount); Index++)
+	for (int32 Index = 0; Index < TickPerCall; Index++)
 	{
 		// Auto Remove Nullptr
 		while (TickActorList.Num() != 0)
@@ -67,7 +65,7 @@ void ULFPTickManager::SendTickInternal()
 			{
 				TickActorList[CurrentArrayIndex]->CallFunctionByNameWithArguments(*CallFunctionName, OutputDeviceNull, nullptr, true);
 				// (Add One To Index) and (Check Is Out Of Bound)
-				if (++CurrentArrayIndex >= TickActorList.Num()) CurrentArrayIndex = 0;
+				CurrentArrayIndex = (CurrentArrayIndex + 1) % TickActorList.Num();
 				break; // Jump Back To For Loop
 			}
 

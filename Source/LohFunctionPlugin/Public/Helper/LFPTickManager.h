@@ -17,8 +17,6 @@ public:
 	// Sets default values for this component's properties
 	ULFPTickManager();
 
-
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -58,7 +56,7 @@ public:
 		int32 CurrentArrayIndex = 0;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPRandomTickHelper | Variable")
-		int32 CurrentCallCount = -1;
+		int32 CurrentCallCount = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPRandomTickHelper | Variable")
 		float TickDelay = 0.0f;

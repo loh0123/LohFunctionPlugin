@@ -2,7 +2,7 @@ C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\U
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPGridArrayHelper.gen.cpp
 C:\Unreal\UE_4.27\Engine\Source\Runtime\CoreUObject\Public\UObject/GeneratedCppIncludes.h
 C:\Unreal\UE_4.27\Engine\Source\Runtime\CoreUObject\Public\UObject/MetaData.h
-C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/LFPGridArrayHelper.h
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Helper/LFPGridArrayHelper.h
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPGridArrayHelper.generated.h
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPMazeLibrary.gen.cpp
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Math/LFPMazeLibrary.h

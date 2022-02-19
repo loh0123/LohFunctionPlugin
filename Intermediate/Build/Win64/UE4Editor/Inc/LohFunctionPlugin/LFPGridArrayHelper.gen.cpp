@@ -5,7 +5,7 @@
 ===========================================================================*/
 
 #include "UObject/GeneratedCppIncludes.h"
-#include "LohFunctionPlugin/Public/LFPGridArrayHelper.h"
+#include "LohFunctionPlugin/Public/Helper/LFPGridArrayHelper.h"
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable : 4883)
@@ -37,7 +37,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 		return ELFPGridType_StaticEnum();
 	}
 	static FCompiledInDeferEnum Z_CompiledInDeferEnum_UEnum_ELFPGridType(ELFPGridType_StaticEnum, TEXT("/Script/LohFunctionPlugin"), TEXT("ELFPGridType"), false, nullptr, nullptr);
-	uint32 Get_Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType_Hash() { return 738950003U; }
+	uint32 Get_Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType_Hash() { return 444117692U; }
 	UEnum* Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType()
 	{
 #if WITH_HOT_RELOAD
@@ -58,7 +58,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 				{ "BlueprintType", "true" },
 				{ "Hexagon.DisplayName", "Hexagon" },
 				{ "Hexagon.Name", "ELFPGridType::Hexagon" },
-				{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+				{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 				{ "Rectangular.DisplayName", "Rectangular" },
 				{ "Rectangular.Name", "ELFPGridType::Rectangular" },
 				{ "Triangle.DisplayName", "Triangle" },
@@ -279,7 +279,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "GetAreaIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventGetAreaIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x44820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex_Statics::Function_MetaDataParams)) };
@@ -354,7 +354,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "GetGridWorldLocation", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventGetGridWorldLocation_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation_Statics::Function_MetaDataParams)) };
@@ -429,7 +429,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "GetGridWorldLocationWithIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventGetGridWorldLocationWithIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex_Statics::Function_MetaDataParams)) };
@@ -492,7 +492,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "GridLocationsToIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventGridLocationsToIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x44C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex_Statics::Function_MetaDataParams)) };
@@ -537,7 +537,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "GridLocationToIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventGridLocationToIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex_Statics::Function_MetaDataParams)) };
@@ -600,7 +600,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "IndexsToGridLocation", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventIndexsToGridLocation_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x44420401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation_Statics::Function_MetaDataParams)) };
@@ -645,7 +645,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "IndexToGridLocation", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventIndexToGridLocation_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation_Statics::Function_MetaDataParams)) };
@@ -695,7 +695,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "IsLocationValid", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventIsLocationValid_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid_Statics::Function_MetaDataParams)) };
@@ -745,7 +745,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "IsWorldLocationValid", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventIsWorldLocationValid_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid_Statics::Function_MetaDataParams)) };
@@ -832,7 +832,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "RandomSectionGridIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventRandomSectionGridIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x44C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex_Statics::Function_MetaDataParams)) };
@@ -895,7 +895,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "SectionGridIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventSectionGridIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x44C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex_Statics::Function_MetaDataParams)) };
@@ -940,7 +940,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "WordlLocationToGridLocation", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventWordlLocationToGridLocation_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation_Statics::Function_MetaDataParams)) };
@@ -985,7 +985,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridArrayHelper, nullptr, "WordlLocationToIndex", nullptr, nullptr, sizeof(LFPGridArrayHelper_eventWordlLocationToIndex_Parms), Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex_Statics::Function_MetaDataParams)) };
@@ -1035,47 +1035,47 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPGridArrayHelper_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex, "GetAreaIndex" }, // 3472462951
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation, "GetGridWorldLocation" }, // 2927021256
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex, "GetGridWorldLocationWithIndex" }, // 4234257398
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex, "GridLocationsToIndex" }, // 2239969966
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex, "GridLocationToIndex" }, // 2661429419
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation, "IndexsToGridLocation" }, // 1597754219
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation, "IndexToGridLocation" }, // 3201785013
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid, "IsLocationValid" }, // 1796866098
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid, "IsWorldLocationValid" }, // 416822519
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex, "RandomSectionGridIndex" }, // 3046198752
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex, "SectionGridIndex" }, // 2412836215
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation, "WordlLocationToGridLocation" }, // 1703474531
-		{ &Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex, "WordlLocationToIndex" }, // 3083785114
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetAreaIndex, "GetAreaIndex" }, // 3889514141
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocation, "GetGridWorldLocation" }, // 203919825
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GetGridWorldLocationWithIndex, "GetGridWorldLocationWithIndex" }, // 1577980677
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationsToIndex, "GridLocationsToIndex" }, // 3188878781
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_GridLocationToIndex, "GridLocationToIndex" }, // 2653671320
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IndexsToGridLocation, "IndexsToGridLocation" }, // 2734486147
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IndexToGridLocation, "IndexToGridLocation" }, // 3922643725
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IsLocationValid, "IsLocationValid" }, // 3278211735
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_IsWorldLocationValid, "IsWorldLocationValid" }, // 3462930485
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_RandomSectionGridIndex, "RandomSectionGridIndex" }, // 405038215
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_SectionGridIndex, "SectionGridIndex" }, // 1892274178
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToGridLocation, "WordlLocationToGridLocation" }, // 2445945186
+		{ &Z_Construct_UFunction_ULFPGridArrayHelper_WordlLocationToIndex, "WordlLocationToIndex" }, // 979464315
 	};
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPGridArrayHelper_Statics::Class_MetaDataParams[] = {
 		{ "BlueprintSpawnableComponent", "" },
 		{ "ClassGroupNames", "Custom" },
 		{ "HideCategories", "Trigger PhysicsVolume" },
-		{ "IncludePath", "LFPGridArrayHelper.h" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "IncludePath", "Helper/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridArratSize_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridArratSize = { "GridArratSize", nullptr, (EPropertyFlags)0x0020080000020015, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPGridArrayHelper, GridArratSize), METADATA_PARAMS(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridArratSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridArratSize_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridSize_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridSize = { "GridSize", nullptr, (EPropertyFlags)0x0020080000000015, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPGridArrayHelper, GridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridSize_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridGap_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridGap = { "GridGap", nullptr, (EPropertyFlags)0x0020080000000015, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPGridArrayHelper, GridGap), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridGap_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridGap_MetaData)) };
@@ -1083,7 +1083,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridType_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/LFPGridArrayHelper.h" },
+		{ "ModuleRelativePath", "Public/Helper/LFPGridArrayHelper.h" },
 	};
 #endif
 	const UE4CodeGen_Private::FEnumPropertyParams Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridType = { "GridType", nullptr, (EPropertyFlags)0x0020080000000015, UE4CodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPGridArrayHelper, GridType), Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType, METADATA_PARAMS(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridType_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPGridArrayHelper_Statics::NewProp_GridType_MetaData)) };
@@ -1121,7 +1121,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridArrayHelper() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(ULFPGridArrayHelper, 1329776530);
+	IMPLEMENT_CLASS(ULFPGridArrayHelper, 2503660349);
 	template<> LOHFUNCTIONPLUGIN_API UClass* StaticClass<ULFPGridArrayHelper>()
 	{
 		return ULFPGridArrayHelper::StaticClass();

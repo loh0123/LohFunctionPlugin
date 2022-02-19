@@ -1,6 +1,6 @@
 // Copyright by Loh Zhi Kang
 
-#include "LFPGridArrayHelper.h"
+#include "Helper/LFPGridArrayHelper.h"
 
 // Sets default values for this component's properties
 ULFPGridArrayHelper::ULFPGridArrayHelper()
