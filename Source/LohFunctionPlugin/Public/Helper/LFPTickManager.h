@@ -4,17 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "LFPRandomTickHelper.generated.h"
+#include <Runtime/Core/Public/Misc/OutputDeviceNull.h>
+#include "LFPTickManager.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPRandomTickHelper : public UActorComponent
+class LOHFUNCTIONPLUGIN_API ULFPTickManager : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	ULFPRandomTickHelper();
+	ULFPTickManager();
 
 
 
@@ -27,13 +28,17 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
-		FORCEINLINE AActor* SendTick();
+		FORCEINLINE int32 SendTick();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
-		FORCEINLINE bool AddTickActor(AActor* Actor, const bool CheckDuplication);
+		FORCEINLINE bool AddTickActor(AActor* Actor, const bool IsRandom, const bool CheckDuplication = false);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
 		FORCEINLINE bool RemoveTickActor(AActor* Actor, const bool RemoveAll);
+
+private:
+
+	UFUNCTION() void SendTickInternal();
 
 public:
 
@@ -44,10 +49,16 @@ public:
 		FString CallFunctionName = "OnRandomTick";
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPRandomTickHelper | Variable")
+		int32 TickPerCall = 1;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPRandomTickHelper | Variable")
 		int32 TickCount = 1;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPRandomTickHelper | Variable")
 		int32 CurrentArrayIndex = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "LFPRandomTickHelper | Variable")
+		int32 CurrentCallCount = -1;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPRandomTickHelper | Variable")
 		float TickDelay = 0.0f;
@@ -58,5 +69,7 @@ public:
 protected:
 
 	UPROPERTY() TArray<AActor*> TickActorList;
+
+	FOutputDeviceNull OutputDeviceNull;
 
 };

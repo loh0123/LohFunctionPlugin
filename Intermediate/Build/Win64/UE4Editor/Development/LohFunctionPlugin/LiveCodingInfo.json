@@ -2,7 +2,7 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.cpp.obj": [
-			"LFPRandomTickHelper.cpp.obj",
+			"LFPTickManager.cpp.obj",
 			"LFPGridArrayHelper.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginBPLibrary.cpp.obj",
@@ -15,9 +15,9 @@
 			"LFPGridArrayHelper.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
-			"LFPRandomTickHelper.gen.cpp.obj",
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTerrainSystem.gen.cpp.obj",
+			"LFPTickManager.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginBPLibrary.gen.cpp.obj"
 		]
