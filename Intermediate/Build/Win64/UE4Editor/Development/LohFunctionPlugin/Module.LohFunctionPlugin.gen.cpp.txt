@@ -1,9 +1,9 @@
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\Definitions.LohFunctionPlugin.h
-C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPGridArrayHelper.gen.cpp
+C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPGridLibrary.gen.cpp
 C:\Unreal\UE_4.27\Engine\Source\Runtime\CoreUObject\Public\UObject/GeneratedCppIncludes.h
 C:\Unreal\UE_4.27\Engine\Source\Runtime\CoreUObject\Public\UObject/MetaData.h
-C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Helper/LFPGridArrayHelper.h
-C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPGridArrayHelper.generated.h
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Math/LFPGridLibrary.h
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPGridLibrary.generated.h
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPMazeLibrary.gen.cpp
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Math/LFPMazeLibrary.h
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPMazeLibrary.generated.h
@@ -20,6 +20,9 @@ C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/U
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Helper/LFPTickManager.h
 C:\Unreal\UE_4.27\Engine\Source\Runtime/Core/Public/Misc/OutputDeviceNull.h
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPTickManager.generated.h
+C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LFPWorldGrid.gen.cpp
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/Helper/LFPWorldGrid.h
+C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Inc\LohFunctionPlugin\LFPWorldGrid.generated.h
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LohFunctionPlugin.init.gen.cpp
 C:/Unreal/Project/PluginLab/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UE4Editor/Inc/LohFunctionPlugin/LohFunctionPluginBPLibrary.gen.cpp
 C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin/Public/LohFunctionPluginBPLibrary.h

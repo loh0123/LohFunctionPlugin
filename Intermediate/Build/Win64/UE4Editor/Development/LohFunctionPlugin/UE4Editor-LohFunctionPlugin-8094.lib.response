@@ -1,0 +1,13 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UE4Editor-LohFunctionPlugin-8094.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"C:\Unreal\Project\PluginLab\Intermediate\Build\Win64\PluginLabEditor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.obj"
+"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\Module.LohFunctionPlugin.cpp.obj"
+"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\Module.LohFunctionPlugin.gen.cpp.obj"
+"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\Default.rc2.res"
+/OUT:"C:\Unreal\Project\PluginLab\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UE4Editor\Development\LohFunctionPlugin\UE4Editor-LohFunctionPlugin-8094.lib"
