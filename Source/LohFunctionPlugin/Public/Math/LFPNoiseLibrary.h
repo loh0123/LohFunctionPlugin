@@ -12,10 +12,10 @@ struct FLFPNoiseMixTable
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseMixTable")
 		FVector Multiply = FVector(1.0f);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseMixTable")
 		float MixValue = 1.0f;
 };
 
@@ -24,7 +24,7 @@ struct FLFPNoiseTable
 {
 	GENERATED_USTRUCT_BODY()
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseTable")
 		TArray<float> NoiseData;
 };
 
@@ -36,13 +36,13 @@ struct FLFPNearbyVectorData
 	FLFPNearbyVectorData() {}
 	FLFPNearbyVectorData(const float Dis, const FIntVector Vec, const FVector Point) : NearbyDistance(Dis), NearbyVector(Vec), NearbyPoint(Point) {}
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
 		float NearbyDistance = -1.0f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
 		FIntVector NearbyVector = FIntVector(-1);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
 		FVector NearbyPoint;
 
 	FORCEINLINE bool operator<(const FLFPNearbyVectorData& Other) const { return NearbyDistance < Other.NearbyDistance; }

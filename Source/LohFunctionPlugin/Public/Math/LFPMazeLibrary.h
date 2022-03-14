@@ -20,13 +20,13 @@ struct FLFPMazeData
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeData")
 		int32 WalkCount = 0;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeData")
 		int32 ParentIndex = -1;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeData")
 		TArray<int32> OpenList;
 };
 
@@ -39,16 +39,16 @@ struct FLFPMazeStartData
 	FLFPMazeStartData(const FIntVector Loc, const TArray<int32>& Open) : GraphLocation(Loc), OpenConnection(Open) {}
 	FLFPMazeStartData(const FIntVector Loc, const TArray<int32>& Open, EMazeCellType Type) : GraphLocation(Loc), OpenConnection(Open), CellType(Type) {}
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeStartData")
 		FIntVector GraphLocation = FIntVector(0);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeStartData")
 		TArray<int32> OpenConnection;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeStartData")
 		EMazeCellType CellType = EMazeCellType::Maze_Open;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeStartData")
 		int32 CellID = 0;
 };
 
@@ -57,19 +57,19 @@ struct FLFPMazeTable
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeTable")
 		FIntVector MazeSize = FIntVector(0);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPMazeTable")
 		TArray<FLFPMazeStartData> StartData;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPMazeTable")
 		TArray<FLFPMazeData> MazeData;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPMazeTable")
 		TArray<int32> DeadEnd;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPMazeTable")
 		TArray<FIntVector> RoomSize;
 };
 

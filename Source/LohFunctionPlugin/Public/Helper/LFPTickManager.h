@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameFramework/Actor.h"
 #include <Runtime/Core/Public/Misc/OutputDeviceNull.h>
 #include "LFPTickManager.generated.h"
 
