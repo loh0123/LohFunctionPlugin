@@ -26,6 +26,10 @@ public class LohFunctionPlugin : ModuleRules
 			new string[]
 			{
 				"Core",
+				"GeometryCore",
+				"GeometryFramework",
+				"DynamicMesh",
+				"GeometryScriptingCore",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
