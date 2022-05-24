@@ -1,0 +1,31 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.LohFunctionPlugin.cpp.obj": [
+			"LFPTickManager.cpp.obj",
+			"LFPWorldGrid.cpp.obj",
+			"LohFunctionPlugin.cpp.obj",
+			"LohFunctionPluginBPLibrary.cpp.obj",
+			"LFPGridLibrary.cpp.obj",
+			"LFPMazeLibrary.cpp.obj",
+			"LFPNoiseLibrary.cpp.obj",
+			"LFProceduralRoomLibrary.cpp.obj",
+			"BaseVoxelMesh.cpp.obj",
+			"DynamicHexaVoxel.cpp.obj",
+			"HexagonVoxelMesh.cpp.obj"
+		],
+		"Module.LohFunctionPlugin.gen.cpp.obj": [
+			"BaseVoxelMesh.gen.cpp.obj",
+			"DynamicHexaVoxel.gen.cpp.obj",
+			"HexagonVoxelMesh.gen.cpp.obj",
+			"LFPGridLibrary.gen.cpp.obj",
+			"LFPMazeLibrary.gen.cpp.obj",
+			"LFPNoiseLibrary.gen.cpp.obj",
+			"LFProceduralRoomLibrary.gen.cpp.obj",
+			"LFPTickManager.gen.cpp.obj",
+			"LFPWorldGrid.gen.cpp.obj",
+			"LohFunctionPlugin.init.gen.cpp.obj",
+			"LohFunctionPluginBPLibrary.gen.cpp.obj"
+		]
+	}
+}

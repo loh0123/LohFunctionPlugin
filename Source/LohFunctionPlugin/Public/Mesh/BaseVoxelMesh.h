@@ -18,6 +18,8 @@ struct FLFPVoxelTriangleUpdateData
 
 	UPROPERTY() TArray<FIntVector> NewTriangleList;
 
+	UPROPERTY() TArray<int32> NewTriangleGroupList;
+
 	UPROPERTY() TArray<FVector2f> NewUVList;
 };
 
@@ -30,7 +32,7 @@ struct FLFPVoxelGridData
 		FName BlockName = FName("Air");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridData")
-		TArray<FVector2D> UVData;
+		TArray<FVector2D> CustomData = {};
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridData")
 		int32 MaterialID = 0;
@@ -43,9 +45,6 @@ struct FLFPVoxelTriangleData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTriangleData")
 		TArray<int32> MeshTriangleIndex = {};
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTriangleData")
-		bool NeedUpdate = true;
 };
 
 USTRUCT(BlueprintType)
@@ -67,17 +66,18 @@ struct FLFPVoxelMeshData
 
 
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		bool TrianglesNeedUpdate = true;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		FIntVector VertexSize = FIntVector(-1);
+		FIntVector VertexSize = FIntVector(INDEX_NONE);
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		int32 MaxIndex = -1;
+		int32 MaxIndex = INDEX_NONE;
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
 		TArray<FLFPVoxelTriangleData> TriangleDataList = {};
+
+	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
+		TSet<int32> TriangleUpdateList = {};
 };
 
 /**
@@ -93,11 +93,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function")
 		void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData);
 
-	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function")
-		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData GridData, const bool bUpdateMesh = true);
+		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData GridData, const bool bUpdateMesh = true) { UE_LOG(BaseVoxelMesh, Warning, TEXT("SetVoxelGridData Is Running On Base")); }   // Override This
 
-	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function")
-		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocation, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true);
+		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocation, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) { UE_LOG(BaseVoxelMesh, Warning, TEXT("SetVoxelGridDataList Is Running On Base")); }   // Override This
 
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function") // (Virtual Function Is Costly To Call) (This Is The Bridge To Other Class Function)
 		virtual void UpdateMesh() { UE_LOG(BaseVoxelMesh, Warning, TEXT("UpdateMesh Is Running On Base")); }  // Override This
@@ -111,7 +109,7 @@ protected:
 		void UpdateTriangles() { UE_LOG(BaseVoxelMesh, Warning, TEXT("UpdateTriangles Is Running On Base")); }  // Override This
 
 	UFUNCTION()
-		FORCEINLINE void MarkTrianglesDataForUpdate(const int32 GridIndex) { UE_LOG(BaseVoxelMesh, Warning, TEXT("MarkTrianglesDataForUpdate Is Running On Base")); }  // Override This
+		FORCEINLINE void MarkTrianglesDataForUpdate(const int32 GridIndex);
 
 	UFUNCTION()
 		FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<int32>& NeighbourIndexList) { UE_LOG(BaseVoxelMesh, Warning, TEXT("FindBlockNeighbour Is Running On Base")); }  // Override This

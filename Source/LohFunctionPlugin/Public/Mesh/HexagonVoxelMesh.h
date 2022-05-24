@@ -16,7 +16,13 @@ class LOHFUNCTIONPLUGIN_API UHexagonVoxelMesh : public UBaseVoxelMesh
 	
 public:
 
-	void UpdateMesh() override { if (MeshData.VertexSize.GetMax() == 0) UpdateVertices(); if (MeshData.TrianglesNeedUpdate) UpdateTriangles(); }
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+	void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData GridData, const bool bUpdateMesh = true);
+
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+	void SetVoxelGridDataList(const TArray<FIntVector>& GridLocation, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true);
+
+	void UpdateMesh() override { if (MeshData.VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  UpdateTriangles(); }
 
 protected:
 
@@ -24,11 +30,9 @@ protected:
 
 	void UpdateTriangles();
 
-	FORCEINLINE void AddHexagonWall(const TArray<int32>& VertexIndexList, TArray<FIntVector>& TrianglesList, TArray<FVector2f>& UVList, const int32 ID);
+	FORCEINLINE void AddHexagonWall(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, int32& GroupID, const int32 ID);
 
-	FORCEINLINE void AddHexagonRoof(const TArray<int32>& VertexIndexList, TArray<FIntVector>& TrianglesList, TArray<FVector2f>& UVList, const int32 ID);
-
-	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 GridIndex);
+	FORCEINLINE void AddHexagonRoof(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, int32& GroupID, const int32 ID);
 
 	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<int32>& NeighbourIndexList);
 
