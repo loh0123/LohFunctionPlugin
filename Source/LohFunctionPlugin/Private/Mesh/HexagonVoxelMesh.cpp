@@ -224,7 +224,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 				TangentOptions);
 			Tangents.CopyToOverlays(EditMesh);
 	
-		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+		}, EDynamicMeshChangeType::MeshChange, EDynamicMeshAttributeChangeFlags::Unknown, false);
 	}
 }
 
