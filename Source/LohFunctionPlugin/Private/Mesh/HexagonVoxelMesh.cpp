@@ -69,11 +69,16 @@ void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocat
 		MarkIndexList.Append(NeighbourIndexList);
 	}
 
+	MarkIndexList.Remove(INDEX_NONE);
+
 	// Mark All Index In MarkList To Be Clean Up
 	for (int32 MarkIndex : MarkIndexList)
 	{
 		MarkTrianglesDataForUpdate(MarkIndex);
 	}
+
+	// Check If Update Mesh Is Needed
+	if (bUpdateMesh) UpdateMesh();
 
 	return;
 }
@@ -149,11 +154,11 @@ void UHexagonVoxelMesh::UpdateTriangles()
 		for (int32 LoopIndex = 0; LoopIndex < 6; LoopIndex++)
 		{
 			if (LocalNeighbourList[LoopIndex] == INDEX_NONE || IsBlockFaceVisible(GridIndex, LocalNeighbourList[LoopIndex]))
-				AddHexagonWall(LocalVerticesIndex, UpdateDataList.Last(0), GroupID, LoopIndex);
+				AddHexagonWall(LocalVerticesIndex, UpdateDataList.Last(0), LoopIndex);
 		}
 
-		if (LocalNeighbourList[6] == INDEX_NONE || IsBlockFaceVisible(GridIndex, LocalNeighbourList[6])) AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0), GroupID, 0);
-		if (LocalNeighbourList[7] == INDEX_NONE || IsBlockFaceVisible(GridIndex, LocalNeighbourList[7])) AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0), GroupID, 1);
+		if (LocalNeighbourList[6] == INDEX_NONE || IsBlockFaceVisible(GridIndex, LocalNeighbourList[6])) AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0),  0);
+		if (LocalNeighbourList[7] == INDEX_NONE || IsBlockFaceVisible(GridIndex, LocalNeighbourList[7])) AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0),  1);
 	}
 
 	MeshData.TriangleUpdateList.Empty(MeshData.MaxIndex);
@@ -163,69 +168,67 @@ void UHexagonVoxelMesh::UpdateTriangles()
 		EditMesh([&](FDynamicMesh3& EditMesh)
 		{
 			EditMesh.Attributes()->SetNumUVLayers(8);
-
+	
 			TArray<FDynamicMeshUVOverlay*> UVOverlayList;
-
+	
 			UVOverlayList.SetNum(8);
 
+			for (int32 UVLayerID = 0; UVLayerID < 8; UVLayerID++)
+			{
+				UVOverlayList[UVLayerID] = EditMesh.Attributes()->GetUVLayer(UVLayerID);
+			}
+	
 			int32 GroupID = 0;
-
+	
 			for (auto& UpdateData : UpdateDataList)
 			{
 				MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Reserve(UpdateData.NewTriangleList.Num());
-
+	
 				for (int32 TriangleID = 0; TriangleID < UpdateData.NewTriangleList.Num(); TriangleID++)
 				{
-					MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(EditMesh.AppendTriangle(UpdateData.NewTriangleList[TriangleID], UpdateData.NewTriangleGroupList[TriangleID]));
-				}
+					const int32 TriIndex = EditMesh.AppendTriangle(UpdateData.NewTriangleList[TriangleID], UpdateData.NewTriangleGroupList[TriangleID]);
 
-				for (int32 UVLayerID = 0; UVLayerID < 8; UVLayerID++)
-				{
-					UVOverlayList[UVLayerID] = EditMesh.Attributes()->GetUVLayer(UVLayerID);
-				}
+					MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(TriIndex);
 
-				for (int32 TriIndex = 0; TriIndex < MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Num(); TriIndex++)
-				{
-					const int32 UVIndex = TriIndex * 3;
-					const int32 TriangleID = MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex[TriIndex];
+					const int32 UVIndex = TriangleID * 3;
 
 					int32 Elem0 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex]);
 					int32 Elem1 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 1]);
 					int32 Elem2 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 2]);
-					UVOverlayList[0]->SetTriangle(TriangleID, FIndex3i(Elem0, Elem1, Elem2), true);
+					UVOverlayList[0]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
 
 					for (int32 CustomDataUV = 1; CustomDataUV < FMath::Min(MeshData.GridData[UpdateData.GridIndex].CustomData.Num() + 1,8); CustomDataUV++)
 					{
 						Elem0 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(MeshData.GridData[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
 						Elem1 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(MeshData.GridData[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
 						Elem2 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(MeshData.GridData[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
-						UVOverlayList[CustomDataUV]->SetTriangle(TriangleID, FIndex3i(Elem0, Elem1, Elem2), true);
+						UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
 					}
 				}
-
-				FMeshNormals::InitializeMeshToPerTriangleNormals(&EditMesh);
-
-				if (EditMesh.Attributes()->HasTangentSpace() == false)
-				{
-					EditMesh.Attributes()->EnableTangents();
-				}
-
-				FComputeTangentsOptions TangentOptions;
-				TangentOptions.bAveraged = true;
-
-				FMeshTangentsd Tangents(&EditMesh);
-				Tangents.ComputeTriVertexTangents(
-					EditMesh.Attributes()->PrimaryNormals(),
-					EditMesh.Attributes()->GetUVLayer(0),
-					TangentOptions);
-				Tangents.CopyToOverlays(EditMesh);
 			}
 
+			FMeshNormals::InitializeMeshToPerTriangleNormals(&EditMesh);
+
+			if (EditMesh.Attributes()->HasTangentSpace() == false)
+			{
+				EditMesh.Attributes()->EnableTangents();
+			}
+			
+			FComputeTangentsOptions TangentOptions;
+			TangentOptions.bAveraged = false;
+			
+			FMeshTangentsd Tangents(&EditMesh);
+			Tangents.ComputeTriVertexTangents(
+				EditMesh.Attributes()->PrimaryNormals(),
+				EditMesh.Attributes()->GetUVLayer(0),
+				TangentOptions);
+			Tangents.CopyToOverlays(EditMesh);
+	
 		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
 	}
 }
 
-void UHexagonVoxelMesh::AddHexagonWall(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, int32& GroupID, const int32 ID)
+void UHexagonVoxelMesh::AddHexagonWall(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, const int32 ID)
 {
 	check(ID >= 0 && ID <= 5); // Terminate Unreal If WallID Is Invalid
 
@@ -252,16 +255,14 @@ void UHexagonVoxelMesh::AddHexagonWall(const TArray<int32>& VertexIndexList, FLF
 	});
 
 	UpdateData.NewTriangleGroupList.Append({
-		GroupID,
-		GroupID,
+		ID + 2,
+		ID + 2,
 	});
-
-	GroupID++;
 
 	return;
 }
 
-void UHexagonVoxelMesh::AddHexagonRoof(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, int32& GroupID, const int32 ID)
+void UHexagonVoxelMesh::AddHexagonRoof(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, const int32 ID)
 {
 	if (ID == 0)
 	{
@@ -319,13 +320,11 @@ void UHexagonVoxelMesh::AddHexagonRoof(const TArray<int32>& VertexIndexList, FLF
 	}
 
 	UpdateData.NewTriangleGroupList.Append({
-		GroupID,
-		GroupID,
-		GroupID,
-		GroupID,
+		ID,
+		ID,
+		ID,
+		ID,
 	});
-
-	GroupID++;
 
 	return;
 }

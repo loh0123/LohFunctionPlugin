@@ -26,7 +26,8 @@ void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize
 
 	MeshData.TriangleUpdateList.Reserve(MeshData.MaxIndex);
 
-	for (int32 TriIndex = 0; TriIndex < MeshData.MaxIndex; TriIndex++)
+
+	for (int32 TriIndex = 0; TriIndex < FMath::Min(MeshData.MaxIndex, GridData.Num()); TriIndex++)
 	{
 		MeshData.TriangleUpdateList.Add(TriIndex);
 	}
@@ -41,14 +42,14 @@ void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const int32 GridIndex)
 {
 	check(GridIndex < MeshData.MaxIndex&& GridIndex >= 0);
 
-	EditMesh([&](FDynamicMesh3& EditMesh)
+	if (MeshData.TriangleDataList[GridIndex].MeshTriangleIndex.Num() > 0) EditMesh([&](FDynamicMesh3& EditMesh)
+	{
+		for (int32 TriangleIndex : MeshData.TriangleDataList[GridIndex].MeshTriangleIndex)
 		{
-			for (int32 TriangleIndex : MeshData.TriangleDataList[GridIndex].MeshTriangleIndex)
-			{
-				EditMesh.RemoveTriangle(TriangleIndex, false);
-			}
+			EditMesh.RemoveTriangle(TriangleIndex, false);
+		}
 
-		}, EDynamicMeshChangeType::DeformationEdit, EDynamicMeshAttributeChangeFlags::MeshTopology, false);
+	}, EDynamicMeshChangeType::DeformationEdit, EDynamicMeshAttributeChangeFlags::MeshTopology, false);
 
 	MeshData.TriangleDataList[GridIndex] = FLFPVoxelTriangleData();
 
