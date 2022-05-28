@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "UDynamicMesh.h"
 #include "GeometryScriptingCore/Public/GeometryScript/GeometryScriptTypes.h"
+#include "Components/DynamicMeshComponent.h"
 #include "BaseVoxelMesh.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(BaseVoxelMesh, Warning, All);
+
+class UBaseVoxelMesh;
 
 USTRUCT()
 struct FLFPVoxelTriangleUpdateData
@@ -77,7 +80,7 @@ struct FLFPVoxelMeshData
 		TArray<FLFPVoxelTriangleData> TriangleDataList = {};
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		TSet<int32> TriangleUpdateList = {};
+		TSet<int32> DataUpdateList = {};
 };
 
 /**
@@ -90,41 +93,45 @@ class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function")
-		void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData);
+	virtual void SetupPool(UBaseVoxelMesh* VoxelPool) {};
 
-		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData GridData, const bool bUpdateMesh = true) { UE_LOG(BaseVoxelMesh, Warning, TEXT("SetVoxelGridData Is Running On Base")); }   // Override This
+	virtual void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData);
 
-		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocation, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) { UE_LOG(BaseVoxelMesh, Warning, TEXT("SetVoxelGridDataList Is Running On Base")); }   // Override This
+	virtual void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh);
 
-	UFUNCTION(BlueprintCallable, Category = "BaseVoxelMesh | Function") // (Virtual Function Is Costly To Call) (This Is The Bridge To Other Class Function)
-		virtual void UpdateMesh() { UE_LOG(BaseVoxelMesh, Warning, TEXT("UpdateMesh Is Running On Base")); }  // Override This
+	virtual void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridDataList, const bool bUpdateMesh);
 
-protected:
-
-	UFUNCTION()
-		void UpdateVertices() { UE_LOG(BaseVoxelMesh, Warning, TEXT("UpdateVertices Is Running On Base")); }  // Override This
-
-	UFUNCTION()
-		void UpdateTriangles() { UE_LOG(BaseVoxelMesh, Warning, TEXT("UpdateTriangles Is Running On Base")); }  // Override This
-
-	UFUNCTION()
-		FORCEINLINE void MarkTrianglesDataForUpdate(const int32 GridIndex);
-
-	UFUNCTION()
-		FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<int32>& NeighbourIndexList) { UE_LOG(BaseVoxelMesh, Warning, TEXT("FindBlockNeighbour Is Running On Base")); }  // Override This
-
-	UFUNCTION()
-		FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList) { UE_LOG(BaseVoxelMesh, Warning, TEXT("FindBlockVertices Is Running On Base")); }  // Override This
-
-	UFUNCTION()
-		FORCEINLINE bool IsBlockFaceVisible(const int32 FromGridIndex, const int32 ToGridIndex) const { UE_LOG(BaseVoxelMesh, Warning, TEXT("IsBlockFaceVisible Is Running On Base")); return false; }  // Override This
-
-	UFUNCTION()
-		FORCEINLINE bool IsBlockNeedRender(const int32 GridIndex) const { UE_LOG(BaseVoxelMesh, Warning, TEXT("IsBlockNeedRender Is Running On Base")); return false; }  // Override This
+	virtual void UpdateMesh() { unimplemented(); }  // Override This
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FLFPVoxelMeshData MeshData;
-	
+	FORCEINLINE FLFPVoxelMeshData& GetVoxelMeshData() { return ExternalVoxelData ? *ExternalVoxelData : LocalVoxelData; }
+
+	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const { return ExternalVoxelData ? *ExternalVoxelData : LocalVoxelData; }
+
+
+
+	FORCEINLINE void UpdateVertices() { unimplemented(); }  // Override This
+
+	FORCEINLINE void UpdateTriangles();
+
+	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector& GridLocation, FLFPVoxelMeshData& MeshData);
+
+	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& GridLocationList);
+
+	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<FIntVector>& NeighbourLocationList) { unimplemented(); }  // Override This
+
+	FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList) { unimplemented(); }  // Override This
+
+	FORCEINLINE bool IsBlockVisible(const int32 GridIndex) const;
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FLFPVoxelMeshData LocalVoxelData;
+
+	FLFPVoxelMeshData* ExternalVoxelData;
+
+	TFunction<bool(const FIntVector)> IsOutBoundBlockVisible = nullptr;
+
+	FIntVector GlobalStartLocation = FIntVector::NoneValue;
 };

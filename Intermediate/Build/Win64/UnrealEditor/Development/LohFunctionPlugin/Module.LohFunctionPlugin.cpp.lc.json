@@ -95,8 +95,6 @@
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\dynamicmesh\\meshtangents.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\geometryframework\\dynamicmeshcomponent.generated.h",
             "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\basevoxelmesh.generated.h",
-            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\public\\mesh\\voxelpoolbase.h",
-            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelpoolbase.generated.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\interactivetoolsframework\\public\\targetinterfaces\\materialprovider.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\interactivetoolsframework\\materialprovider.generated.h",
             "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\private\\mesh\\hexagonvoxelmesh.cpp",
@@ -110,7 +108,9 @@
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\linetypes.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\plugins\\runtime\\geometryprocessing\\source\\dynamicmesh\\public\\operations\\meshbevel.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\util\\progresscancel.h",
-            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\private\\mesh\\voxelpoolbase.cpp"
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\private\\mesh\\voxelpoolbase.cpp",
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\public\\mesh\\voxelpoolbase.h",
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelpoolbase.generated.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

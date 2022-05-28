@@ -18,14 +18,22 @@ struct FLFPVoxelGridData;
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_SPARSE_DATA
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS \
  \
+	DECLARE_FUNCTION(execUpdateMesh); \
+	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
+	DECLARE_FUNCTION(execSetAllVoxelGridData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
-	DECLARE_FUNCTION(execSetVoxelGridData);
+	DECLARE_FUNCTION(execSetVoxelGridData); \
+	DECLARE_FUNCTION(execSetupMesh);
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS_NO_PURE_DECLS \
  \
+	DECLARE_FUNCTION(execUpdateMesh); \
+	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
+	DECLARE_FUNCTION(execSetAllVoxelGridData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
-	DECLARE_FUNCTION(execSetVoxelGridData);
+	DECLARE_FUNCTION(execSetVoxelGridData); \
+	DECLARE_FUNCTION(execSetupMesh);
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_INCLASS_NO_PURE_DECLS \

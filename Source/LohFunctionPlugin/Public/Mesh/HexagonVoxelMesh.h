@@ -17,12 +17,22 @@ class LOHFUNCTIONPLUGIN_API UHexagonVoxelMesh : public UBaseVoxelMesh
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-	void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData GridData, const bool bUpdateMesh = true);
+		 void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-	void SetVoxelGridDataList(const TArray<FIntVector>& GridLocation, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true);
+		 void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;
 
-	void UpdateMesh() override { if (MeshData.VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  UpdateTriangles(); }
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+		 void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) override;
+
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+		 void SetAllVoxelGridData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+		 void SetVoxelGridAreaData(const int32 OriginGridIndex, const FIntVector Range, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+		 void UpdateMesh() override { if (GetVoxelMeshData().VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  UpdateTriangles(); }
 
 protected:
 
@@ -34,12 +44,8 @@ protected:
 
 	FORCEINLINE void AddHexagonRoof(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, const int32 ID);
 
-	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<int32>& NeighbourIndexList);
+	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<FIntVector>& NeighbourLocationList);
 
 	FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList);
-
-	FORCEINLINE bool IsBlockFaceVisible(const int32 FromGridIndex, const int32 ToGridIndex) const;
-
-	FORCEINLINE bool IsBlockNeedRender(const int32 GridIndex) const;
 
 };

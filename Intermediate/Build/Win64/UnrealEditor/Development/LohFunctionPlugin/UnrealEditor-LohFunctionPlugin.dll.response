@@ -46,6 +46,7 @@
 "..\Intermediate\Build\Win64\UnrealEditor\Development\GeometryFramework\UnrealEditor-GeometryFramework.lib"
 "..\Plugins\Runtime\GeometryProcessing\Intermediate\Build\Win64\UnrealEditor\Development\DynamicMesh\UnrealEditor-DynamicMesh.lib"
 "..\Plugins\Experimental\GeometryScripting\Intermediate\Build\Win64\UnrealEditor\Development\GeometryScriptingCore\UnrealEditor-GeometryScriptingCore.lib"
+"..\Intermediate\Build\Win64\UnrealEditor\Development\InteractiveToolsFramework\UnrealEditor-InteractiveToolsFramework.lib"
 "delayimp.lib"
 "wininet.lib"
 "rpcrt4.lib"
