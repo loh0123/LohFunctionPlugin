@@ -68,11 +68,11 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	{
 		P_GET_STRUCT(FVector,Z_Param_MeshSize);
 		P_GET_STRUCT(FIntVector,Z_Param_GridSize);
-		P_GET_TSET_REF(FName,Z_Param_Out_RenderNameList);
+		P_GET_TSET_REF(FName,Z_Param_Out_IgnoreNameList);
 		P_GET_TARRAY_REF(FLFPVoxelGridData,Z_Param_Out_GridData);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->SetupMesh(Z_Param_MeshSize,Z_Param_GridSize,Z_Param_Out_RenderNameList,Z_Param_Out_GridData);
+		P_THIS->SetupMesh(Z_Param_MeshSize,Z_Param_GridSize,Z_Param_Out_IgnoreNameList,Z_Param_Out_GridData);
 		P_NATIVE_END;
 	}
 	void UHexagonVoxelMesh::StaticRegisterNativesUHexagonVoxelMesh()
@@ -153,7 +153,7 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 		{
 			FVector MeshSize;
 			FIntVector GridSize;
-			TSet<FName> RenderNameList;
+			TSet<FName> IgnoreNameList;
 			TArray<FLFPVoxelGridData> GridData;
 		};
 #if WITH_METADATA
@@ -164,11 +164,11 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_GridSize_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_GridSize;
-		static const UECodeGen_Private::FNamePropertyParams NewProp_RenderNameList_ElementProp;
+		static const UECodeGen_Private::FNamePropertyParams NewProp_IgnoreNameList_ElementProp;
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_RenderNameList_MetaData[];
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_IgnoreNameList_MetaData[];
 #endif
-		static const UECodeGen_Private::FSetPropertyParams NewProp_RenderNameList;
+		static const UECodeGen_Private::FSetPropertyParams NewProp_IgnoreNameList;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_GridData_Inner;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_GridData_MetaData[];
@@ -192,13 +192,13 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridSize = { "GridSize", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(HexagonVoxelMesh_eventSetupMesh_Parms, GridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridSize_MetaData)) };
-	const UECodeGen_Private::FNamePropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList_ElementProp = { "RenderNameList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Name, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+	const UECodeGen_Private::FNamePropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList_ElementProp = { "IgnoreNameList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Name, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UECodeGen_Private::FSetPropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList = { "RenderNameList", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(HexagonVoxelMesh_eventSetupMesh_Parms, RenderNameList), METADATA_PARAMS(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList_MetaData)) };
+	const UECodeGen_Private::FSetPropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList = { "IgnoreNameList", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(HexagonVoxelMesh_eventSetupMesh_Parms, IgnoreNameList), METADATA_PARAMS(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridData_Inner = { "GridData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelGridData, METADATA_PARAMS(nullptr, 0) }; // 4094411625
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridData_MetaData[] = {
@@ -209,8 +209,8 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_MeshSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridSize,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList_ElementProp,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_RenderNameList,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList_ElementProp,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_IgnoreNameList,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridData_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics::NewProp_GridData,
 	};
@@ -505,7 +505,7 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_UHexagonVoxelMesh_Statics::FuncInfo[] = {
 		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetAllVoxelGridData, "SetAllVoxelGridData" }, // 3692341469
-		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh, "SetupMesh" }, // 2102006934
+		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh, "SetupMesh" }, // 1420974956
 		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetVoxelGridAreaData, "SetVoxelGridAreaData" }, // 965634634
 		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetVoxelGridData, "SetVoxelGridData" }, // 1207931074
 		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetVoxelGridDataList, "SetVoxelGridDataList" }, // 3169477689
@@ -554,9 +554,9 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UHexagonVoxelMesh, UHexagonVoxelMesh::StaticClass, TEXT("UHexagonVoxelMesh"), &Z_Registration_Info_UClass_UHexagonVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UHexagonVoxelMesh), 2535732780U) },
+		{ Z_Construct_UClass_UHexagonVoxelMesh, UHexagonVoxelMesh::StaticClass, TEXT("UHexagonVoxelMesh"), &Z_Registration_Info_UClass_UHexagonVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UHexagonVoxelMesh), 1573024757U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_1125168532(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_1005195515(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

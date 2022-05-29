@@ -31,6 +31,14 @@ public class LohFunctionPlugin : ModuleRules
 				"DynamicMesh",
 				"GeometryScriptingCore",
 				"InteractiveToolsFramework",
+
+				"PhysicsCore",
+				"MeshDescription",
+				"StaticMeshDescription",
+				"GeometryAlgorithms",
+				"DynamicMesh",
+				"MeshConversion",
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -43,6 +51,9 @@ public class LohFunctionPlugin : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"RenderCore",
+				"RHI",
+				"ImageWriteQueue",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

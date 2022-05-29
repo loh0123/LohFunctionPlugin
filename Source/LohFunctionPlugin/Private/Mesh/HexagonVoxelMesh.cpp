@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright by Loh Zhi Kang
 
 
 #include "Mesh/HexagonVoxelMesh.h"
@@ -7,13 +7,37 @@
 #include "GeometryCore/Public/DynamicMesh/MeshTangents.h"
 #include "DynamicMesh/Public/GroupTopology.h"
 #include "DynamicMesh/Public/Operations/MeshBevel.h"
+#include "Mesh/BaseVoxelPool.h"
 
 
 using namespace UE::Geometry;
 
-void UHexagonVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData)
+void UHexagonVoxelMesh::SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
 {
-	Super::SetupMesh(MeshSize, GridSize, RenderNameList, GridData);
+	Super::SetupPool(NewVoxelPool, NewPoolLocation, NewPoolIndex);
+
+	EditMesh([&](FDynamicMesh3& EditMesh)
+		{
+			EditMesh.Attributes()->SetNumUVLayers(8);
+
+			if (!EditMesh.Attributes()->HasMaterialID())
+			{
+				EditMesh.Attributes()->EnableMaterialID();
+			}
+
+			if (EditMesh.Attributes()->HasTangentSpace() == false)
+			{
+				EditMesh.Attributes()->EnableTangents();
+			}
+
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+
+	UpdateMesh();
+}
+
+void UHexagonVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData)
+{
+	Super::SetupMesh(MeshSize, GridSize, IgnoreNameList, GridData);
 
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{
@@ -42,6 +66,8 @@ void UHexagonVoxelMesh::SetVoxelGridData(const FIntVector GridLocation, const FL
 
 	if (!ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize)) return;
 
+	Super::SetVoxelGridData(GridLocation, GridData, bUpdateMesh);
+
 	// Find Neighbour On GridLocation
 	TArray<FIntVector> UpdateList;
 	FindBlockNeighbour(GridLocation, UpdateList);
@@ -52,8 +78,6 @@ void UHexagonVoxelMesh::SetVoxelGridData(const FIntVector GridLocation, const FL
 	// Mark Neighbour Cache To Be Clean Up
 	MarkTrianglesDataListForUpdate(TSet(UpdateList));
 
-	Super::SetVoxelGridData(GridLocation, GridData, bUpdateMesh);
-
 	// Check If Update Mesh Is Needed
 	if (bUpdateMesh) UpdateMesh();
 
@@ -63,6 +87,8 @@ void UHexagonVoxelMesh::SetVoxelGridData(const FIntVector GridLocation, const FL
 void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	Super::SetVoxelGridDataList(GridLocationList, GridData, bUpdateMesh);
 
 	// Collect all update location //////////////////////////////////////////////////
 	TArray<FIntVector> UpdateList;
@@ -82,8 +108,6 @@ void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocat
 	// Mark location to be clean up
 	MarkTrianglesDataListForUpdate(TotalUpdateList);
 	///////////////////////////////////////////////////////////////////////////////////
-
-	Super::SetVoxelGridDataList(GridLocationList, GridData, bUpdateMesh);
 
 	// Check if update mesh is needed
 	if (bUpdateMesh) UpdateMesh();
@@ -225,7 +249,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 			}
 			else
 			{
-				// ToDo implement out bound block checker
+				if (VoxelPool && VoxelPool->IsBlockVisible(LocalNeighbourList[LoopIndex] + PoolVoxelLocation)) continue;
 			}
 
 			if(LoopIndex >= 6) 

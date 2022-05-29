@@ -10,7 +10,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(BaseVoxelMesh, Warning, All);
 
-class UBaseVoxelMesh;
+class UBaseVoxelPool;
 
 USTRUCT()
 struct FLFPVoxelTriangleUpdateData
@@ -65,7 +65,7 @@ struct FLFPVoxelMeshData
 		FIntVector GridSize = FIntVector(1);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData | Setting")
-		TSet<FName> RenderNameList = {};
+		TSet<FName> IgnoreNameList = { FName("Air") };
 
 
 
@@ -93,9 +93,11 @@ class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 
 public:
 
-	virtual void SetupPool(UBaseVoxelMesh* VoxelPool) {};
+	virtual void SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex);
 
-	virtual void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData);
+	virtual void ClearPool();
+
+	virtual void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData);
 
 	virtual void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh);
 
@@ -103,11 +105,14 @@ public:
 
 	virtual void UpdateMesh() { unimplemented(); }  // Override This
 
+
+	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector GridLocation);
+
 protected:
 
-	FORCEINLINE FLFPVoxelMeshData& GetVoxelMeshData() { return ExternalVoxelData ? *ExternalVoxelData : LocalVoxelData; }
+	FORCEINLINE FLFPVoxelMeshData& GetVoxelMeshData();
 
-	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const { return ExternalVoxelData ? *ExternalVoxelData : LocalVoxelData; }
+	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const;
 
 
 
@@ -115,7 +120,7 @@ protected:
 
 	FORCEINLINE void UpdateTriangles();
 
-	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector& GridLocation, FLFPVoxelMeshData& MeshData);
+	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector GridLocation, FLFPVoxelMeshData& MeshData);
 
 	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& GridLocationList);
 
@@ -129,9 +134,11 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FLFPVoxelMeshData LocalVoxelData;
 
-	FLFPVoxelMeshData* ExternalVoxelData;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") UBaseVoxelPool* VoxelPool;
 
-	TFunction<bool(const FIntVector)> IsOutBoundBlockVisible = nullptr;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FIntVector PoolLocation = FIntVector::NoneValue;
 
-	FIntVector GlobalStartLocation = FIntVector::NoneValue;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FIntVector PoolVoxelLocation = FIntVector::NoneValue;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") int32 PoolIndex = INDEX_NONE;
 };

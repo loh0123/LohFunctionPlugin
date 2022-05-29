@@ -16,8 +16,10 @@ class LOHFUNCTIONPLUGIN_API UHexagonVoxelMesh : public UBaseVoxelMesh
 	
 public:
 
+		void SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex) override;
+
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData) override;
+		 void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
 		 void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;

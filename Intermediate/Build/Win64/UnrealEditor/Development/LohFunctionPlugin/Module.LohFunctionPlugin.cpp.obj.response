@@ -252,6 +252,8 @@
 /I Runtime\ClothingSystemRuntimeInterface\Public
 /I ..\Intermediate\Build\Win64\UnrealEditor\Inc\AnimationDataController
 /I Developer\AnimationDataController\Public
+/I ..\Intermediate\Build\Win64\UnrealEditor\Inc\ImageWriteQueue
+/I Runtime\ImageWriteQueue\Public
 /I "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UnrealEditor\Inc\LohFunctionPlugin"
 /I "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Source"
 /I "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Source\LohFunctionPlugin\Public"

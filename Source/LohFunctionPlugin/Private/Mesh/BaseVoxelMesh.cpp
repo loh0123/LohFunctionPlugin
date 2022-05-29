@@ -1,14 +1,56 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright by Loh Zhi Kang
 
 
 #include "Mesh/BaseVoxelMesh.h"
 #include "./Math/LFPGridLibrary.h"
-#include "Mesh/VoxelPoolBase.h"
+#include "Mesh/BaseVoxelPool.h"
 #include "TargetInterfaces/MaterialProvider.h" //FComponentMaterialSet
 
 DEFINE_LOG_CATEGORY(BaseVoxelMesh);
 
-void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& RenderNameList, const TArray<FLFPVoxelGridData>& GridData)
+void UBaseVoxelMesh::SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
+{
+	checkf(NewVoxelPool, TEXT("Voxel Pool Can't Be Invalid"));
+
+	VoxelPool = NewVoxelPool;
+	PoolLocation = NewPoolLocation;
+	PoolIndex = NewPoolIndex;
+
+	FLFPVoxelMeshData& MeshData = NewVoxelPool->PoolVoxelData[NewPoolIndex];
+
+	PoolVoxelLocation = FIntVector(NewPoolLocation.X * MeshData.GridSize.X, NewPoolLocation.Y * MeshData.GridSize.Y, NewPoolLocation.Z * MeshData.GridSize.Z);
+
+	MeshData.GridData.SetNum(MeshData.MaxIndex);
+	MeshData.TriangleDataList.SetNum(MeshData.MaxIndex);
+
+	MeshData.DataUpdateList.Reserve(MeshData.MaxIndex);
+
+	for (int32 TriIndex = 0; TriIndex < MeshData.MaxIndex; TriIndex++)
+	{
+		MeshData.DataUpdateList.Add(TriIndex);
+	}
+	
+	return;
+}
+
+void UBaseVoxelMesh::ClearPool()
+{
+	checkf(VoxelPool, TEXT("Voxel Pool Already Is Invalid"));
+
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	MeshData.TriangleDataList.Empty();
+	MeshData.DataUpdateList.Empty();
+
+	VoxelPool = nullptr;
+	PoolLocation = FIntVector::NoneValue;
+	PoolVoxelLocation = FIntVector::NoneValue;
+	PoolIndex = INDEX_NONE;
+
+	return;
+}
+
+void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
@@ -19,7 +61,7 @@ void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize
 
 	MeshData.MeshSize = MeshSize;
 	MeshData.GridSize = GridSize;
-	MeshData.RenderNameList = RenderNameList;
+	MeshData.IgnoreNameList = IgnoreNameList;
 
 	MeshData.MaxIndex = GridSize.X * GridSize.Y * GridSize.Z;
 
@@ -69,6 +111,23 @@ void UBaseVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocation
 	return;
 }
 
+void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const FIntVector GridLocation)
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	MarkTrianglesDataForUpdate(GridLocation, MeshData);
+}
+
+FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData()
+{
+	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
+}
+
+const FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData() const
+{
+	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
+}
+
 
 void UBaseVoxelMesh::UpdateTriangles()
 {
@@ -93,13 +152,15 @@ void UBaseVoxelMesh::UpdateTriangles()
 }
 
 
-void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const FIntVector& GridLocation, FLFPVoxelMeshData& MeshData)
+void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const FIntVector GridLocation, FLFPVoxelMeshData& MeshData)
 {
 	if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
-		MeshData.DataUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize));
-	else
 	{
-		// ToDo : Make Out Bound Update Function
+		MeshData.DataUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize));
+	}	
+	else if (VoxelPool)
+	{
+		VoxelPool->MarkTrianglesDataListForUpdate(TSet({ GridLocation + PoolVoxelLocation }));
 	}
 
 	return;
@@ -109,16 +170,27 @@ void UBaseVoxelMesh::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Grid
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
+	TSet<FIntVector> OutBoundList;
+
 	for (const FIntVector& GridLocation : GridLocationList)
 	{
-		MarkTrianglesDataForUpdate(GridLocation, MeshData);
+		if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
+		{
+			MeshData.DataUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize));
+		}
+		else
+		{
+			OutBoundList.Add(GridLocation + PoolVoxelLocation);
+		}
 	}
+
+	if (VoxelPool) VoxelPool->MarkTrianglesDataListForUpdate(OutBoundList);
 
 	return;
 }
 
 bool UBaseVoxelMesh::IsBlockVisible(const int32 GridIndex) const
 {
-	return GetVoxelMeshData().RenderNameList.Contains(GetVoxelMeshData().GridData[GridIndex].BlockName);  // Not In Render List;
+	return !GetVoxelMeshData().IgnoreNameList.Contains(GetVoxelMeshData().GridData[GridIndex].BlockName);
 }
 
