@@ -38,6 +38,25 @@ void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int3
 	return;
 }
 
+void UBaseVoxelPool::ProcessVoxelUpdate()
+{
+	if (UpdateList.Num() > 0)
+	{
+		TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList[0];
+
+		VoxelMesh->UpdateMesh_Internal();
+
+		UpdateList.RemoveAt(0, 1, false);
+
+		if (UpdateList.GetSlack() > 10)
+		{
+			UpdateList.Shrink();
+		}
+	}
+
+	return;
+}
+
 FLFPVoxelMeshData& UBaseVoxelPool::GetPoolVoxelData(const int32 PoolIndex)
 {
 	checkf(PoolVoxelData.IsValidIndex(PoolIndex), TEXT("Pool Index Invalid"));
@@ -57,6 +76,21 @@ int32 UBaseVoxelPool::PoolVoxelLocationToPoolIndex(const FIntVector PoolVoxelLoc
 FIntVector UBaseVoxelPool::PoolVoxelLocationToVoxelLocation(const FIntVector PoolVoxelLocation) const
 {
 	return FIntVector(PoolVoxelLocation.X % MainGridSize.X, PoolVoxelLocation.Y % MainGridSize.Y, PoolVoxelLocation.Z % MainGridSize.Z);
+}
+
+void UBaseVoxelPool::MarkTrianglesDataForUpdate(const FIntVector& PoolVoxelLocation)
+{
+	const int32 PoolIndex = PoolVoxelLocationToPoolIndex(PoolVoxelLocation);
+
+	if (!PoolVoxelData.IsValidIndex(PoolIndex) || !ActiveMeshes.Contains(PoolIndex)) return;
+
+	const FIntVector VoxelLocation = PoolVoxelLocationToVoxelLocation(PoolVoxelLocation);
+
+	TObjectPtr<UBaseVoxelMesh> VoxelMesh = ActiveMeshes.FindChecked(PoolIndex);
+
+	VoxelMesh->MarkTrianglesDataForUpdate(VoxelLocation);
+
+	VoxelMesh->UpdateMesh(); // Refactor later
 }
 
 void UBaseVoxelPool::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& PoolVoxelLocationList)
@@ -80,7 +114,7 @@ void UBaseVoxelPool::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Pool
 
 	for (UBaseVoxelMesh* VoxelMesh : UpdateMeshList)
 	{
-		VoxelMesh->UpdateMesh();
+		VoxelMesh->UpdateMesh(); // Refactor later
 	}
 	
 	return;
@@ -90,11 +124,17 @@ bool UBaseVoxelPool::IsBlockVisible(const FIntVector PoolVoxelLocation) const
 {
 	const int32 PoolIndex = PoolVoxelLocationToPoolIndex(PoolVoxelLocation);
 
+	// Check is PoolIndex valid or GridData has been initialize
 	if (!PoolVoxelData.IsValidIndex(PoolIndex) || PoolVoxelData[PoolIndex].GridData.Num() == 0) return false;
 
-	const int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize);
+	return !MainIgnoreNameList.Contains(PoolVoxelData[PoolIndex].GridData[ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize)].BlockName);
+}
 
-	return !MainIgnoreNameList.Contains(PoolVoxelData[PoolIndex].GridData[VoxelIndex].BlockName);
+void UBaseVoxelPool::AddVoxelUpdate(TObjectPtr<UBaseVoxelMesh> VoxelMesh)
+{
+	if (UpdateList.Num() == 0 || UpdateList.Last() != VoxelMesh) UpdateList.Add(VoxelMesh);
+
+	return;
 }
 
 

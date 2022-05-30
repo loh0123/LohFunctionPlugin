@@ -20,6 +20,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool | Function")
 		virtual void SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, const TSet<FName>& NewMainIgnoreNameList, TSubclassOf<UBaseVoxelMesh> VoxelType);
 
+	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool | Function")
+		FORCEINLINE void ProcessVoxelUpdate();
+
 
 	FORCEINLINE FLFPVoxelMeshData& GetPoolVoxelData(const int32 PoolIndex);
 
@@ -27,9 +30,14 @@ public:
 
 	FORCEINLINE FIntVector PoolVoxelLocationToVoxelLocation(const FIntVector PoolVoxelLocation) const;
 
+	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector& PoolVoxelLocation);
+
 	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& PoolVoxelLocationList);
 
 	FORCEINLINE bool IsBlockVisible(const FIntVector PoolVoxelLocation) const;
+
+
+	FORCEINLINE void AddVoxelUpdate(TObjectPtr<UBaseVoxelMesh> VoxelMesh);
 
 public:
 	
@@ -49,6 +57,8 @@ public:
 		void FreeAllMeshes();
 
 protected:
+	UPROPERTY() TArray<TObjectPtr<UBaseVoxelMesh>> UpdateList;
+
 	/** Meshes in the pool that are available */
 	UPROPERTY() TArray<TObjectPtr<UBaseVoxelMesh>> CachedMeshes;
 

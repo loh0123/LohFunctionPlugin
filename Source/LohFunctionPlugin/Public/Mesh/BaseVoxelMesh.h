@@ -93,7 +93,7 @@ class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 
 public:
 
-	virtual void SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex);
+	virtual void SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex);
 
 	virtual void ClearPool();
 
@@ -103,42 +103,44 @@ public:
 
 	virtual void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridDataList, const bool bUpdateMesh);
 
-	virtual void UpdateMesh() { unimplemented(); }  // Override This
+	virtual void UpdateMesh_Internal() { unimplemented(); }  // Override This
 
+
+	FORCEINLINE void UpdateMesh();
 
 	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector GridLocation);
+
+	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& GridLocationList);
+
+
+	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const;
 
 protected:
 
 	FORCEINLINE FLFPVoxelMeshData& GetVoxelMeshData();
-
-	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const;
-
 
 
 	FORCEINLINE void UpdateVertices() { unimplemented(); }  // Override This
 
 	FORCEINLINE void UpdateTriangles();
 
-	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector GridLocation, FLFPVoxelMeshData& MeshData);
-
-	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& GridLocationList);
-
 	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<FIntVector>& NeighbourLocationList) { unimplemented(); }  // Override This
 
 	FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList) { unimplemented(); }  // Override This
 
-	FORCEINLINE bool IsBlockVisible(const int32 GridIndex) const;
+	FORCEINLINE bool IsBlockVisible(const FIntVector GridLocation) const;
 
-protected:
+private:
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FLFPVoxelMeshData LocalVoxelData;
+	UPROPERTY() FLFPVoxelMeshData LocalVoxelData;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") UBaseVoxelPool* VoxelPool;
+	UPROPERTY() TObjectPtr<UBaseVoxelPool> VoxelPool;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FIntVector PoolLocation = FIntVector::NoneValue;
+	UPROPERTY() FIntVector PoolLocation = FIntVector::NoneValue;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") FIntVector PoolVoxelLocation = FIntVector::NoneValue;
+	UPROPERTY() FIntVector PoolVoxelLocation = FIntVector::NoneValue;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "BaseVoxelMesh | Varaible") int32 PoolIndex = INDEX_NONE;
+	UPROPERTY() int32 PoolIndex = INDEX_NONE;
+
+
 };

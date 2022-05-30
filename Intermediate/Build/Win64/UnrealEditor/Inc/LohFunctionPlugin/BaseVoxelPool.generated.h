@@ -22,6 +22,7 @@ struct FIntVector;
 	DECLARE_FUNCTION(execReturnAllMeshes); \
 	DECLARE_FUNCTION(execReturnMesh); \
 	DECLARE_FUNCTION(execRequestMesh); \
+	DECLARE_FUNCTION(execProcessVoxelUpdate); \
 	DECLARE_FUNCTION(execSetupVoxelPool);
 
 
@@ -31,6 +32,7 @@ struct FIntVector;
 	DECLARE_FUNCTION(execReturnAllMeshes); \
 	DECLARE_FUNCTION(execReturnMesh); \
 	DECLARE_FUNCTION(execRequestMesh); \
+	DECLARE_FUNCTION(execProcessVoxelUpdate); \
 	DECLARE_FUNCTION(execSetupVoxelPool);
 
 

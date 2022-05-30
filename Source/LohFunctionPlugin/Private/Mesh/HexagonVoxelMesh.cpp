@@ -12,7 +12,7 @@
 
 using namespace UE::Geometry;
 
-void UHexagonVoxelMesh::SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
+void UHexagonVoxelMesh::SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
 {
 	Super::SetupPool(NewVoxelPool, NewPoolLocation, NewPoolIndex);
 
@@ -229,9 +229,9 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 	for (const int32 GridIndex : MeshData.DataUpdateList)
 	{
-		if (!IsBlockVisible(GridIndex)) continue; // Check block is visible
-
 		const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(GridIndex, MeshData.GridSize);
+
+		if (!IsBlockVisible(GridLocation)) continue; // Check block is visible
 
 		FindBlockVertices(GridLocation, LocalVerticesIndex);
 
@@ -243,14 +243,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 		for (int32 LoopIndex = 0; LoopIndex < 8; LoopIndex++)
 		{
-			if (ULFPGridLibrary::IsLocationValid(LocalNeighbourList[LoopIndex], MeshData.GridSize))
-			{
-				if (IsBlockVisible(ULFPGridLibrary::GridLocationToIndex(LocalNeighbourList[LoopIndex], MeshData.GridSize))) continue;
-			}
-			else
-			{
-				if (VoxelPool && VoxelPool->IsBlockVisible(LocalNeighbourList[LoopIndex] + PoolVoxelLocation)) continue;
-			}
+			if (IsBlockVisible(LocalNeighbourList[LoopIndex])) continue;
 
 			if(LoopIndex >= 6) 
 				AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0), LoopIndex - 6);

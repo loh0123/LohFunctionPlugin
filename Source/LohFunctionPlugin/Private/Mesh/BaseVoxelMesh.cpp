@@ -8,7 +8,7 @@
 
 DEFINE_LOG_CATEGORY(BaseVoxelMesh);
 
-void UBaseVoxelMesh::SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
+void UBaseVoxelMesh::SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex)
 {
 	checkf(NewVoxelPool, TEXT("Voxel Pool Can't Be Invalid"));
 
@@ -111,56 +111,27 @@ void UBaseVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocation
 	return;
 }
 
+void UBaseVoxelMesh::UpdateMesh()
+{
+	if (VoxelPool) 
+		VoxelPool->AddVoxelUpdate(this); 
+	else 
+		UpdateMesh_Internal(); 
+	
+	return;
+}
+
 void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const FIntVector GridLocation)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	MarkTrianglesDataForUpdate(GridLocation, MeshData);
-}
-
-FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData()
-{
-	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
-}
-
-const FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData() const
-{
-	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
-}
-
-
-void UBaseVoxelMesh::UpdateTriangles()
-{
-	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
-
-	if (MeshData.DataUpdateList.Num() > 0)
-		EditMesh([&](FDynamicMesh3& EditMesh)
-		{
-			for (int32 DataIndex : MeshData.DataUpdateList)
-			{
-				for (int32 TriangleIndex : MeshData.TriangleDataList[DataIndex].MeshTriangleIndex)
-				{
-					EditMesh.RemoveTriangle(TriangleIndex, false);
-				}
-
-				MeshData.TriangleDataList[DataIndex] = FLFPVoxelTriangleData();
-			}
-
-		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
-
-	return;
-}
-
-
-void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const FIntVector GridLocation, FLFPVoxelMeshData& MeshData)
-{
 	if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
 	{
 		MeshData.DataUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize));
-	}	
+	}
 	else if (VoxelPool)
 	{
-		VoxelPool->MarkTrianglesDataListForUpdate(TSet({ GridLocation + PoolVoxelLocation }));
+		VoxelPool->MarkTrianglesDataForUpdate(GridLocation + PoolVoxelLocation);
 	}
 
 	return;
@@ -189,8 +160,52 @@ void UBaseVoxelMesh::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Grid
 	return;
 }
 
-bool UBaseVoxelMesh::IsBlockVisible(const int32 GridIndex) const
+const FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData() const
 {
-	return !GetVoxelMeshData().IgnoreNameList.Contains(GetVoxelMeshData().GridData[GridIndex].BlockName);
+	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
+}
+
+FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData()
+{
+	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
+}
+
+
+void UBaseVoxelMesh::UpdateTriangles()
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	if (MeshData.DataUpdateList.Num() > 0)
+		EditMesh([&](FDynamicMesh3& EditMesh)
+		{
+			for (int32 DataIndex : MeshData.DataUpdateList)
+			{
+				for (int32 TriangleIndex : MeshData.TriangleDataList[DataIndex].MeshTriangleIndex)
+				{
+					EditMesh.RemoveTriangle(TriangleIndex, false);
+				}
+
+				MeshData.TriangleDataList[DataIndex] = FLFPVoxelTriangleData();
+			}
+
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+
+	return;
+}
+
+bool UBaseVoxelMesh::IsBlockVisible(const FIntVector GridLocation) const
+{
+	const FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
+	{
+		return !MeshData.IgnoreNameList.Contains(MeshData.GridData[ULFPGridLibrary::GridLocationToIndex(GridLocation, GetVoxelMeshData().GridSize)].BlockName);
+	}
+	else if (VoxelPool) // If connected to voxel pool than check location on it
+	{
+		return VoxelPool->IsBlockVisible(GridLocation + PoolVoxelLocation);
+	}
+
+	return false;
 }
 

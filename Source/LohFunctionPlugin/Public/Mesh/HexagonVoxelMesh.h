@@ -16,25 +16,27 @@ class LOHFUNCTIONPLUGIN_API UHexagonVoxelMesh : public UBaseVoxelMesh
 	
 public:
 
-		void SetupPool(UBaseVoxelPool* NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex) override;
+		void SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData) override;
+		void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;
+		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) override;
+		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetAllVoxelGridData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+		void SetAllVoxelGridData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void SetVoxelGridAreaData(const int32 OriginGridIndex, const FIntVector Range, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+		void SetVoxelGridAreaData(const int32 OriginGridIndex, const FIntVector Range, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+
+		void UpdateMesh_Internal() override { if (GetVoxelMeshData().VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  UpdateTriangles(); }
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		 void UpdateMesh() override { if (GetVoxelMeshData().VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  UpdateTriangles(); }
+		void UpdateMesh() { Super::UpdateMesh(); };
 
 protected:
 
