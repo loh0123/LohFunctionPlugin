@@ -51,9 +51,10 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelPool() {}
 	}
 	DEFINE_FUNCTION(UBaseVoxelPool::execProcessVoxelUpdate)
 	{
+		P_GET_PROPERTY(FIntProperty,Z_Param_Count);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->ProcessVoxelUpdate();
+		P_THIS->ProcessVoxelUpdate(Z_Param_Count);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(UBaseVoxelPool::execSetupVoxelPool)
@@ -107,10 +108,28 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelPool() {}
 	}
 	struct Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics
 	{
+		struct BaseVoxelPool_eventProcessVoxelUpdate_Parms
+		{
+			int32 Count;
+		};
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_Count_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_Count;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
 #endif
 		static const UECodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::NewProp_Count_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::NewProp_Count = { "Count", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(BaseVoxelPool_eventProcessVoxelUpdate_Parms, Count), METADATA_PARAMS(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::NewProp_Count_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::NewProp_Count_MetaData)) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::NewProp_Count,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::Function_MetaDataParams[] = {
@@ -118,7 +137,7 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelPool() {}
 		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelPool.h" },
 	};
 #endif
-	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UBaseVoxelPool, nullptr, "ProcessVoxelUpdate", nullptr, nullptr, 0, nullptr, 0, RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::Function_MetaDataParams)) };
+	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UBaseVoxelPool, nullptr, "ProcessVoxelUpdate", nullptr, nullptr, sizeof(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::BaseVoxelPool_eventProcessVoxelUpdate_Parms), Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate_Statics::Function_MetaDataParams)) };
 	UFunction* Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate()
 	{
 		static UFunction* ReturnFunction = nullptr;
@@ -398,7 +417,7 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelPool() {}
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_UBaseVoxelPool_Statics::FuncInfo[] = {
 		{ &Z_Construct_UFunction_UBaseVoxelPool_FreeAllMeshes, "FreeAllMeshes" }, // 3134575751
-		{ &Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate, "ProcessVoxelUpdate" }, // 1911223621
+		{ &Z_Construct_UFunction_UBaseVoxelPool_ProcessVoxelUpdate, "ProcessVoxelUpdate" }, // 4187381258
 		{ &Z_Construct_UFunction_UBaseVoxelPool_RequestMesh, "RequestMesh" }, // 1743741047
 		{ &Z_Construct_UFunction_UBaseVoxelPool_ReturnAllMeshes, "ReturnAllMeshes" }, // 2316063127
 		{ &Z_Construct_UFunction_UBaseVoxelPool_ReturnMesh, "ReturnMesh" }, // 2539310354
@@ -551,9 +570,9 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelPool() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelPool_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UBaseVoxelPool, UBaseVoxelPool::StaticClass, TEXT("UBaseVoxelPool"), &Z_Registration_Info_UClass_UBaseVoxelPool, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelPool), 3240570463U) },
+		{ Z_Construct_UClass_UBaseVoxelPool, UBaseVoxelPool::StaticClass, TEXT("UBaseVoxelPool"), &Z_Registration_Info_UClass_UBaseVoxelPool, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelPool), 1529175652U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelPool_h_1895533109(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelPool_h_2416870298(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelPool_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelPool_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

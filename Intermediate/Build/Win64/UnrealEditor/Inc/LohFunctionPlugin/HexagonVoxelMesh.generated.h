@@ -20,7 +20,8 @@ struct FLFPVoxelGridData;
  \
 	DECLARE_FUNCTION(execUpdateMesh); \
 	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
-	DECLARE_FUNCTION(execSetAllVoxelGridData); \
+	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
+	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
 	DECLARE_FUNCTION(execSetVoxelGridData); \
 	DECLARE_FUNCTION(execSetupMesh);
@@ -30,7 +31,8 @@ struct FLFPVoxelGridData;
  \
 	DECLARE_FUNCTION(execUpdateMesh); \
 	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
-	DECLARE_FUNCTION(execSetAllVoxelGridData); \
+	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
+	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
 	DECLARE_FUNCTION(execSetVoxelGridData); \
 	DECLARE_FUNCTION(execSetupMesh);

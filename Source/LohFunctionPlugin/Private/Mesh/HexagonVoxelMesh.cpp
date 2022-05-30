@@ -8,6 +8,7 @@
 #include "DynamicMesh/Public/GroupTopology.h"
 #include "DynamicMesh/Public/Operations/MeshBevel.h"
 #include "Mesh/BaseVoxelPool.h"
+#include "Runtime/Core/Public/Async/ParallelFor.h"
 
 
 using namespace UE::Geometry;
@@ -84,11 +85,11 @@ void UHexagonVoxelMesh::SetVoxelGridData(const FIntVector GridLocation, const FL
 	return;
 }
 
-void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh)
+void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridDataList, const bool bUpdateMesh)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	Super::SetVoxelGridDataList(GridLocationList, GridData, bUpdateMesh);
+	Super::SetVoxelGridDataList(GridLocationList, GridDataList, bUpdateMesh);
 
 	// Collect all update location //////////////////////////////////////////////////
 	TArray<FIntVector> UpdateList;
@@ -115,26 +116,52 @@ void UHexagonVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocat
 	return;
 }
 
-void UHexagonVoxelMesh::SetAllVoxelGridData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
+void UHexagonVoxelMesh::SetVoxelGridDataListWithSingleData(const TArray<FIntVector>& GridLocationList, const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	TArray<FIntVector> GridLocationList;
-	TArray<FLFPVoxelGridData> GridDataList;
+	Super::SetVoxelGridDataListWithSingleData(GridLocationList, GridData, bUpdateMesh);
 
-	GridLocationList.Reserve(MeshData.MaxIndex);
+	// Collect all update location //////////////////////////////////////////////////
+	TArray<FIntVector> UpdateList;
+	TSet<FIntVector> TotalUpdateList;
 
-	GridDataList.Init(GridData, MeshData.MaxIndex);
-
-	for (int32 Index = 0; Index < MeshData.MaxIndex; Index++)
+	for (const FIntVector& LoopVector : GridLocationList)
 	{
-		GridLocationList.Add(ULFPGridLibrary::IndexToGridLocation(Index, MeshData.GridSize));
+		if (!ULFPGridLibrary::IsLocationValid(LoopVector, MeshData.GridSize)) continue;
+
+		FindBlockNeighbour(LoopVector, UpdateList);
+
+		TotalUpdateList.Append(UpdateList);
+
+		TotalUpdateList.Add(LoopVector);
 	}
 
-	SetVoxelGridDataList(GridLocationList, GridDataList, bUpdateMesh);
+	// Mark location to be clean up
+	MarkTrianglesDataListForUpdate(TotalUpdateList);
+	///////////////////////////////////////////////////////////////////////////////////
+
+	// Check if update mesh is needed
+	if (bUpdateMesh) UpdateMesh();
 
 	return;
 }
+
+void UHexagonVoxelMesh::SetAllVoxelGridDataWithSingleData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	Super::SetAllVoxelGridDataWithSingleData(GridData, bUpdateMesh);
+
+	// Mark all location to be clean up
+	MarkAllTrianglesDataForUpdate();
+
+	// Check if update mesh is needed
+	if (bUpdateMesh) UpdateMesh();
+
+	return;
+}
+
 
 void UHexagonVoxelMesh::SetVoxelGridAreaData(const int32 OriginGridIndex, const FIntVector Range, const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
 {
@@ -182,20 +209,17 @@ void UHexagonVoxelMesh::UpdateVertices()
 
 	MeshData.VertexSize = FIntVector((MeshData.GridSize.X * 2) + 2, MeshData.GridSize.Y + 1, MeshData.GridSize.Z * 2);
 
-	MeshVertex.Reserve(MeshData.VertexSize.X * MeshData.VertexSize.Y * MeshData.VertexSize.Z);
+	const int32 VertexIndexSize = MeshData.VertexSize.X * MeshData.VertexSize.Y * MeshData.VertexSize.Z;
 
-	for (int32 Z = 0; Z < MeshData.VertexSize.Z; Z++)
-	{
-		for (int32 Y = 0; Y < MeshData.VertexSize.Y; Y++)
-		{
-			for (int32 X = 0; X < MeshData.VertexSize.X; X++)
-			{
-				const FVector CurrentHexaPos = (FVector(X / 4, Y, Z / 2) * (MeshData.MeshSize + FVector(MeshData.MeshSize.X * 0.5, 0, 0)) + FVector(0, 0, Z % 2 == 1 ? MeshData.MeshSize.Z : 0));
+	MeshVertex.SetNum(VertexIndexSize);
 
-				MeshVertex.Add(PointList[X % 4] + CurrentHexaPos);
-			}
-		}
-	}
+	ParallelFor(VertexIndexSize, [&](const int32 LoopIndex) {
+		const FIntVector VertexLocation = ULFPGridLibrary::IndexToGridLocation(LoopIndex, MeshData.VertexSize);
+	
+		const FVector CurrentHexaPos = (FVector(VertexLocation.X / 4, VertexLocation.Y, VertexLocation.Z / 2) * (MeshData.MeshSize + FVector(MeshData.MeshSize.X * 0.5, 0, 0)) + FVector(0, 0, VertexLocation.Z % 2 == 1 ? MeshData.MeshSize.Z : 0));
+	
+		MeshVertex[LoopIndex] = (PointList[VertexLocation.X % 4] + CurrentHexaPos);
+		});
 
 	if (MeshVertex.Num() == 0) return; // Stop If No Vertex To Be Added
 
@@ -221,36 +245,75 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 	TArray<FLFPVoxelTriangleUpdateData> UpdateDataList;
 
-	TArray<int32> LocalVerticesIndex;
-
-	TArray<FIntVector> LocalNeighbourList;
-
 	int32 GroupID = 0;
 
-	for (const int32 GridIndex : MeshData.DataUpdateList)
-	{
-		const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(GridIndex, MeshData.GridSize);
-
-		if (!IsBlockVisible(GridLocation)) continue; // Check block is visible
-
-		FindBlockVertices(GridLocation, LocalVerticesIndex);
-
-		FindBlockNeighbour(GridLocation, LocalNeighbourList);
-
-		UpdateDataList.Add(FLFPVoxelTriangleUpdateData());
-
-		UpdateDataList.Last(0).GridIndex = GridIndex;
-
-		for (int32 LoopIndex = 0; LoopIndex < 8; LoopIndex++)
+	FCriticalSection Mutex;
+	
+	TArray<int32> DataUpdateListArray = MeshData.DataUpdateList.Array();
+	
+	ParallelFor(DataUpdateListArray.Num(), [&](const int32 LoopIndex) {
+		const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(DataUpdateListArray[LoopIndex], MeshData.GridSize);
+	
+		if (IsBlockVisible(GridLocation))
 		{
-			if (IsBlockVisible(LocalNeighbourList[LoopIndex])) continue;
+			TArray<int32> LocalVerticesIndex;
+	
+			TArray<FIntVector> LocalNeighbourList;
+	
+			FindBlockVertices(GridLocation, LocalVerticesIndex);
+	
+			FindBlockNeighbour(GridLocation, LocalNeighbourList);
+	
+			FLFPVoxelTriangleUpdateData UpdateData;
+	
+			UpdateData.GridIndex = DataUpdateListArray[LoopIndex];
+	
+			for (int32 FaceIndex = 0; FaceIndex < 8; FaceIndex++)
+			{
+				if (IsBlockVisible(LocalNeighbourList[FaceIndex])) continue;
+	
+				if (FaceIndex >= 6)
+					AddHexagonRoof(LocalVerticesIndex, UpdateData, FaceIndex - 6);
+				else
+					AddHexagonWall(LocalVerticesIndex, UpdateData, FaceIndex);
+			}
+	
+			Mutex.Lock();
+			UpdateDataList.Add(UpdateData);
+			Mutex.Unlock();
+		}	
+	});
 
-			if(LoopIndex >= 6) 
-				AddHexagonRoof(LocalVerticesIndex, UpdateDataList.Last(0), LoopIndex - 6);
-			else 
-				AddHexagonWall(LocalVerticesIndex, UpdateDataList.Last(0), LoopIndex);
-		}
-	}
+	//TArray<int32> LocalVerticesIndex;
+	//
+	//TArray<FIntVector> LocalNeighbourList;
+	//
+	//for (const int32 GridIndex : MeshData.DataUpdateList)
+	//{
+	//	const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(GridIndex, MeshData.GridSize);
+	//
+	//	if (!IsBlockVisible(GridLocation)) continue; // Check block is visible
+	//
+	//	FindBlockVertices(GridLocation, LocalVerticesIndex);
+	//
+	//	FindBlockNeighbour(GridLocation, LocalNeighbourList);
+	//
+	//	FLFPVoxelTriangleUpdateData UpdateData;
+	//
+	//	UpdateData.GridIndex = GridIndex;
+	//
+	//	for (int32 LoopIndex = 0; LoopIndex < 8; LoopIndex++)
+	//	{
+	//		if (IsBlockVisible(LocalNeighbourList[LoopIndex])) continue;
+	//
+	//		if(LoopIndex >= 6) 
+	//			AddHexagonRoof(LocalVerticesIndex, UpdateData, LoopIndex - 6);
+	//		else 
+	//			AddHexagonWall(LocalVerticesIndex, UpdateData, LoopIndex);
+	//	}
+	//
+	//	UpdateDataList.Add(UpdateData);
+	//}
 
 	MeshData.DataUpdateList.Empty(MeshData.MaxIndex);
 

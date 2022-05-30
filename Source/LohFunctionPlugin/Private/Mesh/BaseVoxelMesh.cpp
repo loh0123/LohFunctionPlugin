@@ -5,6 +5,7 @@
 #include "./Math/LFPGridLibrary.h"
 #include "Mesh/BaseVoxelPool.h"
 #include "TargetInterfaces/MaterialProvider.h" //FComponentMaterialSet
+#include "Runtime/Core/Public/Async/ParallelFor.h"
 
 DEFINE_LOG_CATEGORY(BaseVoxelMesh);
 
@@ -84,7 +85,7 @@ void UBaseVoxelMesh::SetVoxelGridData(const FIntVector GridLocation, const FLFPV
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	checkf(ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize), TEXT("Not allow invalid location (SetVoxelGridData)"));
+	if (!ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize)) return;
 
 	// Replace Data In Array
 	MeshData.GridData[ULFPGridLibrary::GridLocationToIndex(GridLocation,MeshData.GridSize)] = GridData;
@@ -97,16 +98,46 @@ void UBaseVoxelMesh::SetVoxelGridDataList(const TArray<FIntVector>& GridLocation
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	for (const FIntVector& GridLocation : GridLocationList)
-	{
-		checkf(ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize), TEXT("Not allow invalid location on array (SetVoxelGridDataList)"));
+	ParallelFor(GridLocationList.Num(), [&](const int32 LoopIndex) {
+		if (ULFPGridLibrary::IsLocationValid(GridLocationList[LoopIndex], MeshData.GridSize))
+		{
+			// Find Index
+			const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(GridLocationList[LoopIndex], MeshData.GridSize);
 
-		// Find Index
-		const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize);
+			// Replace Data In Array
+			MeshData.GridData[GridIndex] = GridDataList.IsValidIndex(LoopIndex) ? GridDataList[LoopIndex] : FLFPVoxelGridData();
+		}
+	});
 
+	return;
+}
+
+void UBaseVoxelMesh::SetVoxelGridDataListWithSingleData(const TArray<FIntVector>& GridLocationList, const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	ParallelFor(GridLocationList.Num(), [&](const int32 LoopIndex) {
+		if (ULFPGridLibrary::IsLocationValid(GridLocationList[LoopIndex], MeshData.GridSize))
+		{
+			// Find Index
+			const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(GridLocationList[LoopIndex], MeshData.GridSize);
+
+			// Replace Data In Array
+			MeshData.GridData[GridIndex] = GridData;
+		}
+	});
+
+	return;
+}
+
+void UBaseVoxelMesh::SetAllVoxelGridDataWithSingleData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh)
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	ParallelFor(MeshData.MaxIndex, [&](const int32 GridIndex) {
 		// Replace Data In Array
-		MeshData.GridData[GridIndex] = GridDataList[GridIndex];
-	}
+		MeshData.GridData[GridIndex] = GridData;
+	});
 
 	return;
 }
@@ -158,6 +189,36 @@ void UBaseVoxelMesh::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Grid
 	if (VoxelPool) VoxelPool->MarkTrianglesDataListForUpdate(OutBoundList);
 
 	return;
+}
+
+void UBaseVoxelMesh::MarkAllTrianglesDataForUpdate()
+{
+	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
+
+	TSet<FIntVector> OutBoundList;
+
+	for (int32 Z = -1; Z < MeshData.GridSize.Z + 1; Z++)
+	{
+		for (int32 Y = -1; Y < MeshData.GridSize.Y + 1; Y++)
+		{
+			for (int32 X = -1; X < MeshData.GridSize.X + 1; X++)
+			{
+				const FIntVector GridLocation = FIntVector(X, Y, Z);
+
+				if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
+				{
+					MeshData.DataUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(GridLocation, MeshData.GridSize));
+				}
+				else
+				{
+					OutBoundList.Add(GridLocation + PoolVoxelLocation);
+				}
+			}
+
+		}
+	}
+
+	if (VoxelPool) VoxelPool->MarkTrianglesDataListForUpdate(OutBoundList);
 }
 
 const FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData() const

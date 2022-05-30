@@ -25,10 +25,13 @@ public:
 		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridData, const bool bUpdateMesh = true) override;
+		void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridDataList, const bool bUpdateMesh = true) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		void SetAllVoxelGridData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);
+		void SetVoxelGridDataListWithSingleData(const TArray<FIntVector>& GridLocationList, const FLFPVoxelGridData& GridData, const bool bUpdateMesh) override;
+
+	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
+		void SetAllVoxelGridDataWithSingleData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
 		void SetVoxelGridAreaData(const int32 OriginGridIndex, const FIntVector Range, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true);

@@ -103,6 +103,10 @@ public:
 
 	virtual void SetVoxelGridDataList(const TArray<FIntVector>& GridLocationList, const TArray<FLFPVoxelGridData>& GridDataList, const bool bUpdateMesh);
 
+	virtual void SetVoxelGridDataListWithSingleData(const TArray<FIntVector>& GridLocationList, const FLFPVoxelGridData& GridData, const bool bUpdateMesh);
+
+	virtual void SetAllVoxelGridDataWithSingleData(const FLFPVoxelGridData& GridData, const bool bUpdateMesh);
+
 	virtual void UpdateMesh_Internal() { unimplemented(); }  // Override This
 
 
@@ -111,6 +115,8 @@ public:
 	FORCEINLINE void MarkTrianglesDataForUpdate(const FIntVector GridLocation);
 
 	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& GridLocationList);
+
+	FORCEINLINE void MarkAllTrianglesDataForUpdate();
 
 
 	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const;

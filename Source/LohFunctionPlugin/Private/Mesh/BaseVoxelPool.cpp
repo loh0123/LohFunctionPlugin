@@ -3,6 +3,7 @@
 
 #include "Mesh/BaseVoxelPool.h"
 #include "./Math/LFPGridLibrary.h"
+#include "Runtime/Core/Public/Async/ParallelFor.h"
 
 void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, const TSet<FName>& NewMainIgnoreNameList, TSubclassOf<UBaseVoxelMesh> VoxelType)
 {
@@ -38,15 +39,18 @@ void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int3
 	return;
 }
 
-void UBaseVoxelPool::ProcessVoxelUpdate()
+void UBaseVoxelPool::ProcessVoxelUpdate(const int32 Count)
 {
 	if (UpdateList.Num() > 0)
 	{
-		TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList[0];
+		for (int32 LoopIndex = 0; LoopIndex < FMath::Min(Count,UpdateList.Num()); LoopIndex++)
+		{
+			TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList[0];
 
-		VoxelMesh->UpdateMesh_Internal();
+			VoxelMesh->UpdateMesh_Internal();
 
-		UpdateList.RemoveAt(0, 1, false);
+			UpdateList.RemoveAt(0, 1, false);
+		}
 
 		if (UpdateList.GetSlack() > 10)
 		{

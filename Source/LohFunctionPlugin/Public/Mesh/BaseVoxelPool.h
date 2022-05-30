@@ -21,7 +21,7 @@ public:
 		virtual void SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, const TSet<FName>& NewMainIgnoreNameList, TSubclassOf<UBaseVoxelMesh> VoxelType);
 
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool | Function")
-		FORCEINLINE void ProcessVoxelUpdate();
+		FORCEINLINE void ProcessVoxelUpdate(const int32 Count);
 
 
 	FORCEINLINE FLFPVoxelMeshData& GetPoolVoxelData(const int32 PoolIndex);
