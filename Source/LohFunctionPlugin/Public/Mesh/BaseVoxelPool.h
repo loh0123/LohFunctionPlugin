@@ -46,7 +46,7 @@ public:
 
 	
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool")
-		void ReturnMesh(UBaseVoxelMesh* Mesh);
+		void ReturnMesh(const FIntVector PoolLocation);
 
 	
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool")

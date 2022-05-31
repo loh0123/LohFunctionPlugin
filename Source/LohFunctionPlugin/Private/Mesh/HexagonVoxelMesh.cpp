@@ -198,7 +198,7 @@ void UHexagonVoxelMesh::UpdateVertices()
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	TArray<FVector> MeshVertex;
+	//TArray<FVector> MeshVertex;
 
 	const TArray<FVector> PointList = {
 		FVector(0							,MeshData.MeshSize.Y * 0.5	,0),
@@ -211,26 +211,26 @@ void UHexagonVoxelMesh::UpdateVertices()
 
 	const int32 VertexIndexSize = MeshData.VertexSize.X * MeshData.VertexSize.Y * MeshData.VertexSize.Z;
 
-	MeshVertex.SetNum(VertexIndexSize);
+	MeshData.VerticesList.SetNum(VertexIndexSize);
 
 	ParallelFor(VertexIndexSize, [&](const int32 LoopIndex) {
 		const FIntVector VertexLocation = ULFPGridLibrary::IndexToGridLocation(LoopIndex, MeshData.VertexSize);
 	
 		const FVector CurrentHexaPos = (FVector(VertexLocation.X / 4, VertexLocation.Y, VertexLocation.Z / 2) * (MeshData.MeshSize + FVector(MeshData.MeshSize.X * 0.5, 0, 0)) + FVector(0, 0, VertexLocation.Z % 2 == 1 ? MeshData.MeshSize.Z : 0));
 	
-		MeshVertex[LoopIndex] = (PointList[VertexLocation.X % 4] + CurrentHexaPos);
+		MeshData.VerticesList[LoopIndex] = (PointList[VertexLocation.X % 4] + CurrentHexaPos);
 		});
 
-	if (MeshVertex.Num() == 0) return; // Stop If No Vertex To Be Added
+	//if (MeshData.VerticesList.Num() == 0) return; // Stop If No Vertex To Be Added
 
-	EditMesh([&](FDynamicMesh3& EditMesh)
-	{
-		for (FVector& Position : MeshVertex)
-		{
-			int32 NewVertexIndex = EditMesh.AppendVertex(Position);
-		}
-
-	}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+	//EditMesh([&](FDynamicMesh3& EditMesh)
+	//{
+	//	for (FVector& Position : MeshVertex)
+	//	{
+	//		int32 NewVertexIndex = EditMesh.AppendVertex(Position);
+	//	}
+	//
+	//}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
 
 	return;
 }
@@ -340,7 +340,13 @@ void UHexagonVoxelMesh::UpdateTriangles()
 			
 				for (int32 TriangleID = 0; TriangleID < UpdateData.NewTriangleList.Num(); TriangleID++)
 				{
-					const int32 TriIndex = EditMesh.AppendTriangle(UpdateData.NewTriangleList[TriangleID], UpdateData.NewTriangleGroupList[TriangleID]);
+					FIntVector TriVertexIndex;
+
+					TriVertexIndex.X = EditMesh.AppendVertex(MeshData.VerticesList[UpdateData.NewTriangleList[TriangleID].X]);
+					TriVertexIndex.Y = EditMesh.AppendVertex(MeshData.VerticesList[UpdateData.NewTriangleList[TriangleID].Y]);
+					TriVertexIndex.Z = EditMesh.AppendVertex(MeshData.VerticesList[UpdateData.NewTriangleList[TriangleID].Z]);
+
+					const int32 TriIndex = EditMesh.AppendTriangle(TriVertexIndex, UpdateData.NewTriangleGroupList[TriangleID]);
 			
 					MeshData.TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(TriIndex);
 			
@@ -365,7 +371,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 			FMeshNormals::InitializeMeshToPerTriangleNormals(&EditMesh);
 	
-		}, EDynamicMeshChangeType::MeshChange, EDynamicMeshAttributeChangeFlags::Unknown, true);
+		}, EDynamicMeshChangeType::MeshChange, EDynamicMeshAttributeChangeFlags::Unknown, false);
 	}
 }
 

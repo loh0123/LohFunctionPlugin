@@ -241,13 +241,13 @@ void UBaseVoxelMesh::UpdateTriangles()
 			{
 				for (int32 TriangleIndex : MeshData.TriangleDataList[DataIndex].MeshTriangleIndex)
 				{
-					EditMesh.RemoveTriangle(TriangleIndex, false);
+					EditMesh.RemoveTriangle(TriangleIndex);
 				}
 
 				MeshData.TriangleDataList[DataIndex] = FLFPVoxelTriangleData();
 			}
 
-		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, true);
 
 	return;
 }

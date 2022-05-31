@@ -66,6 +66,8 @@ struct FLFPVoxelMeshData
 
 
 
+	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
+		TArray<FVector> VerticesList = {};
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
 		FIntVector VertexSize = FIntVector::NoneValue;
@@ -81,6 +83,7 @@ struct FLFPVoxelMeshData
 
 	FORCEINLINE void Unload()
 	{
+		VerticesList = {};
 		VertexSize = FIntVector::NoneValue;
 		MaxIndex = INDEX_NONE;
 		TriangleDataList = {};

@@ -164,10 +164,14 @@ UBaseVoxelMesh* UBaseVoxelPool::RequestMesh(const FIntVector PoolLocation)
 
 
 
-void UBaseVoxelPool::ReturnMesh(UBaseVoxelMesh* Mesh)
+void UBaseVoxelPool::ReturnMesh(const FIntVector PoolLocation)
 {
+	TObjectPtr<UBaseVoxelMesh> Mesh = *(ActiveMeshes.Find(ULFPGridLibrary::GridLocationToIndex(PoolLocation, PoolGridSize)));
+
 	if (ensure(Mesh) && ensure(AllCreatedMeshes.Contains(Mesh)))
 	{
+		ActiveMeshes.Remove(ULFPGridLibrary::GridLocationToIndex(PoolLocation, PoolGridSize));
+
 		Mesh->ClearPool();
 		Mesh->Reset();
 
@@ -183,10 +187,13 @@ void UBaseVoxelPool::ReturnAllMeshes()
 {
 	CachedMeshes = AllCreatedMeshes.Array();
 
+	AllCreatedMeshes.Empty();
+
 	for (UBaseVoxelMesh* Mesh : CachedMeshes)
 	{
 		if (Mesh)
 		{
+			Mesh->ClearPool();
 			Mesh->Reset();
 		}
 	}

@@ -8,8 +8,8 @@
 #include "UObject/ScriptMacros.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
-class UBaseVoxelMesh;
 struct FIntVector;
+class UBaseVoxelMesh;
 #ifdef LOHFUNCTIONPLUGIN_BaseVoxelPool_generated_h
 #error "BaseVoxelPool.generated.h already included, missing '#pragma once' in BaseVoxelPool.h"
 #endif
