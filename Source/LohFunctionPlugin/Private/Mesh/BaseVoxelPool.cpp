@@ -5,7 +5,7 @@
 #include "./Math/LFPGridLibrary.h"
 #include "Runtime/Core/Public/Async/ParallelFor.h"
 
-void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, const TSet<FName>& NewMainIgnoreNameList, TSubclassOf<UBaseVoxelMesh> VoxelType)
+void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, TSubclassOf<UBaseVoxelMesh> VoxelType)
 {
 	FreeAllMeshes();
 
@@ -14,12 +14,10 @@ void UBaseVoxelPool::SetupVoxelPool(const FIntVector NewPoolGridSize, const int3
 	PoolGridSize = NewPoolGridSize;
 	MainMeshSize = NewMainMeshSize;
 	MainGridSize = NewMainGridSize;
-	MainIgnoreNameList = NewMainIgnoreNameList;
 
 	FLFPVoxelMeshData VoxelDataToFill;
 
 	VoxelDataToFill.GridSize = MainGridSize;
-	VoxelDataToFill.IgnoreNameList = MainIgnoreNameList;
 	VoxelDataToFill.MeshSize = MainMeshSize;
 	VoxelDataToFill.MaxIndex = MainGridSize.X * MainGridSize.Y * MainGridSize.Z;
 
@@ -45,11 +43,9 @@ void UBaseVoxelPool::ProcessVoxelUpdate(const int32 Count)
 	{
 		for (int32 LoopIndex = 0; LoopIndex < FMath::Min(Count,UpdateList.Num()); LoopIndex++)
 		{
-			TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList[0];
+			TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList.Pop();
 
 			VoxelMesh->UpdateMesh_Internal();
-
-			UpdateList.RemoveAt(0, 1, false);
 		}
 
 		if (UpdateList.GetSlack() > 10)
@@ -128,10 +124,13 @@ bool UBaseVoxelPool::IsBlockVisible(const FIntVector PoolVoxelLocation) const
 {
 	const int32 PoolIndex = PoolVoxelLocationToPoolIndex(PoolVoxelLocation);
 
-	// Check is PoolIndex valid or GridData has been initialize
-	if (!PoolVoxelData.IsValidIndex(PoolIndex) || PoolVoxelData[PoolIndex].GridData.Num() == 0) return false;
+	// Check is PoolIndex valid
+	if (!PoolVoxelData.IsValidIndex(PoolIndex)) return false;
 
-	return !MainIgnoreNameList.Contains(PoolVoxelData[PoolIndex].GridData[ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize)].BlockName);
+	// Check is PoolIndex initialized
+	if (PoolVoxelData[PoolIndex].GridData.IsEmpty()) return true;
+
+	return PoolVoxelData[PoolIndex].GridData[ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize)].IsVisible;
 }
 
 void UBaseVoxelPool::AddVoxelUpdate(TObjectPtr<UBaseVoxelMesh> VoxelMesh)

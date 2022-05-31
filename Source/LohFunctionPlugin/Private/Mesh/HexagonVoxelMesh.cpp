@@ -36,9 +36,9 @@ void UHexagonVoxelMesh::SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const
 	UpdateMesh();
 }
 
-void UHexagonVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData)
+void UHexagonVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TArray<FLFPVoxelGridData>& GridData)
 {
-	Super::SetupMesh(MeshSize, GridSize, IgnoreNameList, GridData);
+	Super::SetupMesh(MeshSize, GridSize, GridData);
 
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{

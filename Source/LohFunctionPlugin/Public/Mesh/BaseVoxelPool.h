@@ -18,7 +18,7 @@ class LOHFUNCTIONPLUGIN_API UBaseVoxelPool : public UObject
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool | Function")
-		virtual void SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, const TSet<FName>& NewMainIgnoreNameList, TSubclassOf<UBaseVoxelMesh> VoxelType);
+		virtual void SetupVoxelPool(const FIntVector NewPoolGridSize, const int32 NewAllowMeshSize, const FVector NewMainMeshSize, const FIntVector NewMainGridSize, TSubclassOf<UBaseVoxelMesh> VoxelType);
 
 	UFUNCTION(BlueprintCallable, Category = "BaseVoxelPool | Function")
 		FORCEINLINE void ProcessVoxelUpdate(const int32 Count);
@@ -87,7 +87,4 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelPool | Setting")
 		FIntVector MainGridSize = FIntVector(1);
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelPool | Setting")
-		TSet<FName> MainIgnoreNameList = { FName("Air") };
 };

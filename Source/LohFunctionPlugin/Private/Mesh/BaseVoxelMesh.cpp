@@ -40,8 +40,7 @@ void UBaseVoxelMesh::ClearPool()
 
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
-	MeshData.TriangleDataList.Empty();
-	MeshData.DataUpdateList.Empty();
+	MeshData.Unload();
 
 	VoxelPool = nullptr;
 	PoolLocation = FIntVector::NoneValue;
@@ -51,7 +50,7 @@ void UBaseVoxelMesh::ClearPool()
 	return;
 }
 
-void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData)
+void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TArray<FLFPVoxelGridData>& GridData)
 {
 	FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
@@ -62,7 +61,6 @@ void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize
 
 	MeshData.MeshSize = MeshSize;
 	MeshData.GridSize = GridSize;
-	MeshData.IgnoreNameList = IgnoreNameList;
 
 	MeshData.MaxIndex = GridSize.X * GridSize.Y * GridSize.Z;
 
@@ -260,7 +258,7 @@ bool UBaseVoxelMesh::IsBlockVisible(const FIntVector GridLocation) const
 
 	if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
 	{
-		return !MeshData.IgnoreNameList.Contains(MeshData.GridData[ULFPGridLibrary::GridLocationToIndex(GridLocation, GetVoxelMeshData().GridSize)].BlockName);
+		return MeshData.GridData[ULFPGridLibrary::GridLocationToIndex(GridLocation, GetVoxelMeshData().GridSize)].IsVisible;
 	}
 	else if (VoxelPool) // If connected to voxel pool than check location on it
 	{

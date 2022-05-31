@@ -19,7 +19,7 @@ public:
 		void SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FIntVector NewPoolLocation, const int32 NewPoolIndex) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
-		void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData) override;
+		void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TArray<FLFPVoxelGridData>& GridData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
 		void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh = true) override;

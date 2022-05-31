@@ -150,9 +150,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelGridData>(
 #endif
 		static void* NewStructOps();
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_BlockName_MetaData[];
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_IsVisible_MetaData[];
 #endif
-		static const UECodeGen_Private::FNamePropertyParams NewProp_BlockName;
+		static void NewProp_IsVisible_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_IsVisible;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_CustomData_Inner;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_CustomData_MetaData[];
@@ -176,12 +177,16 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelGridData>(
 		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FLFPVoxelGridData>();
 	}
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_BlockName_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible_MetaData[] = {
 		{ "Category", "LFPVoxelGridData" },
 		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
 	};
 #endif
-	const UECodeGen_Private::FNamePropertyParams Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_BlockName = { "BlockName", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Name, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelGridData, BlockName), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_BlockName_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_BlockName_MetaData)) };
+	void Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible_SetBit(void* Obj)
+	{
+		((FLFPVoxelGridData*)Obj)->IsVisible = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible = { "IsVisible", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(FLFPVoxelGridData), &Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible_SetBit, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_CustomData_Inner = { "CustomData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FVector2D, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_CustomData_MetaData[] = {
@@ -198,7 +203,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelGridData>(
 #endif
 	const UECodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_MaterialID = { "MaterialID", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelGridData, MaterialID), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_MaterialID_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_MaterialID_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::PropPointers[] = {
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_BlockName,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_IsVisible,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_CustomData_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_CustomData,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewProp_MaterialID,
@@ -326,11 +331,6 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_GridSize_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_GridSize;
-		static const UECodeGen_Private::FNamePropertyParams NewProp_IgnoreNameList_ElementProp;
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_IgnoreNameList_MetaData[];
-#endif
-		static const UECodeGen_Private::FSetPropertyParams NewProp_IgnoreNameList;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_VertexSize_MetaData[];
 #endif
@@ -362,14 +362,14 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 	{
 		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FLFPVoxelMeshData>();
 	}
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_Inner = { "GridData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelGridData, METADATA_PARAMS(nullptr, 0) }; // 4094411625
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_Inner = { "GridData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelGridData, METADATA_PARAMS(nullptr, 0) }; // 68362500
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_MetaData[] = {
 		{ "Category", "LFPVoxelData" },
 		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData = { "GridData", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelMeshData, GridData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_MetaData)) }; // 4094411625
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData = { "GridData", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelMeshData, GridData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData_MetaData)) }; // 68362500
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_MeshSize_MetaData[] = {
 		{ "Category", "LFPVoxelData | Setting" },
@@ -384,14 +384,6 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridSize = { "GridSize", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelMeshData, GridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridSize_MetaData)) };
-	const UECodeGen_Private::FNamePropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList_ElementProp = { "IgnoreNameList", nullptr, (EPropertyFlags)0x0000000000000001, UECodeGen_Private::EPropertyGenFlags::Name, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList_MetaData[] = {
-		{ "Category", "LFPVoxelData | Setting" },
-		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
-	};
-#endif
-	const UECodeGen_Private::FSetPropertyParams Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList = { "IgnoreNameList", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelMeshData, IgnoreNameList), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList_MetaData)) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_VertexSize_MetaData[] = {
 		{ "Category", "LFPVoxelData | Cache" },
@@ -427,8 +419,6 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridData,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_MeshSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_GridSize,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList_ElementProp,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_IgnoreNameList,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_VertexSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_MaxIndex,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewProp_TriangleDataList_Inner,
@@ -512,7 +502,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
 	};
 #endif
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData = { "LocalVoxelData", nullptr, (EPropertyFlags)0x0040000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UBaseVoxelMesh, LocalVoxelData), Z_Construct_UScriptStruct_FLFPVoxelMeshData, METADATA_PARAMS(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData_MetaData)) }; // 705240297
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData = { "LocalVoxelData", nullptr, (EPropertyFlags)0x0040000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UBaseVoxelMesh, LocalVoxelData), Z_Construct_UScriptStruct_FLFPVoxelMeshData, METADATA_PARAMS(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_LocalVoxelData_MetaData)) }; // 4260804211
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_VoxelPool_MetaData[] = {
 		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
@@ -582,14 +572,14 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelMeshData>(
 	};
 	const FStructRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo[] = {
 		{ FLFPVoxelTriangleUpdateData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelTriangleUpdateData_Statics::NewStructOps, TEXT("LFPVoxelTriangleUpdateData"), &Z_Registration_Info_UScriptStruct_LFPVoxelTriangleUpdateData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelTriangleUpdateData), 3094486123U) },
-		{ FLFPVoxelGridData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewStructOps, TEXT("LFPVoxelGridData"), &Z_Registration_Info_UScriptStruct_LFPVoxelGridData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelGridData), 4094411625U) },
+		{ FLFPVoxelGridData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelGridData_Statics::NewStructOps, TEXT("LFPVoxelGridData"), &Z_Registration_Info_UScriptStruct_LFPVoxelGridData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelGridData), 68362500U) },
 		{ FLFPVoxelTriangleData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelTriangleData_Statics::NewStructOps, TEXT("LFPVoxelTriangleData"), &Z_Registration_Info_UScriptStruct_LFPVoxelTriangleData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelTriangleData), 2785686119U) },
-		{ FLFPVoxelMeshData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewStructOps, TEXT("LFPVoxelMeshData"), &Z_Registration_Info_UScriptStruct_LFPVoxelMeshData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelMeshData), 705240297U) },
+		{ FLFPVoxelMeshData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelMeshData_Statics::NewStructOps, TEXT("LFPVoxelMeshData"), &Z_Registration_Info_UScriptStruct_LFPVoxelMeshData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelMeshData), 4260804211U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UBaseVoxelMesh, UBaseVoxelMesh::StaticClass, TEXT("UBaseVoxelMesh"), &Z_Registration_Info_UClass_UBaseVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelMesh), 1999954576U) },
+		{ Z_Construct_UClass_UBaseVoxelMesh, UBaseVoxelMesh::StaticClass, TEXT("UBaseVoxelMesh"), &Z_Registration_Info_UClass_UBaseVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelMesh), 1956885198U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_813308958(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_28400962(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo),
 		nullptr, 0);

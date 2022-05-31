@@ -32,7 +32,7 @@ struct FLFPVoxelGridData
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridData")
-		FName BlockName = FName("Air");
+		bool IsVisible = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridData")
 		TArray<FVector2D> CustomData = {};
@@ -64,14 +64,11 @@ struct FLFPVoxelMeshData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData | Setting")
 		FIntVector GridSize = FIntVector(1);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData | Setting")
-		TSet<FName> IgnoreNameList = { FName("Air") };
-
 
 
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		FIntVector VertexSize = FIntVector(INDEX_NONE);
+		FIntVector VertexSize = FIntVector::NoneValue;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelData | Cache")
 		int32 MaxIndex = INDEX_NONE;
@@ -81,6 +78,14 @@ struct FLFPVoxelMeshData
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
 		TSet<int32> DataUpdateList = {};
+
+	FORCEINLINE void Unload()
+	{
+		VertexSize = FIntVector::NoneValue;
+		MaxIndex = INDEX_NONE;
+		TriangleDataList = {};
+		DataUpdateList = {};
+	}
 };
 
 /**
@@ -97,7 +102,7 @@ public:
 
 	virtual void ClearPool();
 
-	virtual void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TSet<FName>& IgnoreNameList, const TArray<FLFPVoxelGridData>& GridData);
+	virtual void SetupMesh(const FVector MeshSize, const FIntVector GridSize, const TArray<FLFPVoxelGridData>& GridData);
 
 	virtual void SetVoxelGridData(const FIntVector GridLocation, const FLFPVoxelGridData& GridData, const bool bUpdateMesh);
 
