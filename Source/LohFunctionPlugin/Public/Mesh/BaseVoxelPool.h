@@ -34,7 +34,7 @@ public:
 
 	FORCEINLINE void MarkTrianglesDataListForUpdate(const TSet<FIntVector>& PoolVoxelLocationList);
 
-	FORCEINLINE bool IsBlockVisible(const FIntVector PoolVoxelLocation) const;
+	FORCEINLINE bool IsBlockVisible(const FIntVector PoolVoxelLocation, const int32 SelfMaterialID) const;
 
 
 	FORCEINLINE void AddVoxelUpdate(TObjectPtr<UBaseVoxelMesh> VoxelMesh);

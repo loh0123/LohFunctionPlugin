@@ -17,7 +17,7 @@ struct FLFPVoxelTriangleUpdateData
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY() int32 GridIndex = -1;
+	UPROPERTY() int32 GridIndex = INDEX_NONE;
 
 	UPROPERTY() TArray<FIntVector> NewTriangleList;
 
@@ -55,14 +55,21 @@ struct FLFPVoxelMeshData
 {
 	GENERATED_USTRUCT_BODY()
 
+	FLFPVoxelMeshData() {}
+
+	FLFPVoxelMeshData(const FLFPVoxelMeshData& Data) : GridData(Data.GridData), MeshSize(Data.MeshSize), GridSize(Data.GridSize) {}
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData")
-		TArray<FLFPVoxelGridData> GridData;
+		TArray<FLFPVoxelGridData> GridData = {};
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData | Setting")
 		FVector MeshSize = FVector(400, 346.4, 300);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData | Setting")
 		FIntVector GridSize = FIntVector(1);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelData")
+		bool IsInitialized = false;
 
 
 
@@ -83,11 +90,25 @@ struct FLFPVoxelMeshData
 
 	FORCEINLINE void Unload()
 	{
-		VerticesList = {};
+		VerticesList.Empty();
 		VertexSize = FIntVector::NoneValue;
 		MaxIndex = INDEX_NONE;
-		TriangleDataList = {};
-		DataUpdateList = {};
+		TriangleDataList.Empty();
+		DataUpdateList.Empty();
+	}
+
+	FORCEINLINE void Load()
+	{
+		MaxIndex = GridSize.X * GridSize.Y * GridSize.Z;
+		TriangleDataList.SetNum(MaxIndex);
+		GridData.SetNum(MaxIndex);
+
+		DataUpdateList.Reserve(MaxIndex);
+
+		for (int32 TriIndex = 0; TriIndex < FMath::Min(MaxIndex, GridData.Num()); TriIndex++)
+		{
+			DataUpdateList.Add(TriIndex);
+		}
 	}
 };
 
@@ -98,6 +119,13 @@ UCLASS()
 class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 {
 	GENERATED_BODY()
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVoxelBeginGenerator, UBaseVoxelMesh*, VoxelMesh);
+
+public:
+
+	UPROPERTY(BlueprintAssignable)
+		FOnVoxelBeginGenerator OnBeginGenerator;
 
 public:
 
@@ -129,6 +157,11 @@ public:
 
 	FORCEINLINE const FLFPVoxelMeshData& GetVoxelMeshData() const;
 
+
+	FORCEINLINE bool IsInitialized() const;
+
+	FORCEINLINE void SetInitialized(const bool Value);
+
 protected:
 
 	FORCEINLINE FLFPVoxelMeshData& GetVoxelMeshData();
@@ -142,7 +175,7 @@ protected:
 
 	FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList) { unimplemented(); }  // Override This
 
-	FORCEINLINE bool IsBlockVisible(const FIntVector GridLocation) const;
+	FORCEINLINE bool IsBlockVisible(const FIntVector GridLocation, const int32 SelfMaterialID) const;
 
 private:
 

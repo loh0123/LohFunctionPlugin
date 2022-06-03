@@ -45,6 +45,13 @@ void UBaseVoxelPool::ProcessVoxelUpdate(const int32 Count)
 		{
 			TObjectPtr<UBaseVoxelMesh> VoxelMesh = UpdateList.Pop();
 
+			if (!VoxelMesh->IsInitialized())
+			{
+				VoxelMesh->SetInitialized(true);
+
+				VoxelMesh->OnBeginGenerator.Broadcast(VoxelMesh);
+			}
+
 			VoxelMesh->UpdateMesh_Internal();
 		}
 
@@ -112,7 +119,7 @@ void UBaseVoxelPool::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Pool
 		UpdateMeshList.Add(VoxelMesh);
 	}
 
-	for (UBaseVoxelMesh* VoxelMesh : UpdateMeshList)
+	for (TObjectPtr<UBaseVoxelMesh> VoxelMesh : UpdateMeshList)
 	{
 		VoxelMesh->UpdateMesh(); // Refactor later
 	}
@@ -120,7 +127,7 @@ void UBaseVoxelPool::MarkTrianglesDataListForUpdate(const TSet<FIntVector>& Pool
 	return;
 }
 
-bool UBaseVoxelPool::IsBlockVisible(const FIntVector PoolVoxelLocation) const
+bool UBaseVoxelPool::IsBlockVisible(const FIntVector PoolVoxelLocation, const int32 SelfMaterialID) const
 {
 	const int32 PoolIndex = PoolVoxelLocationToPoolIndex(PoolVoxelLocation);
 
@@ -128,14 +135,16 @@ bool UBaseVoxelPool::IsBlockVisible(const FIntVector PoolVoxelLocation) const
 	if (!PoolVoxelData.IsValidIndex(PoolIndex)) return false;
 
 	// Check is PoolIndex initialized
-	if (PoolVoxelData[PoolIndex].GridData.IsEmpty()) return true;
+	if (!PoolVoxelData[PoolIndex].IsInitialized) return true;
 
-	return PoolVoxelData[PoolIndex].GridData[ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize)].IsVisible;
+	const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(PoolVoxelLocationToVoxelLocation(PoolVoxelLocation), MainGridSize);
+
+	return PoolVoxelData[PoolIndex].GridData[GridIndex].IsVisible ? PoolVoxelData[PoolIndex].GridData[GridIndex].MaterialID == SelfMaterialID : false;
 }
 
 void UBaseVoxelPool::AddVoxelUpdate(TObjectPtr<UBaseVoxelMesh> VoxelMesh)
 {
-	if (UpdateList.Num() == 0 || UpdateList.Last() != VoxelMesh) UpdateList.Add(VoxelMesh);
+	if (UpdateList.Num() == 0 || UpdateList.Last() != VoxelMesh) UpdateList.AddUnique(VoxelMesh);
 
 	return;
 }
@@ -146,7 +155,7 @@ UBaseVoxelMesh* UBaseVoxelPool::RequestMesh(const FIntVector PoolLocation)
 {
 	if (CachedMeshes.Num() > 0 && ULFPGridLibrary::IsLocationValid(PoolLocation, PoolGridSize))
 	{
-		UBaseVoxelMesh* OutMesh = CachedMeshes.Pop(false);
+		TObjectPtr<UBaseVoxelMesh> OutMesh = CachedMeshes.Pop(false);
 
 		const int32 PoolIndex = ULFPGridLibrary::GridLocationToIndex(PoolLocation, PoolGridSize);
 
@@ -189,7 +198,7 @@ void UBaseVoxelPool::ReturnAllMeshes()
 
 	AllCreatedMeshes.Empty();
 
-	for (UBaseVoxelMesh* Mesh : CachedMeshes)
+	for (TObjectPtr<UBaseVoxelMesh> Mesh : CachedMeshes)
 	{
 		if (Mesh)
 		{
@@ -199,7 +208,7 @@ void UBaseVoxelPool::ReturnAllMeshes()
 	}
 
 	// TODO: this may be vestigial code, unclear how it could be hit
-	int32 Removed = CachedMeshes.RemoveAll([](UBaseVoxelMesh* Mesh) { return Mesh == nullptr; });
+	int32 Removed = CachedMeshes.RemoveAll([](TObjectPtr<UBaseVoxelMesh> Mesh) { return Mesh == nullptr; });
 	ensure(Removed == 0);
 }
 

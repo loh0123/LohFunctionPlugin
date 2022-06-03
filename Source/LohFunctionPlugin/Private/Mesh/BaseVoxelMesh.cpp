@@ -13,23 +13,14 @@ void UBaseVoxelMesh::SetupPool(TObjectPtr<UBaseVoxelPool> NewVoxelPool, const FI
 {
 	checkf(NewVoxelPool, TEXT("Voxel Pool Can't Be Invalid"));
 
+	FLFPVoxelMeshData& MeshData = NewVoxelPool->PoolVoxelData[NewPoolIndex];
+
 	VoxelPool = NewVoxelPool;
 	PoolLocation = NewPoolLocation;
 	PoolIndex = NewPoolIndex;
-
-	FLFPVoxelMeshData& MeshData = NewVoxelPool->PoolVoxelData[NewPoolIndex];
-
 	PoolVoxelLocation = FIntVector(NewPoolLocation.X * MeshData.GridSize.X, NewPoolLocation.Y * MeshData.GridSize.Y, NewPoolLocation.Z * MeshData.GridSize.Z);
 
-	MeshData.GridData.SetNum(MeshData.MaxIndex);
-	MeshData.TriangleDataList.SetNum(MeshData.MaxIndex);
-
-	MeshData.DataUpdateList.Reserve(MeshData.MaxIndex);
-
-	for (int32 TriIndex = 0; TriIndex < MeshData.MaxIndex; TriIndex++)
-	{
-		MeshData.DataUpdateList.Add(TriIndex);
-	}
+	MeshData.Load();
 	
 	return;
 }
@@ -61,19 +52,15 @@ void UBaseVoxelMesh::SetupMesh(const FVector MeshSize, const FIntVector GridSize
 
 	MeshData.MeshSize = MeshSize;
 	MeshData.GridSize = GridSize;
-
-	MeshData.MaxIndex = GridSize.X * GridSize.Y * GridSize.Z;
-
 	MeshData.GridData = GridData;
-	MeshData.GridData.SetNum(MeshData.MaxIndex);
-	MeshData.TriangleDataList.SetNum(MeshData.MaxIndex);
 
-	MeshData.DataUpdateList.Reserve(MeshData.MaxIndex);
+	MeshData.Load();
 
-
-	for (int32 TriIndex = 0; TriIndex < FMath::Min(MeshData.MaxIndex, GridData.Num()); TriIndex++)
+	if (!MeshData.IsInitialized)
 	{
-		MeshData.DataUpdateList.Add(TriIndex);
+		MeshData.IsInitialized = true;
+
+		OnBeginGenerator.Broadcast(this);
 	}
 
 	return;
@@ -224,6 +211,18 @@ const FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData() const
 	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
 }
 
+bool UBaseVoxelMesh::IsInitialized() const
+{
+	return GetVoxelMeshData().IsInitialized;
+}
+
+void UBaseVoxelMesh::SetInitialized(const bool Value)
+{
+	GetVoxelMeshData().IsInitialized = Value;
+
+	return;
+}
+
 FLFPVoxelMeshData& UBaseVoxelMesh::GetVoxelMeshData()
 {
 	return VoxelPool ? VoxelPool->PoolVoxelData[PoolIndex] : LocalVoxelData;
@@ -252,19 +251,23 @@ void UBaseVoxelMesh::UpdateTriangles()
 	return;
 }
 
-bool UBaseVoxelMesh::IsBlockVisible(const FIntVector GridLocation) const
+bool UBaseVoxelMesh::IsBlockVisible(const FIntVector GridLocation, const int32 SelfMaterialID) const
 {
 	const FLFPVoxelMeshData& MeshData = GetVoxelMeshData();
 
 	if (ULFPGridLibrary::IsLocationValid(GridLocation, MeshData.GridSize))
 	{
-		return MeshData.GridData[ULFPGridLibrary::GridLocationToIndex(GridLocation, GetVoxelMeshData().GridSize)].IsVisible;
+		const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(GridLocation, GetVoxelMeshData().GridSize);
+
+		return MeshData.GridData[GridIndex].IsVisible ? MeshData.GridData[GridIndex].MaterialID == SelfMaterialID : false;
 	}
 	else if (VoxelPool) // If connected to voxel pool than check location on it
 	{
-		return VoxelPool->IsBlockVisible(GridLocation + PoolVoxelLocation);
+		return VoxelPool->IsBlockVisible(GridLocation + PoolVoxelLocation, SelfMaterialID);
 	}
-
-	return false;
+	else 
+	{
+		return false;
+	}
 }
 

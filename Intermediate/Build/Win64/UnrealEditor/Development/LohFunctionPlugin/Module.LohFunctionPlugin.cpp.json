@@ -108,9 +108,7 @@
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\plugins\\runtime\\geometryprocessing\\source\\dynamicmesh\\public\\edgespan.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\polyline3.h",
             "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\segmenttypes.h",
-            "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\linetypes.h",
-            "d:\\epic game\\unreal engine\\ue_5.0\\engine\\plugins\\runtime\\geometryprocessing\\source\\dynamicmesh\\public\\operations\\meshbevel.h",
-            "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\util\\progresscancel.h"
+            "d:\\epic game\\unreal engine\\ue_5.0\\engine\\source\\runtime\\geometrycore\\public\\linetypes.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []
