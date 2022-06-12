@@ -8,8 +8,7 @@
 #include "UObject/ScriptMacros.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
-struct FIntVector;
-struct FLFPVoxelGridData;
+class ULFPVoxelData;
 #ifdef LOHFUNCTIONPLUGIN_HexagonVoxelMesh_generated_h
 #error "HexagonVoxelMesh.generated.h already included, missing '#pragma once' in HexagonVoxelMesh.h"
 #endif
@@ -18,23 +17,13 @@ struct FLFPVoxelGridData;
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_SPARSE_DATA
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS \
  \
-	DECLARE_FUNCTION(execUpdateMesh); \
-	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
-	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataList); \
-	DECLARE_FUNCTION(execSetVoxelGridData); \
+	DECLARE_FUNCTION(execMarkVoxelDataForUpdate); \
 	DECLARE_FUNCTION(execSetupMesh);
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS_NO_PURE_DECLS \
  \
-	DECLARE_FUNCTION(execUpdateMesh); \
-	DECLARE_FUNCTION(execSetVoxelGridAreaData); \
-	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataList); \
-	DECLARE_FUNCTION(execSetVoxelGridData); \
+	DECLARE_FUNCTION(execMarkVoxelDataForUpdate); \
 	DECLARE_FUNCTION(execSetupMesh);
 
 

@@ -2,8 +2,11 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.cpp.obj": [
+			"VoxelChuckActor.cpp.obj",
+			"LFPVoxelData.cpp.obj",
 			"LFPTickManager.cpp.obj",
 			"LFPWorldGrid.cpp.obj",
+			"VoxelChuckManager.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginBPLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
@@ -11,21 +14,22 @@
 			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
 			"BaseVoxelMesh.cpp.obj",
-			"BaseVoxelPool.cpp.obj",
 			"HexagonVoxelMesh.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"BaseVoxelMesh.gen.cpp.obj",
-			"BaseVoxelPool.gen.cpp.obj",
 			"HexagonVoxelMesh.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTickManager.gen.cpp.obj",
+			"LFPVoxelData.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
-			"LohFunctionPluginBPLibrary.gen.cpp.obj"
+			"LohFunctionPluginBPLibrary.gen.cpp.obj",
+			"VoxelChuckActor.gen.cpp.obj",
+			"VoxelChuckManager.gen.cpp.obj"
 		]
 	}
 }

@@ -10,6 +10,8 @@ bool ULFPGridLibrary::IsLocationValid(const FIntVector& Location, const FIntVect
 
 int32 ULFPGridLibrary::GridLocationToIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
+	if (Location.GetMin() < 0 || Location.X >= GridSize.X || Location.Y >= GridSize.Y || Location.Z >= GridSize.Z) return INDEX_NONE;
+
 	return Location.X + (Location.Y * GridSize.X) + (Location.Z * (GridSize.X * GridSize.Y));
 }
 
