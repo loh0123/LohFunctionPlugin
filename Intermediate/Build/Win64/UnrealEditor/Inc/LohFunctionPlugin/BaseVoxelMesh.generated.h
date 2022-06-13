@@ -28,18 +28,8 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPVoxelTri
 template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPVoxelTriangleData>();
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_SPARSE_DATA
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_RPC_WRAPPERS \
- \
-	DECLARE_FUNCTION(execMarkTrianglesDataForUpdate); \
-	DECLARE_FUNCTION(execUpdateMesh);
-
-
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_RPC_WRAPPERS_NO_PURE_DECLS \
- \
-	DECLARE_FUNCTION(execMarkTrianglesDataForUpdate); \
-	DECLARE_FUNCTION(execUpdateMesh);
-
-
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_RPC_WRAPPERS
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_RPC_WRAPPERS_NO_PURE_DECLS
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_45_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesUBaseVoxelMesh(); \

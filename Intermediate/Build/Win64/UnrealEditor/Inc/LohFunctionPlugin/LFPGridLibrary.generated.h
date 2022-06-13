@@ -25,6 +25,7 @@ struct FRandomStream;
 	DECLARE_FUNCTION(execIndexToGridLocation); \
 	DECLARE_FUNCTION(execGridLocationsToIndex); \
 	DECLARE_FUNCTION(execGridLocationToIndex); \
+	DECLARE_FUNCTION(execIsOnGridEdge); \
 	DECLARE_FUNCTION(execIsLocationValid);
 
 
@@ -37,6 +38,7 @@ struct FRandomStream;
 	DECLARE_FUNCTION(execIndexToGridLocation); \
 	DECLARE_FUNCTION(execGridLocationsToIndex); \
 	DECLARE_FUNCTION(execGridLocationToIndex); \
+	DECLARE_FUNCTION(execIsOnGridEdge); \
 	DECLARE_FUNCTION(execIsLocationValid);
 
 

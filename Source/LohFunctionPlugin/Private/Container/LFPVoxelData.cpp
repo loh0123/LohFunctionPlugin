@@ -45,6 +45,30 @@ void ULFPVoxelData::InitializeChuck(const int32 ChuckIndex)
 	return;
 }
 
+void ULFPVoxelData::UpdateChuck()
+{
+	TArray<int32> UpdateChuckArray = UpdateChuckList.Array();
+
+	for (const int32 ChuckIndex : UpdateChuckArray)
+	{
+		if (ChuckData.IsValidIndex(ChuckIndex))
+		{
+			ChuckData[ChuckIndex].VoxelUpdateEvent.ExecuteIfBound();
+		}
+	}
+
+	UpdateChuckList.Empty();
+
+	return;
+}
+
+void ULFPVoxelData::MarkChuckForUpdate(const int32 ChuckIndex)
+{
+	UpdateChuckList.Add(ChuckIndex);
+
+	return;
+}
+
 void ULFPVoxelData::SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize)
 {
 	PoolLength = NewPoolGridSize.X * NewPoolGridSize.Y * NewPoolGridSize.Z;
@@ -89,18 +113,25 @@ void ULFPVoxelData::SetVoxelGridData(const FIntVector VoxelGridLocation, const F
 	int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ChuckGridSize.X, VoxelGridLocation.Y / ChuckGridSize.Y, VoxelGridLocation.Z / ChuckGridSize.Z), PoolGridSize);
 	int32 VoxelChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ChuckGridSize.X, VoxelGridLocation.Y % ChuckGridSize.Y, VoxelGridLocation.Z % ChuckGridSize.Z), ChuckGridSize);
 
+	UE_LOG(LogTemp, Warning, TEXT("The ChuckIndex value is: %d | The VoxelChuckIndex value is: %d"), ChuckIndex, VoxelChuckIndex);
+
 	if (ChuckData.IsValidIndex(ChuckIndex) && 
 		InitializedList[ChuckIndex] && 
 		ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex))
 	{
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex] = VoxelAttribute;
 
-		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex);
+		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex, true);
 
 		if (bUpdateMesh)
 		{
-			OnChuckUpdate.Broadcast();
+			UpdateChuck();
 		}
+	}
+	else if (ChuckData.IsValidIndex(ChuckIndex))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The InitializedList value is %s"), (InitializedList[ChuckIndex] ? TEXT("true") : TEXT("false")));
+		UE_LOG(LogTemp, Warning, TEXT("The VoxelData Index value is %s"), (ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex) ? TEXT("true") : TEXT("false")));
 	}
 
 	return;
@@ -115,7 +146,7 @@ void ULFPVoxelData::SetVoxelGridDataList(const TArray<FIntVector>& VoxelGridLoca
 
 	if (bUpdateMesh)
 	{
-		OnChuckUpdate.Broadcast();
+		UpdateChuck();
 	}
 
 	return;
@@ -130,7 +161,7 @@ void ULFPVoxelData::SetVoxelGridDataListWithSingleData(const TArray<FIntVector>&
 
 	if (bUpdateMesh)
 	{
-		OnChuckUpdate.Broadcast();
+		UpdateChuck();
 	}
 
 	return;
@@ -138,7 +169,7 @@ void ULFPVoxelData::SetVoxelGridDataListWithSingleData(const TArray<FIntVector>&
 
 void ULFPVoxelData::SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, const FLFPVoxelAttribute& VoxelAttribute, const bool bUpdateMesh)
 {
-	if (!ChuckData.IsValidIndex(ChuckIndex)) return;
+	if (!ChuckData.IsValidIndex(ChuckIndex) || !InitializedList[ChuckIndex]) return;
 
 	const int32 ChuckGridMaxIndex = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
 
@@ -146,12 +177,12 @@ void ULFPVoxelData::SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, co
 	{
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex] = VoxelAttribute;
 
-		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex);
+		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex, ULFPGridLibrary::IsOnGridEdge(ULFPGridLibrary::IndexToGridLocation(VoxelChuckIndex, ChuckGridSize), ChuckGridSize));
 	}
 
 	if (bUpdateMesh)
 	{
-		OnChuckUpdate.Broadcast();
+		UpdateChuck();
 	}
 
 	return;

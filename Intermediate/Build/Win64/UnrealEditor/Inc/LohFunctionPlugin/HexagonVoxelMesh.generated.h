@@ -17,13 +17,11 @@ class ULFPVoxelData;
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_SPARSE_DATA
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS \
  \
-	DECLARE_FUNCTION(execMarkVoxelDataForUpdate); \
 	DECLARE_FUNCTION(execSetupMesh);
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_15_RPC_WRAPPERS_NO_PURE_DECLS \
  \
-	DECLARE_FUNCTION(execMarkVoxelDataForUpdate); \
 	DECLARE_FUNCTION(execSetupMesh);
 
 

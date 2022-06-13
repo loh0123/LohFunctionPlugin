@@ -8,6 +8,11 @@ bool ULFPGridLibrary::IsLocationValid(const FIntVector& Location, const FIntVect
 	return (Location.GetMin() >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z);
 }
 
+bool ULFPGridLibrary::IsOnGridEdge(const FIntVector& Location, const FIntVector& GridSize)
+{
+	return Location.GetMin() == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
+}
+
 int32 ULFPGridLibrary::GridLocationToIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
 	if (Location.GetMin() < 0 || Location.X >= GridSize.X || Location.Y >= GridSize.Y || Location.Z >= GridSize.Z) return INDEX_NONE;

@@ -19,10 +19,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HexagonVoxelMesh | Function")
 		void SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex) override;
 
-	UFUNCTION(BlueprintCallable) 
-		FORCEINLINE void MarkVoxelDataForUpdate(const int32 VoxelIndex);
+	FORCEINLINE void MarkVoxelDataForUpdate(const int32 VoxelIndex, const bool IsNotSingle);
 
-	virtual void UpdateMesh() override;
+	FORCEINLINE void UpdateMesh();
 
 protected:
 

@@ -87,6 +87,15 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridLibrary() {}
 		*(int32*)Z_Param__Result=ULFPGridLibrary::GridLocationToIndex(Z_Param_Out_Location,Z_Param_Out_GridSize);
 		P_NATIVE_END;
 	}
+	DEFINE_FUNCTION(ULFPGridLibrary::execIsOnGridEdge)
+	{
+		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_Location);
+		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_GridSize);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(bool*)Z_Param__Result=ULFPGridLibrary::IsOnGridEdge(Z_Param_Out_Location,Z_Param_Out_GridSize);
+		P_NATIVE_END;
+	}
 	DEFINE_FUNCTION(ULFPGridLibrary::execIsLocationValid)
 	{
 		P_GET_STRUCT_REF(FIntVector,Z_Param_Out_Location);
@@ -106,6 +115,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridLibrary() {}
 			{ "IndexsToGridLocation", &ULFPGridLibrary::execIndexsToGridLocation },
 			{ "IndexToGridLocation", &ULFPGridLibrary::execIndexToGridLocation },
 			{ "IsLocationValid", &ULFPGridLibrary::execIsLocationValid },
+			{ "IsOnGridEdge", &ULFPGridLibrary::execIsOnGridEdge },
 			{ "RandomSectionGridIndex", &ULFPGridLibrary::execRandomSectionGridIndex },
 			{ "SectionGridIndex", &ULFPGridLibrary::execSectionGridIndex },
 		};
@@ -521,6 +531,68 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridLibrary() {}
 		}
 		return ReturnFunction;
 	}
+	struct Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics
+	{
+		struct LFPGridLibrary_eventIsOnGridEdge_Parms
+		{
+			FIntVector Location;
+			FIntVector GridSize;
+			bool ReturnValue;
+		};
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
+#endif
+		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_GridSize_MetaData[];
+#endif
+		static const UECodeGen_Private::FStructPropertyParams NewProp_GridSize;
+		static void NewProp_ReturnValue_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UECodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_Location_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridLibrary_eventIsOnGridEdge_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_GridSize_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_GridSize = { "GridSize", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPGridLibrary_eventIsOnGridEdge_Parms, GridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_GridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_GridSize_MetaData)) };
+	void Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((LFPGridLibrary_eventIsOnGridEdge_Parms*)Obj)->ReturnValue = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPGridLibrary_eventIsOnGridEdge_Parms), &Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_ReturnValue_SetBit, METADATA_PARAMS(nullptr, 0) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_GridSize,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::Function_MetaDataParams[] = {
+		{ "Category", "LFPGridSystem" },
+		{ "ModuleRelativePath", "Public/Math/LFPGridLibrary.h" },
+	};
+#endif
+	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPGridLibrary, nullptr, "IsOnGridEdge", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::LFPGridLibrary_eventIsOnGridEdge_Parms), Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x14C22401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
 	struct Z_Construct_UFunction_ULFPGridLibrary_RandomSectionGridIndex_Statics
 	{
 		struct LFPGridLibrary_eventRandomSectionGridIndex_Parms
@@ -721,6 +793,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridLibrary() {}
 		{ &Z_Construct_UFunction_ULFPGridLibrary_IndexsToGridLocation, "IndexsToGridLocation" }, // 3220487053
 		{ &Z_Construct_UFunction_ULFPGridLibrary_IndexToGridLocation, "IndexToGridLocation" }, // 1220515170
 		{ &Z_Construct_UFunction_ULFPGridLibrary_IsLocationValid, "IsLocationValid" }, // 2932496045
+		{ &Z_Construct_UFunction_ULFPGridLibrary_IsOnGridEdge, "IsOnGridEdge" }, // 2854277419
 		{ &Z_Construct_UFunction_ULFPGridLibrary_RandomSectionGridIndex, "RandomSectionGridIndex" }, // 1741548676
 		{ &Z_Construct_UFunction_ULFPGridLibrary_SectionGridIndex, "SectionGridIndex" }, // 2768533865
 	};
@@ -767,9 +840,9 @@ void EmptyLinkFunctionForGeneratedCodeLFPGridLibrary() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPGridLibrary_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_ULFPGridLibrary, ULFPGridLibrary::StaticClass, TEXT("ULFPGridLibrary"), &Z_Registration_Info_UClass_ULFPGridLibrary, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPGridLibrary), 779701972U) },
+		{ Z_Construct_UClass_ULFPGridLibrary, ULFPGridLibrary::StaticClass, TEXT("ULFPGridLibrary"), &Z_Registration_Info_UClass_ULFPGridLibrary, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPGridLibrary), 1305700964U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPGridLibrary_h_1766382820(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPGridLibrary_h_1309706224(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPGridLibrary_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPGridLibrary_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

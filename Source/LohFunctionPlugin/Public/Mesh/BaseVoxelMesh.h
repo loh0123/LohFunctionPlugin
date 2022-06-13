@@ -48,9 +48,9 @@ public:
 
 	virtual void SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex);
 
-	UFUNCTION(BlueprintCallable) virtual void UpdateMesh() { unimplemented(); }  // Override This
+	FORCEINLINE void UpdateMesh() { unimplemented(); }  // Override This
 
-	UFUNCTION(BlueprintCallable) FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
+	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
 
 protected:
 

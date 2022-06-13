@@ -29,7 +29,9 @@ void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewCh
 {
 	if (NewChuckIndex < 0 || NewChuckIndex >= NewVoxelData->GetPoolLength()) return;
 
-	NewVoxelData->GetVoxelDataUpdateEvent(NewChuckIndex).BindUFunction(this, FName("MarkVoxelDataForUpdate"));
+	NewVoxelData->GetVoxelUpdateEvent(NewChuckIndex).BindUObject(this, &UHexagonVoxelMesh::UpdateMesh);
+
+	NewVoxelData->GetVoxelDataUpdateEvent(NewChuckIndex).BindUObject(this, &UHexagonVoxelMesh::MarkVoxelDataForUpdate);
 
 	Super::SetupMesh(NewVoxelData, NewChuckIndex);
 
@@ -54,16 +56,18 @@ void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewCh
 	return;
 }
 
-void UHexagonVoxelMesh::MarkVoxelDataForUpdate(const int32 VoxelIndex)
+void UHexagonVoxelMesh::MarkVoxelDataForUpdate(const int32 VoxelIndex, const bool IsNotSingle)
 {
+	MarkTrianglesDataForUpdate(VoxelIndex);
+
+	if (!IsNotSingle) return;
+
 	FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, VoxelGridSize);
 
 	// Find Neighbour On GridLocation
 	TArray<FIntVector> UpdateList;
 	FindBlockNeighbour(VoxelLocation, UpdateList);
 	/////////////////////////////////
-
-	MarkTrianglesDataForUpdate(VoxelIndex);
 
 	for (const FIntVector& UpdateLocation : UpdateList)
 	{
@@ -80,7 +84,7 @@ void UHexagonVoxelMesh::MarkVoxelDataForUpdate(const int32 VoxelIndex)
 
 			if (VoxelData->IsChuckIndexValid(TargetChuckIndex) && VoxelChuckIndex >= 0 && VoxelChuckIndex < VoxelData->GetChuckVoxelLength())
 			{
-				VoxelData->GetVoxelMeshUpdateEvent(TargetChuckIndex).ExecuteIfBound(VoxelChuckIndex);
+				VoxelData->GetVoxelDataUpdateEvent(TargetChuckIndex).ExecuteIfBound(VoxelChuckIndex, false);
 			}
 		}
 	}

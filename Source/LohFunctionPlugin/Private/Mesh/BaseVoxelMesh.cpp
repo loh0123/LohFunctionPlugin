@@ -11,7 +11,9 @@ DEFINE_LOG_CATEGORY(BaseVoxelMesh);
 
 void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex)
 {
-	if (!NewVoxelData->IsChuckIndexValid(NewChuckIndex)) return;
+	if (!NewVoxelData || !NewVoxelData->IsChuckIndexValid(NewChuckIndex)) return;
+
+	if (VoxelData) VoxelData->DisconnectEvent(ChuckIndex);
 
 	Reset();
 
@@ -35,10 +37,6 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	NewVoxelData->GetPoolAttribute(NewChuckIndex, ChuckGridLocation, StartVoxelLocation, MeshSize, VoxelGridSize);
 
-	NewVoxelData->GetVoxelMeshUpdateEvent(NewChuckIndex).BindUFunction(this, FName("MarkTrianglesDataForUpdate"));
-
-	NewVoxelData->OnChuckUpdate.AddUFunction(this, FName("UpdateMesh"));
-
 	NewVoxelData->InitializeChuck(NewChuckIndex);
 
 	return;
@@ -46,9 +44,9 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const int32 VoxelIndex)
 {
-	check(VoxelIndex >= 0 && VoxelIndex < VoxelData->GetChuckVoxelLength());
-
 	DataUpdateList.Add(VoxelIndex);
+
+	VoxelData->MarkChuckForUpdate(ChuckIndex);
 
 	return;
 }

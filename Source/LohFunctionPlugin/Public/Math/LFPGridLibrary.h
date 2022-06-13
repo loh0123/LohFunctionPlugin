@@ -18,6 +18,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		static bool IsLocationValid(const FIntVector& Location, const FIntVector& GridSize);
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		static bool IsOnGridEdge(const FIntVector& Location, const FIntVector& GridSize);
 	
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
 		static int32 GridLocationToIndex(const FIntVector& Location, const FIntVector& GridSize);

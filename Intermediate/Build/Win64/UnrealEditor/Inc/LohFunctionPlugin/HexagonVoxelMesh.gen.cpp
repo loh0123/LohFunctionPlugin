@@ -15,14 +15,6 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	UPackage* Z_Construct_UPackage__Script_LohFunctionPlugin();
 	LOHFUNCTIONPLUGIN_API UClass* Z_Construct_UClass_ULFPVoxelData_NoRegister();
 // End Cross Module References
-	DEFINE_FUNCTION(UHexagonVoxelMesh::execMarkVoxelDataForUpdate)
-	{
-		P_GET_PROPERTY(FIntProperty,Z_Param_VoxelIndex);
-		P_FINISH;
-		P_NATIVE_BEGIN;
-		P_THIS->MarkVoxelDataForUpdate(Z_Param_VoxelIndex);
-		P_NATIVE_END;
-	}
 	DEFINE_FUNCTION(UHexagonVoxelMesh::execSetupMesh)
 	{
 		P_GET_OBJECT(ULFPVoxelData,Z_Param_NewVoxelData);
@@ -36,50 +28,9 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 	{
 		UClass* Class = UHexagonVoxelMesh::StaticClass();
 		static const FNameNativePtrPair Funcs[] = {
-			{ "MarkVoxelDataForUpdate", &UHexagonVoxelMesh::execMarkVoxelDataForUpdate },
 			{ "SetupMesh", &UHexagonVoxelMesh::execSetupMesh },
 		};
 		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
-	}
-	struct Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics
-	{
-		struct HexagonVoxelMesh_eventMarkVoxelDataForUpdate_Parms
-		{
-			int32 VoxelIndex;
-		};
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_VoxelIndex_MetaData[];
-#endif
-		static const UECodeGen_Private::FIntPropertyParams NewProp_VoxelIndex;
-		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
-#endif
-		static const UECodeGen_Private::FFunctionParams FuncParams;
-	};
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::NewProp_VoxelIndex_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif
-	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::NewProp_VoxelIndex = { "VoxelIndex", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(HexagonVoxelMesh_eventMarkVoxelDataForUpdate_Parms, VoxelIndex), METADATA_PARAMS(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::NewProp_VoxelIndex_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::NewProp_VoxelIndex_MetaData)) };
-	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::PropPointers[] = {
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::NewProp_VoxelIndex,
-	};
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::Function_MetaDataParams[] = {
-		{ "ModuleRelativePath", "Public/Mesh/HexagonVoxelMesh.h" },
-	};
-#endif
-	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UHexagonVoxelMesh, nullptr, "MarkVoxelDataForUpdate", nullptr, nullptr, sizeof(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::HexagonVoxelMesh_eventMarkVoxelDataForUpdate_Parms), Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::Function_MetaDataParams)) };
-	UFunction* Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate()
-	{
-		static UFunction* ReturnFunction = nullptr;
-		if (!ReturnFunction)
-		{
-			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate_Statics::FuncParams);
-		}
-		return ReturnFunction;
 	}
 	struct Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh_Statics
 	{
@@ -146,7 +97,6 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_UHexagonVoxelMesh_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_UHexagonVoxelMesh_MarkVoxelDataForUpdate, "MarkVoxelDataForUpdate" }, // 1845978301
 		{ &Z_Construct_UFunction_UHexagonVoxelMesh_SetupMesh, "SetupMesh" }, // 1472532446
 	};
 #if WITH_METADATA
@@ -192,9 +142,9 @@ void EmptyLinkFunctionForGeneratedCodeHexagonVoxelMesh() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UHexagonVoxelMesh, UHexagonVoxelMesh::StaticClass, TEXT("UHexagonVoxelMesh"), &Z_Registration_Info_UClass_UHexagonVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UHexagonVoxelMesh), 3206400137U) },
+		{ Z_Construct_UClass_UHexagonVoxelMesh, UHexagonVoxelMesh::StaticClass, TEXT("UHexagonVoxelMesh"), &Z_Registration_Info_UClass_UHexagonVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UHexagonVoxelMesh), 3783135626U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_857445332(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_1073578599(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_HexagonVoxelMesh_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

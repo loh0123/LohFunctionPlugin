@@ -28,7 +28,8 @@ public:
 		int32 MaterialID = 0;
 };
 
-DECLARE_DELEGATE_OneParam(FOnVoxelDataUpdate, int32);
+DECLARE_DELEGATE_TwoParams(FOnVoxelDataUpdate, int32, bool);
+DECLARE_DELEGATE(FOnVoxelUpdate);
 
 USTRUCT(BlueprintType)
 struct FLFPVoxelChuckData
@@ -47,8 +48,14 @@ public:
 	// Update Event For Notify Chuck On Voxel Data Change
 	FOnVoxelDataUpdate VoxelDataUpdateEvent;
 
-	// Update Event For Notify Chuck On Voxel Mesh Change
-	FOnVoxelDataUpdate VoxelMeshUpdateEvent;
+	// Update Event For Notify Chuck On Voxel Update
+	FOnVoxelUpdate VoxelUpdateEvent;
+
+	void Disconnect()
+	{
+		VoxelDataUpdateEvent.Unbind();
+		VoxelUpdateEvent.Unbind();
+	}
 };
 
 /**
@@ -60,7 +67,6 @@ class LOHFUNCTIONPLUGIN_API ULFPVoxelData : public UObject
 	GENERATED_BODY()
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChuckGeneration, int32, ChuckIndex, FIntVector, StartVoxelGridLocation, FIntVector, EndVoxelGridLocation);
-	DECLARE_EVENT(ULFPVoxelData, FOnVoxelMeshUpdate);
 
 private:
 
@@ -68,8 +74,9 @@ private:
 
 protected:
 
-	UPROPERTY() 
-		TArray<FLFPVoxelChuckData> ChuckData;
+	UPROPERTY() TArray<FLFPVoxelChuckData> ChuckData;
+
+	UPROPERTY() TSet<int32> UpdateChuckList;
 
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
@@ -91,10 +98,24 @@ protected:
 
 public:
 
-	FOnVoxelMeshUpdate OnChuckUpdate;
-
 	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "ChuckBegin"))
 		FOnChuckGeneration OnChuckGeneration;
+
+public:
+
+	FORCEINLINE int32 GetPoolLength() const { return PoolLength; }
+
+	FORCEINLINE int32 GetChuckVoxelLength() const { return ChuckVoxelLength; }
+
+	FORCEINLINE FIntVector GetPoolGridSize() const { return PoolGridSize; }
+
+public:
+
+	FORCEINLINE FOnVoxelDataUpdate& GetVoxelDataUpdateEvent(const int32 ChuckIndex) { return ChuckData[ChuckIndex].VoxelDataUpdateEvent; }
+
+	FORCEINLINE FOnVoxelUpdate& GetVoxelUpdateEvent(const int32 ChuckIndex) { return ChuckData[ChuckIndex].VoxelUpdateEvent; }
+
+	FORCEINLINE void DisconnectEvent(const int32 ChuckIndex) { return ChuckData[ChuckIndex].Disconnect(); }
 
 public:
 
@@ -104,19 +125,15 @@ public:
 
 	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const;
 
-	FORCEINLINE int32 GetPoolLength() const { return PoolLength; }
-
-	FORCEINLINE int32 GetChuckVoxelLength() const { return ChuckVoxelLength; }
-
-	FORCEINLINE FIntVector GetPoolGridSize() const { return PoolGridSize; }
-
-	FORCEINLINE FOnVoxelDataUpdate& GetVoxelDataUpdateEvent(const int32 ChuckIndex) { return ChuckData[ChuckIndex].VoxelDataUpdateEvent; }
-
-	FORCEINLINE FOnVoxelDataUpdate& GetVoxelMeshUpdateEvent(const int32 ChuckIndex) { return ChuckData[ChuckIndex].VoxelMeshUpdateEvent; }
-
 	FORCEINLINE void InitializeChuck(const int32 ChuckIndex);
 
 public:
+
+	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
+		FORCEINLINE void UpdateChuck();
+
+	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
+		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize);
