@@ -103,6 +103,8 @@ public:
 
 public:
 
+	FORCEINLINE bool IsChuckIndexValid(const int32 ChuckIndex) const { return ChuckData.IsValidIndex(ChuckIndex); }
+
 	FORCEINLINE int32 GetPoolLength() const { return PoolLength; }
 
 	FORCEINLINE int32 GetChuckVoxelLength() const { return ChuckVoxelLength; }
@@ -119,8 +121,6 @@ public:
 
 public:
 
-	FORCEINLINE bool IsChuckIndexValid(const int32 ChuckIndex) const { return ChuckData.IsValidIndex(ChuckIndex); }
-
 	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const FIntVector VoxelGridLocation) const;
 
 	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const;
@@ -130,7 +130,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void UpdateChuck();
+		FORCEINLINE void UpdateChuck(const int32 UpdateCount = 9999999);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex);

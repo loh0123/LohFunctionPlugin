@@ -29,29 +29,15 @@ void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewCh
 {
 	if (NewChuckIndex < 0 || NewChuckIndex >= NewVoxelData->GetPoolLength()) return;
 
+	NewVoxelData->DisconnectEvent(NewChuckIndex);
+
 	NewVoxelData->GetVoxelUpdateEvent(NewChuckIndex).BindUObject(this, &UHexagonVoxelMesh::UpdateMesh);
 
 	NewVoxelData->GetVoxelDataUpdateEvent(NewChuckIndex).BindUObject(this, &UHexagonVoxelMesh::MarkVoxelDataForUpdate);
 
 	Super::SetupMesh(NewVoxelData, NewChuckIndex);
 
-	EditMesh([&](FDynamicMesh3& EditMesh)
-		{
-			EditMesh.Attributes()->SetNumUVLayers(8);
-
-			if (!EditMesh.Attributes()->HasMaterialID())
-			{
-				EditMesh.Attributes()->EnableMaterialID();
-			}
-
-			if (EditMesh.Attributes()->HasTangentSpace() == false)
-			{
-				EditMesh.Attributes()->EnableTangents();
-			}
-
-		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
-
-	UpdateMesh();
+	//UpdateMesh();
 
 	return;
 }

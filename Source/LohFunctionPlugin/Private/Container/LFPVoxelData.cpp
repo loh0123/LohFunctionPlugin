@@ -45,19 +45,19 @@ void ULFPVoxelData::InitializeChuck(const int32 ChuckIndex)
 	return;
 }
 
-void ULFPVoxelData::UpdateChuck()
+void ULFPVoxelData::UpdateChuck(const int32 UpdateCount)
 {
-	TArray<int32> UpdateChuckArray = UpdateChuckList.Array();
+	const TArray<int32> UpdateArray = UpdateChuckList.Array();
 
-	for (const int32 ChuckIndex : UpdateChuckArray)
+	for (int32 CountIndex = 0; CountIndex < FMath::Min(UpdateCount, UpdateArray.Num()); CountIndex++)
 	{
-		if (ChuckData.IsValidIndex(ChuckIndex))
+		UpdateChuckList.Remove(UpdateArray[CountIndex]);
+
+		if (ChuckData.IsValidIndex(UpdateArray[CountIndex]))
 		{
-			ChuckData[ChuckIndex].VoxelUpdateEvent.ExecuteIfBound();
+			ChuckData[UpdateArray[CountIndex]].VoxelUpdateEvent.ExecuteIfBound();
 		}
 	}
-
-	UpdateChuckList.Empty();
 
 	return;
 }
@@ -113,8 +113,6 @@ void ULFPVoxelData::SetVoxelGridData(const FIntVector VoxelGridLocation, const F
 	int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ChuckGridSize.X, VoxelGridLocation.Y / ChuckGridSize.Y, VoxelGridLocation.Z / ChuckGridSize.Z), PoolGridSize);
 	int32 VoxelChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ChuckGridSize.X, VoxelGridLocation.Y % ChuckGridSize.Y, VoxelGridLocation.Z % ChuckGridSize.Z), ChuckGridSize);
 
-	UE_LOG(LogTemp, Warning, TEXT("The ChuckIndex value is: %d | The VoxelChuckIndex value is: %d"), ChuckIndex, VoxelChuckIndex);
-
 	if (ChuckData.IsValidIndex(ChuckIndex) && 
 		InitializedList[ChuckIndex] && 
 		ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex))
@@ -128,11 +126,7 @@ void ULFPVoxelData::SetVoxelGridData(const FIntVector VoxelGridLocation, const F
 			UpdateChuck();
 		}
 	}
-	else if (ChuckData.IsValidIndex(ChuckIndex))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("The InitializedList value is %s"), (InitializedList[ChuckIndex] ? TEXT("true") : TEXT("false")));
-		UE_LOG(LogTemp, Warning, TEXT("The VoxelData Index value is %s"), (ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex) ? TEXT("true") : TEXT("false")));
-	}
+	else 
 
 	return;
 }

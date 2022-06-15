@@ -37,6 +37,14 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	NewVoxelData->GetPoolAttribute(NewChuckIndex, ChuckGridLocation, StartVoxelLocation, MeshSize, VoxelGridSize);
 
+	EditMesh([&](FDynamicMesh3& EditMesh)
+		{
+			EditMesh.Attributes()->SetNumUVLayers(8);
+			EditMesh.Attributes()->EnableMaterialID();
+			EditMesh.Attributes()->EnableTangents();
+
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+
 	NewVoxelData->InitializeChuck(NewChuckIndex);
 
 	return;
