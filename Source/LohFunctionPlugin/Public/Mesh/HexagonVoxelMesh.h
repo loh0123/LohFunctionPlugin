@@ -25,9 +25,9 @@ public:
 
 protected:
 
-	void UpdateVertices();
+	FORCEINLINE void UpdateVertices();
 
-	void UpdateTriangles();
+	FORCEINLINE void UpdateTriangles();
 
 	FORCEINLINE void AddHexagonWall(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, const int32 ID);
 

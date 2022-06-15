@@ -16,8 +16,6 @@ DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesCounter"), STAT_MeshUpdateTrianglesC
 
 DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesDataCounter"), STAT_MeshUpdateTrianglesDataCounter, STATGROUP_HexagonVoxelMesh);
 
-DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesMeshCounter"), STAT_MeshUpdateTrianglesMeshCounter, STATGROUP_HexagonVoxelMesh);
-
 DECLARE_CYCLE_STAT(TEXT("MeshVertexUpdateCounter"), STAT_MeshVertexUpdateCounter, STATGROUP_HexagonVoxelMesh);
 
 DECLARE_CYCLE_STAT(TEXT("MeshOperationCounter"), STAT_MeshOperationCounter, STATGROUP_HexagonVoxelMesh);
@@ -121,14 +119,10 @@ void UHexagonVoxelMesh::UpdateTriangles()
 {
 	SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesCounter);
 
-	Super::UpdateTriangles();
-
 	if (DataUpdateList.Num() == 0) return; // no need to update !!!
 
 	TArray<FLFPVoxelTriangleUpdateData> UpdateDataList;
 
-	int32 GroupID = 0;
-	
 	TArray<int32> DataUpdateListArray = DataUpdateList.Array();
 	
 	{
@@ -170,68 +164,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 			});
 	}
 
-	DataUpdateList.Empty(VoxelData->GetChuckVoxelLength());
-
-	if (UpdateDataList.Num() > 0)
-	{
-		EditMesh([&](FDynamicMesh3& EditMesh)
-		{
-			SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesMeshCounter);
-		
-			TArray<TObjectPtr<FDynamicMeshUVOverlay>> UVOverlayList;
-		
-			UVOverlayList.SetNum(8);
-		
-			for (int32 UVLayerID = 0; UVLayerID < 8; UVLayerID++)
-			{
-				UVOverlayList[UVLayerID] = EditMesh.Attributes()->GetUVLayer(UVLayerID);
-			}
-		
-			int32 GroupID = 0;
-		
-			TObjectPtr<FDynamicMeshMaterialAttribute> MaterialIDs = EditMesh.Attributes()->GetMaterialID();
-		
-			for (auto& UpdateData : UpdateDataList)
-			{
-				if (UpdateData.GridIndex == INDEX_NONE) continue;
-		
-				TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Reserve(UpdateData.NewTriangleList.Num());
-			
-				for (int32 TriangleID = 0; TriangleID < UpdateData.NewTriangleList.Num(); TriangleID++)
-				{
-					FIntVector TriVertexIndex;
-		
-					TriVertexIndex.X = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].X]);
-					TriVertexIndex.Y = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].Y]);
-					TriVertexIndex.Z = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].Z]);
-		
-					const int32 TriIndex = EditMesh.AppendTriangle(TriVertexIndex, UpdateData.NewTriangleGroupList[TriangleID]);
-			
-					TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(TriIndex);
-			
-					const int32 UVIndex = TriangleID * 3;
-					
-					int32 Elem0 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex]);
-					int32 Elem1 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 1]);
-					int32 Elem2 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 2]);
-					UVOverlayList[0]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
-					
-					for (int32 CustomDataUV = 1; CustomDataUV < FMath::Min(VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).CustomData.Num() + 1,8); CustomDataUV++)
-					{
-						Elem0 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).CustomData[CustomDataUV - 1]));
-						Elem1 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).CustomData[CustomDataUV - 1]));
-						Elem2 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).CustomData[CustomDataUV - 1]));
-						UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
-					}
-			
-					MaterialIDs->SetValue(TriIndex, VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).MaterialID);
-				}
-			}
-		
-			FMeshNormals::InitializeMeshToPerTriangleNormals(&EditMesh);
-		
-		}, EDynamicMeshChangeType::MeshChange, EDynamicMeshAttributeChangeFlags::Unknown, false);
-	}
+	Super::UpdateTriangles(UpdateDataList);
 }
 
 void UHexagonVoxelMesh::AddHexagonWall(const TArray<int32>& VertexIndexList, FLFPVoxelTriangleUpdateData& UpdateData, const int32 ID)

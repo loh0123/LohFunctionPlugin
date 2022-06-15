@@ -56,11 +56,7 @@ protected:
 
 	FORCEINLINE void UpdateVertices() { unimplemented(); }  // Override This
 
-	FORCEINLINE void UpdateTriangles();
-
-	FORCEINLINE void FindBlockNeighbour(const FIntVector GridLocation, TArray<FIntVector>& NeighbourLocationList) { unimplemented(); }  // Override This
-
-	FORCEINLINE void FindBlockVertices(const FIntVector GridLocation, TArray<int32>& VerticesIndexList) { unimplemented(); }  // Override This
+	FORCEINLINE void UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& UpdateDataList);
 
 	FORCEINLINE bool IsBlockVisible(const FIntVector GridLocation, const int32 SelfMaterialID) const;
 
@@ -81,17 +77,15 @@ protected:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		TArray<FVector> VerticesList = {};
+	UPROPERTY() TArray<FVector> VerticesList = {};
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		FIntVector VertexSize = FIntVector::NoneValue;
+	UPROPERTY() FIntVector VertexSize = FIntVector::NoneValue;
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		TArray<FLFPVoxelTriangleData> TriangleDataList = {};
+	UPROPERTY() TArray<FLFPVoxelTriangleData> TriangleDataList = {};
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelData | Cache")
-		TSet<int32> DataUpdateList = {};
+	UPROPERTY() TSet<int32> DataUpdateList = {};
+
+	UPROPERTY() TSet<int32> BufferUpdateList = {};
 
 
 };
