@@ -39,6 +39,11 @@ public class LohFunctionPlugin : ModuleRules
 				"DynamicMesh",
 				"MeshConversion",
 				"DeveloperSettings",
+
+				"CoreUObject",
+				"Engine",
+				"RenderCore",
+				"RHI",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

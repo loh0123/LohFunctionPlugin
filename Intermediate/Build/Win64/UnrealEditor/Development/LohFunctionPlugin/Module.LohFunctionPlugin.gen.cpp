@@ -12,3 +12,4 @@
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UnrealEditor/Inc/LohFunctionPlugin/LohFunctionPluginBPLibrary.gen.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UnrealEditor/Inc/LohFunctionPlugin/VoxelChuckActor.gen.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UnrealEditor/Inc/LohFunctionPlugin/VoxelChuckManager.gen.cpp"
+#include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Intermediate/Build/Win64/UnrealEditor/Inc/LohFunctionPlugin/VoxelDynamicMeshComponent.gen.cpp"

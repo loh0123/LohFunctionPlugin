@@ -10,7 +10,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(BaseVoxelMesh, Warning, All);
 
-class UBaseVoxelPool;
 class ULFPVoxelData;
 
 USTRUCT()

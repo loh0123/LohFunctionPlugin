@@ -99,7 +99,10 @@
             "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelchuckactor.generated.h",
             "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelchuckmanager.gen.cpp",
             "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\public\\helper\\voxelchuckmanager.h",
-            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelchuckmanager.generated.h"
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxelchuckmanager.generated.h",
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxeldynamicmeshcomponent.gen.cpp",
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\source\\lohfunctionplugin\\public\\mesh\\voxeldynamicmeshcomponent.h",
+            "d:\\unreal engine\\project file\\pluginlab5\\plugins\\lohfunctionplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\lohfunctionplugin\\voxeldynamicmeshcomponent.generated.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

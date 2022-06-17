@@ -14,7 +14,8 @@
 			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
 			"BaseVoxelMesh.cpp.obj",
-			"HexagonVoxelMesh.cpp.obj"
+			"HexagonVoxelMesh.cpp.obj",
+			"VoxelDynamicMeshComponent.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"BaseVoxelMesh.gen.cpp.obj",
@@ -29,7 +30,8 @@
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginBPLibrary.gen.cpp.obj",
 			"VoxelChuckActor.gen.cpp.obj",
-			"VoxelChuckManager.gen.cpp.obj"
+			"VoxelChuckManager.gen.cpp.obj",
+			"VoxelDynamicMeshComponent.gen.cpp.obj"
 		]
 	}
 }
