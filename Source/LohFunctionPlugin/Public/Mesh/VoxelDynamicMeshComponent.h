@@ -65,6 +65,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VoxelDynamicMeshComponent")
 		void SetVoxelMesh(UBaseVoxelMesh* NewVoxelMesh);
 
+	UFUNCTION(BlueprintCallable, Category = "VoxelDynamicMeshComponent")
+		int32 GetVoxelSectionCount() const { return VoxelMeshObject->GetVoxelSectionCount(); };
+
 public:
 
 	virtual void InvalidateAutoCalculatedTangents();

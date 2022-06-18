@@ -306,9 +306,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		P_GET_STRUCT(FVector,Z_Param_NewMeshSize);
 		P_GET_STRUCT(FIntVector,Z_Param_NewPoolGridSize);
 		P_GET_STRUCT(FIntVector,Z_Param_NewChuckGridSize);
+		P_GET_PROPERTY(FIntProperty,Z_Param_NewMaxMaterialID);
+		P_GET_PROPERTY(FIntProperty,Z_Param_NewSectionSize);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		P_THIS->SetupVoxelData(Z_Param_NewMeshSize,Z_Param_NewPoolGridSize,Z_Param_NewChuckGridSize);
+		P_THIS->SetupVoxelData(Z_Param_NewMeshSize,Z_Param_NewPoolGridSize,Z_Param_NewChuckGridSize,Z_Param_NewMaxMaterialID,Z_Param_NewSectionSize);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPVoxelData::execMarkChuckForUpdate)
@@ -569,6 +571,8 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 			FVector NewMeshSize;
 			FIntVector NewPoolGridSize;
 			FIntVector NewChuckGridSize;
+			int32 NewMaxMaterialID;
+			int32 NewSectionSize;
 		};
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_NewMeshSize_MetaData[];
@@ -582,6 +586,14 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_NewChuckGridSize_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_NewChuckGridSize;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_NewMaxMaterialID_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_NewMaxMaterialID;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_NewSectionSize_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_NewSectionSize;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
@@ -606,14 +618,30 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewChuckGridSize = { "NewChuckGridSize", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPVoxelData_eventSetupVoxelData_Parms, NewChuckGridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewChuckGridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewChuckGridSize_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMaxMaterialID_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMaxMaterialID = { "NewMaxMaterialID", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPVoxelData_eventSetupVoxelData_Parms, NewMaxMaterialID), METADATA_PARAMS(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMaxMaterialID_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMaxMaterialID_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewSectionSize_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewSectionSize = { "NewSectionSize", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPVoxelData_eventSetupVoxelData_Parms, NewSectionSize), METADATA_PARAMS(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewSectionSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewSectionSize_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMeshSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewPoolGridSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewChuckGridSize,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewMaxMaterialID,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::NewProp_NewSectionSize,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData_Statics::Function_MetaDataParams[] = {
 		{ "Category", "VoxelData | Function" },
+		{ "CPP_Default_NewMaxMaterialID", "1" },
+		{ "CPP_Default_NewSectionSize", "16" },
 		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
 	};
 #endif
@@ -903,16 +931,18 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
-		static const UECodeGen_Private::FStructPropertyParams NewProp_ChuckData_Inner;
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_ChuckData_MetaData[];
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_MaxMaterialID_MetaData[];
 #endif
-		static const UECodeGen_Private::FArrayPropertyParams NewProp_ChuckData;
-		static const UECodeGen_Private::FIntPropertyParams NewProp_UpdateChuckList_ElementProp;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_MaxMaterialID;
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_UpdateChuckList_MetaData[];
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_SectionCount_MetaData[];
 #endif
-		static const UECodeGen_Private::FSetPropertyParams NewProp_UpdateChuckList;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_SectionCount;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_SectionSize_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_SectionSize;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_PoolLength_MetaData[];
 #endif
@@ -933,6 +963,16 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_ChuckGridSize_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ChuckGridSize;
+		static const UECodeGen_Private::FStructPropertyParams NewProp_ChuckData_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_ChuckData_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_ChuckData;
+		static const UECodeGen_Private::FIntPropertyParams NewProp_UpdateChuckList_ElementProp;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_UpdateChuckList_MetaData[];
+#endif
+		static const UECodeGen_Private::FSetPropertyParams NewProp_UpdateChuckList;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_OnChuckGeneration_MetaData[];
 #endif
@@ -951,7 +991,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		{ &Z_Construct_UFunction_ULFPVoxelData_MarkChuckForUpdate, "MarkChuckForUpdate" }, // 1990761464
 		{ &Z_Construct_UDelegateFunction_ULFPVoxelData_OnChuckGeneration__DelegateSignature, "OnChuckGeneration__DelegateSignature" }, // 1924044401
 		{ &Z_Construct_UFunction_ULFPVoxelData_SetAllVoxelGridDataWithSingleData, "SetAllVoxelGridDataWithSingleData" }, // 147577900
-		{ &Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData, "SetupVoxelData" }, // 2135786032
+		{ &Z_Construct_UFunction_ULFPVoxelData_SetupVoxelData, "SetupVoxelData" }, // 683281325
 		{ &Z_Construct_UFunction_ULFPVoxelData_SetVoxelGridData, "SetVoxelGridData" }, // 878729034
 		{ &Z_Construct_UFunction_ULFPVoxelData_SetVoxelGridDataList, "SetVoxelGridDataList" }, // 3245775166
 		{ &Z_Construct_UFunction_ULFPVoxelData_SetVoxelGridDataListWithSingleData, "SetVoxelGridDataListWithSingleData" }, // 1924042767
@@ -965,20 +1005,29 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
 	};
 #endif
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_Inner = { "ChuckData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelChuckData, METADATA_PARAMS(nullptr, 0) }; // 507177860
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MaxMaterialID_MetaData[] = {
+		{ "Category", "VoxelData | Cache" },
+		{ "Comment", "// Initialize Data\n" },
+		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
+		{ "ToolTip", "Initialize Data" },
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MaxMaterialID = { "MaxMaterialID", nullptr, (EPropertyFlags)0x0020080000020015, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, MaxMaterialID), METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MaxMaterialID_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MaxMaterialID_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionCount_MetaData[] = {
+		{ "Category", "VoxelData | Cache" },
 		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData = { "ChuckData", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, ChuckData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData)) }; // 507177860
-	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_ElementProp = { "UpdateChuckList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionCount = { "SectionCount", nullptr, (EPropertyFlags)0x0020080000020015, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, SectionCount), METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionCount_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionCount_MetaData)) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionSize_MetaData[] = {
+		{ "Category", "VoxelData | Cache" },
 		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
 	};
 #endif
-	const UECodeGen_Private::FSetPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList = { "UpdateChuckList", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, UpdateChuckList), METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData)) };
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionSize = { "SectionSize", nullptr, (EPropertyFlags)0x0020080000020015, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, SectionSize), METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionSize_MetaData)) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_PoolLength_MetaData[] = {
 		{ "Category", "VoxelData | Cache" },
@@ -1014,6 +1063,22 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckGridSize = { "ChuckGridSize", nullptr, (EPropertyFlags)0x0020080000020015, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, ChuckGridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckGridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckGridSize_MetaData)) };
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_Inner = { "ChuckData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelChuckData, METADATA_PARAMS(nullptr, 0) }; // 507177860
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData[] = {
+		{ "Comment", "// Runtime Data\n" },
+		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
+		{ "ToolTip", "Runtime Data" },
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData = { "ChuckData", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, ChuckData), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_MetaData)) }; // 507177860
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_ElementProp = { "UpdateChuckList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData[] = {
+		{ "ModuleRelativePath", "Public/Container/LFPVoxelData.h" },
+	};
+#endif
+	const UECodeGen_Private::FSetPropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList = { "UpdateChuckList", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, UpdateChuckList), METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_MetaData)) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_OnChuckGeneration_MetaData[] = {
 		{ "DisplayName", "ChuckBegin" },
@@ -1022,15 +1087,18 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 #endif
 	const UECodeGen_Private::FMulticastDelegatePropertyParams Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_OnChuckGeneration = { "OnChuckGeneration", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPVoxelData, OnChuckGeneration), Z_Construct_UDelegateFunction_ULFPVoxelData_OnChuckGeneration__DelegateSignature, METADATA_PARAMS(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_OnChuckGeneration_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_OnChuckGeneration_MetaData)) }; // 1924044401
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ULFPVoxelData_Statics::PropPointers[] = {
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_Inner,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_ElementProp,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MaxMaterialID,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionCount,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_SectionSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_PoolLength,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckVoxelLength,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_MeshSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_PoolGridSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckGridSize,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_ChuckData,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList_ElementProp,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_UpdateChuckList,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPVoxelData_Statics::NewProp_OnChuckGeneration,
 	};
 	const FCppClassTypeInfoStatic Z_Construct_UClass_ULFPVoxelData_Statics::StaticCppClassTypeInfo = {
@@ -1074,9 +1142,9 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelChuckData>
 		{ FLFPVoxelChuckData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelChuckData_Statics::NewStructOps, TEXT("LFPVoxelChuckData"), &Z_Registration_Info_UScriptStruct_LFPVoxelChuckData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelChuckData), 507177860U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_ULFPVoxelData, ULFPVoxelData::StaticClass, TEXT("ULFPVoxelData"), &Z_Registration_Info_UClass_ULFPVoxelData, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPVoxelData), 2885843462U) },
+		{ Z_Construct_UClass_ULFPVoxelData, ULFPVoxelData::StaticClass, TEXT("ULFPVoxelData"), &Z_Registration_Info_UClass_ULFPVoxelData, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPVoxelData), 484641669U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_2271827938(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_3145174575(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_Statics::ScriptStructInfo),
 		nullptr, 0);

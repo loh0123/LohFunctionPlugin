@@ -35,8 +35,6 @@ void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewCh
 
 	Super::SetupMesh(NewVoxelData, NewChuckIndex);
 
-	//UpdateMesh();
-
 	return;
 }
 
@@ -135,6 +133,8 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 			const int32 SelfMaterialID = VoxelData->GetVoxelData(ChuckIndex, DataUpdateListArray[LoopIndex]).MaterialID;
 
+			const int32 MaterialOffset = (GridLocation.Z / VoxelData->GetSectionSize()) * VoxelData->GetMaxMaterialID();
+
 			if (IsBlockVisible(GridLocation, SelfMaterialID))
 			{
 				TArray<int32> LocalVerticesIndex;
@@ -158,6 +158,8 @@ void UHexagonVoxelMesh::UpdateTriangles()
 					else
 						AddHexagonWall(LocalVerticesIndex, UpdateData, FaceIndex);
 				}
+
+				UpdateData.MaterialID = VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).MaterialID + MaterialOffset;
 
 				UpdateDataList[LoopIndex] = UpdateData;
 			}

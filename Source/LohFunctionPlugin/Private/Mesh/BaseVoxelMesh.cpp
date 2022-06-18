@@ -67,6 +67,16 @@ void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const int32 VoxelIndex)
 	return;
 }
 
+int32 UBaseVoxelMesh::GetVoxelSectionCount() const
+{
+	return VoxelData ? VoxelData->GetSectionCount() : INDEX_NONE;
+}
+
+bool UBaseVoxelMesh::isVoxelDataValid() const
+{
+	return VoxelData != nullptr;
+}
+
 
 void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& UpdateDataList)
 {
@@ -133,7 +143,7 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 						UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
 					}
 
-					MaterialIDs->SetValue(TriIndex, VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).MaterialID);
+					MaterialIDs->SetValue(TriIndex, UpdateData.MaterialID);
 				}
 			}
 

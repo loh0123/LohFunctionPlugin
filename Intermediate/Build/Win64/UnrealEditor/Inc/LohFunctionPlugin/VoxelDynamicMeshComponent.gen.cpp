@@ -76,6 +76,13 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		}
 		return Z_Registration_Info_UEnum_EVoxelDynamicMeshComponentUpdateMode.InnerSingleton;
 	}
+	DEFINE_FUNCTION(UVoxelDynamicMeshComponent::execGetVoxelSectionCount)
+	{
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		*(int32*)Z_Param__Result=P_THIS->GetVoxelSectionCount();
+		P_NATIVE_END;
+	}
 	DEFINE_FUNCTION(UVoxelDynamicMeshComponent::execSetVoxelMesh)
 	{
 		P_GET_OBJECT(UBaseVoxelMesh,Z_Param_NewVoxelMesh);
@@ -97,6 +104,7 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		UClass* Class = UVoxelDynamicMeshComponent::StaticClass();
 		static const FNameNativePtrPair Funcs[] = {
 			{ "ConfigureMaterialSet", &UVoxelDynamicMeshComponent::execConfigureMaterialSet },
+			{ "GetVoxelSectionCount", &UVoxelDynamicMeshComponent::execGetVoxelSectionCount },
 			{ "SetVoxelMesh", &UVoxelDynamicMeshComponent::execSetVoxelMesh },
 		};
 		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
@@ -142,6 +150,39 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		if (!ReturnFunction)
 		{
 			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UVoxelDynamicMeshComponent_ConfigureMaterialSet_Statics::FuncParams);
+		}
+		return ReturnFunction;
+	}
+	struct Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics
+	{
+		struct VoxelDynamicMeshComponent_eventGetVoxelSectionCount_Parms
+		{
+			int32 ReturnValue;
+		};
+		static const UECodeGen_Private::FIntPropertyParams NewProp_ReturnValue;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UECodeGen_Private::FFunctionParams FuncParams;
+	};
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(VoxelDynamicMeshComponent_eventGetVoxelSectionCount_Parms, ReturnValue), METADATA_PARAMS(nullptr, 0) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::NewProp_ReturnValue,
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::Function_MetaDataParams[] = {
+		{ "Category", "VoxelDynamicMeshComponent" },
+		{ "ModuleRelativePath", "Public/Mesh/VoxelDynamicMeshComponent.h" },
+	};
+#endif
+	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UVoxelDynamicMeshComponent, nullptr, "GetVoxelSectionCount", nullptr, nullptr, sizeof(Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::VoxelDynamicMeshComponent_eventGetVoxelSectionCount_Parms), Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount_Statics::FuncParams);
 		}
 		return ReturnFunction;
 	}
@@ -208,6 +249,7 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::FuncInfo[] = {
 		{ &Z_Construct_UFunction_UVoxelDynamicMeshComponent_ConfigureMaterialSet, "ConfigureMaterialSet" }, // 647109098
+		{ &Z_Construct_UFunction_UVoxelDynamicMeshComponent_GetVoxelSectionCount, "GetVoxelSectionCount" }, // 1416129315
 		{ &Z_Construct_UFunction_UVoxelDynamicMeshComponent_SetVoxelMesh, "SetVoxelMesh" }, // 176562793
 	};
 #if WITH_METADATA
@@ -278,9 +320,9 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		{ EVoxelDynamicMeshComponentUpdateMode_StaticEnum, TEXT("EVoxelDynamicMeshComponentUpdateMode"), &Z_Registration_Info_UEnum_EVoxelDynamicMeshComponentUpdateMode, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2066601958U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UVoxelDynamicMeshComponent, UVoxelDynamicMeshComponent::StaticClass, TEXT("UVoxelDynamicMeshComponent"), &Z_Registration_Info_UClass_UVoxelDynamicMeshComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVoxelDynamicMeshComponent), 864548927U) },
+		{ Z_Construct_UClass_UVoxelDynamicMeshComponent, UVoxelDynamicMeshComponent::StaticClass, TEXT("UVoxelDynamicMeshComponent"), &Z_Registration_Info_UClass_UVoxelDynamicMeshComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVoxelDynamicMeshComponent), 2985217931U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_400402432(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_1267965081(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo),
 		nullptr, 0,
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::EnumInfo));

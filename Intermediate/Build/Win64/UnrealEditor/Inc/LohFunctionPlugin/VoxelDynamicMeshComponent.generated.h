@@ -18,12 +18,14 @@ class UMaterialInterface;
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_28_SPARSE_DATA
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_28_RPC_WRAPPERS \
  \
+	DECLARE_FUNCTION(execGetVoxelSectionCount); \
 	DECLARE_FUNCTION(execSetVoxelMesh); \
 	DECLARE_FUNCTION(execConfigureMaterialSet);
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_28_RPC_WRAPPERS_NO_PURE_DECLS \
  \
+	DECLARE_FUNCTION(execGetVoxelSectionCount); \
 	DECLARE_FUNCTION(execSetVoxelMesh); \
 	DECLARE_FUNCTION(execConfigureMaterialSet);
 

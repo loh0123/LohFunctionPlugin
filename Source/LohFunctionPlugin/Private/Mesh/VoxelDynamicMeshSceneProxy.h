@@ -16,6 +16,7 @@ public:
 	FVoxelDynamicMeshSceneProxy(UVoxelDynamicMeshComponent* Component)
 		: FBaseDynamicMeshSceneProxy(Component)
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+		, SectionCount(Component->GetVoxelSectionCount())
 	{
 		ParentComponent = Component;
 	}
@@ -50,6 +51,8 @@ public:
 
 	void Initialize()
 	{
+		if (SectionCount != GetNumMaterials()) return;
+
 		// allocate buffer sets based on materials
 		ensure(RenderBufferSets.Num() == 0);
 		int32 NumMaterials = GetNumMaterials();
@@ -217,6 +220,9 @@ private:
 
 	FMaterialRelevance MaterialRelevance;
 
+	int32 SectionCount = 1;
+
 public:
+
 	UVoxelDynamicMeshComponent* ParentComponent;
 };

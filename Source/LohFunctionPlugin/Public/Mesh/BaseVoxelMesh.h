@@ -24,6 +24,8 @@ struct FLFPVoxelTriangleUpdateData
 	UPROPERTY() TArray<int32> NewTriangleGroupList;
 
 	UPROPERTY() TArray<FVector2f> NewUVList;
+
+	UPROPERTY() int32 MaterialID = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -51,6 +53,12 @@ public:
 
 	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
 
+	FORCEINLINE void MarkVoxelDataForUpdate(const int32 VoxelIndex, const bool IsNotSingle) { unimplemented(); }  // Override This
+
+	FORCEINLINE int32 GetVoxelSectionCount() const;
+
+	FORCEINLINE bool isVoxelDataValid() const;
+
 protected:
 
 	FORCEINLINE void UpdateVertices() { unimplemented(); }  // Override This
@@ -59,7 +67,7 @@ protected:
 
 	FORCEINLINE bool IsBlockVisible(const FIntVector GridLocation, const int32 SelfMaterialID) const;
 
-protected:
+protected: // Initialize Data
 
 	UPROPERTY() TObjectPtr<ULFPVoxelData> VoxelData;
 
@@ -74,7 +82,7 @@ protected:
 	UPROPERTY() FIntVector VoxelGridSize = FIntVector(1);
 
 
-protected:
+protected: // Runtime Data
 
 	UPROPERTY() TArray<FVector> VerticesList = {};
 

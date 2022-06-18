@@ -26,6 +26,11 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
 		int32 MaterialID = 0;
+
+	void CorrectMaterialID(const int32 MaxID = 1)
+	{
+		MaterialID = MaterialID >= 0 && MaterialID < MaxID ? MaterialID : 0;
+	}
 };
 
 DECLARE_DELEGATE_TwoParams(FOnVoxelDataUpdate, int32, bool);
@@ -68,31 +73,41 @@ class LOHFUNCTIONPLUGIN_API ULFPVoxelData : public UObject
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChuckGeneration, int32, ChuckIndex, FIntVector, StartVoxelGridLocation, FIntVector, EndVoxelGridLocation);
 
-private:
-
-	TBitArray<> InitializedList;
-
-protected:
-
-	UPROPERTY() TArray<FLFPVoxelChuckData> ChuckData;
-
-	UPROPERTY() TSet<int32> UpdateChuckList;
-
+protected: // Initialize Data
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
-		int32 PoolLength = INDEX_NONE;
+		int32 MaxMaterialID = 1;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
-		int32 ChuckVoxelLength = INDEX_NONE;
+		int32 SectionCount = 1;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
+		int32 SectionSize = 1;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
+		int32 PoolLength = 1;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Cache")
+		int32 ChuckVoxelLength = 1;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Setting")
-		FVector MeshSize = FVector(400, 346.4, 300);
+		FVector MeshSize = FVector(10.0);
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Setting")
 		FIntVector PoolGridSize = FIntVector(1);
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Setting")
 		FIntVector ChuckGridSize = FIntVector(1);
+
+protected:  // Runtime Data
+
+	UPROPERTY() TArray<FLFPVoxelChuckData> ChuckData;
+
+	UPROPERTY() TSet<int32> UpdateChuckList;
+
+	TBitArray<> InitializedList;
+
+protected: // Empty Data
 
 	const FLFPVoxelAttribute DefaultVoxelAttribute = FLFPVoxelAttribute();
 
@@ -106,6 +121,12 @@ public:
 	FORCEINLINE bool IsChuckIndexValid(const int32 ChuckIndex) const { return ChuckData.IsValidIndex(ChuckIndex); }
 
 	FORCEINLINE int32 GetPoolLength() const { return PoolLength; }
+
+	FORCEINLINE int32 GetMaxMaterialID() const { return MaxMaterialID; }
+
+	FORCEINLINE int32 GetSectionCount() const { return SectionCount; }
+
+	FORCEINLINE int32 GetSectionSize() const { return SectionSize; }
 
 	FORCEINLINE int32 GetChuckVoxelLength() const { return ChuckVoxelLength; }
 
@@ -136,7 +157,7 @@ public:
 		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize);
+		FORCEINLINE void SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID = 1, const int32 NewSectionSize = 16);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void GetPoolAttribute(const int32 ChuckIndex, FIntVector& ChuckGridLocation, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize);

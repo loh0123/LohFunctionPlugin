@@ -52,9 +52,23 @@ void UVoxelDynamicMeshComponent::OnMeshObjectChanged(UDynamicMesh* ChangedMeshOb
 
 void UVoxelDynamicMeshComponent::ConfigureMaterialSet(const TArray<UMaterialInterface*>& NewMaterialSet)
 {
-	for (int k = 0; k < NewMaterialSet.Num(); ++k)
+	if (NewMaterialSet.IsEmpty()) return;
+
+	if (VoxelMeshObject->isVoxelDataValid())
 	{
-		SetMaterial(k, NewMaterialSet[k]);
+		SetNumMaterials(GetVoxelSectionCount());
+
+		for (int k = 0; k < GetVoxelSectionCount(); ++k)
+		{
+			SetMaterial(k, NewMaterialSet[k % NewMaterialSet.Num()]);
+		}
+	}
+	else
+	{
+		for (int k = 0; k < NewMaterialSet.Num(); ++k)
+		{
+			SetMaterial(k, NewMaterialSet[k]);
+		}
 	}
 }
 
@@ -72,6 +86,8 @@ void UVoxelDynamicMeshComponent::SetVoxelMesh(UBaseVoxelMesh* NewVoxelMesh)
 
 	VoxelMeshObject = NewVoxelMesh;
 	MeshObjectChangedHandle = VoxelMeshObject->OnMeshChanged().AddUObject(this, &UVoxelDynamicMeshComponent::OnMeshObjectChanged);
+
+	ConfigureMaterialSet(GetMaterials());
 
 	NotifyMeshUpdated();
 

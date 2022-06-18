@@ -69,10 +69,22 @@ void ULFPVoxelData::MarkChuckForUpdate(const int32 ChuckIndex)
 	return;
 }
 
-void ULFPVoxelData::SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize)
+void ULFPVoxelData::SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID, const int32 NewSectionSize)
 {
-	PoolLength = NewPoolGridSize.X * NewPoolGridSize.Y * NewPoolGridSize.Z;
-	ChuckVoxelLength = NewChuckGridSize.X * NewChuckGridSize.Y * NewChuckGridSize.Z;
+	MeshSize = NewMeshSize.GetMin() > 10.0 ? NewMeshSize : FVector(10.0);
+	PoolGridSize = NewPoolGridSize.GetMin() > 0 ? NewPoolGridSize : FIntVector(1);
+	ChuckGridSize = NewChuckGridSize.GetMin() > 0 ? NewChuckGridSize : FIntVector(1);
+	MaxMaterialID = NewMaxMaterialID > 0 ? NewMaxMaterialID : 1;
+
+	SectionSize = NewSectionSize > 16 ? NewSectionSize : 16;
+
+	SectionCount = ChuckGridSize.Z / SectionSize;
+	if (ChuckGridSize.Z % SectionSize > 0) SectionCount++;
+
+	SectionCount *= MaxMaterialID;
+
+	PoolLength = PoolGridSize.X * PoolGridSize.Y * PoolGridSize.Z;
+	ChuckVoxelLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
 
 	ChuckData.Empty(PoolLength);
 	ChuckData.SetNum(PoolLength);
@@ -80,10 +92,6 @@ void ULFPVoxelData::SetupVoxelData(const FVector NewMeshSize, const FIntVector N
 	InitializedList.Empty(PoolLength);
 	InitializedList.AddUninitialized(PoolLength);
 	InitializedList.SetRange(0, PoolLength, false);
-
-	MeshSize = NewMeshSize;
-	PoolGridSize = NewPoolGridSize;
-	ChuckGridSize = NewChuckGridSize;
 
 	return;
 }
@@ -118,6 +126,8 @@ void ULFPVoxelData::SetVoxelGridData(const FIntVector VoxelGridLocation, const F
 		ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex))
 	{
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex] = VoxelAttribute;
+
+		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex].CorrectMaterialID(MaxMaterialID);
 
 		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex, true);
 
@@ -170,6 +180,8 @@ void ULFPVoxelData::SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, co
 	for (int32 VoxelChuckIndex = 0; VoxelChuckIndex < ChuckGridMaxIndex; VoxelChuckIndex++)
 	{
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex] = VoxelAttribute;
+
+		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex].CorrectMaterialID(MaxMaterialID);
 
 		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex, ULFPGridLibrary::IsOnGridEdge(ULFPGridLibrary::IndexToGridLocation(VoxelChuckIndex, ChuckGridSize), ChuckGridSize));
 	}
