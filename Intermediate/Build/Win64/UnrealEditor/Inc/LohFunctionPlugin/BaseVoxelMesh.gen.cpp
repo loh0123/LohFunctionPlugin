@@ -14,6 +14,7 @@ void EmptyLinkFunctionForGeneratedCodeBaseVoxelMesh() {}
 	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FIntVector();
 	COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FVector2f();
 	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPVoxelTriangleData();
+	LOHFUNCTIONPLUGIN_API UScriptStruct* Z_Construct_UScriptStruct_FLFPVoxelSectionData();
 	LOHFUNCTIONPLUGIN_API UClass* Z_Construct_UClass_UBaseVoxelMesh_NoRegister();
 	LOHFUNCTIONPLUGIN_API UClass* Z_Construct_UClass_UBaseVoxelMesh();
 	GEOMETRYFRAMEWORK_API UClass* Z_Construct_UClass_UDynamicMesh();
@@ -208,6 +209,74 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelTriangleDa
 		}
 		return Z_Registration_Info_UScriptStruct_LFPVoxelTriangleData.InnerSingleton;
 	}
+	static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_LFPVoxelSectionData;
+class UScriptStruct* FLFPVoxelSectionData::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FLFPVoxelSectionData, Z_Construct_UPackage__Script_LohFunctionPlugin(), TEXT("LFPVoxelSectionData"));
+	}
+	return Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.OuterSingleton;
+}
+template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelSectionData>()
+{
+	return FLFPVoxelSectionData::StaticStruct();
+}
+	struct Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics
+	{
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
+#endif
+		static void* NewStructOps();
+		static const UECodeGen_Private::FIntPropertyParams NewProp_TriangleIndexList_ElementProp;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_TriangleIndexList_MetaData[];
+#endif
+		static const UECodeGen_Private::FSetPropertyParams NewProp_TriangleIndexList;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+		static const UECodeGen_Private::FStructParams ReturnStructParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::Struct_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
+	};
+#endif
+	void* Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FLFPVoxelSectionData>();
+	}
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList_ElementProp = { "TriangleIndexList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList_MetaData[] = {
+		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
+	};
+#endif
+	const UECodeGen_Private::FSetPropertyParams Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList = { "TriangleIndexList", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPVoxelSectionData, TriangleIndexList), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList_MetaData)) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList_ElementProp,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewProp_TriangleIndexList,
+	};
+	const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::ReturnStructParams = {
+		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
+		nullptr,
+		&NewStructOps,
+		"LFPVoxelSectionData",
+		sizeof(FLFPVoxelSectionData),
+		alignof(FLFPVoxelSectionData),
+		Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::PropPointers,
+		UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::PropPointers),
+		RF_Public|RF_Transient|RF_MarkAsNative,
+		EStructFlags(0x00000001),
+		METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::Struct_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::Struct_MetaDataParams))
+	};
+	UScriptStruct* Z_Construct_UScriptStruct_FLFPVoxelSectionData()
+	{
+		if (!Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.InnerSingleton)
+		{
+			UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.InnerSingleton, Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::ReturnStructParams);
+		}
+		return Z_Registration_Info_UScriptStruct_LFPVoxelSectionData.InnerSingleton;
+	}
 	void UBaseVoxelMesh::StaticRegisterNativesUBaseVoxelMesh()
 	{
 	}
@@ -270,6 +339,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelTriangleDa
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_BufferUpdateList_MetaData[];
 #endif
 		static const UECodeGen_Private::FSetPropertyParams NewProp_BufferUpdateList;
+		static const UECodeGen_Private::FStructPropertyParams NewProp_SectionTriangleList_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_SectionTriangleList_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_SectionTriangleList;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 		static const FCppClassTypeInfoStatic StaticCppClassTypeInfo;
 		static const UECodeGen_Private::FClassParams ClassParams;
@@ -360,6 +434,13 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelTriangleDa
 	};
 #endif
 	const UECodeGen_Private::FSetPropertyParams Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_BufferUpdateList = { "BufferUpdateList", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UBaseVoxelMesh, BufferUpdateList), METADATA_PARAMS(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_BufferUpdateList_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_BufferUpdateList_MetaData)) };
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList_Inner = { "SectionTriangleList", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPVoxelSectionData, METADATA_PARAMS(nullptr, 0) }; // 678669128
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList_MetaData[] = {
+		{ "ModuleRelativePath", "Public/Mesh/BaseVoxelMesh.h" },
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList = { "SectionTriangleList", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UBaseVoxelMesh, SectionTriangleList), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList_MetaData)) }; // 678669128
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UBaseVoxelMesh_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_VoxelData,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_ChuckGridLocation,
@@ -376,6 +457,8 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelTriangleDa
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_DataUpdateList,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_BufferUpdateList_ElementProp,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_BufferUpdateList,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UBaseVoxelMesh_Statics::NewProp_SectionTriangleList,
 	};
 	const FCppClassTypeInfoStatic Z_Construct_UClass_UBaseVoxelMesh_Statics::StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<UBaseVoxelMesh>::IsAbstract,
@@ -416,11 +499,12 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPVoxelTriangleDa
 	const FStructRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo[] = {
 		{ FLFPVoxelTriangleUpdateData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelTriangleUpdateData_Statics::NewStructOps, TEXT("LFPVoxelTriangleUpdateData"), &Z_Registration_Info_UScriptStruct_LFPVoxelTriangleUpdateData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelTriangleUpdateData), 1497137956U) },
 		{ FLFPVoxelTriangleData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelTriangleData_Statics::NewStructOps, TEXT("LFPVoxelTriangleData"), &Z_Registration_Info_UScriptStruct_LFPVoxelTriangleData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelTriangleData), 2785686119U) },
+		{ FLFPVoxelSectionData::StaticStruct, Z_Construct_UScriptStruct_FLFPVoxelSectionData_Statics::NewStructOps, TEXT("LFPVoxelSectionData"), &Z_Registration_Info_UScriptStruct_LFPVoxelSectionData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPVoxelSectionData), 678669128U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UBaseVoxelMesh, UBaseVoxelMesh::StaticClass, TEXT("UBaseVoxelMesh"), &Z_Registration_Info_UClass_UBaseVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelMesh), 1587572903U) },
+		{ Z_Construct_UClass_UBaseVoxelMesh, UBaseVoxelMesh::StaticClass, TEXT("UBaseVoxelMesh"), &Z_Registration_Info_UClass_UBaseVoxelMesh, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UBaseVoxelMesh), 3081978622U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_17296615(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_1706952808(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_BaseVoxelMesh_h_Statics::ScriptStructInfo),
 		nullptr, 0);

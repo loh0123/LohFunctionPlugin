@@ -27,6 +27,7 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	VoxelData = NewVoxelData;
 	ChuckIndex = NewChuckIndex;
+	SectionTriangleList.Reset();
 
 	VerticesList.Empty();
 
@@ -37,6 +38,8 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	DataUpdateList.Empty(NewVoxelData->GetChuckVoxelLength());
 	DataUpdateList.Reserve(NewVoxelData->GetChuckVoxelLength());
+
+	SectionTriangleList.SetNum(NewVoxelData->GetSectionCount());
 
 	for (int32 TriIndex = 0; TriIndex < NewVoxelData->GetChuckVoxelLength(); TriIndex++)
 	{
@@ -80,15 +83,24 @@ bool UBaseVoxelMesh::isVoxelDataValid() const
 
 void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& UpdateDataList)
 {
+	TSet<int32> SectionUpdateList;
+
 	if (DataUpdateList.Num() > 0)
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{
 			SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesMeshCounter);
 
+			TObjectPtr<FDynamicMeshMaterialAttribute> MaterialIDs = EditMesh.Attributes()->GetMaterialID();
+
 			for (int32 DataIndex : DataUpdateList)
 			{
 				for (int32 TriangleIndex : TriangleDataList[DataIndex].MeshTriangleIndex)
 				{
+					int MatIdx;
+					MaterialIDs->GetValue(TriangleIndex, &MatIdx);
+
+					SectionTriangleList[MatIdx].TriangleIndexList.Remove(TriangleIndex);
+
 					EditMesh.RemoveTriangle(TriangleIndex);
 				}
 
@@ -108,11 +120,11 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 
 			int32 GroupID = 0;
 
-			TObjectPtr<FDynamicMeshMaterialAttribute> MaterialIDs = EditMesh.Attributes()->GetMaterialID();
-
 			for (auto& UpdateData : UpdateDataList)
 			{
 				if (UpdateData.GridIndex == INDEX_NONE) continue;
+
+				SectionUpdateList.Add(UpdateData.MaterialID);
 
 				TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Reserve(UpdateData.NewTriangleList.Num());
 
@@ -126,13 +138,15 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 
 					const int32 TriIndex = EditMesh.AppendTriangle(TriVertexIndex, UpdateData.NewTriangleGroupList[TriangleID]);
 
+					SectionTriangleList[UpdateData.MaterialID].TriangleIndexList.Add(TriIndex);
+
 					TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(TriIndex);
 
 					const int32 UVIndex = TriangleID * 3;
 
-					int32 Elem0 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex]);
-					int32 Elem1 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 1]);
-					int32 Elem2 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 2]);
+					int Elem0 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex]);
+					int Elem1 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 1]);
+					int Elem2 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 2]);
 					UVOverlayList[0]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
 
 					for (int32 CustomDataUV = 1; CustomDataUV < FMath::Min(VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).CustomData.Num() + 1, 8); CustomDataUV++)
@@ -148,6 +162,8 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 			}
 
 			FMeshNormals::InitializeMeshToPerTriangleNormals(&EditMesh);
+
+			if (!SectionUpdateList.IsEmpty()) OnVoxelSectionUpdate.Broadcast(SectionUpdateList);
 
 		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
 

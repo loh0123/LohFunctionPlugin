@@ -37,6 +37,16 @@ struct FLFPVoxelTriangleData
 		TArray<int32> MeshTriangleIndex = {};
 };
 
+USTRUCT()
+struct FLFPVoxelSectionData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY() TSet<int32> TriangleIndexList = {};
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxelSectionUpdate, TSet<int32>);
+
 /**
  *  This class is the base of voxel and is design to be override
  */
@@ -54,6 +64,8 @@ public:
 	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
 
 	FORCEINLINE void MarkVoxelDataForUpdate(const int32 VoxelIndex, const bool IsNotSingle) { unimplemented(); }  // Override This
+
+	FORCEINLINE const TArray<FLFPVoxelSectionData>& GetSectionTriangleList() const { return SectionTriangleList; }
 
 	FORCEINLINE int32 GetVoxelSectionCount() const;
 
@@ -94,5 +106,13 @@ protected: // Runtime Data
 
 	UPROPERTY() TSet<int32> BufferUpdateList = {};
 
+	UPROPERTY() TArray<FLFPVoxelSectionData> SectionTriangleList = {};
 
+protected:
+
+	FOnVoxelSectionUpdate OnVoxelSectionUpdate;
+
+public:
+
+	FOnVoxelSectionUpdate& OnSectionUpdate() { return OnVoxelSectionUpdate; }
 };

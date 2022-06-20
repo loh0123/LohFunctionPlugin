@@ -11,13 +11,23 @@ using namespace UE::Geometry;
 
 UVoxelDynamicMeshComponent::UVoxelDynamicMeshComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
 	VoxelMeshObject = CreateDefaultSubobject<UBaseVoxelMesh>(TEXT("BaseVoxelMesh"));
+	MeshObjectChangedHandle = VoxelMeshObject->OnMeshChanged().AddUObject(this, &UVoxelDynamicMeshComponent::OnMeshObjectChanged);
+	MeshObjectSectionHandle = VoxelMeshObject->OnSectionUpdate().AddUObject(this, &UVoxelDynamicMeshComponent::MarkSectionListDirty);
 
 	ResetProxy();
+}
+
+void UVoxelDynamicMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	if (UpdateMode != EVoxelDynamicMeshComponentUpdateMode::NoUpdate)
+	{
+		NotifyMeshUpdated();
+	}
 }
 
 void UVoxelDynamicMeshComponent::ApplyTransform(const FTransform3d& Transform, bool bInvert)
@@ -39,11 +49,11 @@ void UVoxelDynamicMeshComponent::OnMeshObjectChanged(UDynamicMesh* ChangedMeshOb
 {
 	if (ChangeInfo.Type == EDynamicMeshChangeType::AttributeEdit)
 	{
-		// ToDo : Update Vertex Info
+		SetUpdateMode(EVoxelDynamicMeshComponentUpdateMode::FastUpdate);
 	}
 	else
 	{
-		NotifyMeshUpdated();
+		SetUpdateMode(EVoxelDynamicMeshComponentUpdateMode::SectionUpdate);
 	}
 
 	// Rebuild body setup.
@@ -70,6 +80,8 @@ void UVoxelDynamicMeshComponent::ConfigureMaterialSet(const TArray<UMaterialInte
 			SetMaterial(k, NewMaterialSet[k]);
 		}
 	}
+
+	SetUpdateMode(EVoxelDynamicMeshComponentUpdateMode::FullUpdate);
 }
 
 void UVoxelDynamicMeshComponent::SetVoxelMesh(UBaseVoxelMesh* NewVoxelMesh)
@@ -82,14 +94,16 @@ void UVoxelDynamicMeshComponent::SetVoxelMesh(UBaseVoxelMesh* NewVoxelMesh)
 	if (ensure(VoxelMeshObject))
 	{
 		VoxelMeshObject->OnMeshChanged().Remove(MeshObjectChangedHandle);
+		VoxelMeshObject->OnSectionUpdate().Remove(MeshObjectSectionHandle);
 	}
 
 	VoxelMeshObject = NewVoxelMesh;
 	MeshObjectChangedHandle = VoxelMeshObject->OnMeshChanged().AddUObject(this, &UVoxelDynamicMeshComponent::OnMeshObjectChanged);
+	MeshObjectSectionHandle = VoxelMeshObject->OnSectionUpdate().AddUObject(this, &UVoxelDynamicMeshComponent::MarkSectionListDirty);
 
 	ConfigureMaterialSet(GetMaterials());
 
-	NotifyMeshUpdated();
+	SetUpdateMode(EVoxelDynamicMeshComponentUpdateMode::FullUpdate);
 
 	// Rebuild physics data
 	//InvalidatePhysicsData();
@@ -162,6 +176,23 @@ void UVoxelDynamicMeshComponent::ResetProxy()
 	UpdateBounds();
 
 	GetDynamicMesh()->PostRealtimeUpdate();
+}
+
+void UVoxelDynamicMeshComponent::UpdateProxySection()
+{
+	if (bProxyValid)
+	{
+		InvalidateAutoCalculatedTangents();
+		GetCurrentSceneProxy()->UpdateSectionList(DirtySectionIndexList.Array(), VoxelMeshObject->GetSectionTriangleList());
+		UpdateLocalBounds();
+		UpdateBounds();
+
+		GetDynamicMesh()->PostRealtimeUpdate();
+	}
+	else
+	{
+		ResetProxy();
+	}
 }
 
 void UVoxelDynamicMeshComponent::UpdateLocalBounds()

@@ -16,7 +16,9 @@ enum class EVoxelDynamicMeshComponentUpdateMode
 
 	FastUpdate = 1, // Update Vertices Info Only
 
-	FullUpdate = 2 // Reset Proxy And Update Every thing
+	SectionUpdate = 2, // Update Section Only
+
+	FullUpdate = 3 // Reset Proxy And Update Every thing
 };
 
 /**
@@ -26,6 +28,10 @@ UCLASS(hidecategories = (LOD), meta = (BlueprintSpawnableComponent), ClassGroup 
 class LOHFUNCTIONPLUGIN_API UVoxelDynamicMeshComponent : public UBaseDynamicMeshComponent
 {
 	GENERATED_UCLASS_BODY()
+
+public:
+
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public: // Base Dynamic Mesh Function Interface
 
@@ -53,9 +59,29 @@ public:
 
 	//virtual void NotifyMaterialSetUpdated();
 
-	virtual void NotifyMeshUpdated() override { ResetProxy(); }
+	virtual void NotifyMeshUpdated() override 
+	{ 
+		switch (UpdateMode)
+		{
+		case EVoxelDynamicMeshComponentUpdateMode::FastUpdate: break;
+		case EVoxelDynamicMeshComponentUpdateMode::SectionUpdate: UpdateProxySection(); break;
+		case EVoxelDynamicMeshComponentUpdateMode::FullUpdate: ResetProxy(); break;
+		}
+
+		ResetUpdateMode();
+
+		return;
+	}
 
 	//void FastNotifyUpdated();
+
+public:
+
+	void MarkSectionListDirty(const TSet<int32> SectionList) { DirtySectionIndexList.Append(SectionList); }
+
+	void SetUpdateMode(const EVoxelDynamicMeshComponentUpdateMode Mode) { if (UpdateMode < Mode) UpdateMode = Mode; }
+
+	void ResetUpdateMode() { UpdateMode = EVoxelDynamicMeshComponentUpdateMode::NoUpdate; }
 
 public:
 
@@ -100,6 +126,8 @@ protected:
 
 	void ResetProxy();
 
+	void UpdateProxySection();
+
 protected:
 
 	void UpdateLocalBounds();
@@ -122,10 +150,18 @@ protected:
 
 	FDelegateHandle MeshObjectChangedHandle;
 
+	FDelegateHandle MeshObjectSectionHandle;
+
+	FDelegateHandle MeshObjectTriangleHandle;
+
+	EVoxelDynamicMeshComponentUpdateMode UpdateMode = EVoxelDynamicMeshComponentUpdateMode::FullUpdate;
+
 protected:
 
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> MeshBodySetup;
 
 	UPROPERTY(Instanced) TObjectPtr<UBaseVoxelMesh> VoxelMeshObject;
+
+	UPROPERTY() TSet<int32> DirtySectionIndexList;
 	
 };

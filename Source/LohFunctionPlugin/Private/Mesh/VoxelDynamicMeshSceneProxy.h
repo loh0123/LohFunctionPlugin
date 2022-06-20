@@ -25,7 +25,10 @@ public:
 
 	virtual void GetActiveRenderBufferSets(TArray<FMeshRenderBufferSet*>& Buffers) const override
 	{
-		Buffers = RenderBufferSets;
+		for (FMeshRenderBufferSet* Buffer : RenderBufferSets)
+		{
+			if (Buffer != nullptr) Buffers.Add(Buffer);
+		}
 	}
 
 	TUniqueFunction<void(int, int, int, const FVector3f&, FVector3f&, FVector3f&)> MakeTangentsFunc(bool bSkipAutoCompute = false)
@@ -162,6 +165,94 @@ public:
 					});
 			}
 		}
+	}
+
+	void UpdateSectionList(const TArray<int32>& SectionList, const TArray<FLFPVoxelSectionData>& SectionData)
+	{
+		// remove sets to update
+		ENQUEUE_RENDER_COMMAND(FOctreeDynamicMeshSceneProxyUpdatePreClean)(
+			[this, SectionList](FRHICommandListImmediate& RHICmdList)
+			{
+				for (const int32 SetID : SectionList)
+				{
+					if (RenderBufferSets.IsValidIndex(SetID) && RenderBufferSets[SetID] != nullptr)
+					{
+						ReleaseRenderBufferSet(RenderBufferSets[SetID]);
+						RenderBufferSets[SetID] = nullptr;
+					}
+				}
+			});
+
+		FDynamicMesh3* Mesh = ParentComponent->GetMesh();
+
+		// find suitable overlays
+		FDynamicMeshMaterialAttribute* MaterialID = nullptr;
+		TArray<const FDynamicMeshUVOverlay*, TInlineAllocator<8>> UVOverlays = { nullptr };
+		FDynamicMeshNormalOverlay* NormalOverlay = nullptr;
+		FDynamicMeshColorOverlay* ColorOverlay = nullptr;
+		if (Mesh->HasAttributes())
+		{
+			MaterialID = Mesh->Attributes()->GetMaterialID();
+			UVOverlays.SetNum(Mesh->Attributes()->NumUVLayers());
+			for (int32 k = 0; k < UVOverlays.Num(); ++k)
+			{
+				UVOverlays[k] = Mesh->Attributes()->GetUVLayer(k);
+			}
+			NormalOverlay = Mesh->Attributes()->PrimaryNormals();
+			ColorOverlay = Mesh->Attributes()->PrimaryColors();
+		}
+
+		TUniqueFunction<void(int, int, int, const FVector3f&, FVector3f&, FVector3f&)> TangentsFunc = MakeTangentsFunc();
+
+		{
+			TArray<int> Triangles;
+			Triangles.Reserve(Mesh->MaxTriangleID() / RenderBufferSets.Num());
+
+			for (const int32 SetID : SectionList)
+			{
+				if (RenderBufferSets.IsValidIndex(SetID))
+				{
+					Triangles.Reset();
+
+					FMeshRenderBufferSet* RenderBuffers = AllocateNewRenderBufferSet();
+					RenderBuffers->Material = GetMaterial(SetID);
+
+					//for (int tid : Mesh->TriangleIndicesItr())
+					//{
+					//	int MatIdx;
+					//	MaterialID->GetValue(tid, &MatIdx);
+					//	if (MatIdx == SetID)
+					//	{
+					//		Triangles.Add(tid);
+					//	}
+					//}
+
+					Triangles = SectionData[SetID].TriangleIndexList.Array();
+
+					if (Triangles.IsEmpty())
+					{
+						RenderBufferSets[SetID] = RenderBuffers;
+
+						continue;
+					}
+
+					InitializeBuffersFromOverlays(RenderBuffers, Mesh,
+						Triangles.Num(), Triangles,
+						UVOverlays, NormalOverlay, ColorOverlay, TangentsFunc);
+
+					RenderBuffers->Triangles = Triangles;
+
+					ENQUEUE_RENDER_COMMAND(FOctreeDynamicMeshSceneProxyUpdateAddOne)(
+						[this, SetID, RenderBuffers](FRHICommandListImmediate& RHICmdList)
+						{
+							RenderBuffers->Upload();
+							RenderBufferSets[SetID] = RenderBuffers;
+						});
+				}
+			}
+		}
+
+		return;
 	}
 
 	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override
