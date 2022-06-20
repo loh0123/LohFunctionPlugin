@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Mesh/BaseVoxelMesh.h"
 #include "Components/BaseDynamicMeshComponent.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "VoxelDynamicMeshComponent.generated.h"
 
 class FVoxelDynamicMeshSceneProxy;
@@ -25,13 +26,15 @@ enum class EVoxelDynamicMeshComponentUpdateMode
  * 
  */
 UCLASS(hidecategories = (LOD), meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
-class LOHFUNCTIONPLUGIN_API UVoxelDynamicMeshComponent : public UBaseDynamicMeshComponent
+class LOHFUNCTIONPLUGIN_API UVoxelDynamicMeshComponent : public UBaseDynamicMeshComponent, public IInterface_CollisionDataProvider
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void ProcessMesh(TFunctionRef<void(const UE::Geometry::FDynamicMesh3&)> ProcessFunc) const;
 
 public: // Base Dynamic Mesh Function Interface
 
@@ -64,8 +67,8 @@ public:
 		switch (UpdateMode)
 		{
 		case EVoxelDynamicMeshComponentUpdateMode::FastUpdate: break;
-		case EVoxelDynamicMeshComponentUpdateMode::SectionUpdate: UpdateProxySection(); break;
-		case EVoxelDynamicMeshComponentUpdateMode::FullUpdate: ResetProxy(); break;
+		case EVoxelDynamicMeshComponentUpdateMode::SectionUpdate: UpdateProxySection(); RebuildPhysicsData(); break;
+		case EVoxelDynamicMeshComponentUpdateMode::FullUpdate: ResetProxy(); RebuildPhysicsData(); break;
 		}
 
 		ResetUpdateMode();
@@ -93,6 +96,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelDynamicMeshComponent")
 		int32 GetVoxelSectionCount() const { return VoxelMeshObject->GetVoxelSectionCount(); };
+
+public: // Collision Handler
+
+	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;
+
+	virtual bool ContainsPhysicsTriMeshData(bool InUseAllTriData) const override;
+
+	virtual bool WantsNegXTriMesh() override;
+
+	virtual UBodySetup* GetBodySetup() override;
+
+	FORCEINLINE UBodySetup* GetBodySetupHelper();
+
+	virtual void RebuildPhysicsData();
+
+	void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
 
 public:
 
@@ -158,7 +177,9 @@ protected:
 
 protected:
 
-	UPROPERTY(Instanced) TObjectPtr<UBodySetup> MeshBodySetup;
+	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> MeshBodySetup;
+
+	UPROPERTY(transient) TArray<TObjectPtr<UBodySetup>> AsyncBodySetupQueue;
 
 	UPROPERTY(Instanced) TObjectPtr<UBaseVoxelMesh> VoxelMeshObject;
 

@@ -4,6 +4,7 @@
 #include "Mesh/VoxelDynamicMeshComponent.h"
 #include "DynamicMesh/MeshTransforms.h"
 #include "Mesh/BaseVoxelMesh.h"
+#include "Engine/CollisionProfile.h"
 
 #include "Mesh/VoxelDynamicMeshSceneProxy.h"
 
@@ -28,6 +29,12 @@ void UVoxelDynamicMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	{
 		NotifyMeshUpdated();
 	}
+}
+
+void UVoxelDynamicMeshComponent::ProcessMesh(
+	TFunctionRef<void(const UE::Geometry::FDynamicMesh3&)> ProcessFunc) const
+{
+	VoxelMeshObject->ProcessMesh(ProcessFunc);
 }
 
 void UVoxelDynamicMeshComponent::ApplyTransform(const FTransform3d& Transform, bool bInvert)
@@ -58,6 +65,138 @@ void UVoxelDynamicMeshComponent::OnMeshObjectChanged(UDynamicMesh* ChangedMeshOb
 
 	// Rebuild body setup.
 	//InvalidatePhysicsData();
+}
+
+bool UVoxelDynamicMeshComponent::GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData)
+{
+	ProcessMesh([&](const FDynamicMesh3& Mesh)
+		{
+			TArray<int32> VertexMap;
+			bool bIsSparseV = !Mesh.IsCompactV();
+			if (bIsSparseV)
+			{
+				VertexMap.SetNum(Mesh.MaxVertexID());
+			}
+
+			// copy vertices
+			CollisionData->Vertices.Reserve(Mesh.VertexCount());
+			for (int32 vid : Mesh.VertexIndicesItr())
+			{
+				int32 Index = CollisionData->Vertices.Add((FVector3f)Mesh.GetVertex(vid));
+				if (bIsSparseV)
+				{
+					VertexMap[vid] = Index;
+				}
+				else
+				{
+					check(vid == Index);
+				}
+			}
+
+			// copy triangles
+			CollisionData->Indices.Reserve(Mesh.TriangleCount());
+			CollisionData->MaterialIndices.Reserve(Mesh.TriangleCount());
+			for (int32 tid : Mesh.TriangleIndicesItr())
+			{
+				FIndex3i Tri = Mesh.GetTriangle(tid);
+				FTriIndices Triangle;
+				Triangle.v0 = (bIsSparseV) ? VertexMap[Tri.A] : Tri.A;
+				Triangle.v1 = (bIsSparseV) ? VertexMap[Tri.B] : Tri.B;
+				Triangle.v2 = (bIsSparseV) ? VertexMap[Tri.C] : Tri.C;
+				CollisionData->Indices.Add(Triangle);
+
+				CollisionData->MaterialIndices.Add(0);		// not supporting physical materials yet
+			}
+
+			CollisionData->bFlipNormals = true;
+			//CollisionData->bDeformableMesh = true;
+			CollisionData->bFastCook = true;
+		});
+
+	return true;
+}
+
+bool UVoxelDynamicMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
+{
+	return (VoxelMeshObject != nullptr) && (VoxelMeshObject->GetTriangleCount() > 0);
+}
+
+bool UVoxelDynamicMeshComponent::WantsNegXTriMesh()
+{
+	return true;
+}
+
+UBodySetup* UVoxelDynamicMeshComponent::GetBodySetup()
+{
+	if (MeshBodySetup == nullptr)
+	{
+		MeshBodySetup = GetBodySetupHelper();
+	}
+
+	return MeshBodySetup;
+}
+
+UBodySetup* UVoxelDynamicMeshComponent::GetBodySetupHelper()
+{
+	UBodySetup* NewBodySetup = NewObject<UBodySetup>(this, NAME_None, (IsTemplate() ? RF_Public | RF_ArchetypeObject : RF_NoFlags));
+	NewBodySetup->BodySetupGuid = FGuid::NewGuid();
+
+	NewBodySetup->bGenerateMirroredCollision = false;
+	NewBodySetup->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+
+	NewBodySetup->DefaultInstance.SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
+	NewBodySetup->bSupportUVsAndFaceRemap = false; /* bSupportPhysicalMaterialMasks; */
+
+	return NewBodySetup;
+}
+
+void UVoxelDynamicMeshComponent::RebuildPhysicsData()
+{
+	AsyncBodySetupQueue.Add(GetBodySetupHelper());
+
+	UBodySetup* UseBodySetup = AsyncBodySetupQueue.Last();
+
+	if (UseBodySetup)
+	{
+		UseBodySetup->CreatePhysicsMeshesAsync(FOnAsyncPhysicsCookFinished::CreateUObject(this, &UVoxelDynamicMeshComponent::FinishPhysicsAsyncCook, UseBodySetup));
+		
+		//MeshBodySetup->InvalidatePhysicsData();
+		//// Also we want cooked data for this
+		//MeshBodySetup->bHasCookedCollisionData = true;
+		//
+		//MeshBodySetup->CreatePhysicsMeshes();
+		//RecreatePhysicsState();
+	}
+}
+
+void UVoxelDynamicMeshComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup)
+{
+	TArray<UBodySetup*> NewQueue;
+	NewQueue.Reserve(AsyncBodySetupQueue.Num());
+
+
+	int32 FoundIdx;
+	if (AsyncBodySetupQueue.Find(FinishedBodySetup, FoundIdx))
+	{
+		if (bSuccess)
+		{
+			//The new body was found in the array meaning it's newer so use it
+			MeshBodySetup = FinishedBodySetup;
+			RecreatePhysicsState();
+
+			//remove any async body setups that were requested before this one
+			for (int32 AsyncIdx = FoundIdx + 1; AsyncIdx < AsyncBodySetupQueue.Num(); ++AsyncIdx)
+			{
+				NewQueue.Add(AsyncBodySetupQueue[AsyncIdx]);
+			}
+
+			AsyncBodySetupQueue = NewQueue;
+		}
+		else
+		{
+			AsyncBodySetupQueue.RemoveAt(FoundIdx);
+		}
+	}
 }
 
 void UVoxelDynamicMeshComponent::ConfigureMaterialSet(const TArray<UMaterialInterface*>& NewMaterialSet)
