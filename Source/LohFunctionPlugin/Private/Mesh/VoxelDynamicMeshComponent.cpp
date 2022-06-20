@@ -25,10 +25,17 @@ UVoxelDynamicMeshComponent::UVoxelDynamicMeshComponent(const FObjectInitializer&
 
 void UVoxelDynamicMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	if (UpdateMode != EVoxelDynamicMeshComponentUpdateMode::NoUpdate)
+	if (TickCounter >= 5)
 	{
-		NotifyMeshUpdated();
+		TickCounter = 0;
+
+		if (UpdateMode != EVoxelDynamicMeshComponentUpdateMode::NoUpdate)
+		{
+			NotifyMeshUpdated();
+		}
 	}
+
+	TickCounter++;
 }
 
 void UVoxelDynamicMeshComponent::ProcessMesh(
@@ -96,7 +103,7 @@ bool UVoxelDynamicMeshComponent::GetPhysicsTriMeshData(struct FTriMeshCollisionD
 			// copy triangles
 			CollisionData->Indices.Reserve(Mesh.TriangleCount());
 			CollisionData->MaterialIndices.Reserve(Mesh.TriangleCount());
-			for (int32 tid : Mesh.TriangleIndicesItr())
+			for (int tid : Mesh.TriangleIndicesItr())
 			{
 				FIndex3i Tri = Mesh.GetTriangle(tid);
 				FTriIndices Triangle;

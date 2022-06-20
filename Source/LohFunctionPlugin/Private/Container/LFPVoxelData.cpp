@@ -180,10 +180,11 @@ void ULFPVoxelData::SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, co
 	for (int32 VoxelChuckIndex = 0; VoxelChuckIndex < ChuckGridMaxIndex; VoxelChuckIndex++)
 	{
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex] = VoxelAttribute;
-
+	
 		ChuckData[ChuckIndex].VoxelData[VoxelChuckIndex].CorrectMaterialID(MaxMaterialID);
 
 		ChuckData[ChuckIndex].VoxelDataUpdateEvent.ExecuteIfBound(VoxelChuckIndex, ULFPGridLibrary::IsOnGridEdge(ULFPGridLibrary::IndexToGridLocation(VoxelChuckIndex, ChuckGridSize), ChuckGridSize));
+
 	}
 
 	if (bUpdateMesh)

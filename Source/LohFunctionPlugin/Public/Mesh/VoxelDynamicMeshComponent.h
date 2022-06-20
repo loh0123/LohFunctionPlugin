@@ -184,5 +184,7 @@ protected:
 	UPROPERTY(Instanced) TObjectPtr<UBaseVoxelMesh> VoxelMeshObject;
 
 	UPROPERTY() TSet<int32> DirtySectionIndexList;
+
+	UPROPERTY() int32 TickCounter;
 	
 };

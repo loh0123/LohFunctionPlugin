@@ -254,6 +254,10 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_DirtySectionIndexList_MetaData[];
 #endif
 		static const UECodeGen_Private::FSetPropertyParams NewProp_DirtySectionIndexList;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_TickCounter_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_TickCounter;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 		static const UECodeGen_Private::FImplementedInterfaceParams InterfaceParams[];
 		static const FCppClassTypeInfoStatic StaticCppClassTypeInfo;
@@ -306,6 +310,12 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 	};
 #endif
 	const UECodeGen_Private::FSetPropertyParams Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_DirtySectionIndexList = { "DirtySectionIndexList", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Set, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UVoxelDynamicMeshComponent, DirtySectionIndexList), METADATA_PARAMS(Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_DirtySectionIndexList_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_DirtySectionIndexList_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_TickCounter_MetaData[] = {
+		{ "ModuleRelativePath", "Public/Mesh/VoxelDynamicMeshComponent.h" },
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_TickCounter = { "TickCounter", nullptr, (EPropertyFlags)0x0020080000000000, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UVoxelDynamicMeshComponent, TickCounter), METADATA_PARAMS(Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_TickCounter_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_TickCounter_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_MeshBodySetup,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_AsyncBodySetupQueue_Inner,
@@ -313,6 +323,7 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_VoxelMeshObject,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_DirtySectionIndexList_ElementProp,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_DirtySectionIndexList,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::NewProp_TickCounter,
 	};
 		const UECodeGen_Private::FImplementedInterfaceParams Z_Construct_UClass_UVoxelDynamicMeshComponent_Statics::InterfaceParams[] = {
 			{ Z_Construct_UClass_UInterface_CollisionDataProvider_NoRegister, (int32)VTABLE_OFFSET(UVoxelDynamicMeshComponent, IInterface_CollisionDataProvider), false },  // 1866130202
@@ -357,9 +368,9 @@ void EmptyLinkFunctionForGeneratedCodeVoxelDynamicMeshComponent() {}
 		{ EVoxelDynamicMeshComponentUpdateMode_StaticEnum, TEXT("EVoxelDynamicMeshComponentUpdateMode"), &Z_Registration_Info_UEnum_EVoxelDynamicMeshComponentUpdateMode, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 4067951U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UVoxelDynamicMeshComponent, UVoxelDynamicMeshComponent::StaticClass, TEXT("UVoxelDynamicMeshComponent"), &Z_Registration_Info_UClass_UVoxelDynamicMeshComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVoxelDynamicMeshComponent), 2884433825U) },
+		{ Z_Construct_UClass_UVoxelDynamicMeshComponent, UVoxelDynamicMeshComponent::StaticClass, TEXT("UVoxelDynamicMeshComponent"), &Z_Registration_Info_UClass_UVoxelDynamicMeshComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVoxelDynamicMeshComponent), 2945781114U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_1389665054(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_2644824261(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::ClassInfo),
 		nullptr, 0,
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_Statics::EnumInfo));
