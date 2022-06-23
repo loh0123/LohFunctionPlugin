@@ -23,6 +23,13 @@ UVoxelDynamicMeshComponent::UVoxelDynamicMeshComponent(const FObjectInitializer&
 	ResetProxy();
 }
 
+UVoxelDynamicMeshComponent::~UVoxelDynamicMeshComponent()
+{
+	VoxelMeshObject = nullptr;
+	MeshObjectChangedHandle.Reset();
+	MeshObjectSectionHandle.Reset();
+}
+
 void UVoxelDynamicMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	if (TickCounter >= 5)
@@ -326,10 +333,11 @@ void UVoxelDynamicMeshComponent::ResetProxy()
 
 void UVoxelDynamicMeshComponent::UpdateProxySection()
 {
-	if (bProxyValid)
+	if (bProxyValid && GetCurrentSceneProxy())
 	{
 		InvalidateAutoCalculatedTangents();
 		GetCurrentSceneProxy()->UpdateSectionList(DirtySectionIndexList.Array(), VoxelMeshObject->GetSectionTriangleList());
+		DirtySectionIndexList.Empty();
 		UpdateLocalBounds();
 		UpdateBounds();
 

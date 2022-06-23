@@ -52,7 +52,7 @@ public: \
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_31_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
-	NO_API UVoxelDynamicMeshComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
+	NO_API UVoxelDynamicMeshComponent(const FObjectInitializer& ObjectInitializer); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UVoxelDynamicMeshComponent) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UVoxelDynamicMeshComponent); \
 	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UVoxelDynamicMeshComponent); \
@@ -64,8 +64,6 @@ public:
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_31_ENHANCED_CONSTRUCTORS \
-	/** Standard constructor, called after all reflected properties have been initialized */ \
-	NO_API UVoxelDynamicMeshComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UVoxelDynamicMeshComponent(UVoxelDynamicMeshComponent&&); \
@@ -73,7 +71,7 @@ private: \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UVoxelDynamicMeshComponent); \
 	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UVoxelDynamicMeshComponent); \
-	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UVoxelDynamicMeshComponent)
+	DEFINE_DEFAULT_CONSTRUCTOR_CALL(UVoxelDynamicMeshComponent)
 
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Mesh_VoxelDynamicMeshComponent_h_28_PROLOG

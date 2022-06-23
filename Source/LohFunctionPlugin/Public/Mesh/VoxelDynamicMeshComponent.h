@@ -32,6 +32,10 @@ class LOHFUNCTIONPLUGIN_API UVoxelDynamicMeshComponent : public UBaseDynamicMesh
 
 public:
 
+	UVoxelDynamicMeshComponent();
+
+	~UVoxelDynamicMeshComponent();
+
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual void ProcessMesh(TFunctionRef<void(const UE::Geometry::FDynamicMesh3&)> ProcessFunc) const;
@@ -50,12 +54,6 @@ public: // Base Dynamic Mesh Function Interface
 
 public: // Mesh Data Change Function
 
-	//virtual void ApplyChange(const FMeshVertexChange* Change, bool bRevert) override { VoxelMeshObject->ApplyChange(Change, bRevert); }
-
-	//virtual void ApplyChange(const FMeshChange* Change, bool bRevert) override { VoxelMeshObject->ApplyChange(Change, bRevert); }
-
-	//virtual void ApplyChange(const FMeshReplacementChange* Change, bool bRevert) override { VoxelMeshObject->ApplyChange(Change, bRevert); }
-
 	void OnMeshObjectChanged(UDynamicMesh* ChangedMeshObject, FDynamicMeshChangeInfo ChangeInfo);
 
 public:
@@ -70,7 +68,7 @@ public:
 		case EVoxelDynamicMeshComponentUpdateMode::SectionUpdate: UpdateProxySection(); RebuildPhysicsData(); break;
 		case EVoxelDynamicMeshComponentUpdateMode::FullUpdate: ResetProxy(); RebuildPhysicsData(); break;
 		}
-
+		
 		ResetUpdateMode();
 
 		return;

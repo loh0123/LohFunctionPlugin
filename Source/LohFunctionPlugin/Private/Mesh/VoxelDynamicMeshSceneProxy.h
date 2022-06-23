@@ -21,13 +21,16 @@ public:
 		ParentComponent = Component;
 	}
 
-	~FVoxelDynamicMeshSceneProxy() {}
+	virtual ~FVoxelDynamicMeshSceneProxy() 
+	{
+		ParentComponent = nullptr;
+	}
 
 	virtual void GetActiveRenderBufferSets(TArray<FMeshRenderBufferSet*>& Buffers) const override
 	{
 		for (FMeshRenderBufferSet* Buffer : RenderBufferSets)
 		{
-			if (Buffer != nullptr) Buffers.Add(Buffer);
+			if (Buffer != nullptr && Buffer->TriangleCount > 0) Buffers.Add(Buffer);
 		}
 	}
 
@@ -217,24 +220,7 @@ public:
 					FMeshRenderBufferSet* RenderBuffers = AllocateNewRenderBufferSet();
 					RenderBuffers->Material = GetMaterial(SetID);
 
-					//for (int tid : Mesh->TriangleIndicesItr())
-					//{
-					//	int MatIdx;
-					//	MaterialID->GetValue(tid, &MatIdx);
-					//	if (MatIdx == SetID)
-					//	{
-					//		Triangles.Add(tid);
-					//	}
-					//}
-
 					Triangles = SectionData[SetID].TriangleIndexList.Array();
-
-					if (Triangles.IsEmpty())
-					{
-						RenderBufferSets[SetID] = RenderBuffers;
-
-						continue;
-					}
 
 					InitializeBuffersFromOverlays(RenderBuffers, Mesh,
 						Triangles.Num(), Triangles,

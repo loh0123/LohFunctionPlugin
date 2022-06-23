@@ -78,7 +78,7 @@ void UHexagonVoxelMesh::UpdateMesh()
 {
 	if (VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  
 	
-	UpdateTriangles();
+	if (DataUpdateList.Num() > 0) UpdateTriangles();
 
 	return;
 }
@@ -117,8 +117,6 @@ void UHexagonVoxelMesh::UpdateTriangles()
 {
 	SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesCounter);
 
-	if (DataUpdateList.Num() == 0) return; // no need to update !!!
-
 	TArray<FLFPVoxelTriangleUpdateData> UpdateDataList;
 
 	TArray<int32> DataUpdateListArray = DataUpdateList.Array();
@@ -128,10 +126,12 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 		UpdateDataList.SetNum(DataUpdateListArray.Num());
 
+		const TArray<FLFPVoxelAttribute>& VoxelElementDataList = VoxelData->GetVoxelData(ChuckIndex);
+
 		ParallelFor(DataUpdateListArray.Num(), [&](const int32 LoopIndex) {
 			const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(DataUpdateListArray[LoopIndex], VoxelGridSize);
 
-			const int32 SelfMaterialID = VoxelData->GetVoxelData(ChuckIndex, DataUpdateListArray[LoopIndex]).MaterialID;
+			const int32 SelfMaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID;
 
 			const int32 MaterialOffset = (GridLocation.Z / VoxelData->GetSectionSize()) * VoxelData->GetMaxMaterialID();
 
@@ -159,7 +159,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 						AddHexagonWall(LocalVerticesIndex, UpdateData, FaceIndex);
 				}
 
-				UpdateData.MaterialID = VoxelData->GetVoxelData(ChuckIndex, UpdateData.GridIndex).MaterialID + MaterialOffset;
+				UpdateData.MaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID + MaterialOffset;
 
 				UpdateDataList[LoopIndex] = UpdateData;
 			}

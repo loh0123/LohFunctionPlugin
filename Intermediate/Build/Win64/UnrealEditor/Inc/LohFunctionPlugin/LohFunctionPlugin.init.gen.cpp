@@ -7,27 +7,23 @@
 #include "UObject/GeneratedCppIncludes.h"
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
-	LOHFUNCTIONPLUGIN_API UFunction* Z_Construct_UDelegateFunction_ULFPVoxelData_OnChuckGeneration__DelegateSignature();
 	static FPackageRegistrationInfo Z_Registration_Info_UPackage__Script_LohFunctionPlugin;
 	FORCENOINLINE UPackage* Z_Construct_UPackage__Script_LohFunctionPlugin()
 	{
 		if (!Z_Registration_Info_UPackage__Script_LohFunctionPlugin.OuterSingleton)
 		{
-			static UObject* (*const SingletonFuncArray[])() = {
-				(UObject* (*)())Z_Construct_UDelegateFunction_ULFPVoxelData_OnChuckGeneration__DelegateSignature,
-			};
 			static const UECodeGen_Private::FPackageParams PackageParams = {
 				"/Script/LohFunctionPlugin",
-				SingletonFuncArray,
-				UE_ARRAY_COUNT(SingletonFuncArray),
+				nullptr,
+				0,
 				PKG_CompiledIn | 0x00000000,
-				0x3FAE3C0A,
-				0x428B2EF5,
+				0xA863D58B,
+				0xF8BBE621,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UECodeGen_Private::ConstructUPackage(Z_Registration_Info_UPackage__Script_LohFunctionPlugin.OuterSingleton, PackageParams);
 		}
 		return Z_Registration_Info_UPackage__Script_LohFunctionPlugin.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_LohFunctionPlugin(Z_Construct_UPackage__Script_LohFunctionPlugin, TEXT("/Script/LohFunctionPlugin"), Z_Registration_Info_UPackage__Script_LohFunctionPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x3FAE3C0A, 0x428B2EF5));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_LohFunctionPlugin(Z_Construct_UPackage__Script_LohFunctionPlugin, TEXT("/Script/LohFunctionPlugin"), Z_Registration_Info_UPackage__Script_LohFunctionPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xA863D58B, 0xF8BBE621));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

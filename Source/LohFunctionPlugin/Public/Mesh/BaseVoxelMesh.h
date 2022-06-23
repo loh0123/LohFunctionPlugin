@@ -28,13 +28,12 @@ struct FLFPVoxelTriangleUpdateData
 	UPROPERTY() int32 MaterialID = 0;
 };
 
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FLFPVoxelTriangleData
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTriangleData")
-		TArray<int32> MeshTriangleIndex = {};
+	UPROPERTY() TArray<int32> MeshTriangleIndex = {};
 };
 
 USTRUCT()
@@ -53,17 +52,16 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxelSectionUpdate, TSet<int32>);
 UCLASS()
 class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
+
 
 	virtual void SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex);
 
 	FORCEINLINE void UpdateMesh() { unimplemented(); }  // Override This
 
 	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
-
-	FORCEINLINE void MarkVoxelDataForUpdate(const int32 VoxelIndex, const bool IsNotSingle) { unimplemented(); }  // Override This
 
 	FORCEINLINE const TArray<FLFPVoxelSectionData>& GetSectionTriangleList() const { return SectionTriangleList; }
 
@@ -104,7 +102,7 @@ protected: // Runtime Data
 
 	UPROPERTY() TSet<int32> DataUpdateList = {};
 
-	UPROPERTY() TSet<int32> BufferUpdateList = {};
+	//UPROPERTY() TSet<int32> BufferUpdateList = {};
 
 	UPROPERTY() TArray<FLFPVoxelSectionData> SectionTriangleList = {};
 

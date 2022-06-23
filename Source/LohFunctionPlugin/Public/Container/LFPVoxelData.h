@@ -36,7 +36,7 @@ public:
 DECLARE_DELEGATE_TwoParams(FOnVoxelDataUpdate, int32, bool);
 DECLARE_DELEGATE(FOnVoxelUpdate);
 
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FLFPVoxelChuckData
 {
 	GENERATED_USTRUCT_BODY()
@@ -47,8 +47,7 @@ struct FLFPVoxelChuckData
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelChuckData")
-		TArray<FLFPVoxelAttribute> VoxelData = {};
+	UPROPERTY() TArray<FLFPVoxelAttribute> VoxelData = {};
 
 	// Update Event For Notify Chuck On Voxel Data Change
 	FOnVoxelDataUpdate VoxelDataUpdateEvent;
@@ -69,9 +68,7 @@ public:
 UCLASS(BlueprintType)
 class LOHFUNCTIONPLUGIN_API ULFPVoxelData : public UObject
 {
-	GENERATED_BODY()
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChuckGeneration, int32, ChuckIndex, FIntVector, StartVoxelGridLocation, FIntVector, EndVoxelGridLocation);
+	GENERATED_UCLASS_BODY()
 
 protected: // Initialize Data
 
@@ -113,11 +110,6 @@ protected: // Empty Data
 
 public:
 
-	UPROPERTY(BlueprintAssignable, meta = (DisplayName = "ChuckBegin"))
-		FOnChuckGeneration OnChuckGeneration;
-
-public:
-
 	FORCEINLINE bool IsChuckIndexValid(const int32 ChuckIndex) const { return ChuckData.IsValidIndex(ChuckIndex); }
 
 	FORCEINLINE int32 GetPoolLength() const { return PoolLength; }
@@ -144,7 +136,9 @@ public:
 
 	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const FIntVector VoxelGridLocation) const;
 
-	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const;
+	//FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const;
+
+	FORCEINLINE const TArray<FLFPVoxelAttribute>& GetVoxelData(const int32 ChuckIndex);
 
 	FORCEINLINE void InitializeChuck(const int32 ChuckIndex);
 
