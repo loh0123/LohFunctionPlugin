@@ -22,41 +22,48 @@ struct FIntVector;
 
 template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPVoxelAttribute>();
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_42_GENERATED_BODY \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_40_GENERATED_BODY \
 	friend struct Z_Construct_UScriptStruct_FLFPVoxelChuckData_Statics; \
 	LOHFUNCTIONPLUGIN_API static class UScriptStruct* StaticStruct();
 
 
 template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPVoxelChuckData>();
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_SPARSE_DATA
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_RPC_WRAPPERS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_70_GENERATED_BODY \
+	friend struct Z_Construct_UScriptStruct_FLFPVoxelContainerSetting_Statics; \
+	LOHFUNCTIONPLUGIN_API static class UScriptStruct* StaticStruct();
+
+
+template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<struct FLFPVoxelContainerSetting>();
+
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_SPARSE_DATA
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_RPC_WRAPPERS \
  \
 	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
 	DECLARE_FUNCTION(execSetVoxelGridData); \
 	DECLARE_FUNCTION(execIsChuckInitialized); \
 	DECLARE_FUNCTION(execGetPoolAttribute); \
 	DECLARE_FUNCTION(execSetupVoxelData); \
 	DECLARE_FUNCTION(execMarkChuckForUpdate); \
-	DECLARE_FUNCTION(execUpdateChuck);
+	DECLARE_FUNCTION(execUpdateChuck); \
+	DECLARE_FUNCTION(execGetContainerSize);
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execSetAllVoxelGridDataWithSingleData); \
-	DECLARE_FUNCTION(execSetVoxelGridDataListWithSingleData); \
 	DECLARE_FUNCTION(execSetVoxelGridDataList); \
 	DECLARE_FUNCTION(execSetVoxelGridData); \
 	DECLARE_FUNCTION(execIsChuckInitialized); \
 	DECLARE_FUNCTION(execGetPoolAttribute); \
 	DECLARE_FUNCTION(execSetupVoxelData); \
 	DECLARE_FUNCTION(execMarkChuckForUpdate); \
-	DECLARE_FUNCTION(execUpdateChuck);
+	DECLARE_FUNCTION(execUpdateChuck); \
+	DECLARE_FUNCTION(execGetContainerSize);
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_INCLASS_NO_PURE_DECLS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesULFPVoxelData(); \
 	friend struct Z_Construct_UClass_ULFPVoxelData_Statics; \
@@ -65,7 +72,7 @@ public: \
 	DECLARE_SERIALIZER(ULFPVoxelData)
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_INCLASS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_INCLASS \
 private: \
 	static void StaticRegisterNativesULFPVoxelData(); \
 	friend struct Z_Construct_UClass_ULFPVoxelData_Statics; \
@@ -74,7 +81,7 @@ public: \
 	DECLARE_SERIALIZER(ULFPVoxelData)
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_STANDARD_CONSTRUCTORS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API ULFPVoxelData(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ULFPVoxelData) \
@@ -87,7 +94,7 @@ private: \
 public:
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_ENHANCED_CONSTRUCTORS \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API ULFPVoxelData(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
@@ -100,26 +107,26 @@ public: \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ULFPVoxelData)
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_68_PROLOG
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_GENERATED_BODY_LEGACY \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_127_PROLOG
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_GENERATED_BODY_LEGACY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_SPARSE_DATA \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_RPC_WRAPPERS \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_INCLASS \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_STANDARD_CONSTRUCTORS \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_SPARSE_DATA \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_RPC_WRAPPERS \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_INCLASS \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_STANDARD_CONSTRUCTORS \
 public: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
-#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_GENERATED_BODY \
+#define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_SPARSE_DATA \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_INCLASS_NO_PURE_DECLS \
-	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_71_ENHANCED_CONSTRUCTORS \
-static_assert(false, "Unknown access specifier for GENERATED_BODY() macro in class LFPVoxelData."); \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_SPARSE_DATA \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_INCLASS_NO_PURE_DECLS \
+	FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Container_LFPVoxelData_h_130_ENHANCED_CONSTRUCTORS \
+private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
