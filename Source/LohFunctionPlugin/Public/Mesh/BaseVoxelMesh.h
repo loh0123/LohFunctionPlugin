@@ -67,11 +67,15 @@ public:
 
 	FORCEINLINE int32 GetVoxelSectionCount() const;
 
-	FORCEINLINE bool isVoxelDataValid() const;
+	FORCEINLINE bool IsVoxelDataValid() const;
+
+public:
+
+	FORCEINLINE FColor GetTriangleColour(const int32 TriID) const { return TriangleColourList.IsValidIndex(TriID) ? TriangleColourList[TriID] : FColor(0); }
 
 protected:
 
-	FORCEINLINE void UpdateVertices() { unimplemented(); }  // Override This
+	FORCEINLINE void UpdateVertices(const TArray<FVector>& VerticesList);
 
 	FORCEINLINE void UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& UpdateDataList);
 
@@ -94,7 +98,7 @@ protected: // Initialize Data
 
 protected: // Runtime Data
 
-	UPROPERTY() TArray<FVector> VerticesList = {};
+	//UPROPERTY() TArray<FVector> VerticesList = {};
 
 	UPROPERTY() FIntVector VertexSize = FIntVector::NoneValue;
 
@@ -102,9 +106,10 @@ protected: // Runtime Data
 
 	UPROPERTY() TSet<int32> DataUpdateList = {};
 
-	//UPROPERTY() TSet<int32> BufferUpdateList = {};
-
 	UPROPERTY() TArray<FLFPVoxelSectionData> SectionTriangleList = {};
+
+
+	UPROPERTY() TArray<FColor> TriangleColourList = {};
 
 protected:
 

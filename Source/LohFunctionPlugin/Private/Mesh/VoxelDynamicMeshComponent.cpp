@@ -217,7 +217,7 @@ void UVoxelDynamicMeshComponent::ConfigureMaterialSet(const TArray<UMaterialInte
 {
 	if (NewMaterialSet.IsEmpty()) return;
 
-	if (VoxelMeshObject->isVoxelDataValid())
+	if (VoxelMeshObject->IsVoxelDataValid())
 	{
 		SetNumMaterials(GetVoxelSectionCount());
 
@@ -308,6 +308,12 @@ FPrimitiveSceneProxy* UVoxelDynamicMeshComponent::CreateSceneProxy()
 	if (GetMesh()->TriangleCount() > 0)
 	{
 		NewProxy = new FVoxelDynamicMeshSceneProxy(this);
+
+		NewProxy->bUsePerTriangleColor = true;
+
+		NewProxy->PerTriangleColorFunc = [&](const FDynamicMesh3* Mesh, int TriID) {
+			return VoxelMeshObject->GetTriangleColour(TriID);
+		};
 
 		NewProxy->Initialize();
 

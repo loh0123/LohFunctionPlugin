@@ -25,7 +25,7 @@ using namespace UE::Geometry;
 
 void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex)
 {
-	if (NewChuckIndex < 0 || NewChuckIndex >= NewVoxelData->GetPoolLength()) return;
+	if (NewChuckIndex < 0 || NewChuckIndex >= NewVoxelData->GetContainerSetting().PoolLength) return;
 
 	NewVoxelData->DisconnectEvent(NewChuckIndex);
 
@@ -61,10 +61,10 @@ void UHexagonVoxelMesh::MarkVoxelDataForUpdate(const int32 VoxelIndex, const boo
 		{
 			FIntVector VoxelGridLocation = UpdateLocation + StartVoxelLocation;
 
-			int32 TargetChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / VoxelGridSize.X, VoxelGridLocation.Y / VoxelGridSize.Y, VoxelGridLocation.Z / VoxelGridSize.Z), VoxelData->GetPoolGridSize());
+			int32 TargetChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / VoxelGridSize.X, VoxelGridLocation.Y / VoxelGridSize.Y, VoxelGridLocation.Z / VoxelGridSize.Z), VoxelData->GetContainerSetting().PoolGridSize);
 			int32 VoxelChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % VoxelGridSize.X, VoxelGridLocation.Y % VoxelGridSize.Y, VoxelGridLocation.Z % VoxelGridSize.Z), VoxelGridSize);
 
-			if (VoxelData->IsChuckIndexValid(TargetChuckIndex) && VoxelChuckIndex >= 0 && VoxelChuckIndex < VoxelData->GetChuckVoxelLength())
+			if (VoxelData->IsChuckIndexValid(TargetChuckIndex) && VoxelChuckIndex >= 0 && VoxelChuckIndex < VoxelData->GetContainerSetting().ChuckVoxelLength)
 			{
 				VoxelData->GetVoxelDataUpdateEvent(TargetChuckIndex).ExecuteIfBound(VoxelChuckIndex, false);
 			}
@@ -76,7 +76,7 @@ void UHexagonVoxelMesh::MarkVoxelDataForUpdate(const int32 VoxelIndex, const boo
 
 void UHexagonVoxelMesh::UpdateMesh()
 {
-	if (VertexSize.GetMax() == INDEX_NONE) UpdateVertices();  
+	if (VertexSize == FIntVector::NoneValue) UpdateVertices();
 	
 	if (DataUpdateList.Num() > 0) UpdateTriangles();
 
@@ -87,7 +87,7 @@ void UHexagonVoxelMesh::UpdateVertices()
 {
 	SCOPE_CYCLE_COUNTER(STAT_MeshVertexUpdateCounter);
 
-	//TArray<FVector> MeshVertex;
+	TArray<FVector> MeshVertex;
 
 	const TArray<FVector> PointList = {
 		FVector(0					,MeshSize.Y * 0.5	,0),
@@ -100,15 +100,17 @@ void UHexagonVoxelMesh::UpdateVertices()
 
 	const int32 VertexIndexSize = VertexSize.X * VertexSize.Y * VertexSize.Z;
 
-	VerticesList.SetNum(VertexIndexSize);
+	MeshVertex.SetNum(VertexIndexSize);
 
 	ParallelFor(VertexIndexSize, [&](const int32 LoopIndex) {
 		const FIntVector VertexLocation = ULFPGridLibrary::IndexToGridLocation(LoopIndex, VertexSize);
 	
 		const FVector CurrentHexaPos = (FVector(VertexLocation.X / 4, VertexLocation.Y, VertexLocation.Z / 2) * (MeshSize + FVector(MeshSize.X * 0.5, 0, 0)) + FVector(0, 0, VertexLocation.Z % 2 == 1 ? MeshSize.Z : 0));
 	
-		VerticesList[LoopIndex] = (PointList[VertexLocation.X % 4] + CurrentHexaPos);
+		MeshVertex[LoopIndex] = (PointList[VertexLocation.X % 4] + CurrentHexaPos);
 		});
+
+	Super::UpdateVertices(MeshVertex);
 
 	return;
 }
@@ -133,7 +135,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 			const int32 SelfMaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID;
 
-			const int32 MaterialOffset = (GridLocation.Z / VoxelData->GetSectionSize()) * VoxelData->GetMaxMaterialID();
+			const int32 MaterialOffset = (GridLocation.Z / VoxelData->GetContainerSetting().SectionSize) * VoxelData->GetContainerSetting().MaxMaterialID;
 
 			if (IsBlockVisible(GridLocation, SelfMaterialID))
 			{

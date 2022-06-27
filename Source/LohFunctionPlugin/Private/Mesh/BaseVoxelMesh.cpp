@@ -34,19 +34,21 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 	ChuckIndex = NewChuckIndex;
 	SectionTriangleList.Reset();
 
-	VerticesList.Empty();
+	//VerticesList.Empty();
+
+	TriangleColourList.Empty();
 
 	VertexSize = FIntVector::NoneValue;
 
 	TriangleDataList.Empty();
-	TriangleDataList.SetNum(NewVoxelData->GetChuckVoxelLength());
+	TriangleDataList.SetNum(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
 
-	DataUpdateList.Empty(NewVoxelData->GetChuckVoxelLength());
-	DataUpdateList.Reserve(NewVoxelData->GetChuckVoxelLength());
+	DataUpdateList.Empty(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
+	DataUpdateList.Reserve(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
 
-	SectionTriangleList.SetNum(NewVoxelData->GetSectionCount());
+	SectionTriangleList.SetNum(NewVoxelData->GetContainerSetting().SectionCount);
 
-	for (int32 TriIndex = 0; TriIndex < NewVoxelData->GetChuckVoxelLength(); TriIndex++)
+	for (int32 TriIndex = 0; TriIndex < NewVoxelData->GetContainerSetting().ChuckVoxelLength; TriIndex++)
 	{
 		DataUpdateList.Add(TriIndex);
 	}
@@ -55,7 +57,7 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{
-			EditMesh.Attributes()->SetNumUVLayers(8);
+			EditMesh.Attributes()->SetNumUVLayers(4);
 			EditMesh.Attributes()->EnableMaterialID();
 			EditMesh.Attributes()->EnableTangents();
 
@@ -79,14 +81,27 @@ void UBaseVoxelMesh::MarkTrianglesDataForUpdate(const int32 VoxelIndex)
 
 int32 UBaseVoxelMesh::GetVoxelSectionCount() const
 {
-	return VoxelData ? VoxelData->GetSectionCount() : INDEX_NONE;
+	return VoxelData ? VoxelData->GetContainerSetting().SectionCount : INDEX_NONE;
 }
 
-bool UBaseVoxelMesh::isVoxelDataValid() const
+bool UBaseVoxelMesh::IsVoxelDataValid() const
 {
 	return VoxelData != nullptr;
 }
 
+
+void UBaseVoxelMesh::UpdateVertices(const TArray<FVector>& VerticesList)
+{
+	EditMesh([&](FDynamicMesh3& EditMesh)
+		{
+			EditMesh.Clear();
+
+			for (const FVector Pos : VerticesList)
+			{
+				EditMesh.AppendVertex(Pos);
+			}
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, true);
+}
 
 void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& UpdateDataList)
 {
@@ -117,10 +132,11 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 			if (UpdateDataList.Num() == 0) return;
 
 			TArray<TObjectPtr<FDynamicMeshUVOverlay>> UVOverlayList;
+			TObjectPtr<FDynamicMeshColorOverlay> PrimaryColors = EditMesh.Attributes()->PrimaryColors();
 
-			UVOverlayList.SetNum(8);
+			UVOverlayList.SetNum(4);
 
-			for (int32 UVLayerID = 0; UVLayerID < 8; UVLayerID++)
+			for (int32 UVLayerID = 0; UVLayerID < 4; UVLayerID++)
 			{
 				UVOverlayList[UVLayerID] = EditMesh.Attributes()->GetUVLayer(UVLayerID);
 			}
@@ -141,9 +157,9 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 				{
 					FIntVector TriVertexIndex;
 
-					TriVertexIndex.X = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].X]);
-					TriVertexIndex.Y = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].Y]);
-					TriVertexIndex.Z = EditMesh.AppendVertex(VerticesList[UpdateData.NewTriangleList[TriangleID].Z]);
+					TriVertexIndex.X = UpdateData.NewTriangleList[TriangleID].X;
+					TriVertexIndex.Y = UpdateData.NewTriangleList[TriangleID].Y;
+					TriVertexIndex.Z = UpdateData.NewTriangleList[TriangleID].Z;
 
 					const int32 TriIndex = EditMesh.AppendTriangle(TriVertexIndex, UpdateData.NewTriangleGroupList[TriangleID]);
 
@@ -152,19 +168,22 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 					TriangleDataList[UpdateData.GridIndex].MeshTriangleIndex.Add(TriIndex);
 
 					const int32 UVIndex = TriangleID * 3;
-
+					
 					int Elem0 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex]);
 					int Elem1 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 1]);
 					int Elem2 = UVOverlayList[0]->AppendElement(UpdateData.NewUVList[UVIndex + 2]);
 					UVOverlayList[0]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
+					
+					//for (int32 CustomDataUV = 1; CustomDataUV < FMath::Min(VoxelElementDataList[UpdateData.GridIndex].CustomData.Num() + 1, 8); CustomDataUV++)
+					//{
+					//	Elem0 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
+					//	Elem1 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
+					//	Elem2 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
+					//	UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
+					//}
 
-					for (int32 CustomDataUV = 1; CustomDataUV < FMath::Min(VoxelElementDataList[UpdateData.GridIndex].CustomData.Num() + 1, 8); CustomDataUV++)
-					{
-						Elem0 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
-						Elem1 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
-						Elem2 = UVOverlayList[CustomDataUV]->AppendElement(FVector2f(VoxelElementDataList[UpdateData.GridIndex].CustomData[CustomDataUV - 1]));
-						UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
-					}
+					if (TriangleColourList.Num() <= TriIndex) TriangleColourList.SetNum(TriIndex + 1);
+					TriangleColourList[TriIndex] = VoxelElementDataList[UpdateData.GridIndex].VertexColor;
 
 					MaterialIDs->SetValue(TriIndex, UpdateData.MaterialID);
 				}
@@ -183,6 +202,6 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 
 bool UBaseVoxelMesh::IsBlockVisible(const FIntVector GridLocation, const int32 SelfMaterialID) const
 {
-	return VoxelData->GetVoxelData(GridLocation + StartVoxelLocation).IsVisible ? VoxelData->GetVoxelData(GridLocation + StartVoxelLocation).MaterialID == SelfMaterialID : false;
+	return VoxelData->GetVoxelVisible(GridLocation + StartVoxelLocation) ? VoxelData->GetVoxelData(GridLocation + StartVoxelLocation).MaterialID == SelfMaterialID : false;
 }
 
