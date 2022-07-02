@@ -9,18 +9,6 @@
 #include "Container/LFPVoxelData.h"
 #include "Runtime/Core/Public/Async/ParallelFor.h"
 
-
-DECLARE_STATS_GROUP(TEXT("HexagonVoxelMesh Performance Counter"), STATGROUP_HexagonVoxelMesh, STATCAT_Advanced);
-
-DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesCounter"), STAT_MeshUpdateTrianglesCounter, STATGROUP_HexagonVoxelMesh);
-
-DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesDataCounter"), STAT_MeshUpdateTrianglesDataCounter, STATGROUP_HexagonVoxelMesh);
-
-DECLARE_CYCLE_STAT(TEXT("MeshVertexUpdateCounter"), STAT_MeshVertexUpdateCounter, STATGROUP_HexagonVoxelMesh);
-
-DECLARE_CYCLE_STAT(TEXT("MeshOperationCounter"), STAT_MeshOperationCounter, STATGROUP_HexagonVoxelMesh);
-
-
 using namespace UE::Geometry;
 
 void UHexagonVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex)
@@ -85,8 +73,6 @@ void UHexagonVoxelMesh::UpdateMesh()
 
 void UHexagonVoxelMesh::UpdateVertices()
 {
-	SCOPE_CYCLE_COUNTER(STAT_MeshVertexUpdateCounter);
-
 	TArray<FVector> MeshVertex;
 
 	const TArray<FVector> PointList = {
@@ -117,15 +103,11 @@ void UHexagonVoxelMesh::UpdateVertices()
 
 void UHexagonVoxelMesh::UpdateTriangles()
 {
-	SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesCounter);
-
 	TArray<FLFPVoxelTriangleUpdateData> UpdateDataList;
 
 	TArray<int32> DataUpdateListArray = DataUpdateList.Array();
 	
 	{
-		SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesDataCounter);
-
 		UpdateDataList.SetNum(DataUpdateListArray.Num());
 
 		const TArray<FLFPVoxelAttribute>& VoxelElementDataList = VoxelData->GetVoxelData(ChuckIndex);
@@ -147,7 +129,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 
 				FindBlockNeighbour(GridLocation, LocalNeighbourList);
 
-				FLFPVoxelTriangleUpdateData UpdateData;
+				FLFPVoxelTriangleUpdateData& UpdateData = UpdateDataList[LoopIndex];
 
 				UpdateData.GridIndex = DataUpdateListArray[LoopIndex];
 
@@ -162,8 +144,6 @@ void UHexagonVoxelMesh::UpdateTriangles()
 				}
 
 				UpdateData.MaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID + MaterialOffset;
-
-				UpdateDataList[LoopIndex] = UpdateData;
 			}
 			});
 	}

@@ -8,8 +8,6 @@
 #include "Components/DynamicMeshComponent.h"
 #include "BaseVoxelMesh.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(BaseVoxelMesh, Warning, All);
-
 class ULFPVoxelData;
 
 USTRUCT()
@@ -56,12 +54,13 @@ class LOHFUNCTIONPLUGIN_API UBaseVoxelMesh : public UDynamicMesh
 
 public:
 
-
 	virtual void SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuckIndex);
 
 	FORCEINLINE void UpdateMesh() { unimplemented(); }  // Override This
 
 	FORCEINLINE void MarkTrianglesDataForUpdate(const int32 VoxelIndex);
+
+public:
 
 	FORCEINLINE const TArray<FLFPVoxelSectionData>& GetSectionTriangleList() const { return SectionTriangleList; }
 
@@ -71,7 +70,7 @@ public:
 
 public:
 
-	FORCEINLINE FColor GetTriangleColour(const int32 TriID) const { return TriangleColourList.IsValidIndex(TriID) ? TriangleColourList[TriID] : FColor(0); }
+	FORCEINLINE FColor GetTriangleColour(const int32 TriID) const;
 
 protected:
 
@@ -85,15 +84,15 @@ protected: // Initialize Data
 
 	UPROPERTY() TObjectPtr<ULFPVoxelData> VoxelData;
 
-	UPROPERTY() FIntVector ChuckGridLocation = FIntVector::NoneValue;
+	//UPROPERTY() FIntVector ChuckGridLocation = FIntVector::NoneValue;
 
-	UPROPERTY() FIntVector StartVoxelLocation = FIntVector::NoneValue;
+	UPROPERTY() int32 ChuckIndex = INDEX_NONE; // Chuck Index On Voxel Data Chuck Array
 
-	UPROPERTY() int32 ChuckIndex = INDEX_NONE;
+	UPROPERTY() FVector MeshSize = FVector(400, 346.4, 300); // Voxel Mesh Size
 
-	UPROPERTY() FVector MeshSize = FVector(400, 346.4, 300);
+	UPROPERTY() FIntVector VoxelGridSize = FIntVector(1); // How Big This Chuck Is Rendering
 
-	UPROPERTY() FIntVector VoxelGridSize = FIntVector(1);
+	UPROPERTY() FIntVector StartVoxelLocation = FIntVector::NoneValue;  // Start Voxel Location Of The Chuck
 
 
 protected: // Runtime Data
@@ -102,14 +101,16 @@ protected: // Runtime Data
 
 	UPROPERTY() FIntVector VertexSize = FIntVector::NoneValue;
 
-	UPROPERTY() TArray<FLFPVoxelTriangleData> TriangleDataList = {};
-
 	UPROPERTY() TSet<int32> DataUpdateList = {};
+
+	UPROPERTY() TArray<FLFPVoxelTriangleData> TriangleDataList = {};
 
 	UPROPERTY() TArray<FLFPVoxelSectionData> SectionTriangleList = {};
 
+	UPROPERTY() TArray<int32> TriangleVoxelIndexList = {};
 
-	UPROPERTY() TArray<FColor> TriangleColourList = {};
+
+	//UPROPERTY() TArray<FColor> TriangleColourList = {};
 
 protected:
 

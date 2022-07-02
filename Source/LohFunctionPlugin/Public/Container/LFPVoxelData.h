@@ -187,7 +187,7 @@ public:
 		FORCEINLINE void SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID = 1, const int32 NewSectionSize = 16);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void GetPoolAttribute(const int32 ChuckIndex, FIntVector& ChuckGridLocation, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize);
+		FORCEINLINE void GetPoolAttribute(const int32 ChuckIndex, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE bool IsChuckInitialized(const int32 ChuckIndex) const;

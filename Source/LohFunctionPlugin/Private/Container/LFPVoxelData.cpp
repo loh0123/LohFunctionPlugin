@@ -73,17 +73,45 @@ int32 ULFPVoxelData::GetContainerSize()
 
 void ULFPVoxelData::UpdateChuck(const int32 UpdateCount)
 {
-	const TArray<int32> UpdateArray = UpdateChuckList.Array();
+	//const TArray<int32> UpdateArray = UpdateChuckList.Array();
 
-	for (int32 CountIndex = 0; CountIndex < FMath::Min(UpdateCount, UpdateArray.Num()); CountIndex++)
+	if (UpdateCount <= 0)
 	{
-		UpdateChuckList.Remove(UpdateArray[CountIndex]);
-
-		if (ChuckData.IsValidIndex(UpdateArray[CountIndex]))
-		{
-			ChuckData[UpdateArray[CountIndex]].VoxelUpdateEvent.ExecuteIfBound();
-		}
+		return;
 	}
+
+	int32 Count = 0;
+
+	TArray<int32> RemoveArray;
+
+	RemoveArray.Reserve(UpdateCount);
+
+	for (auto ChuckIndex = UpdateChuckList.CreateIterator(); ChuckIndex && Count < UpdateCount; ++ChuckIndex)
+	{
+		RemoveArray.Add(*ChuckIndex);
+
+		if (ChuckData.IsValidIndex(*ChuckIndex))
+		{
+			ChuckData[*ChuckIndex].VoxelUpdateEvent.ExecuteIfBound();
+		}
+
+		Count++;
+	}
+
+	for (const int32 ChuckIndex : RemoveArray)
+	{
+		UpdateChuckList.Remove(ChuckIndex);
+	}
+
+	//for (int32 CountIndex = 0; CountIndex < FMath::Min(UpdateCount, UpdateArray.Num()); CountIndex++)
+	//{
+	//	UpdateChuckList.Remove(UpdateArray[CountIndex]);
+	//
+	//	if (ChuckData.IsValidIndex(UpdateArray[CountIndex]))
+	//	{
+	//		ChuckData[UpdateArray[CountIndex]].VoxelUpdateEvent.ExecuteIfBound();
+	//	}
+	//}
 
 	return;
 }
@@ -101,21 +129,18 @@ void ULFPVoxelData::SetupVoxelData(const FVector NewMeshSize, const FIntVector N
 
 	ContainerSetting.UpdateCache(NewMaxMaterialID, NewSectionSize);
 
-	ChuckData.Empty(ContainerSetting.PoolLength);
-	ChuckData.SetNum(ContainerSetting.PoolLength);
+	ChuckData.Init(FLFPVoxelChuckData(), ContainerSetting.PoolLength);
 
-	InitializedList.Empty(ContainerSetting.PoolLength);
-	InitializedList.AddUninitialized(ContainerSetting.PoolLength);
-	InitializedList.SetRange(0, ContainerSetting.PoolLength, false);
+	InitializedList = TBitArray(false, ContainerSetting.PoolLength);
 
 	return;
 }
 
-void ULFPVoxelData::GetPoolAttribute(const int32 ChuckIndex, FIntVector& ChuckGridLocation, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize)
+void ULFPVoxelData::GetPoolAttribute(const int32 ChuckIndex, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize)
 {
 	if (!ChuckData.IsValidIndex(ChuckIndex)) return;
 
-	ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.PoolGridSize);
+	const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.PoolGridSize);
 	StartVoxelLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.ChuckGridSize.X, ChuckGridLocation.Y * ContainerSetting.ChuckGridSize.Y, ChuckGridLocation.Z * ContainerSetting.ChuckGridSize.Z);
 
 	ChuckMeshSize = ContainerSetting.MeshSize;

@@ -14,11 +14,13 @@
 			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
 			"BaseVoxelMesh.cpp.obj",
+			"CubeVoxelMesh.cpp.obj",
 			"HexagonVoxelMesh.cpp.obj",
 			"VoxelDynamicMeshComponent.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"BaseVoxelMesh.gen.cpp.obj",
+			"CubeVoxelMesh.gen.cpp.obj",
 			"HexagonVoxelMesh.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",

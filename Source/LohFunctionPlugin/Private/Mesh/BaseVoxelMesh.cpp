@@ -9,12 +9,6 @@
 #include "Container/LFPVoxelData.h"
 #include "Runtime/Core/Public/Async/ParallelFor.h"
 
-DEFINE_LOG_CATEGORY(BaseVoxelMesh);
-
-DECLARE_STATS_GROUP(TEXT("HexagonVoxelMesh Performance Counter"), STATGROUP_VoxelMesh, STATCAT_Advanced);
-
-DECLARE_CYCLE_STAT(TEXT("MeshUpdateTrianglesMeshCounter"), STAT_MeshUpdateTrianglesMeshCounter, STATGROUP_VoxelMesh);
-
 using namespace UE::Geometry;
 
 UBaseVoxelMesh::UBaseVoxelMesh(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -32,36 +26,36 @@ void UBaseVoxelMesh::SetupMesh(ULFPVoxelData* NewVoxelData, const int32 NewChuck
 
 	VoxelData = NewVoxelData;
 	ChuckIndex = NewChuckIndex;
-	SectionTriangleList.Reset();
 
 	//VerticesList.Empty();
 
-	TriangleColourList.Empty();
+	TriangleVoxelIndexList.Empty();
 
 	VertexSize = FIntVector::NoneValue;
 
-	TriangleDataList.Empty();
-	TriangleDataList.SetNum(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
+	TriangleDataList.Init(FLFPVoxelTriangleData(), NewVoxelData->GetContainerSetting().ChuckVoxelLength);
 
 	DataUpdateList.Empty(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
+
 	DataUpdateList.Reserve(NewVoxelData->GetContainerSetting().ChuckVoxelLength);
 
-	SectionTriangleList.SetNum(NewVoxelData->GetContainerSetting().SectionCount);
+	SectionTriangleList.Init(FLFPVoxelSectionData(), NewVoxelData->GetContainerSetting().SectionCount);
 
 	for (int32 TriIndex = 0; TriIndex < NewVoxelData->GetContainerSetting().ChuckVoxelLength; TriIndex++)
 	{
 		DataUpdateList.Add(TriIndex);
 	}
 
-	NewVoxelData->GetPoolAttribute(NewChuckIndex, ChuckGridLocation, StartVoxelLocation, MeshSize, VoxelGridSize);
+	NewVoxelData->GetPoolAttribute(NewChuckIndex, StartVoxelLocation, MeshSize, VoxelGridSize);
 
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{
+			EditMesh.EnableAttributes();
 			EditMesh.Attributes()->SetNumUVLayers(4);
 			EditMesh.Attributes()->EnableMaterialID();
 			EditMesh.Attributes()->EnableTangents();
 
-		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, false);
+		}, EDynamicMeshChangeType::GeneralEdit, EDynamicMeshAttributeChangeFlags::Unknown, true);
 
 	if (NewVoxelData->IsChuckInitialized(NewChuckIndex) == false) NewVoxelData->InitializeChuck(NewChuckIndex);
 
@@ -89,6 +83,11 @@ bool UBaseVoxelMesh::IsVoxelDataValid() const
 	return VoxelData != nullptr;
 }
 
+FColor UBaseVoxelMesh::GetTriangleColour(const int32 TriID) const
+{
+	return TriangleVoxelIndexList.IsValidIndex(TriID) ? VoxelData->GetVoxelData(ChuckIndex)[TriangleVoxelIndexList[TriID]].VertexColor :FColor(0);
+}
+
 
 void UBaseVoxelMesh::UpdateVertices(const TArray<FVector>& VerticesList)
 {
@@ -96,7 +95,7 @@ void UBaseVoxelMesh::UpdateVertices(const TArray<FVector>& VerticesList)
 		{
 			EditMesh.Clear();
 
-			for (const FVector Pos : VerticesList)
+			for (const FVector& Pos : VerticesList)
 			{
 				EditMesh.AppendVertex(Pos);
 			}
@@ -110,8 +109,6 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 	if (DataUpdateList.Num() > 0)
 	EditMesh([&](FDynamicMesh3& EditMesh)
 		{
-			SCOPE_CYCLE_COUNTER(STAT_MeshUpdateTrianglesMeshCounter);
-
 			TObjectPtr<FDynamicMeshMaterialAttribute> MaterialIDs = EditMesh.Attributes()->GetMaterialID();
 
 			for (int32 DataIndex : DataUpdateList)
@@ -123,7 +120,7 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 
 					SectionTriangleList[MatIdx].TriangleIndexList.Remove(TriangleIndex);
 
-					EditMesh.RemoveTriangle(TriangleIndex);
+					EditMesh.RemoveTriangle(TriangleIndex, false, false);
 				}
 
 				TriangleDataList[DataIndex].MeshTriangleIndex.Empty();
@@ -132,7 +129,6 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 			if (UpdateDataList.Num() == 0) return;
 
 			TArray<TObjectPtr<FDynamicMeshUVOverlay>> UVOverlayList;
-			TObjectPtr<FDynamicMeshColorOverlay> PrimaryColors = EditMesh.Attributes()->PrimaryColors();
 
 			UVOverlayList.SetNum(4);
 
@@ -182,8 +178,11 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 					//	UVOverlayList[CustomDataUV]->SetTriangle(TriIndex, FIndex3i(Elem0, Elem1, Elem2), true);
 					//}
 
-					if (TriangleColourList.Num() <= TriIndex) TriangleColourList.SetNum(TriIndex + 1);
-					TriangleColourList[TriIndex] = VoxelElementDataList[UpdateData.GridIndex].VertexColor;
+					//if (TriangleColourList.Num() <= TriIndex) TriangleColourList.SetNum(TriIndex + 1);
+					//TriangleColourList[TriIndex] = VoxelElementDataList[UpdateData.GridIndex].VertexColor;
+
+					if (TriangleVoxelIndexList.Num() <= TriIndex) TriangleVoxelIndexList.SetNum(TriIndex + 1);
+					TriangleVoxelIndexList[TriIndex] = UpdateData.GridIndex;
 
 					MaterialIDs->SetValue(TriIndex, UpdateData.MaterialID);
 				}

@@ -11,5 +11,6 @@
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Math/LFPNoiseLibrary.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Math/LFProceduralRoomLibrary.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Mesh/BaseVoxelMesh.cpp"
+#include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Mesh/CubeVoxelMesh.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Mesh/HexagonVoxelMesh.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Mesh/VoxelDynamicMeshComponent.cpp"
