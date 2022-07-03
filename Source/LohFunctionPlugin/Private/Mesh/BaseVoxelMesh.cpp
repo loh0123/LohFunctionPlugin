@@ -7,7 +7,6 @@
 #include "GeometryCore/Public/DynamicMesh/MeshNormals.h"
 #include "GeometryCore/Public/DynamicMesh/MeshTangents.h"
 #include "Container/LFPVoxelData.h"
-#include "Runtime/Core/Public/Async/ParallelFor.h"
 
 using namespace UE::Geometry;
 
@@ -85,7 +84,7 @@ bool UBaseVoxelMesh::IsVoxelDataValid() const
 
 FColor UBaseVoxelMesh::GetTriangleColour(const int32 TriID) const
 {
-	return TriangleVoxelIndexList.IsValidIndex(TriID) ? VoxelData->GetVoxelData(ChuckIndex)[TriangleVoxelIndexList[TriID]].VertexColor :FColor(0);
+	return TriangleVoxelIndexList.IsValidIndex(TriID) ? VoxelData->GetVoxelData(ChuckIndex, TriangleVoxelIndexList[TriID]).VertexColor :FColor(0);
 }
 
 
@@ -139,7 +138,7 @@ void UBaseVoxelMesh::UpdateTriangles(const TArray<FLFPVoxelTriangleUpdateData>& 
 
 			int32 GroupID = 0;
 
-			const TArray<FLFPVoxelAttribute>& VoxelElementDataList = VoxelData->GetVoxelData(ChuckIndex);
+			//const TArray<FLFPVoxelAttribute>& VoxelElementDataList = VoxelData->GetVoxelData(ChuckIndex);
 
 			for (auto& UpdateData : UpdateDataList)
 			{

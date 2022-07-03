@@ -110,12 +110,10 @@ void UHexagonVoxelMesh::UpdateTriangles()
 	{
 		UpdateDataList.SetNum(DataUpdateListArray.Num());
 
-		const TArray<FLFPVoxelAttribute>& VoxelElementDataList = VoxelData->GetVoxelData(ChuckIndex);
-
 		ParallelFor(DataUpdateListArray.Num(), [&](const int32 LoopIndex) {
 			const FIntVector GridLocation = ULFPGridLibrary::IndexToGridLocation(DataUpdateListArray[LoopIndex], VoxelGridSize);
 
-			const int32 SelfMaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID;
+			const int32 SelfMaterialID = VoxelData->GetVoxelData(ChuckIndex, DataUpdateListArray[LoopIndex]).MaterialID;
 
 			const int32 MaterialOffset = (GridLocation.Z / VoxelData->GetContainerSetting().SectionSize) * VoxelData->GetContainerSetting().MaxMaterialID;
 
@@ -143,7 +141,7 @@ void UHexagonVoxelMesh::UpdateTriangles()
 						AddHexagonWall(LocalVerticesIndex, UpdateData, FaceIndex);
 				}
 
-				UpdateData.MaterialID = VoxelElementDataList[DataUpdateListArray[LoopIndex]].MaterialID + MaterialOffset;
+				UpdateData.MaterialID = VoxelData->GetVoxelData(ChuckIndex, DataUpdateListArray[LoopIndex]).MaterialID + MaterialOffset;
 			}
 			});
 	}

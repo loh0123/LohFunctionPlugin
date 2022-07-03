@@ -4,16 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Engine/DataTable.h"
 #include "LFPVoxelData.generated.h"
 
 class UBaseVoxelMesh;
 
 USTRUCT(BlueprintType)
-struct FLFPVoxelAttribute
+struct FLFPVoxelAttribute : public FTableRowBase
 {
-	GENERATED_USTRUCT_BODY()
-
-	FLFPVoxelAttribute() {}
+	GENERATED_BODY()
 
 public:
 
@@ -45,7 +44,7 @@ struct FLFPVoxelChuckData
 
 public:
 
-	UPROPERTY() TArray<FLFPVoxelAttribute> VoxelData = {};
+	UPROPERTY() TArray<FName> VoxelData = {};
 
 	TBitArray<> VoxelVisibleMap = {};
 
@@ -136,6 +135,8 @@ protected: // Initialize Data
 
 protected:  // Runtime Data
 
+	UPROPERTY() TObjectPtr<UDataTable> VoxelAttributeTable;
+
 	UPROPERTY() TArray<FLFPVoxelChuckData> ChuckData;
 
 	UPROPERTY() TSet<int32> UpdateChuckList;
@@ -164,7 +165,9 @@ public:
 
 	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const FIntVector VoxelGridLocation) const;
 
-	FORCEINLINE const TArray<FLFPVoxelAttribute>& GetVoxelData(const int32 ChuckIndex);
+	FORCEINLINE const FLFPVoxelAttribute& GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const;
+
+	//FORCEINLINE void GetVoxelData(const int32 ChuckIndex, TArray<FLFPVoxelAttribute>& AttributeList);
 
 	FORCEINLINE bool GetVoxelVisible(const FIntVector VoxelGridLocation) const;
 
@@ -184,7 +187,7 @@ public:
 		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetupVoxelData(const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID = 1, const int32 NewSectionSize = 16);
+		FORCEINLINE void SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID = 1, const int32 NewSectionSize = 16);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void GetPoolAttribute(const int32 ChuckIndex, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize);
@@ -193,11 +196,11 @@ public:
 		FORCEINLINE bool IsChuckInitialized(const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetVoxelGridData(const FIntVector VoxelGridLocation, const FLFPVoxelAttribute& VoxelAttribute, const bool IsVisible, const bool bUpdateMesh = true);
+		FORCEINLINE void SetVoxelGridData(const FIntVector VoxelGridLocation, const FName& VoxelAttributeName, const bool IsVisible, const bool bUpdateMesh = true);
 	
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetVoxelGridDataList(const TArray<FIntVector>& VoxelGridLocationList, const FLFPVoxelAttribute& VoxelAttribute, const bool IsVisible, const bool bUpdateMesh = true);
+		FORCEINLINE void SetVoxelGridDataList(const TArray<FIntVector>& VoxelGridLocationList, const FName& VoxelAttributeName, const bool IsVisible, const bool bUpdateMesh = true);
 	
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, const FLFPVoxelAttribute& VoxelAttribute, const bool IsVisible, const bool bUpdateMesh = true);
+		FORCEINLINE void SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, const FName& VoxelAttributeName, const bool IsVisible, const bool bUpdateMesh = true);
 };

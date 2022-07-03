@@ -61,7 +61,7 @@
 /DBUILT_FROM_CHANGELIST=19764885
 /DBUILD_VERSION=++UE5+Release-5.0-CL-19764885
 /DBUILD_ICON_FILE_NAME="\"..\\Build\\Windows\\Resources\\Default.ico\""
-/DPROJECT_COPYRIGHT_STRING="Fill out your copyright notice in the Description page of Project Settings."
+/DPROJECT_COPYRIGHT_STRING="Copyright by Loh Zhi Kang"
 /DPROJECT_PRODUCT_IDENTIFIER=PluginLab5
 /fo "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UnrealEditor\Development\LohFunctionPlugin\Default.rc2.res"
 "..\Build\Windows\Resources\Default.rc2"
