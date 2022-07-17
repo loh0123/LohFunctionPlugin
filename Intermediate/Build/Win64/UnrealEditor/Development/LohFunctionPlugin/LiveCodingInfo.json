@@ -18,6 +18,7 @@
 			"HexagonVoxelMesh.cpp.obj",
 			"VoxelDynamicMeshComponent.cpp.obj",
 			"LFPBaseVoxelMeshComponent.cpp.obj",
+			"LFPBaseVoxelMeshSceneProxy.cpp.obj",
 			"LFPCubeVoxelMeshComponent.cpp.obj",
 			"LFPVoxelContainer.cpp.obj"
 		],

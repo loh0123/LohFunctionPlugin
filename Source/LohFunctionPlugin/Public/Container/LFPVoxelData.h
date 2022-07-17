@@ -48,6 +48,10 @@ public:
 
 	TBitArray<> VoxelVisibleMap = {};
 
+protected:
+
+	UPROPERTY() TSet<int32> VoxelIndexChangeList = {};
+
 public:
 
 	// Update Event For Notify Chuck On Voxel Data Change
