@@ -10,28 +10,22 @@ const FLFPVoxelAttribute& ULFPVoxelData::GetVoxelData(const FIntVector VoxelGrid
 	int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.ChuckGridSize.X, VoxelGridLocation.Y / ContainerSetting.ChuckGridSize.Y, VoxelGridLocation.Z / ContainerSetting.ChuckGridSize.Z), ContainerSetting.PoolGridSize);
 	int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.ChuckGridSize.X, VoxelGridLocation.Y % ContainerSetting.ChuckGridSize.Y, VoxelGridLocation.Z % ContainerSetting.ChuckGridSize.Z), ContainerSetting.ChuckGridSize);
 
-	if (ChuckData.IsValidIndex(ChuckIndex) && ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelIndex))
-	{
-		return GetVoxelData(ChuckIndex, VoxelIndex);
-	}
-	else
-	{
-		return DefaultVoxelAttribute;
-	}
+	return GetVoxelData(ChuckIndex, VoxelIndex);
 }
 
 const FLFPVoxelAttribute& ULFPVoxelData::GetVoxelData(const int32 ChuckIndex, const int32 VoxelIndex) const
 {
-	FLFPVoxelAttribute* AttributeData = reinterpret_cast<FLFPVoxelAttribute*>(VoxelAttributeTable->FindRowUnchecked(ChuckData[ChuckIndex].VoxelData[VoxelIndex]));
+	if (ChuckData.IsValidIndex(ChuckIndex) && ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelIndex))
+	{
+		uint8* AttributeData = VoxelAttributeTable->FindRowUnchecked(ChuckData[ChuckIndex].VoxelData[VoxelIndex]);
 
-	if (AttributeData)
-	{
-		return *AttributeData;
+		if (AttributeData)
+		{
+			return *reinterpret_cast<FLFPVoxelAttribute*>(AttributeData);
+		}
 	}
-	else
-	{
-		return DefaultVoxelAttribute;
-	}
+
+	return DefaultVoxelAttribute;
 }
 
 //void ULFPVoxelData::GetVoxelData(const int32 ChuckIndex, TArray<FLFPVoxelAttribute>& AttributeList)
@@ -138,7 +132,7 @@ void ULFPVoxelData::MarkChuckForUpdate(const int32 ChuckIndex)
 
 void ULFPVoxelData::SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FVector NewMeshSize, const FIntVector NewPoolGridSize, const FIntVector NewChuckGridSize, const int32 NewMaxMaterialID, const int32 NewSectionSize)
 {
-	if (NewVoxelAttributeTable == nullptr) return;
+	if (NewVoxelAttributeTable == nullptr || NewVoxelAttributeTable->GetRowStruct()->IsChildOf(FLFPVoxelAttribute::StaticStruct()) == false) return;
 
 	VoxelAttributeTable = NewVoxelAttributeTable;
 

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright by Loh Zhi Kang
 
 
 #include "Helper/VoxelChuckManager.h"
