@@ -42,19 +42,6 @@ void ULFPVoxelContainer::SetupVoxelData(UDataTable* NewVoxelAttributeTable, cons
 	return;
 }
 
-void ULFPVoxelContainer::GetChuckAttribute(const int32 ChuckIndex, FIntVector& StartVoxelLocation, FVector& ChuckMeshSize, FIntVector& ChuckVoxelGridSize)
-{
-	if (!ChuckData.IsValidIndex(ChuckIndex)) return;
-
-	const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.PoolGridSize);
-	StartVoxelLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.ChuckGridSize.X, ChuckGridLocation.Y * ContainerSetting.ChuckGridSize.Y, ChuckGridLocation.Z * ContainerSetting.ChuckGridSize.Z);
-
-	ChuckMeshSize = ContainerSetting.MeshSize;
-	ChuckVoxelGridSize = ContainerSetting.ChuckGridSize;
-
-	return;
-}
-
 bool ULFPVoxelContainer::IsChuckInitialized(const int32 ChuckIndex) const
 {
 	if (!ChuckData.IsValidIndex(ChuckIndex)) return false;
@@ -64,19 +51,19 @@ bool ULFPVoxelContainer::IsChuckInitialized(const int32 ChuckIndex) const
 
 void ULFPVoxelContainer::SetVoxelGridData(const FIntVector VoxelGridLocation, const FName& VoxelAttributeName, const bool bUpdateMesh)
 {
-	int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.ChuckGridSize.X, VoxelGridLocation.Y / ContainerSetting.ChuckGridSize.Y, VoxelGridLocation.Z / ContainerSetting.ChuckGridSize.Z), ContainerSetting.PoolGridSize);
-	int32 VoxelChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.ChuckGridSize.X, VoxelGridLocation.Y % ContainerSetting.ChuckGridSize.Y, VoxelGridLocation.Z % ContainerSetting.ChuckGridSize.Z), ContainerSetting.ChuckGridSize);
+	int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y / ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z / ContainerSetting.VoxelGridSize.Z), ContainerSetting.ChuckGridSize);
+	int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y % ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z % ContainerSetting.VoxelGridSize.Z), ContainerSetting.VoxelGridSize);
 
 	if (ChuckData.IsValidIndex(ChuckIndex))
 	{
 		if (ChuckData[ChuckIndex].IsInitialized() == false)
 		{
-			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.ChuckVoxelLength);
+			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength);
 		}
 
-		if (ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelChuckIndex))
+		if (ChuckData[ChuckIndex].VoxelData.IsValidIndex(VoxelIndex))
 		{
-			ChuckData[ChuckIndex].SetVoxel(VoxelChuckIndex, VoxelAttributeName);
+			ChuckData[ChuckIndex].SetVoxel(VoxelIndex, VoxelAttributeName);
 		}
 
 		if (bUpdateMesh)
@@ -103,7 +90,7 @@ void ULFPVoxelContainer::SetVoxelGridDataList(const TArray<FIntVector>& VoxelGri
 	return;
 }
 
-void ULFPVoxelContainer::SetAllVoxelGridDataWithSingleData(const int32 ChuckIndex, const FName& VoxelAttributeName, const bool bUpdateMesh)
+void ULFPVoxelContainer::SetChuckGridData(const int32 ChuckIndex, const FName& VoxelAttributeName, const bool bUpdateMesh)
 {
 	const int32 ChuckGridMaxIndex = ContainerSetting.ChuckGridSize.X * ContainerSetting.ChuckGridSize.Y * ContainerSetting.ChuckGridSize.Z;
 
@@ -111,7 +98,7 @@ void ULFPVoxelContainer::SetAllVoxelGridDataWithSingleData(const int32 ChuckInde
 	{
 		if (ChuckData[ChuckIndex].IsInitialized() == false)
 		{
-			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.ChuckVoxelLength);
+			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength);
 		}
 
 		for (int32 VoxelChuckIndex = 0; VoxelChuckIndex < ChuckGridMaxIndex; VoxelChuckIndex++)

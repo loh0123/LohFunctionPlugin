@@ -18,8 +18,6 @@
 			"HexagonVoxelMesh.cpp.obj",
 			"VoxelDynamicMeshComponent.cpp.obj",
 			"LFPBaseVoxelMeshComponent.cpp.obj",
-			"LFPBaseVoxelMeshSceneProxy.cpp.obj",
-			"LFPCubeVoxelMeshComponent.cpp.obj",
 			"LFPVoxelContainer.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
@@ -27,7 +25,6 @@
 			"CubeVoxelMesh.gen.cpp.obj",
 			"HexagonVoxelMesh.gen.cpp.obj",
 			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
-			"LFPCubeVoxelMeshComponent.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
