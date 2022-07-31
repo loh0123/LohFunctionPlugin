@@ -187,7 +187,7 @@ public: /* Function For Render Component To Get Container Data */
 		int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y / ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z / ContainerSetting.VoxelGridSize.Z), ContainerSetting.ChuckGridSize);
 		int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y % ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z % ContainerSetting.VoxelGridSize.Z), ContainerSetting.VoxelGridSize);
 
-		return IsChuckIndexValid(ChuckIndex) ? GetVoxelAttributeByName(ChuckData[ChuckIndex].VoxelData[VoxelIndex]) : DefaultVoxelAttribute;
+		return IsChuckIndexValid(ChuckIndex) && IsChuckInitialized(ChuckIndex) ? GetVoxelAttributeByName(ChuckData[ChuckIndex].VoxelData[VoxelIndex]) : DefaultVoxelAttribute;
 	}
 
 	FORCEINLINE const FLFPVoxelAttributeV2& GetVoxelAttributeByName(const FName VoxelName) const
@@ -211,7 +211,7 @@ public: /* Function For Render Component To Get Container Data */
 		int32 ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y / ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z / ContainerSetting.VoxelGridSize.Z), ContainerSetting.ChuckGridSize);
 		int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y % ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z % ContainerSetting.VoxelGridSize.Z), ContainerSetting.VoxelGridSize);
 
-		return IsChuckIndexValid(ChuckIndex) ? ChuckData[ChuckIndex].VoxelData[VoxelIndex] : ContainerSetting.InvisibleName;
+		return IsChuckIndexValid(ChuckIndex) && IsChuckInitialized(ChuckIndex) ? ChuckData[ChuckIndex].VoxelData[VoxelIndex] : ContainerSetting.InvisibleName;
 	}
 
 	FORCEINLINE const TArray<FName>& GetVoxelNameList(const int32 ChuckIndex) const
