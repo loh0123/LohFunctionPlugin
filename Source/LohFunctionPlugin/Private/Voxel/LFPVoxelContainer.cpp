@@ -29,17 +29,19 @@ void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex)
 	return;
 }
 
-void ULFPVoxelContainer::SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FLFPVoxelContainerSettingV2 NewSetting)
+bool ULFPVoxelContainer::SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FLFPVoxelContainerSettingV2 NewSetting)
 {
-	if (NewVoxelAttributeTable == nullptr || NewVoxelAttributeTable->GetRowStruct()->IsChildOf(FLFPVoxelAttributeV2::StaticStruct()) == false) return;
+	if (NewVoxelAttributeTable == nullptr || NewVoxelAttributeTable->GetRowStruct()->IsChildOf(FLFPVoxelAttributeV2::StaticStruct()) == false) return false;
 
 	ContainerSetting = NewSetting;
 
 	ContainerSetting.InitSetting();
 
+	ChuckData.Init(FLFPVoxelChuckDataV2(), ContainerSetting.ChuckLength);
+
 	VoxelAttributeTable = NewVoxelAttributeTable;
 
-	return;
+	return true;
 }
 
 bool ULFPVoxelContainer::IsChuckInitialized(const int32 ChuckIndex) const

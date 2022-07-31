@@ -15,8 +15,11 @@
 #include "Materials/Material.h"
 #include "RayTracingDefinitions.h"
 #include "RayTracingInstance.h"
+#include "VectorUtil.h"
 
 #include "Voxel/LFPBaseVoxelMeshComponent.h"
+
+using namespace UE::Geometry;
 
 
 class FLFPVoxelMeshRenderBufferSet
@@ -121,32 +124,72 @@ public:
 		VoxelComponent(Component), 
 		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
-		FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(0);
+		int32 BufferIndex = 0;
+		
+		const TArray<FVoxelMeshBufferData>& BufferDataList = Component->GetVoxelMesh();
 
-		Buffer->PositionVertexBuffer.Init(3);
-		Buffer->ColorVertexBuffer.Init(3);
-		Buffer->StaticMeshVertexBuffer.Init(3, 1);
+		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
+		{
+			const FVoxelMeshBufferData& BufferData = BufferDataList[MaterialIndex];
 
-		Buffer->IndexBuffer.Indices = { 0,1,2 };
+			if (BufferData.TriangleCount == 0) continue;
 
-		Buffer->PositionVertexBuffer.VertexPosition(0) = FVector3f(0, 0, 0);
-		Buffer->PositionVertexBuffer.VertexPosition(1) = FVector3f(0, 100, 0);
-		Buffer->PositionVertexBuffer.VertexPosition(2) = FVector3f(100, 0, 0);
+			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(BufferIndex);
 
-		Buffer->StaticMeshVertexBuffer.SetVertexTangents(0, FVector3f(1, 0, 0), FVector3f(0, 1, 0), FVector3f(0, 0, 1));
-		Buffer->StaticMeshVertexBuffer.SetVertexTangents(1, FVector3f(1, 0, 0), FVector3f(0, 1, 0), FVector3f(0, 0, 1));
-		Buffer->StaticMeshVertexBuffer.SetVertexTangents(2, FVector3f(1, 0, 0), FVector3f(0, 1, 0), FVector3f(0, 0, 1));
+			Buffer->PositionVertexBuffer.Init(BufferData.VertexList);
+			Buffer->ColorVertexBuffer.InitFromColorArray(BufferData.VoxelColorList);
 
-		Buffer->StaticMeshVertexBuffer.SetVertexUV(0, 0, FVector2f(0, 0));
-		Buffer->StaticMeshVertexBuffer.SetVertexUV(1, 0, FVector2f(0, 1));
-		Buffer->StaticMeshVertexBuffer.SetVertexUV(2, 0, FVector2f(1, 0));
+			Buffer->IndexBuffer.Indices = BufferData.TriangleIndexList;
 
-		ENQUEUE_RENDER_COMMAND(FLFPBaseVoxelMeshSceneProxy)(
-			[Buffer](FRHICommandListImmediate& RHICmdList)
+			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 1);
+
+			for (int32 Index = 0; Index < BufferData.TriangleCount; Index++)
 			{
-				Buffer->Upload();
-			});
+				int32 VertexIndStart = Index * 3;
 
+				FVector3f TriVertices[3] = {
+					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart]],
+					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 1]],
+					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 2]],
+				};
+
+				FVector2f TriUVs[3] = {
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
+				};
+
+				FVector3f Tangent, Bitangent, Normal;
+
+				Normal = VectorUtil::Normal(TriVertices[0], TriVertices[1], TriVertices[2]);
+
+				ComputeFaceTangent(TriVertices, TriUVs, Tangent, Bitangent);
+
+				FVector3f ProjectedTangent = Normalized(Tangent - Tangent.Dot(Normal) * Normal);
+
+				float BitangentSign = VectorUtil::BitangentSign(Normal, ProjectedTangent, Bitangent);
+				FVector3f ReconsBitangent = VectorUtil::Bitangent(Normal, ProjectedTangent, BitangentSign);
+
+				for (int32 VertexInd = VertexIndStart; VertexInd < VertexIndStart + 3; VertexInd++)
+				{
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 0, BufferData.UVList[VertexInd]);
+
+					Buffer->StaticMeshVertexBuffer.SetVertexTangents(VertexInd, ProjectedTangent, ReconsBitangent, Normal);
+				}
+			}
+
+			if (Component->GetMaterial(MaterialIndex) != nullptr)
+			{
+				Buffer->Material = Component->GetMaterial(MaterialIndex);
+			}
+
+			ENQUEUE_RENDER_COMMAND(FLFPBaseVoxelMeshSceneProxy)(
+				[Buffer](FRHICommandListImmediate& RHICmdList)
+				{
+					Buffer->Upload();
+				});
+		}
+		
 		return;
 	}
 
@@ -188,6 +231,37 @@ public:
 		AllocatedBufferSets[BufferID] = Buffer;
 
 		return Buffer;
+	}
+
+	FORCEINLINE void ComputeFaceTangent(
+		FVector3f TriVertices[3], FVector2f TriUVs[3],
+		FVector3f& TangentOut, FVector3f& BitangentOut)
+	{
+		FVector2f UVEdge1 = TriUVs[1] - TriUVs[0];
+		FVector2f UVEdge2 = TriUVs[2] - TriUVs[0];
+		FVector3f TriEdge1 = TriVertices[1] - TriVertices[0];
+		FVector3f TriEdge2 = TriVertices[2] - TriVertices[0];
+
+		FVector3f TriTangent = (UVEdge2.Y * TriEdge1) - (UVEdge1.Y * TriEdge2);
+		FVector3f TriBitangent = (-UVEdge2.X * TriEdge1) + (UVEdge1.X * TriEdge2);
+
+		double UVArea = (UVEdge1.X * UVEdge2.Y) - (UVEdge1.Y * UVEdge2.X);
+		bool bPreserveOrientation = (UVArea >= 0);
+
+		UVArea = FMathd::Abs(UVArea);
+
+		// if a triangle is zero-UV-area due to one edge being collapsed, we still have a 
+		// valid direction on the other edge. We are going to keep those
+		double TriTangentLength = TriTangent.Length();
+		double TriBitangentLength = TriBitangent.Length();
+		TangentOut = (TriTangentLength > 0) ? (TriTangent / TriTangentLength) : FVector3f::Zero();
+		BitangentOut = (TriBitangentLength > 0) ? (TriBitangent / TriBitangentLength) : FVector3f::Zero();
+
+		if (bPreserveOrientation == false)
+		{
+			TangentOut = -TangentOut;
+			BitangentOut = -BitangentOut;
+		}
 	}
 
 	virtual void GetDynamicMeshElements(
