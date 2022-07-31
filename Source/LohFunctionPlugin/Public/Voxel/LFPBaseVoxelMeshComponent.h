@@ -57,7 +57,7 @@ public:
 
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 public:
 
@@ -108,4 +108,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		FVector VoxelHalfSize = FVector(100);
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+		FVector2D VoxelUVSize = FVector2D(1.0f);
 };

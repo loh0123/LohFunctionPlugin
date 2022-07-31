@@ -20,6 +20,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
 		int32 MaterialID = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+		FVector2D UVOffset = FVector2D(0);
 };
 
 DECLARE_DELEGATE(FOnVoxelChuckUpdate);
@@ -229,13 +232,6 @@ public: /* Function For Render Component To Get Container Data */
 	}
 
 public: /* Function For Prepare Render Component To Use Container Data */
-
-	FORCEINLINE FOnVoxelChuckUpdate& GetVoxelUpdateEvent(const int32 ChuckIndex)
-	{
-		check(ChuckData.IsValidIndex(ChuckIndex));
-
-		return ChuckData[ChuckIndex].VoxelChuckUpdateEvent;
-	}
 
 	template <typename UserClass, typename Func>
 	FORCEINLINE void ConnectVoxelUpdateEvent(const int32 ChuckIndex, UserClass* InUserObject, Func InFunc)
