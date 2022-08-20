@@ -21,13 +21,13 @@ void EmptyLinkFunctionForGeneratedCodeLohFunctionPlugin_init() {}
 				SingletonFuncArray,
 				UE_ARRAY_COUNT(SingletonFuncArray),
 				PKG_CompiledIn | 0x00000000,
-				0x566C8432,
-				0x81833FDE,
+				0x7701D526,
+				0x072C14AD,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UECodeGen_Private::ConstructUPackage(Z_Registration_Info_UPackage__Script_LohFunctionPlugin.OuterSingleton, PackageParams);
 		}
 		return Z_Registration_Info_UPackage__Script_LohFunctionPlugin.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_LohFunctionPlugin(Z_Construct_UPackage__Script_LohFunctionPlugin, TEXT("/Script/LohFunctionPlugin"), Z_Registration_Info_UPackage__Script_LohFunctionPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x566C8432, 0x81833FDE));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_LohFunctionPlugin(Z_Construct_UPackage__Script_LohFunctionPlugin, TEXT("/Script/LohFunctionPlugin"), Z_Registration_Info_UPackage__Script_LohFunctionPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x7701D526, 0x072C14AD));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

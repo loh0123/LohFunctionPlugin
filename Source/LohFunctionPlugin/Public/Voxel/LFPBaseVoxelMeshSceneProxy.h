@@ -125,8 +125,12 @@ public:
 		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
 		int32 BufferIndex = 0;
-		
-		const TArray<FVoxelMeshBufferData>& BufferDataList = Component->GetVoxelMesh();
+
+		Component->VoxelMeshMutex.Lock();
+
+		const TArray<FVoxelMeshBufferData> BufferDataList = MoveTemp(Component->VoxelMesh);
+
+		Component->VoxelMeshMutex.Unlock();
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
 		{
@@ -137,14 +141,14 @@ public:
 			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(BufferIndex);
 
 			Buffer->PositionVertexBuffer.Init(BufferData.VertexList);
-			Buffer->ColorVertexBuffer.InitFromColorArray(BufferData.VoxelColorList);
 
 			Buffer->IndexBuffer.Indices = BufferData.TriangleIndexList;
 
+			Buffer->ColorVertexBuffer.Init(BufferData.VertexList.Num());
+
 			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 1);
 
-			for (int32 Index = 0; Index < BufferData.TriangleCount; Index++)
-			{
+			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
 				int32 VertexIndStart = Index * 3;
 
 				FVector3f TriVertices[3] = {
@@ -154,9 +158,9 @@ public:
 				};
 
 				FVector2f TriUVs[3] = {
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
+					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
+					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
+					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
 				};
 
 				FVector3f Tangent, Bitangent, Normal;
@@ -172,11 +176,13 @@ public:
 
 				for (int32 VertexInd = VertexIndStart; VertexInd < VertexIndStart + 3; VertexInd++)
 				{
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 0, BufferData.UVList[VertexInd]);
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 0, TriUVs[VertexInd - VertexIndStart]);
 
 					Buffer->StaticMeshVertexBuffer.SetVertexTangents(VertexInd, ProjectedTangent, ReconsBitangent, Normal);
+
+					Buffer->ColorVertexBuffer.VertexColor(VertexInd) = BufferData.VoxelColorList[Index];
 				}
-			}
+			});
 
 			if (Component->GetMaterial(MaterialIndex) != nullptr)
 			{
@@ -273,15 +279,14 @@ public:
 		const bool bWireframe = (AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe);
 
 		// set up wireframe material. Probably bad to reference GEngine here...also this material is very bad?
-		FMaterialRenderProxy* WireframeMaterialProxy = nullptr;
+		FColoredMaterialRenderProxy* WireframeMaterialInstance = nullptr;
 		if (bWireframe)
 		{
-			FColoredMaterialRenderProxy* WireframeMaterialInstance = new FColoredMaterialRenderProxy(
+			WireframeMaterialInstance = new FColoredMaterialRenderProxy(
 				GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
 				FLinearColor(0, 0.5f, 1.f)
 			);
 			Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
-			WireframeMaterialProxy = WireframeMaterialInstance;
 		}
 
 		ESceneDepthPriorityGroup DepthPriority = SDPG_World;
@@ -306,9 +311,7 @@ public:
 						continue;
 					}
 
-					UMaterialInterface* UseMaterial = BufferSet->Material;
-
-					FMaterialRenderProxy* MaterialProxy = UseMaterial->GetRenderProxy();
+					FMaterialRenderProxy* MaterialProxy = bWireframe ? WireframeMaterialInstance : BufferSet->Material->GetRenderProxy();
 
 					// do we need separate one of these for each MeshRenderBufferSet?
 					FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
@@ -397,17 +400,17 @@ protected:
 	FMaterialRelevance MaterialRelevance;
 };
 
-class FLFPBaseVoxelMeshSceneProxyTask : public FNonAbandonableTask
-{
-	friend class FAutoDeleteAsyncTask<FLFPBaseVoxelMeshSceneProxyTask>;
-
-public:
-
-	FLFPBaseVoxelMeshSceneProxyTask() {}
-
-	void DoWork();
-
-	// This next section of code needs to be here. Not important as to why.
-
-	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseVoxelMeshSceneProxyTask, STATGROUP_ThreadPoolAsyncTasks); }
-};
+//class FLFPBaseVoxelMeshSceneProxyTask : public FNonAbandonableTask
+//{
+//	friend class FAutoDeleteAsyncTask<FLFPBaseVoxelMeshSceneProxyTask>;
+//
+//public:
+//
+//	FLFPBaseVoxelMeshSceneProxyTask() {}
+//
+//	void DoWork();
+//
+//	// This next section of code needs to be here. Not important as to why.
+//
+//	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseVoxelMeshSceneProxyTask, STATGROUP_ThreadPoolAsyncTasks); }
+//};

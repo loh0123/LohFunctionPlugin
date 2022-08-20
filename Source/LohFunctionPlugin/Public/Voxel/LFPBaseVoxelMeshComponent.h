@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainer.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "LFPBaseVoxelMeshComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
@@ -17,27 +18,29 @@ struct FVoxelMeshBufferData
 public:
 
 	/** Raw Vertex Generated For The Function */
-	UPROPERTY() TArray<FVector3f> VertexList;
+	TArray<FVector3f> VertexList;
 
 	/** Raw Triangle Index Generated For The Function */
-	UPROPERTY() TArray<uint32> TriangleIndexList;
+	TArray<uint32> TriangleIndexList;
 
-	/** Raw Vertex Generated For The Function */
-	UPROPERTY() TArray<FVector2f> UVList;
+	/** Raw UV Generated For The Function */
+	TArray<FVector2d> UVList;
 
 	/** Color For The Vertex */
-	UPROPERTY() TArray<FColor> VoxelColorList;
+	TArray<FColor> VoxelColorList;
 
 	/** How Many Triangle Has Been Generated */
-	UPROPERTY() int32 TriangleCount = 0;
+	int32 TriangleCount = 0;
 };
 
 /**
  * 
  */
 UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
-class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent
+class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
+	friend class FLFPBaseVoxelMeshSceneProxy;
+
 	GENERATED_BODY()
 
 public:
@@ -47,7 +50,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FVector NewVoxelHalfSize);
+		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FVector NewVoxelHalfSize, const FName InitializeName);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void SetVoxelMaterial(const TArray<UMaterialInterface*>& Material);
@@ -57,15 +60,13 @@ public:
 
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 public:
 
 	FORCEINLINE int32 GetVoxelLength() const;
 
 	FORCEINLINE void GetVoxelAttributeList(TArray<FLFPVoxelAttributeV2>& VoxelAttributeList, TBitArray<>& VisibleList);
-
-	FORCEINLINE const TArray<FVoxelMeshBufferData>& GetVoxelMesh();
 
 protected:
 
@@ -87,13 +88,37 @@ public:
 
 	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
 
+public: // Collision Handler
+
+	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;
+
+	virtual bool ContainsPhysicsTriMeshData(bool InUseAllTriData) const override;
+
+	virtual bool WantsNegXTriMesh() override;
+
+	virtual UBodySetup* GetBodySetup() override;
+
+	FORCEINLINE UBodySetup* CreateBodySetup();
+
+	virtual void RebuildPhysicsData();
+
+	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
+
 protected:
 
-	UPROPERTY() TArray<FVoxelMeshBufferData> VoxelMesh;
+	std::atomic<uint32> VoxelMeshVersion = 0;
+
+	FCriticalSection VoxelMeshMutex;
+
+	UPROPERTY(transient) TArray<FVoxelMeshBufferData> VoxelMesh;
 
 	UPROPERTY() bool IsVoxelMeshDirty = false;
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> BaseMaterials;
+
+	UPROPERTY(transient) bool bIsBodyInvalid = false;
+
+	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> MeshBodySetup;
 
 protected:
 
