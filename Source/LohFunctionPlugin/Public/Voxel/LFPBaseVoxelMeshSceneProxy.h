@@ -89,8 +89,12 @@ public:
 
 			FRayTracingGeometrySegment Segment;
 			Segment.VertexBuffer = PositionVertexBuffer.VertexBufferRHI;
+			Segment.VertexBufferElementType = VET_Float3;
+			Segment.VertexBufferStride = PositionVertexBuffer.GetStride();
+			Segment.VertexBufferOffset = 0;
 			Segment.NumPrimitives = RayTracingGeometry.Initializer.TotalPrimitiveCount;
 			Segment.MaxVertices = PositionVertexBuffer.GetNumVertices();
+			Segment.bEnabled = true;
 			RayTracingGeometry.Initializer.Segments.Add(Segment);
 
 			RayTracingGeometry.UpdateRHI();
@@ -153,8 +157,8 @@ class FLFPBaseVoxelMeshSceneProxy : public FPrimitiveSceneProxy
 {
 public:
 	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
-		VoxelComponent(Component), 
-		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+		  VoxelComponent(Component)
+		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
 		int32 BufferIndex = 0;
 
