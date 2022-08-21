@@ -74,8 +74,28 @@ public:
 
 		InitOrUpdateResource(&this->VertexFactory);
 
-		//InvalidateRayTracingData();
-		//ValidateRayTracingData();		// currently we are immediately validating. This may be revisited in future.
+#if RHI_RAYTRACING
+		if (IndexBuffer.Indices.IsEmpty() == false && IsRayTracingEnabled())
+		{
+			FRayTracingGeometryInitializer Initializer;
+			Initializer.IndexBuffer = IndexBuffer.IndexBufferRHI;
+			Initializer.TotalPrimitiveCount = IndexBuffer.Indices.Num() / 3;
+			Initializer.GeometryType = RTGT_Triangles;
+			Initializer.bFastBuild = true;
+			Initializer.bAllowUpdate = false;
+
+			RayTracingGeometry.SetInitializer(Initializer);
+			RayTracingGeometry.InitResource();
+
+			FRayTracingGeometrySegment Segment;
+			Segment.VertexBuffer = PositionVertexBuffer.VertexBufferRHI;
+			Segment.NumPrimitives = RayTracingGeometry.Initializer.TotalPrimitiveCount;
+			Segment.MaxVertices = PositionVertexBuffer.GetNumVertices();
+			RayTracingGeometry.Initializer.Segments.Add(Segment);
+
+			RayTracingGeometry.UpdateRHI();
+		}
+#endif
 	}
 
 	void Release()
@@ -86,9 +106,16 @@ public:
 		IndexBuffer.ReleaseResource();
 		VertexFactory.ReleaseResource();
 
-		// todo : Ray Trace Clean Up
+#if RHI_RAYTRACING
+		if (IsRayTracingEnabled())
+		{
+			RayTracingGeometry.ReleaseResource();
+		}
+#endif
 
 		Material = nullptr;
+
+		delete this;
 
 		return;
 	}
@@ -112,6 +139,11 @@ public:
 
 	/** Material to draw this mesh with */
 	UMaterialInterface* Material = nullptr;
+
+#if RHI_RAYTRACING
+	/** The buffer containing the Ray Tracing Geometry data. */
+	FRayTracingGeometry RayTracingGeometry;
+#endif
 };
 
 /**
@@ -208,8 +240,6 @@ public:
 			if (Buffer != nullptr)
 			{
 				Buffer->Release();
-
-				delete Buffer;
 			}
 		}
 
@@ -229,8 +259,6 @@ public:
 		if (AllocatedBufferSets[BufferID] != nullptr)
 		{
 			AllocatedBufferSets[BufferID]->Release();
-
-			delete AllocatedBufferSets[BufferID];
 		}
 
 		// Set New Buffer To Array
@@ -354,6 +382,68 @@ public:
 		Mesh.bCanApplyViewModeOverrides = false;
 		Collector.AddMesh(ViewIndex, Mesh);
 	}
+
+#if RHI_RAYTRACING
+	virtual bool IsRayTracingRelevant() const override { return true; }
+
+	virtual bool HasRayTracingRepresentation() const override { return true; }
+
+	virtual void GetDynamicRayTracingInstances(FRayTracingMaterialGatheringContext& Context, TArray<FRayTracingInstance>& OutRayTracingInstances) override final
+	{
+		for (const FLFPVoxelMeshRenderBufferSet* Section : AllocatedBufferSets)
+		{
+			if (Section != nullptr)
+			{
+				FMaterialRenderProxy* MaterialProxy = Section->Material->GetRenderProxy();
+
+				if (Section->RayTracingGeometry.RayTracingGeometryRHI.IsValid())
+				{
+					check(Section->RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+
+					FRayTracingInstance RayTracingInstance;
+					RayTracingInstance.Geometry = &Section->RayTracingGeometry;
+					RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
+
+					uint32 SectionIdx = 0;
+					FMeshBatch MeshBatch;
+
+					MeshBatch.VertexFactory = &Section->VertexFactory;
+					MeshBatch.SegmentIndex = 0;
+					MeshBatch.MaterialRenderProxy = Section->Material->GetRenderProxy();
+					MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
+					MeshBatch.Type = PT_TriangleList;
+					MeshBatch.DepthPriorityGroup = SDPG_World;
+					MeshBatch.bCanApplyViewModeOverrides = false;
+					MeshBatch.CastRayTracedShadow = IsShadowCast(Context.ReferenceView);
+
+					FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+					BatchElement.IndexBuffer = &Section->IndexBuffer;
+
+					bool bHasPrecomputedVolumetricLightmap;
+					FMatrix PreviousLocalToWorld;
+					int32 SingleCaptureIndex;
+					bool bOutputVelocity;
+					GetScene().GetPrimitiveUniformShaderParameters_RenderThread(GetPrimitiveSceneInfo(), bHasPrecomputedVolumetricLightmap, PreviousLocalToWorld, SingleCaptureIndex, bOutputVelocity);
+
+					FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Context.RayTracingMeshResourceCollector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+					DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, DrawsVelocity(), bOutputVelocity, GetCustomPrimitiveData());
+					BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+
+					BatchElement.FirstIndex = 0;
+					BatchElement.NumPrimitives = Section->IndexBuffer.Indices.Num() / 3;
+					BatchElement.MinVertexIndex = 0;
+					BatchElement.MaxVertexIndex = Section->PositionVertexBuffer.GetNumVertices() - 1;
+
+					RayTracingInstance.Materials.Add(MeshBatch);
+
+					RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
+					OutRayTracingInstances.Add(RayTracingInstance);
+				}
+			}
+		}
+	}
+
+#endif
 
 	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const
 	{
