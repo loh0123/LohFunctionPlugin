@@ -28,14 +28,6 @@ public:
 
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
-};
-
-USTRUCT()
-struct FVoxelMeshCPUBufferData
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
 
 	/** How Many Triangle Has Been Generated */
 	int32 TriangleCount = 0;
@@ -78,7 +70,7 @@ public:
 
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, FVoxelMeshCPUBufferData& CPUData, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 public:
 
@@ -99,6 +91,8 @@ protected:
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
 public:
+
+	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 
 	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
@@ -127,8 +121,6 @@ public: // Collision Handler
 protected:
 
 	UPROPERTY(transient) TArray<FVoxelMeshBufferData> VoxelMesh;
-
-	UPROPERTY(transient) TArray<FVoxelMeshCPUBufferData> CPUVoxelMesh;
 
 	UPROPERTY() bool IsVoxelMeshDirty = false;
 

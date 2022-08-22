@@ -72,7 +72,7 @@ FLFPVoxelAttributeV2 ULFPBaseVoxelMeshComponent::GetVoxelDataFromFaceIndex(const
 	return FLFPVoxelAttributeV2();
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, FVoxelMeshCPUBufferData& CPUData, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
 {
 	const uint32 StartIndex = EditMesh.VertexList.Num();
 
@@ -159,9 +159,9 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, FV
 	EditMesh.VoxelColorList.Append({ VoxelColor ,VoxelColor });
 
 	/* Add Index Trace */
-	CPUData.VoxelIndexList.Append({ VoxelIndex, VoxelIndex });
+	EditMesh.VoxelIndexList.Append({ VoxelIndex, VoxelIndex });
 
-	CPUData.TriangleCount += 2;
+	EditMesh.TriangleCount += 2;
 }
 
 int32 ULFPBaseVoxelMeshComponent::GetVoxelLength() const
@@ -205,10 +205,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					}
 
 					TArray<FVoxelMeshBufferData> NewVoxelMesh;
-					TArray<FVoxelMeshCPUBufferData> NewCPUVoxelMesh;
 
 					NewVoxelMesh.Init(FVoxelMeshBufferData(), FMath::Max(GetNumMaterials(), 1));
-					NewCPUVoxelMesh.Init(FVoxelMeshCPUBufferData(), FMath::Max(GetNumMaterials(), 1));
 
 					TArray<FIntVector> FaceCheckDirection = {
 						FIntVector(0,0,1),
@@ -250,19 +248,18 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 								{
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-									AddVoxelFace(NewVoxelMesh[MaterialID], NewCPUVoxelMesh[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+									AddVoxelFace(NewVoxelMesh[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
 								}
 							}
 						}
 					}
 
-					AsyncTask(ENamedThreads::GameThread, [CPUData = MoveTemp(NewCPUVoxelMesh), GPUData = MoveTemp(NewVoxelMesh), this]() mutable {
+					AsyncTask(ENamedThreads::GameThread, [GPUData = MoveTemp(NewVoxelMesh), this]() mutable {
 						if (IsValid(this) == false) return;
 
 						IsGeneratingMesh = false;
 
 						VoxelMesh = MoveTemp(GPUData);
-						CPUVoxelMesh = MoveTemp(CPUData);
 
 						MarkRenderStateDirty();
 						RebuildPhysicsData();
@@ -296,19 +293,24 @@ FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalT
 	return Ret;
 }
 
+void ULFPBaseVoxelMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
+{
+	OutMaterials.Append(BaseMaterials);
+}
+
 UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
 {
 	UMaterialInterface* Result = nullptr;
 	SectionIndex = 0;
 
-	if (CPUVoxelMesh.IsEmpty() == false && FaceIndex >= 0)
+	if (VoxelMesh.IsEmpty() == false && FaceIndex >= 0)
 	{
 		// Look for section that corresponds to the supplied face
 		int32 TotalFaceCount = 0;
 
-		for (int32 SectionIdx = 0; SectionIdx < CPUVoxelMesh.Num(); SectionIdx++)
+		for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
 		{
-			const FVoxelMeshCPUBufferData& Section = CPUVoxelMesh[SectionIdx];
+			const FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
 			
 			TotalFaceCount += Section.TriangleCount;
 

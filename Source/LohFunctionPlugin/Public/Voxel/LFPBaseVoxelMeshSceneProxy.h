@@ -157,7 +157,7 @@ public:
 		  VoxelComponent(Component)
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
-		const TArray<FVoxelMeshBufferData> BufferDataList = MoveTemp(Component->VoxelMesh);
+		const TArray<FVoxelMeshBufferData>& BufferDataList = Component->VoxelMesh;
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
 		{
