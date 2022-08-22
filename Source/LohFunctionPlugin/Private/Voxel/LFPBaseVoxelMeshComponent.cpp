@@ -67,7 +67,12 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	IsVoxelMeshDirty = true;
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
+FLFPVoxelAttributeV2 ULFPBaseVoxelMeshComponent::GetVoxelDataFromFaceIndex(const int32 FaceIndex, const int32 ElemetIndex, int32& OutVoxelIndex, FVector& OutVoxelGlobalLocation) const
+{
+	return FLFPVoxelAttributeV2();
+}
+
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, FVoxelMeshCPUBufferData& CPUData, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
 {
 	const uint32 StartIndex = EditMesh.VertexList.Num();
 
@@ -153,7 +158,10 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, co
 
 	EditMesh.VoxelColorList.Append({ VoxelColor ,VoxelColor });
 
-	EditMesh.TriangleCount += 2;
+	/* Add Index Trace */
+	CPUData.VoxelIndexList.Append({ VoxelIndex, VoxelIndex });
+
+	CPUData.TriangleCount += 2;
 }
 
 int32 ULFPBaseVoxelMeshComponent::GetVoxelLength() const
@@ -183,94 +191,86 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 {
 	if (IsVoxelMeshDirty)
 	{
-		IsVoxelMeshDirty = false;
-
-		VoxelMeshVersion += 1;
-
-		uint32 CurrentMeshVersion = VoxelMeshVersion;
-
-		Async(EAsyncExecution::TaskGraph, [CurrentMeshVersion, this]()
+		if (IsGeneratingMesh == false)
 		{
-			if (IsValid(this) == false)
-			{
-				return;
-			}
+			IsGeneratingMesh = true;
 
-			TArray<FVoxelMeshBufferData> NewVoxelMesh;
+			IsVoxelMeshDirty = false;
 
-			NewVoxelMesh.Init(FVoxelMeshBufferData(), FMath::Max(GetNumMaterials(), 1));
-
-			TArray<FIntVector> FaceCheckDirection = {
-				FIntVector(0,0,1),
-				FIntVector(-1,0,0),
-				FIntVector(0,1,0),
-				FIntVector(1,0,0),
-				FIntVector(0,-1,0),
-				FIntVector(0,0,-1),
-			};
-
-			TArray<FVector2d> FaceUVStartOffset = {
-				FVector2d(0,0),
-				FVector2d(1,0),
-				FVector2d(2,0),
-				FVector2d(2,1),
-				FVector2d(1,1),
-				FVector2d(0,1),
-			};
-
-			FRWScopeLock ReadLock(VoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
-
-			const TArray<FName> VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckIndex);
-
-			for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
-			{
-				const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize);
-
-				const FVector3f VoxelLocation = ((FVector3f)VoxelGridLocation) * ((FVector3f)VoxelHalfSize * 2);
-
-				const FLFPVoxelAttributeV2& VoxelAttribute = VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
-
-				const FVector2d VoxelUVOffset = FVector2d(VoxelAttribute.UVOffset);
-
-				if (VoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
+			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [this]()
 				{
-					for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
+					if (IsValid(this) == false)
 					{
-						if (VoxelContainer->IsVoxelVisible(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
+						return;
+					}
+
+					TArray<FVoxelMeshBufferData> NewVoxelMesh;
+					TArray<FVoxelMeshCPUBufferData> NewCPUVoxelMesh;
+
+					NewVoxelMesh.Init(FVoxelMeshBufferData(), FMath::Max(GetNumMaterials(), 1));
+					NewCPUVoxelMesh.Init(FVoxelMeshCPUBufferData(), FMath::Max(GetNumMaterials(), 1));
+
+					TArray<FIntVector> FaceCheckDirection = {
+						FIntVector(0,0,1),
+						FIntVector(-1,0,0),
+						FIntVector(0,1,0),
+						FIntVector(1,0,0),
+						FIntVector(0,-1,0),
+						FIntVector(0,0,-1),
+					};
+
+					TArray<FVector2d> FaceUVStartOffset = {
+						FVector2d(0,0),
+						FVector2d(1,0),
+						FVector2d(2,0),
+						FVector2d(2,1),
+						FVector2d(1,1),
+						FVector2d(0,1),
+					};
+
+					FRWScopeLock ReadLock(VoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
+
+					const TArray<FName> VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckIndex);
+
+					for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
+					{
+						const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize);
+
+						const FVector3f VoxelLocation = ((FVector3f)VoxelGridLocation) * ((FVector3f)VoxelHalfSize * 2);
+
+						const FLFPVoxelAttributeV2& VoxelAttribute = VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+
+						const FVector2d VoxelUVOffset = FVector2d(VoxelAttribute.UVOffset);
+
+						if (VoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
 						{
-							AddVoxelFace(NewVoxelMesh[VoxelAttribute.MaterialID < GetNumOverrideMaterials() ? VoxelAttribute.MaterialID : 0], VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
+							{
+								if (VoxelContainer->IsVoxelVisible(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
+								{
+									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
+
+									AddVoxelFace(NewVoxelMesh[MaterialID], NewCPUVoxelMesh[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+								}
+							}
 						}
 					}
+
+					AsyncTask(ENamedThreads::GameThread, [CPUData = MoveTemp(NewCPUVoxelMesh), GPUData = MoveTemp(NewVoxelMesh), this]() mutable {
+						if (IsValid(this) == false) return;
+
+						IsGeneratingMesh = false;
+
+						VoxelMesh = MoveTemp(GPUData);
+						CPUVoxelMesh = MoveTemp(CPUData);
+
+						MarkRenderStateDirty();
+						RebuildPhysicsData();
+						});
+
 				}
-			}
-
-			if (IsValid(this) && CurrentMeshVersion == VoxelMeshVersion)
-			{
-				FScopeLock VoxelMeshLock(&VoxelMeshMutex);
-
-				VoxelMesh = MoveTemp(NewVoxelMesh);
-			}
-
-			//AsyncTask(ENamedThreads::GameThread, [NewVoxelMesh, this]() {
-			//	if (IsValid(this) && NewVoxelMesh.Num() == FMath::Max(GetNumMaterials(), 1))
-			//	{
-			//		VoxelMesh = NewVoxelMesh;
-			//
-			//		MarkRenderStateDirty();
-			//	}
-			//	});
-
+			);
 		}
-		, [this]()
-		{
-			AsyncTask(ENamedThreads::GameThread, [this]() {
-				if (IsValid(this) == false) return;
-
-				MarkRenderStateDirty();
-				RebuildPhysicsData();
-				});
-		}
-		);
 	}
 }
 
@@ -294,6 +294,35 @@ FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalT
 	Ret.SphereRadius *= BoundsScale;
 
 	return Ret;
+}
+
+UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
+{
+	UMaterialInterface* Result = nullptr;
+	SectionIndex = 0;
+
+	if (CPUVoxelMesh.IsEmpty() == false && FaceIndex >= 0)
+	{
+		// Look for section that corresponds to the supplied face
+		int32 TotalFaceCount = 0;
+
+		for (int32 SectionIdx = 0; SectionIdx < CPUVoxelMesh.Num(); SectionIdx++)
+		{
+			const FVoxelMeshCPUBufferData& Section = CPUVoxelMesh[SectionIdx];
+			
+			TotalFaceCount += Section.TriangleCount;
+
+			if (FaceIndex < TotalFaceCount)
+			{
+				// Get the current material for it, from this component
+				Result = GetMaterial(SectionIdx);
+				SectionIndex = SectionIdx;
+				break;
+			}
+		}
+	}
+
+	return Result;
 }
 
 int32 ULFPBaseVoxelMeshComponent::GetNumMaterials() const

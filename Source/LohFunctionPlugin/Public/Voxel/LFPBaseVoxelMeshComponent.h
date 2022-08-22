@@ -28,13 +28,28 @@ public:
 
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
+};
+
+USTRUCT()
+struct FVoxelMeshCPUBufferData
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
 
 	/** How Many Triangle Has Been Generated */
 	int32 TriangleCount = 0;
+
+	/** Index For The Voxel Trace */
+	TArray<int32> VoxelIndexList;
 };
 
 /**
+ * This Class Main Function Is To Render Out The Voxel
+ *  - Render Voxel Mesh
+ *  - Handle Collision
  * 
+ * Secondary Function Is To Generate Out Ths Voxel Mesh Data From Voxel Coordination Data
  */
 UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
 class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
@@ -58,9 +73,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelMesh();
 
+	UFUNCTION(BlueprintPure, Category = "LFPBaseVoxelMeshComponent | Function")
+		FORCEINLINE FLFPVoxelAttributeV2 GetVoxelDataFromFaceIndex(const int32 FaceIndex, const int32 ElemetIndex, int32& OutVoxelIndex, FVector& OutVoxelGlobalLocation) const;
+
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, FVoxelMeshCPUBufferData& CPUData, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 public:
 
@@ -81,6 +99,8 @@ protected:
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
 public:
+
+	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
 	virtual int32 GetNumMaterials() const override;
 
@@ -106,13 +126,13 @@ public: // Collision Handler
 
 protected:
 
-	std::atomic<uint32> VoxelMeshVersion = 0;
-
-	FCriticalSection VoxelMeshMutex;
-
 	UPROPERTY(transient) TArray<FVoxelMeshBufferData> VoxelMesh;
 
+	UPROPERTY(transient) TArray<FVoxelMeshCPUBufferData> CPUVoxelMesh;
+
 	UPROPERTY() bool IsVoxelMeshDirty = false;
+
+	UPROPERTY() bool IsGeneratingMesh = false;
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> BaseMaterials;
 

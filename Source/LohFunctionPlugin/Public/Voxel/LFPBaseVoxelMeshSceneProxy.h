@@ -89,12 +89,9 @@ public:
 
 			FRayTracingGeometrySegment Segment;
 			Segment.VertexBuffer = PositionVertexBuffer.VertexBufferRHI;
-			Segment.VertexBufferElementType = VET_Float3;
 			Segment.VertexBufferStride = PositionVertexBuffer.GetStride();
-			Segment.VertexBufferOffset = 0;
 			Segment.NumPrimitives = RayTracingGeometry.Initializer.TotalPrimitiveCount;
 			Segment.MaxVertices = PositionVertexBuffer.GetNumVertices();
-			Segment.bEnabled = true;
 			RayTracingGeometry.Initializer.Segments.Add(Segment);
 
 			RayTracingGeometry.UpdateRHI();
@@ -160,21 +157,15 @@ public:
 		  VoxelComponent(Component)
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
-		int32 BufferIndex = 0;
-
-		Component->VoxelMeshMutex.Lock();
-
 		const TArray<FVoxelMeshBufferData> BufferDataList = MoveTemp(Component->VoxelMesh);
-
-		Component->VoxelMeshMutex.Unlock();
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
 		{
 			const FVoxelMeshBufferData& BufferData = BufferDataList[MaterialIndex];
 
-			if (BufferData.TriangleCount == 0) continue;
+			if (BufferData.TriangleIndexList.IsEmpty()) continue;
 
-			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(BufferIndex);
+			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(MaterialIndex);
 
 			Buffer->PositionVertexBuffer.Init(BufferData.VertexList);
 
@@ -184,7 +175,7 @@ public:
 
 			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 1);
 
-			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
+			ParallelFor(BufferData.TriangleIndexList.Num() / 3, [&](const int32 Index) {
 				int32 VertexIndStart = Index * 3;
 
 				FVector3f TriVertices[3] = {
@@ -259,11 +250,7 @@ public:
 			AllocatedBufferSets.SetNum(BufferID + 1);
 		}
 
-		// Clean Up Existing Buffer
-		if (AllocatedBufferSets[BufferID] != nullptr)
-		{
-			AllocatedBufferSets[BufferID]->Release();
-		}
+		check(AllocatedBufferSets[BufferID] == nullptr); // Check Current Buffer Is Null
 
 		// Set New Buffer To Array
 		AllocatedBufferSets[BufferID] = Buffer;
