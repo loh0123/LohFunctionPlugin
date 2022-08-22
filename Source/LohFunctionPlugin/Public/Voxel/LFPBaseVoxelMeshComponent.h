@@ -66,7 +66,7 @@ public:
 		FORCEINLINE void UpdateVoxelMesh();
 
 	UFUNCTION(BlueprintPure, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE FLFPVoxelAttributeV2 GetVoxelDataFromFaceIndex(const int32 FaceIndex, const int32 ElemetIndex, int32& OutVoxelIndex, FVector& OutVoxelGlobalLocation) const;
+		FORCEINLINE FLFPVoxelAttributeV2 GetVoxelDataFromFaceIndex(const int32 FaceIndex, FLFPVoxelGridIndex& OutVoxelGridIndex, FVector& OutVoxelWorldLocation) const;
 
 protected:
 
@@ -82,15 +82,15 @@ protected:
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-protected:
+public:
 
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
-protected:
+public:
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
-public:
+public: // Material Handler
 
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 

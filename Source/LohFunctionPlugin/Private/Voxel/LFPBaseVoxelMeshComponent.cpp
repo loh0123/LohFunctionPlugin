@@ -67,8 +67,35 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	IsVoxelMeshDirty = true;
 }
 
-FLFPVoxelAttributeV2 ULFPBaseVoxelMeshComponent::GetVoxelDataFromFaceIndex(const int32 FaceIndex, const int32 ElemetIndex, int32& OutVoxelIndex, FVector& OutVoxelGlobalLocation) const
+FLFPVoxelAttributeV2 ULFPBaseVoxelMeshComponent::GetVoxelDataFromFaceIndex(const int32 FaceIndex, FLFPVoxelGridIndex& OutVoxelGridIndex, FVector& OutVoxelWorldLocation) const
 {
+	if (VoxelMesh.IsEmpty() == false && FaceIndex >= 0 && IsValid(VoxelContainer))
+	{
+		// Look for section that corresponds to the supplied face
+		int32 TotalFaceCount = 0;
+
+		int32 PreTotalFaceCount = 0;
+
+		for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
+		{
+			const FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
+
+			PreTotalFaceCount = TotalFaceCount;
+
+			TotalFaceCount += Section.TriangleCount;
+
+			if (FaceIndex < TotalFaceCount)
+			{
+				OutVoxelGridIndex.ChuckIndex = ChuckIndex;
+				OutVoxelGridIndex.VoxelIndex = VoxelMesh[SectionIdx].VoxelIndexList[FaceIndex - PreTotalFaceCount];
+
+				OutVoxelWorldLocation = ((FVector)(ULFPGridLibrary::IndexToGridLocation(OutVoxelGridIndex.VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize) + VoxelStartLocation) * (VoxelHalfSize * 2));
+
+				return VoxelContainer->GetVoxelAttribute(OutVoxelGridIndex);
+			}
+		}
+	}
+
 	return FLFPVoxelAttributeV2();
 }
 
