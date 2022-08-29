@@ -16,6 +16,7 @@
 #include "RayTracingDefinitions.h"
 #include "RayTracingInstance.h"
 #include "VectorUtil.h"
+#include "DistanceFieldAtlas.h"
 
 #include "Voxel/LFPBaseVoxelMeshComponent.h"
 
@@ -156,7 +157,10 @@ public:
 	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
 		  VoxelComponent(Component)
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+		, DistanceFieldData(IsValid(Component->DistanceFieldMesh) ? Component->DistanceFieldMesh->GetLODForExport(0).DistanceFieldData : nullptr)
 	{
+		bSupportsDistanceFieldRepresentation = true;
+
 		const TArray<FVoxelMeshBufferData>& BufferDataList = Component->VoxelMesh;
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
@@ -175,7 +179,7 @@ public:
 
 			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 1);
 
-			ParallelFor(BufferData.TriangleIndexList.Num() / 3, [&](const int32 Index) {
+			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
 				int32 VertexIndStart = Index * 3;
 
 				FVector3f TriVertices[3] = {
@@ -374,6 +378,30 @@ public:
 		Collector.AddMesh(ViewIndex, Mesh);
 	}
 
+	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
+	{
+		OutDistanceFieldData = DistanceFieldData;
+		SelfShadowBias = 1.0f;
+	}
+
+	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override
+	{
+		if (DistanceFieldData && VoxelComponent->IsGeneratingMesh == false && VoxelComponent->VoxelDistanceField.IsEmpty() == false)
+		{
+			FRenderTransform CurrentLocal = (FMatrix44f)GetLocalToWorld();
+
+			for (const FTransform& DFTransform : VoxelComponent->VoxelDistanceField)
+			{
+				ObjectLocalToWorldTransforms.Add(DFTransform.ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
+			}
+		}
+	}
+
+	virtual bool HasDistanceFieldRepresentation() const override
+	{
+		return DistanceFieldData != nullptr && VoxelComponent->IsGeneratingMesh == false && VoxelComponent->VoxelDistanceField.IsEmpty() == false;
+	}
+
 #if RHI_RAYTRACING
 	virtual bool IsRayTracingRelevant() const override { return true; }
 
@@ -479,6 +507,8 @@ protected:
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 
 	FMaterialRelevance MaterialRelevance;
+
+	FDistanceFieldVolumeData* DistanceFieldData;
 };
 
 //class FLFPBaseVoxelMeshSceneProxyTask : public FNonAbandonableTask

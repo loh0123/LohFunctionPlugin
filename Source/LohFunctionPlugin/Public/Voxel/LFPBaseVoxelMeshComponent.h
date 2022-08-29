@@ -6,6 +6,7 @@
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainer.h"
 #include "PhysicsEngine/BodySetup.h"
+#include "DistanceFieldAtlas.h"
 #include "LFPBaseVoxelMeshComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
@@ -133,6 +134,12 @@ protected:
 	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> MeshBodySetup;
 
 protected:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
+		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+		TArray<FTransform> VoxelDistanceField;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;

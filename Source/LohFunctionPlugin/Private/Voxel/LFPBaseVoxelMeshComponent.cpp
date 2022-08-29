@@ -232,6 +232,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					}
 
 					TArray<FVoxelMeshBufferData> NewVoxelMesh;
+					TArray<FTransform> NewVoxelDF;
 
 					NewVoxelMesh.Init(FVoxelMeshBufferData(), FMath::Max(GetNumMaterials(), 1));
 
@@ -257,6 +258,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 					const TArray<FName> VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckIndex);
 
+					NewVoxelDF.Reserve(VoxelContainer->GetContainerSetting().VoxelLength);
+
 					for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
 					{
 						const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize);
@@ -269,6 +272,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 						if (VoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
 						{
+							bool HasFace = false;
+
 							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
 							{
 								if (VoxelContainer->IsVoxelVisible(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
@@ -276,17 +281,27 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
 									AddVoxelFace(NewVoxelMesh[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+								
+									HasFace = true;
 								}
+							}
+
+							if (HasFace)
+							{
+								NewVoxelDF.Add(FTransform(FVector(VoxelLocation)));
 							}
 						}
 					}
 
-					AsyncTask(ENamedThreads::GameThread, [GPUData = MoveTemp(NewVoxelMesh), this]() mutable {
+					NewVoxelDF.Shrink();
+
+					AsyncTask(ENamedThreads::GameThread, [GPUData = MoveTemp(NewVoxelMesh), DFData = MoveTemp(NewVoxelDF), this]() mutable {
 						if (IsValid(this) == false) return;
 
 						IsGeneratingMesh = false;
 
 						VoxelMesh = MoveTemp(GPUData);
+						VoxelDistanceField = MoveTemp(DFData);
 
 						MarkRenderStateDirty();
 						RebuildPhysicsData();
