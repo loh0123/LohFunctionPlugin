@@ -6,18 +6,12 @@
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainer.h"
 #include "PhysicsEngine/BodySetup.h"
-#include "DistanceFieldAtlas.h"
 #include "LFPBaseVoxelMeshComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
 
-USTRUCT()
-struct FVoxelMeshBufferData
+struct FVoxelMeshSectionData
 {
-	GENERATED_USTRUCT_BODY()
-
-public:
-
 	/** Raw Vertex Generated For The Function */
 	TArray<FVector3f> VertexList;
 
@@ -31,10 +25,24 @@ public:
 	TArray<FColor> VoxelColorList;
 
 	/** How Many Triangle Has Been Generated */
-	int32 TriangleCount = 0;
+	uint32 TriangleCount = 0;
 
 	/** Index For The Voxel Trace */
 	TArray<int32> VoxelIndexList;
+};
+
+/* This Contains Every Data Need To Render This Voxel Mesh */
+struct FVoxelMeshRenderData
+{
+	~FVoxelMeshRenderData();
+
+	TArray<FVoxelMeshSectionData> Sections;
+
+	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
+
+	TArray<FTransform> DistanceFieldInstanceData;
+
+	class FCardRepresentationData* LumenCardData = nullptr;
 };
 
 /**
@@ -65,19 +73,23 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelMesh();
-
-	UFUNCTION(BlueprintPure, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE FLFPVoxelAttributeV2 GetVoxelDataFromFaceIndex(const int32 FaceIndex, FLFPVoxelGridIndex& OutVoxelGridIndex, FVector& OutVoxelWorldLocation) const;
-
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshBufferData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 public:
 
 	FORCEINLINE int32 GetVoxelLength() const;
 
 	FORCEINLINE void GetVoxelAttributeList(TArray<FLFPVoxelAttributeV2>& VoxelAttributeList, TBitArray<>& VisibleList);
+
+	FORCEINLINE FBox GetVoxelMeshBound() const
+	{ 
+		return FBox(FVector3d(-VoxelHalfSize), VoxelContainer != nullptr ? 
+			((FVector3d)VoxelHalfSize * 2) * ((FVector3d)VoxelContainer->GetContainerSetting().VoxelGridSize) + FVector3d(VoxelHalfSize) 
+			: 
+			FVector3d(VoxelHalfSize)); 
+	}
 
 protected:
 
@@ -115,23 +127,21 @@ public: // Collision Handler
 
 	FORCEINLINE UBodySetup* CreateBodySetup();
 
-	virtual void RebuildPhysicsData();
+	FORCEINLINE void RebuildPhysicsData();
 
 	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
 
 protected:
 
-	UPROPERTY(transient) TArray<FVoxelMeshBufferData> VoxelMesh;
+	FVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
 
-	UPROPERTY() bool IsVoxelMeshValid = false;
+	bool bIsVoxelMeshDirty = false;
 
-	UPROPERTY() bool IsVoxelMeshDirty = false;
+	bool bIsGeneratingMesh = false;
 
-	UPROPERTY() bool IsGeneratingMesh = false;
+	bool bIsBodyInvalid = false;
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> BaseMaterials;
-
-	UPROPERTY(transient) bool bIsBodyInvalid = false;
 
 	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> MeshBodySetup;
 

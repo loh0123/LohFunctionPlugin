@@ -159,18 +159,18 @@ class FLFPBaseVoxelMeshSceneProxy : public FPrimitiveSceneProxy
 public:
 	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
 		  VoxelComponent(Component)
+		, VoxelMeshRenderData(Component->VoxelMeshRenderData)
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
-		, DistanceFieldData(IsValid(Component->DistanceFieldMesh) ? Component->DistanceFieldMesh->GetLODForExport(0).DistanceFieldData : nullptr)
 	{
-		bSupportsDistanceFieldRepresentation = IsValid(Component->DistanceFieldMesh) && Component->VoxelDistanceField.IsValidIndex(0);
+		bSupportsDistanceFieldRepresentation = true;
 
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
-		const TArray<FVoxelMeshBufferData>& BufferDataList = Component->VoxelMesh;
+		const TArray<FVoxelMeshSectionData>& BufferDataList = Component->VoxelMeshRenderData->Sections;
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
 		{
-			const FVoxelMeshBufferData& BufferData = BufferDataList[MaterialIndex];
+			const FVoxelMeshSectionData& BufferData = BufferDataList[MaterialIndex];
 
 			if (BufferData.TriangleIndexList.IsEmpty()) continue;
 
@@ -238,6 +238,8 @@ public:
 	virtual ~FLFPBaseVoxelMeshSceneProxy()
 	{
 		VoxelComponent = nullptr;
+
+		delete VoxelMeshRenderData;
 
 		for (FLFPVoxelMeshRenderBufferSet* Buffer : AllocatedBufferSets)
 		{
@@ -396,26 +398,23 @@ public:
 
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
 	{
-		OutDistanceFieldData = DistanceFieldData;
+		OutDistanceFieldData = VoxelMeshRenderData->DistanceFieldMeshData;
 		SelfShadowBias = 1.0f;
 	}
 
 	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override
 	{
-		if (DistanceFieldData && VoxelComponent->IsGeneratingMesh == false && VoxelComponent->VoxelDistanceField.IsEmpty() == false)
-		{
-			FRenderTransform CurrentLocal = (FMatrix44f)GetLocalToWorld();
+		FRenderTransform CurrentLocal = (FMatrix44f)GetLocalToWorld();
 
-			for (const FTransform& DFTransform : VoxelComponent->VoxelDistanceField)
-			{
-				ObjectLocalToWorldTransforms.Add(DFTransform.ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
-			}
+		for (const FTransform& DFTransform : VoxelMeshRenderData->DistanceFieldInstanceData)
+		{
+			ObjectLocalToWorldTransforms.Add(DFTransform.ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
 		}
 	}
 
 	virtual bool HasDistanceFieldRepresentation() const override
 	{
-		return DistanceFieldData != nullptr && VoxelComponent->IsGeneratingMesh == false && VoxelComponent->VoxelDistanceField.IsEmpty() == false;
+		return VoxelMeshRenderData->DistanceFieldMeshData != nullptr;
 	}
 
 #if RHI_RAYTRACING
@@ -532,11 +531,11 @@ protected:
 
 	ULFPBaseVoxelMeshComponent* VoxelComponent = nullptr;
 
+	FVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
+
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 
 	FMaterialRelevance MaterialRelevance;
-
-	FDistanceFieldVolumeData* DistanceFieldData;
 };
 
 //class FLFPBaseVoxelMeshSceneProxyTask : public FNonAbandonableTask

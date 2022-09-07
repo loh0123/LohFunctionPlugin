@@ -5,8 +5,15 @@
 #include "./Math/LFPGridLibrary.h"
 #include "PhysicsEngine/PhysicsSettings.h"
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
+#include "MeshCardRepresentation.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
+
+FVoxelMeshRenderData::~FVoxelMeshRenderData()
+{
+	delete DistanceFieldMeshData;
+	delete LumenCardData;
+}
 
 ULFPBaseVoxelMeshComponent::ULFPBaseVoxelMeshComponent()
 {
@@ -64,42 +71,10 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 		return;
 	}
 
-	IsVoxelMeshDirty = true;
+	bIsVoxelMeshDirty = true;
 }
 
-FLFPVoxelAttributeV2 ULFPBaseVoxelMeshComponent::GetVoxelDataFromFaceIndex(const int32 FaceIndex, FLFPVoxelGridIndex& OutVoxelGridIndex, FVector& OutVoxelWorldLocation) const
-{
-	if (VoxelMesh.IsEmpty() == false && FaceIndex >= 0 && IsValid(VoxelContainer))
-	{
-		// Look for section that corresponds to the supplied face
-		int32 TotalFaceCount = 0;
-
-		int32 PreTotalFaceCount = 0;
-
-		for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
-		{
-			const FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
-
-			PreTotalFaceCount = TotalFaceCount;
-
-			TotalFaceCount += Section.TriangleCount;
-
-			if (FaceIndex < TotalFaceCount)
-			{
-				OutVoxelGridIndex.ChuckIndex = ChuckIndex;
-				OutVoxelGridIndex.VoxelIndex = VoxelMesh[SectionIdx].VoxelIndexList[FaceIndex - PreTotalFaceCount];
-
-				OutVoxelWorldLocation = ((FVector)(ULFPGridLibrary::IndexToGridLocation(OutVoxelGridIndex.VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize) + VoxelStartLocation) * (VoxelHalfSize * 2));
-
-				return VoxelContainer->GetVoxelAttribute(OutVoxelGridIndex);
-			}
-		}
-	}
-
-	return FLFPVoxelAttributeV2();
-}
-
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshBufferData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
 {
 	const uint32 StartIndex = EditMesh.VertexList.Num();
 
@@ -216,25 +191,27 @@ void ULFPBaseVoxelMeshComponent::GetVoxelAttributeList(TArray<FLFPVoxelAttribute
 
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	if (IsVoxelMeshDirty)
+	if (bIsVoxelMeshDirty)
 	{
-		if (IsGeneratingMesh == false)
+		if (bIsGeneratingMesh == false)
 		{
-			IsGeneratingMesh = true;
+			bIsGeneratingMesh = true;
 
-			IsVoxelMeshDirty = false;
+			bIsVoxelMeshDirty = false;
 
-			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [this]()
+			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, this]()
 				{
 					if (IsValid(this) == false)
 					{
 						return;
 					}
 
-					TArray<FVoxelMeshBufferData> NewVoxelMesh;
-					TArray<FTransform> NewVoxelDF;
+					//TArray<FVoxelMeshSectionData> NewVoxelMesh;
+					//TArray<FTransform> NewVoxelDistanceFieldInstance;
 
-					NewVoxelMesh.Init(FVoxelMeshBufferData(), FMath::Max(GetNumMaterials(), 1));
+					FVoxelMeshRenderData* NewRenderData = new FVoxelMeshRenderData();
+
+					NewRenderData->Sections.Init(FVoxelMeshSectionData(), FMath::Max(GetNumMaterials(), 1));
 
 					TArray<FIntVector> FaceCheckDirection = {
 						FIntVector(0,0,1),
@@ -254,33 +231,33 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						FVector2d(0,1),
 					};
 
-					FRWScopeLock ReadLock(VoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
+					FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
 
-					const TArray<FName> VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckIndex);
+					const TArray<FName> VoxelNameList = LocalVoxelContainer->GetVoxelNameList(ChuckIndex);
 
-					NewVoxelDF.Reserve(VoxelContainer->GetContainerSetting().VoxelLength);
+					NewRenderData->DistanceFieldInstanceData.Reserve(LocalVoxelContainer->GetContainerSetting().VoxelLength);
 
-					for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
+					for (int32 VoxelIndex = 0; VoxelIndex < LocalVoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
 					{
-						const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, VoxelContainer->GetContainerSetting().VoxelGridSize);
+						const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
 
 						const FVector3f VoxelLocation = ((FVector3f)VoxelGridLocation) * ((FVector3f)VoxelHalfSize * 2);
 
-						const FLFPVoxelAttributeV2& VoxelAttribute = VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+						const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
 
 						const FVector2d VoxelUVOffset = FVector2d(VoxelAttribute.UVOffset);
 
-						if (VoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
+						if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
 						{
 							bool HasFace = false;
 
 							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
 							{
-								if (VoxelContainer->IsVoxelVisible(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
+								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
 								{
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-									AddVoxelFace(NewVoxelMesh[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
 								
 									HasFace = true;
 								}
@@ -288,29 +265,37 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 							if (HasFace)
 							{
-								NewVoxelDF.Add(FTransform(FVector(VoxelLocation)));
+								NewRenderData->DistanceFieldInstanceData.Add(FTransform(FVector(VoxelLocation)));
 							}
 						}
 					}
 
-					NewVoxelDF.Shrink();
+					NewRenderData->DistanceFieldInstanceData.Shrink();
 
-					AsyncTask(ENamedThreads::GameThread, [GPUData = MoveTemp(NewVoxelMesh), DFData = MoveTemp(NewVoxelDF), this]() mutable {
+					AsyncTask(ENamedThreads::GameThread, [RenderData = NewRenderData, this]() {
 						if (IsValid(this) == false) return;
 
-						IsGeneratingMesh = false;
+						bIsGeneratingMesh = false;
 
-						VoxelMesh = MoveTemp(GPUData);
-						VoxelDistanceField = MoveTemp(DFData);
+						bool bIsVoxelMeshValid = false;
 
-						IsVoxelMeshValid = false;
-
-						for (const FVoxelMeshBufferData& Buffer : VoxelMesh)
+						for (const FVoxelMeshSectionData& Buffer : RenderData->Sections)
 						{
 							if (Buffer.TriangleCount > 0)
 							{
-								IsVoxelMeshValid = true;
+								bIsVoxelMeshValid = true;
 							}
+						}
+
+						if (bIsVoxelMeshValid)
+						{
+							VoxelMeshRenderData = RenderData;
+						}
+						else
+						{
+							VoxelMeshRenderData = nullptr;
+
+							delete RenderData;
 						}
 
 						MarkRenderStateDirty();
@@ -325,7 +310,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 FPrimitiveSceneProxy* ULFPBaseVoxelMeshComponent::CreateSceneProxy()
 {
-	if (VoxelContainer != nullptr && VoxelContainer->IsChuckInitialized(ChuckIndex) && VoxelMesh.Num() != 0 && GetNumMaterials() != 0 && IsVoxelMeshValid)
+	if (VoxelMeshRenderData && VoxelMeshRenderData->Sections.Num() == GetNumMaterials() && GetNumMaterials() != 0)
 	{
 		return new FLFPBaseVoxelMeshSceneProxy(this);
 	}
@@ -337,8 +322,7 @@ FPrimitiveSceneProxy* ULFPBaseVoxelMeshComponent::CreateSceneProxy()
 
 FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	FBox LocalBoundingBox = FBox(FVector3d(-VoxelHalfSize), VoxelContainer != nullptr ? ((FVector3d)VoxelHalfSize * 2) * ((FVector3d)VoxelContainer->GetContainerSetting().VoxelGridSize) : FVector3d(VoxelHalfSize));
-	FBoxSphereBounds Ret(LocalBoundingBox.TransformBy(LocalToWorld));
+	FBoxSphereBounds Ret(GetVoxelMeshBound().TransformBy(LocalToWorld));
 	Ret.BoxExtent *= BoundsScale;
 	Ret.SphereRadius *= BoundsScale;
 
@@ -355,14 +339,14 @@ UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceInde
 	UMaterialInterface* Result = nullptr;
 	SectionIndex = 0;
 
-	if (VoxelMesh.IsEmpty() == false && FaceIndex >= 0)
+	if (VoxelMeshRenderData && FaceIndex >= 0)
 	{
 		// Look for section that corresponds to the supplied face
 		int32 TotalFaceCount = 0;
 
-		for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
+		for (int32 SectionIdx = 0; SectionIdx < VoxelMeshRenderData->Sections.Num(); SectionIdx++)
 		{
-			const FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
+			const FVoxelMeshSectionData& Section = VoxelMeshRenderData->Sections[SectionIdx];
 			
 			TotalFaceCount += Section.TriangleCount;
 
@@ -401,7 +385,7 @@ void ULFPBaseVoxelMeshComponent::SetMaterial(int32 ElementIndex, UMaterialInterf
 
 bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* CollisionData, bool InUseAllTriData)
 {
-	if (VoxelMesh.IsEmpty() || IsVoxelMeshValid == false) return false;
+	if (VoxelMeshRenderData == nullptr) return false;
 
 	int32 VertexBase = 0; // Base vertex index for current section
 
@@ -413,14 +397,14 @@ bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 	}
 
 	// For each section..
-	for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
+	for (int32 SectionIdx = 0; SectionIdx < VoxelMeshRenderData->Sections.Num(); SectionIdx++)
 	{
-		if (VoxelMesh[SectionIdx].TriangleCount == 0)
+		if (VoxelMeshRenderData->Sections[SectionIdx].TriangleCount == 0)
 		{
 			continue;
 		}
 
-		FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
+		FVoxelMeshSectionData& Section = VoxelMeshRenderData->Sections[SectionIdx];
 
 		CollisionData->Vertices.Append(Section.VertexList);
 
@@ -454,7 +438,7 @@ bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPBaseVoxelMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	return VoxelMesh.IsEmpty() == false && IsVoxelMeshValid;
+	return VoxelMeshRenderData != nullptr;
 }
 
 bool ULFPBaseVoxelMeshComponent::WantsNegXTriMesh()
