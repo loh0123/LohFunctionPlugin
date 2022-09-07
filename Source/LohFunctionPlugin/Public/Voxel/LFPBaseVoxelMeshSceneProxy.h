@@ -162,7 +162,7 @@ public:
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 		, DistanceFieldData(IsValid(Component->DistanceFieldMesh) ? Component->DistanceFieldMesh->GetLODForExport(0).DistanceFieldData : nullptr)
 	{
-		bSupportsDistanceFieldRepresentation = true;
+		bSupportsDistanceFieldRepresentation = IsValid(Component->DistanceFieldMesh) && Component->VoxelDistanceField.IsValidIndex(0);
 
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
@@ -311,7 +311,7 @@ public:
 			{
 				FMeshBatch MeshBatch;
 
-				DrawBatch(MeshBatch, *BufferSet, BufferSet->Material->GetRenderProxy(), false, false);
+				DrawBatch(MeshBatch, *BufferSet, BufferSet->Material->GetRenderProxy(), false);
 
 				PDI->DrawMesh(MeshBatch, 1.f);
 			}
@@ -324,24 +324,21 @@ public:
 		uint32 VisibilityMap,
 		FMeshElementCollector& Collector) const override
 	{
-		const bool bWireframe = (AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe);
-	
 		// set up wireframe material. Probably bad to reference GEngine here...also this material is very bad?
-		FColoredMaterialRenderProxy* WireframeMaterialInstance = nullptr;
-		if (bWireframe)
-		{
-			WireframeMaterialInstance = new FColoredMaterialRenderProxy(
-				GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
-				FLinearColor(0, 0.5f, 1.f)
-			);
-			Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
-		}
+		FColoredMaterialRenderProxy* WireframeMaterialInstance = new FColoredMaterialRenderProxy(
+			GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
+			FLinearColor(0, 0.5f, 1.f)
+		);
+
+		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
 	
 		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 		{
 			if (VisibilityMap & (1 << ViewIndex))
 			{
 				const FSceneView* View = Views[ViewIndex];
+
+				FFrozenSceneViewMatricesGuard FrozenMatricesGuard(*const_cast<FSceneView*>(Views[ViewIndex]));
 	
 				// Draw the mesh.
 				for (FLFPVoxelMeshRenderBufferSet* BufferSet : AllocatedBufferSets)
@@ -351,13 +348,13 @@ public:
 						continue;
 					}
 	
-					FMaterialRenderProxy* MaterialProxy = bWireframe ? WireframeMaterialInstance : BufferSet->Material->GetRenderProxy();
-	
 					if (BufferSet->IndexBuffer.Indices.Num() > 0)
 					{
 						FMeshBatch& MeshBatch = Collector.AllocateMesh();
 	
-						DrawBatch(MeshBatch, *BufferSet, MaterialProxy, bWireframe, false);
+						DrawBatch(MeshBatch, *BufferSet, WireframeMaterialInstance, false);
+
+						MeshBatch.bWireframe = true;
 					
 						Collector.AddMesh(ViewIndex, MeshBatch);
 					}
@@ -369,20 +366,17 @@ public:
 	FORCEINLINE void DrawBatch(FMeshBatch& MeshBatch,
 		const FLFPVoxelMeshRenderBufferSet& RenderBuffers,
 		FMaterialRenderProxy* UseMaterial,
-		bool bWireframe, 
 		bool bForRayTracing) const
 	{
 		FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
 		BatchElement.IndexBuffer = &RenderBuffers.IndexBuffer;
-		MeshBatch.bWireframe = bWireframe;
-		MeshBatch.VertexFactory = &RenderBuffers.VertexFactory;
-		MeshBatch.MaterialRenderProxy = UseMaterial;
-
-		//BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
 		BatchElement.FirstIndex = 0;
 		BatchElement.NumPrimitives = RenderBuffers.IndexBuffer.Indices.Num() / 3;
 		BatchElement.MinVertexIndex = 0;
 		BatchElement.MaxVertexIndex = RenderBuffers.PositionVertexBuffer.GetNumVertices() - 1;
+
+		MeshBatch.VertexFactory = &RenderBuffers.VertexFactory;
+		MeshBatch.MaterialRenderProxy = UseMaterial;
 
 		MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
 		MeshBatch.Type = PT_TriangleList;
@@ -390,6 +384,12 @@ public:
 		MeshBatch.bCanApplyViewModeOverrides = false;
 		MeshBatch.SegmentIndex = RenderBuffers.SectionID;
 		MeshBatch.LODIndex = 0;
+
+		MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
+
+#if RHI_RAYTRACING
+		MeshBatch.CastRayTracedShadow = MeshBatch.CastShadow && bCastDynamicShadow;
+#endif
 
 		return;
 	}
@@ -485,10 +485,19 @@ public:
 	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const
 	{
 		FPrimitiveViewRelevance Result;
+
+		if (AllowDebugViewmodes() && View->Family->EngineShowFlags.Wireframe)
+		{
+			Result.bDynamicRelevance = true;
+		}
+		else
+		{
+			Result.bStaticRelevance = true;
+		}
+
+
 		Result.bDrawRelevance = IsShown(View);
 		Result.bShadowRelevance = IsShadowCast(View);
-		Result.bDynamicRelevance = false;
-		Result.bStaticRelevance = true;
 		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();

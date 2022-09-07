@@ -123,6 +123,8 @@ protected:
 
 	UPROPERTY(transient) TArray<FVoxelMeshBufferData> VoxelMesh;
 
+	UPROPERTY() bool IsVoxelMeshValid = false;
+
 	UPROPERTY() bool IsVoxelMeshDirty = false;
 
 	UPROPERTY() bool IsGeneratingMesh = false;

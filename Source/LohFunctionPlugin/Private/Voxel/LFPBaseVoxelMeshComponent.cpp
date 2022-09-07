@@ -303,6 +303,16 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						VoxelMesh = MoveTemp(GPUData);
 						VoxelDistanceField = MoveTemp(DFData);
 
+						IsVoxelMeshValid = false;
+
+						for (const FVoxelMeshBufferData& Buffer : VoxelMesh)
+						{
+							if (Buffer.TriangleCount > 0)
+							{
+								IsVoxelMeshValid = true;
+							}
+						}
+
 						MarkRenderStateDirty();
 						RebuildPhysicsData();
 						});
@@ -315,7 +325,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 FPrimitiveSceneProxy* ULFPBaseVoxelMeshComponent::CreateSceneProxy()
 {
-	if (VoxelContainer != nullptr && VoxelContainer->IsChuckInitialized(ChuckIndex) && VoxelMesh.Num() != 0 && GetNumMaterials() != 0)
+	if (VoxelContainer != nullptr && VoxelContainer->IsChuckInitialized(ChuckIndex) && VoxelMesh.Num() != 0 && GetNumMaterials() != 0 && IsVoxelMeshValid)
 	{
 		return new FLFPBaseVoxelMeshSceneProxy(this);
 	}
@@ -391,7 +401,7 @@ void ULFPBaseVoxelMeshComponent::SetMaterial(int32 ElementIndex, UMaterialInterf
 
 bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* CollisionData, bool InUseAllTriData)
 {
-	if (VoxelMesh.IsEmpty()) return false;
+	if (VoxelMesh.IsEmpty() || IsVoxelMeshValid == false) return false;
 
 	int32 VertexBase = 0; // Base vertex index for current section
 
@@ -405,6 +415,11 @@ bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 	// For each section..
 	for (int32 SectionIdx = 0; SectionIdx < VoxelMesh.Num(); SectionIdx++)
 	{
+		if (VoxelMesh[SectionIdx].TriangleCount == 0)
+		{
+			continue;
+		}
+
 		FVoxelMeshBufferData& Section = VoxelMesh[SectionIdx];
 
 		CollisionData->Vertices.Append(Section.VertexList);
@@ -439,7 +454,7 @@ bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPBaseVoxelMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	return VoxelMesh.IsEmpty() == false;
+	return VoxelMesh.IsEmpty() == false && IsVoxelMeshValid;
 }
 
 bool ULFPBaseVoxelMeshComponent::WantsNegXTriMesh()
