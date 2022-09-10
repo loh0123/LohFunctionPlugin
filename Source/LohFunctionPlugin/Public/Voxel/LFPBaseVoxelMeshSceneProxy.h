@@ -163,6 +163,7 @@ public:
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
 		bSupportsDistanceFieldRepresentation = true;
+		bSupportsMeshCardRepresentation = true;
 
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
@@ -394,6 +395,11 @@ public:
 #endif
 
 		return;
+	}
+
+	virtual const FCardRepresentationData* GetMeshCardRepresentation() const
+	{
+		return VoxelMeshRenderData->LumenCardData;
 	}
 
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override

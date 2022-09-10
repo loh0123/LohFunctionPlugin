@@ -43,6 +43,9 @@ struct FVoxelMeshRenderData
 	TArray<FTransform> DistanceFieldInstanceData;
 
 	class FCardRepresentationData* LumenCardData = nullptr;
+
+	/** Lumen Box To Calculate Lumen Card : X-, X+, Y-, Y+, Z-, Z+ */
+	TArray<FBox> LumenBox;
 };
 
 /**
@@ -88,7 +91,7 @@ public:
 		return FBox(FVector3d(-VoxelHalfSize), VoxelContainer != nullptr ? 
 			((FVector3d)VoxelHalfSize * 2) * ((FVector3d)VoxelContainer->GetContainerSetting().VoxelGridSize) + FVector3d(VoxelHalfSize) 
 			: 
-			FVector3d(VoxelHalfSize)); 
+			FVector3d(VoxelHalfSize)).ExpandBy(BoundExpand);
 	}
 
 protected:
@@ -149,6 +152,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
 		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
+		float BoundExpand = 5.0f;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TArray<FTransform> VoxelDistanceField;

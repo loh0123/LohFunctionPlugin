@@ -11,7 +11,6 @@ DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
 
 FVoxelMeshRenderData::~FVoxelMeshRenderData()
 {
-	delete DistanceFieldMeshData;
 	delete LumenCardData;
 }
 
@@ -199,7 +198,9 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 			bIsVoxelMeshDirty = false;
 
-			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, this]()
+			FBox LocalBound = GetVoxelMeshBound();
+
+			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalBound, this]()
 				{
 					if (IsValid(this) == false)
 					{
@@ -212,6 +213,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					FVoxelMeshRenderData* NewRenderData = new FVoxelMeshRenderData();
 
 					NewRenderData->Sections.Init(FVoxelMeshSectionData(), FMath::Max(GetNumMaterials(), 1));
+					NewRenderData->LumenBox.Init(FBox(EForceInit::ForceInitToZero), 6);
 
 					TArray<FIntVector> FaceCheckDirection = {
 						FIntVector(0,0,1),
@@ -229,6 +231,19 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						FVector2d(2,1),
 						FVector2d(1,1),
 						FVector2d(0,1),
+					};
+
+					TArray<FVector> SurfaceScale = {
+						FVector(1,1,0),
+						FVector(0,1,1),
+						FVector(1,0,1),
+						FVector(0,1,1),
+						FVector(1,0,1),
+						FVector(1,1,0),
+					};
+
+					TArray<int32> SurfaceDirectionID = {
+						5,0,3,1,2,4
 					};
 
 					FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
@@ -251,6 +266,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						{
 							bool HasFace = false;
 
+							FBox LocalVoxelBound = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize + BoundExpand);
+
 							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
 							{
 								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + FaceCheckDirection[FaceIndex] + VoxelStartLocation)) == false)
@@ -258,8 +275,35 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
 									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
-								
+
 									HasFace = true;
+
+									/* Generate Lumen Box */
+									{
+										FVector MinSurface = LocalVoxelBound.Min * SurfaceScale[FaceIndex];
+										FVector MaxSurface = LocalVoxelBound.Max * SurfaceScale[FaceIndex];
+
+										FVector CardOriginOffset = (FVector(VoxelLocation) * (FVector(FaceCheckDirection[FaceIndex]).GetAbs())) + (VoxelHalfSize * FVector(FaceCheckDirection[FaceIndex]));
+										FVector Extention = BoundExpand * FVector(FaceCheckDirection[FaceIndex]).GetAbs();
+
+										MinSurface += CardOriginOffset - Extention;
+										MaxSurface += CardOriginOffset + Extention;
+
+										if (NewRenderData->LumenBox[FaceIndex].IsValid)
+										{
+											if (NewRenderData->LumenBox[FaceIndex].Min.X > MinSurface.X) NewRenderData->LumenBox[FaceIndex].Min.X = MinSurface.X;
+											if (NewRenderData->LumenBox[FaceIndex].Min.Y > MinSurface.Y) NewRenderData->LumenBox[FaceIndex].Min.Y = MinSurface.Y;
+											if (NewRenderData->LumenBox[FaceIndex].Min.Z > MinSurface.Z) NewRenderData->LumenBox[FaceIndex].Min.Z = MinSurface.Z;
+											
+											if (NewRenderData->LumenBox[FaceIndex].Max.X < MaxSurface.X) NewRenderData->LumenBox[FaceIndex].Max.X = MaxSurface.X;
+											if (NewRenderData->LumenBox[FaceIndex].Max.Y < MaxSurface.Y) NewRenderData->LumenBox[FaceIndex].Max.Y = MaxSurface.Y;
+											if (NewRenderData->LumenBox[FaceIndex].Max.Z < MaxSurface.Z) NewRenderData->LumenBox[FaceIndex].Max.Z = MaxSurface.Z;
+										}
+										else
+										{
+											NewRenderData->LumenBox[FaceIndex] = FBox(MinSurface, MaxSurface);
+										}
+									}
 								}
 							}
 
@@ -267,6 +311,72 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 							{
 								NewRenderData->DistanceFieldInstanceData.Add(FTransform(FVector(VoxelLocation)));
 							}
+						}
+					}
+
+					/* Fill In Lumen Data */
+					{
+						NewRenderData->LumenCardData = new FCardRepresentationData();
+
+						NewRenderData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
+
+						NewRenderData->LumenCardData->MeshCardsBuildData.Bounds = LocalBound;
+
+						for (int32 Index = 0; Index < 6; Index++)
+						{
+							if (NewRenderData->LumenBox[Index].IsValid == false) continue;
+
+							FLumenCardBuildData LumenCard;
+
+							LumenCard.AxisAlignedDirectionIndex = SurfaceDirectionID[Index];
+
+							LumenCard.LODLevel = 0;
+
+							FVector BoxExtent = NewRenderData->LumenBox[Index].GetExtent();
+
+							switch (Index)
+							{
+							case 0:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
+								LumenCard.OBB.AxisX = FVector3f(1.0f, 0.0f, 0.0f);
+								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(0.0f, 0.0f, 1.0f);
+								break;
+							case 1:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.Y, BoxExtent.X);
+								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
+								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(-1.0f, 0.0f, 0.0f);
+								break;
+							case 2:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.X, BoxExtent.Y);
+								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
+								LumenCard.OBB.AxisY = FVector3f(1.0f, 0.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(0.0f, 1.0f, 0.0f);
+								break;
+							case 3:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.Y, BoxExtent.X);
+								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
+								LumenCard.OBB.AxisY = FVector3f(0.0f, -1.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(1.0f, 0.0f, 0.0f);
+								break;
+							case 4:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.X, BoxExtent.Y);
+								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
+								LumenCard.OBB.AxisY = FVector3f(-1.0f, 0.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(0.0f, -1.0f, 0.0f);
+								break;
+							case 5:
+								LumenCard.OBB.Extent = FVector3f(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
+								LumenCard.OBB.AxisX = FVector3f(-1.0f, 0.0f, 0.0f);
+								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
+								LumenCard.OBB.AxisZ = FVector3f(0.0f, 0.0f, -1.0f);
+								break;
+							}
+
+							LumenCard.OBB.Origin = FVector3f(NewRenderData->LumenBox[Index].GetCenter());
+
+							NewRenderData->LumenCardData->MeshCardsBuildData.CardBuildData.Add(LumenCard);
 						}
 					}
 
@@ -290,6 +400,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						if (bIsVoxelMeshValid)
 						{
 							VoxelMeshRenderData = RenderData;
+
+							if (IsValid(DistanceFieldMesh)) VoxelMeshRenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
 						}
 						else
 						{
