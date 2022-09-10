@@ -73,7 +73,7 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	bIsVoxelMeshDirty = true;
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor)
 {
 	const uint32 StartIndex = EditMesh.VertexList.Num();
 
@@ -146,15 +146,15 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, c
 		EditMesh.TriangleIndexList.Append({ StartIndex,1 + StartIndex,2 + StartIndex,3 + StartIndex,4 + StartIndex,5 + StartIndex });
 	}
 
-	FVector2d UVSize = FVector2d(VoxelUVSize) * FVector2d(1.0f / 3.0f, 0.5f);
+	FVector2f UVSize = FVector2f(VoxelUVSize) * FVector2f(1.0f / 3.0f, 0.5f);
 
 	EditMesh.UVList.Append({ 
-		(FVector2d(0.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2d(0.0f,1.0f) + UVOffset) * UVSize,
-		(FVector2d(1.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2d(1.0f,1.0f) + UVOffset) * UVSize,
-		(FVector2d(1.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2d(0.0f,1.0f) + UVOffset) * UVSize 
+		(FVector2f(0.0f,0.0f) + UVOffset) * UVSize,
+		(FVector2f(0.0f,1.0f) + UVOffset) * UVSize,
+		(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
+		(FVector2f(1.0f,1.0f) + UVOffset) * UVSize,
+		(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
+		(FVector2f(0.0f,1.0f) + UVOffset) * UVSize 
 		});
 
 	EditMesh.VoxelColorList.Append({ VoxelColor ,VoxelColor });
@@ -224,13 +224,13 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						FIntVector(0,0,-1),
 					};
 
-					TArray<FVector2d> FaceUVStartOffset = {
-						FVector2d(0,0),
-						FVector2d(1,0),
-						FVector2d(2,0),
-						FVector2d(2,1),
-						FVector2d(1,1),
-						FVector2d(0,1),
+					TArray<FVector2f> FaceUVStartOffset = {
+						FVector2f(0,0),
+						FVector2f(1,0),
+						FVector2f(2,0),
+						FVector2f(2,1),
+						FVector2f(1,1),
+						FVector2f(0,1),
 					};
 
 					TArray<FVector> SurfaceScale = {
@@ -260,7 +260,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 						const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
 
-						const FVector2d VoxelUVOffset = FVector2d(VoxelAttribute.UVOffset);
+						const FVector2f VoxelUVOffset = FVector2f(VoxelAttribute.UVOffset);
 
 						if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
 						{

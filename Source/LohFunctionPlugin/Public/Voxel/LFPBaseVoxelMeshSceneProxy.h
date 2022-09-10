@@ -4,19 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "PrimitiveSceneProxy.h"
-#include "VertexFactory.h"
 #include "LocalVertexFactory.h"
 #include "PrimitiveViewRelevance.h"
 #include "Rendering/StaticMeshVertexBuffer.h"
 #include "Rendering/PositionVertexBuffer.h"
 #include "Rendering/ColorVertexBuffer.h"
-#include "DynamicMeshBuilder.h"
-#include "Components/BaseDynamicMeshComponent.h"
 #include "Materials/Material.h"
 #include "RayTracingDefinitions.h"
 #include "RayTracingInstance.h"
 #include "VectorUtil.h"
-#include "DistanceFieldAtlas.h"
 
 #include "Voxel/LFPBaseVoxelMeshComponent.h"
 
@@ -195,9 +191,9 @@ public:
 				};
 
 				FVector2f TriUVs[3] = {
-					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
-					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
-					(FVector2f)BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
+					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
 				};
 
 				FVector3f Tangent, Bitangent, Normal;

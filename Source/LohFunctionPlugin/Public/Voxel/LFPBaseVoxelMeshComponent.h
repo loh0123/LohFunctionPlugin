@@ -10,42 +10,52 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
 
+USTRUCT()
 struct FVoxelMeshSectionData
 {
+	GENERATED_USTRUCT_BODY()
+
+public:
+
 	/** Raw Vertex Generated For The Function */
-	TArray<FVector3f> VertexList;
+	UPROPERTY() TArray<FVector3f> VertexList;
 
 	/** Raw Triangle Index Generated For The Function */
-	TArray<uint32> TriangleIndexList;
+	UPROPERTY() TArray<uint32> TriangleIndexList;
 
 	/** Raw UV Generated For The Function */
-	TArray<FVector2d> UVList;
+	UPROPERTY() TArray<FVector2f> UVList;
 
 	/** Color For The Vertex */
-	TArray<FColor> VoxelColorList;
+	UPROPERTY() TArray<FColor> VoxelColorList;
 
 	/** How Many Triangle Has Been Generated */
-	uint32 TriangleCount = 0;
+	UPROPERTY() uint32 TriangleCount = 0;
 
 	/** Index For The Voxel Trace */
-	TArray<int32> VoxelIndexList;
+	UPROPERTY() TArray<int32> VoxelIndexList;
 };
 
 /* This Contains Every Data Need To Render This Voxel Mesh */
+USTRUCT()
 struct FVoxelMeshRenderData
 {
+	GENERATED_USTRUCT_BODY()
+
 	~FVoxelMeshRenderData();
 
-	TArray<FVoxelMeshSectionData> Sections;
+public:
+
+	UPROPERTY() TArray<FVoxelMeshSectionData> Sections;
+
+	UPROPERTY() TArray<FTransform> DistanceFieldInstanceData;
+
+	/** Lumen Box To Calculate Lumen Card : X-, X+, Y-, Y+, Z-, Z+ */
+	UPROPERTY() TArray<FBox> LumenBox;
 
 	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
 
-	TArray<FTransform> DistanceFieldInstanceData;
-
 	class FCardRepresentationData* LumenCardData = nullptr;
-
-	/** Lumen Box To Calculate Lumen Card : X-, X+, Y-, Y+, Z-, Z+ */
-	TArray<FBox> LumenBox;
 };
 
 /**
@@ -76,11 +86,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelMesh();
+
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2d UVOffset, const int32 FaceIndex, const FColor VoxelColor);
-
-public:
+	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor);
 
 	FORCEINLINE int32 GetVoxelLength() const;
 
@@ -97,12 +106,10 @@ public:
 protected:
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
-public:
+
 
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
-public:
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
@@ -138,11 +145,11 @@ protected:
 
 	FVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
 
-	bool bIsVoxelMeshDirty = false;
+	UPROPERTY() bool bIsVoxelMeshDirty = false;
 
-	bool bIsGeneratingMesh = false;
+	UPROPERTY() bool bIsGeneratingMesh = false;
 
-	bool bIsBodyInvalid = false;
+	UPROPERTY() bool bIsBodyInvalid = false;
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> BaseMaterials;
 
