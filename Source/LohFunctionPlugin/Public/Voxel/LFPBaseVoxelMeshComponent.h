@@ -51,7 +51,7 @@ public:
 	UPROPERTY() TArray<FTransform> DistanceFieldInstanceData;
 
 	/** Lumen Box To Calculate Lumen Card : X-, X+, Y-, Y+, Z-, Z+ */
-	UPROPERTY() TArray<FBox> LumenBox;
+	UPROPERTY() TMap<FIntPoint, FBox> LumenBox;
 
 	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
 
@@ -162,6 +162,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
 		float BoundExpand = 5.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
+		int32 LumenCardBatch = 1;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TArray<FTransform> VoxelDistanceField;

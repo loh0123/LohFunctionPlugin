@@ -213,7 +213,6 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					FVoxelMeshRenderData* NewRenderData = new FVoxelMeshRenderData();
 
 					NewRenderData->Sections.Init(FVoxelMeshSectionData(), FMath::Max(GetNumMaterials(), 1));
-					NewRenderData->LumenBox.Init(FBox(EForceInit::ForceInitToZero), 6);
 
 					TArray<FIntVector> FaceCheckDirection = {
 						FIntVector(0,0,1),
@@ -289,19 +288,35 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 										MinSurface += CardOriginOffset - Extention;
 										MaxSurface += CardOriginOffset + Extention;
 
-										if (NewRenderData->LumenBox[FaceIndex].IsValid)
+										int32 VoxelSurfaceIndex = -1;
+
+										switch (FaceIndex)
 										{
-											if (NewRenderData->LumenBox[FaceIndex].Min.X > MinSurface.X) NewRenderData->LumenBox[FaceIndex].Min.X = MinSurface.X;
-											if (NewRenderData->LumenBox[FaceIndex].Min.Y > MinSurface.Y) NewRenderData->LumenBox[FaceIndex].Min.Y = MinSurface.Y;
-											if (NewRenderData->LumenBox[FaceIndex].Min.Z > MinSurface.Z) NewRenderData->LumenBox[FaceIndex].Min.Z = MinSurface.Z;
+											case 0: VoxelSurfaceIndex = VoxelGridLocation.Z; break;
+											case 1: VoxelSurfaceIndex = VoxelGridLocation.X; break;
+											case 2: VoxelSurfaceIndex = VoxelGridLocation.Y; break;
+											case 3: VoxelSurfaceIndex = VoxelGridLocation.X; break;
+											case 4: VoxelSurfaceIndex = VoxelGridLocation.Y; break;
+											case 5: VoxelSurfaceIndex = VoxelGridLocation.Z; break;
+										}
+
+										VoxelSurfaceIndex /= FMath::Max(1, LumenCardBatch);
+
+										if (NewRenderData->LumenBox.Contains(FIntPoint(FaceIndex, VoxelSurfaceIndex)))
+										{
+											FBox& LocalLumenBox = NewRenderData->LumenBox.FindChecked(FIntPoint(FaceIndex, VoxelSurfaceIndex));
+
+											if (LocalLumenBox.Min.X > MinSurface.X) LocalLumenBox.Min.X = MinSurface.X;
+											if (LocalLumenBox.Min.Y > MinSurface.Y) LocalLumenBox.Min.Y = MinSurface.Y;
+											if (LocalLumenBox.Min.Z > MinSurface.Z) LocalLumenBox.Min.Z = MinSurface.Z;
 											
-											if (NewRenderData->LumenBox[FaceIndex].Max.X < MaxSurface.X) NewRenderData->LumenBox[FaceIndex].Max.X = MaxSurface.X;
-											if (NewRenderData->LumenBox[FaceIndex].Max.Y < MaxSurface.Y) NewRenderData->LumenBox[FaceIndex].Max.Y = MaxSurface.Y;
-											if (NewRenderData->LumenBox[FaceIndex].Max.Z < MaxSurface.Z) NewRenderData->LumenBox[FaceIndex].Max.Z = MaxSurface.Z;
+											if (LocalLumenBox.Max.X < MaxSurface.X) LocalLumenBox.Max.X = MaxSurface.X;
+											if (LocalLumenBox.Max.Y < MaxSurface.Y) LocalLumenBox.Max.Y = MaxSurface.Y;
+											if (LocalLumenBox.Max.Z < MaxSurface.Z) LocalLumenBox.Max.Z = MaxSurface.Z;
 										}
 										else
 										{
-											NewRenderData->LumenBox[FaceIndex] = FBox(MinSurface, MaxSurface);
+											NewRenderData->LumenBox.Add(FIntPoint(FaceIndex, VoxelSurfaceIndex), FBox(MinSurface, MaxSurface));
 										}
 									}
 								}
@@ -322,19 +337,17 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 						NewRenderData->LumenCardData->MeshCardsBuildData.Bounds = LocalBound;
 
-						for (int32 Index = 0; Index < 6; Index++)
+						for (const auto& LumenBoxMap : NewRenderData->LumenBox)
 						{
-							if (NewRenderData->LumenBox[Index].IsValid == false) continue;
-
 							FLumenCardBuildData LumenCard;
 
-							LumenCard.AxisAlignedDirectionIndex = SurfaceDirectionID[Index];
+							LumenCard.AxisAlignedDirectionIndex = SurfaceDirectionID[LumenBoxMap.Key.X];
 
 							LumenCard.LODLevel = 0;
 
-							FVector BoxExtent = NewRenderData->LumenBox[Index].GetExtent();
+							FVector BoxExtent = LumenBoxMap.Value.GetExtent();
 
-							switch (Index)
+							switch (LumenBoxMap.Key.X)
 							{
 							case 0:
 								LumenCard.OBB.Extent = FVector3f(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
@@ -374,7 +387,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 								break;
 							}
 
-							LumenCard.OBB.Origin = FVector3f(NewRenderData->LumenBox[Index].GetCenter());
+							LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
 
 							NewRenderData->LumenCardData->MeshCardsBuildData.CardBuildData.Add(LumenCard);
 						}
