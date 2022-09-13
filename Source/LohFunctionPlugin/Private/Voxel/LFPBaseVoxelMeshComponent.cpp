@@ -9,6 +9,7 @@
 #include "PhysicsEngine/PhysicsSettings.h"
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
 #include "MeshCardRepresentation.h"
+#include "Kismet/KismetMathLibrary.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
 
@@ -76,89 +77,35 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	bIsVoxelMeshDirty = true;
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize)
 {
-	const uint32 StartIndex = EditMesh.VertexList.Num();
-
-	bool FlipTriangleIndex = false;
-
-	switch (FaceIndex)
 	{
-	case 0 : EditMesh.VertexList.Append({ 
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	case 1 : EditMesh.VertexList.Append({
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	case 2 : EditMesh.VertexList.Append({
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	case 3 : EditMesh.VertexList.Append({
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	case 4 : EditMesh.VertexList.Append({
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y, VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	case 5 : EditMesh.VertexList.Append({
-		FVector3f(-VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f(-VoxelHalfSize.X, VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		FVector3f( VoxelHalfSize.X,-VoxelHalfSize.Y,-VoxelHalfSize.Z) + VoxelLocation,
-		});
-		break;
-	}
+		const uint32 StartIndex = EditMesh.VertexList.Num();
 
-	if (FlipTriangleIndex)
-	{
-		EditMesh.TriangleIndexList.Append({ 5 + StartIndex,4 + StartIndex,3 + StartIndex,2 + StartIndex,1 + StartIndex, StartIndex });
-	}
-	else
-	{
 		EditMesh.TriangleIndexList.Append({ StartIndex,1 + StartIndex,2 + StartIndex,3 + StartIndex,4 + StartIndex,5 + StartIndex });
 	}
 
-	FVector2f UVSize = FVector2f(VoxelUVSize) * FVector2f(1.0f / 3.0f, 0.5f);
+	EditMesh.VertexList.Append({
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(-LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+		VertexRotationList[FaceIndex].RotateVector(FVector3f(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation,
+	});
 
-	EditMesh.UVList.Append({ 
-		(FVector2f(0.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2f(0.0f,1.0f) + UVOffset) * UVSize,
-		(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2f(1.0f,1.0f) + UVOffset) * UVSize,
-		(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
-		(FVector2f(0.0f,1.0f) + UVOffset) * UVSize 
+	{
+		FVector2f UVSize = FVector2f(VoxelUVSize) * FVector2f(1.0f / 3.0f, 0.5f);
+
+		EditMesh.UVList.Append({
+			(FVector2f(0.0f,0.0f) + UVOffset) * UVSize,
+			(FVector2f(0.0f,1.0f) + UVOffset) * UVSize,
+			(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
+			(FVector2f(1.0f,1.0f) + UVOffset) * UVSize,
+			(FVector2f(1.0f,0.0f) + UVOffset) * UVSize,
+			(FVector2f(0.0f,1.0f) + UVOffset) * UVSize
 		});
+	}
 
 	EditMesh.VoxelColorList.Append({ VoxelColor ,VoxelColor });
 
@@ -203,7 +150,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 			FBox LocalBound = GetVoxelMeshBound();
 
-			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalBound, this]()
+			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalVoxelHalfSize = VoxelHalfSize, LocalBound, this]()
 				{
 					if (IsValid(this) == false)
 					{
@@ -276,7 +223,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 								{
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor);
+									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, FaceUVStartOffset[FaceIndex] + VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor, LocalVoxelHalfSize);
 
 									HasFace = true;
 
@@ -350,45 +297,10 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 							FVector BoxExtent = LumenBoxMap.Value.GetExtent();
 
-							switch (LumenBoxMap.Key.X)
-							{
-							case 0:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
-								LumenCard.OBB.AxisX = FVector3f(1.0f, 0.0f, 0.0f);
-								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(0.0f, 0.0f, 1.0f);
-								break;
-							case 1:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.Y, BoxExtent.X);
-								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
-								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(-1.0f, 0.0f, 0.0f);
-								break;
-							case 2:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.X, BoxExtent.Y);
-								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
-								LumenCard.OBB.AxisY = FVector3f(1.0f, 0.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(0.0f, 1.0f, 0.0f);
-								break;
-							case 3:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.Y, BoxExtent.X);
-								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
-								LumenCard.OBB.AxisY = FVector3f(0.0f, -1.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(1.0f, 0.0f, 0.0f);
-								break;
-							case 4:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.Z, BoxExtent.X, BoxExtent.Y);
-								LumenCard.OBB.AxisX = FVector3f(0.0f, 0.0f, 1.0f);
-								LumenCard.OBB.AxisY = FVector3f(-1.0f, 0.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(0.0f, -1.0f, 0.0f);
-								break;
-							case 5:
-								LumenCard.OBB.Extent = FVector3f(BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
-								LumenCard.OBB.AxisX = FVector3f(-1.0f, 0.0f, 0.0f);
-								LumenCard.OBB.AxisY = FVector3f(0.0f, 1.0f, 0.0f);
-								LumenCard.OBB.AxisZ = FVector3f(0.0f, 0.0f, -1.0f);
-								break;
-							}
+							LumenCard.OBB.Extent = VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(FVector3f(BoxExtent)).GetAbs();
+
+							FRotationMatrix44f R(VertexRotationList[LumenBoxMap.Key.X]);
+							R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
 
 							LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
 

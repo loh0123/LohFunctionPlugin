@@ -93,7 +93,7 @@ public:
 
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor);
+	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
 
 	FORCEINLINE int32 GetVoxelLength() const;
 
@@ -187,4 +187,16 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		FVector2D VoxelUVSize = FVector2D(1.0f);
+
+private:
+
+const TArray<FRotator3f> VertexRotationList =
+	{
+		FRotator3f(0.0f,   0.0f, 0.0f),
+		FRotator3f(90.0f,   0.0f, 0.0f),
+		FRotator3f(90.0f, 270.0f, 0.0f),
+		FRotator3f(90.0f, 180.0f, 0.0f),
+		FRotator3f(90.0f,  90.0f, 0.0f),
+		FRotator3f(180.0f,   0.0f, 0.0f),
+	};
 };
