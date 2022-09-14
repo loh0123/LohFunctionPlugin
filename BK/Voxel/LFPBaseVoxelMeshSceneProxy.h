@@ -29,7 +29,7 @@ public:
 
 	FLFPVoxelMeshRenderBufferSet(ERHIFeatureLevel::Type InFeatureLevel, int32 ID)
 		: VertexFactory(InFeatureLevel, "FLFPVoxelMeshRenderBufferSet")
-		, Material(nullptr)
+		, Material(UMaterial::GetDefaultMaterial(MD_Surface))
 		, SectionID(ID)
 	{
 		StaticMeshVertexBuffer.SetUseFullPrecisionUVs(true);
@@ -167,11 +167,11 @@ public:
 
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
-		const TArray<FBaseVoxelMeshSectionData>& BufferDataList = Component->VoxelMeshRenderData->Sections;
+		const TArray<FVoxelMeshSectionData>& BufferDataList = Component->VoxelMeshRenderData->Sections;
 
 		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
 		{
-			const FBaseVoxelMeshSectionData& BufferData = BufferDataList[MaterialIndex];
+			const FVoxelMeshSectionData& BufferData = BufferDataList[MaterialIndex];
 
 			if (BufferData.TriangleIndexList.IsEmpty()) continue;
 
@@ -537,7 +537,7 @@ protected:
 
 	ULFPBaseVoxelMeshComponent* VoxelComponent = nullptr;
 
-	FBaseVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
+	FVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
 
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 

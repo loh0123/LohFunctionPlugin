@@ -13,20 +13,6 @@
 #include "LFPVoxelContainer.generated.h"
 
 USTRUCT(BlueprintType)
-struct FLFPVoxelChuckInfo
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelChuckInfo")
-		int32 ChuckIndex = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelChuckInfo")
-		FIntVector StartVoxelLocation = FIntVector::NoneValue;
-};
-
-USTRUCT(BlueprintType)
 struct FLFPVoxelGridIndex
 {
 	GENERATED_BODY()
@@ -133,9 +119,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelContainerSetting | Cache")
 		int32 VoxelLength = 1;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelContainerSetting | Cache")
-		FVector HalfRenderBound = FVector(-1.0f);
-
 public:
 
 	/* Size Of Voxel Inside Of A Chuck */
@@ -150,21 +133,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FName InvisibleName = FName("None");
 
-	/* Half Of The Size Of The Voxel Should Be Render */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
-		FVector VoxelHalfSize = FVector(100);
-
 public:
 
 	FORCEINLINE void InitSetting()
 	{
-		if (VoxelGridSize.GetMin() <= 0) VoxelGridSize = FIntVector(1);
-		if (ChuckGridSize.GetMin() <= 0) ChuckGridSize = FIntVector(1);
-		if (VoxelHalfSize.GetMin() <= 0) VoxelHalfSize = FVector(50.0f);
+		if (VoxelGridSize.GetMin() < 0) VoxelGridSize = FIntVector(1);
+		if (ChuckGridSize.GetMin() < 0) ChuckGridSize = FIntVector(1);
 
 		VoxelLength = VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z;
 		ChuckLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
-		HalfRenderBound = VoxelHalfSize * FVector(VoxelGridSize);
 	}
 };
 
@@ -226,18 +203,13 @@ public:  /* Function For Render Component To Check Container Data Is Safe */
 
 public: /* Function For Render Component To Get Container Data */
 
-	FORCEINLINE FLFPVoxelChuckInfo GetChuckInfo(const int32 ChuckIndex) const
+	FORCEINLINE FIntVector GetChuckStartVoxelLocation(const int32 ChuckIndex) const
 	{
 		check(IsChuckIndexValid(ChuckIndex));
 
-		FLFPVoxelChuckInfo ChuckInfo;
-
 		const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
-		ChuckInfo.ChuckIndex = ChuckIndex;
-		ChuckInfo.StartVoxelLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
-
-		return ChuckInfo;
+		return FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
 	}
 
 	/* This Is Use To Access Atttribute Outside Of The Local Chuck */

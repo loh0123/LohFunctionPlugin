@@ -14,61 +14,126 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
 
-USTRUCT()
-struct FVoxelMeshSectionData
+USTRUCT(BlueprintType)
+struct FBaseVoxelMeshSetting
 {
 	GENERATED_USTRUCT_BODY()
 
 public:
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		float BoundExpand = 5.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		int32 LumenCardBatch = 1;
+};
+
+USTRUCT(BlueprintType)
+struct FBaseVoxelMeshStatus
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
+	
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingMesh : 1;
+	
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
+};
+
+struct FBaseVoxelMeshConstantData
+{
+	const TArray<FRotator> VertexRotationList =
+	{
+		FRotator(  0.0f,   0.0f, 0.0f),
+		FRotator( 90.0f,   0.0f, 0.0f),
+		FRotator( 90.0f, 270.0f, 0.0f),
+		FRotator( 90.0f, 180.0f, 0.0f),
+		FRotator( 90.0f,  90.0f, 0.0f),
+		FRotator(180.0f,   0.0f, 0.0f),
+	};
+
+	const TArray<FIntVector> FaceCheckDirection = {
+		FIntVector( 0.0f, 0.0f, 1.0f),
+		FIntVector(-1.0f, 0.0f, 0.0f),
+		FIntVector( 0.0f, 1.0f, 0.0f),
+		FIntVector( 1.0f, 0.0f, 0.0f),
+		FIntVector( 0.0f,-1.0f, 0.0f),
+		FIntVector( 0.0f, 0.0f,-1.0f),
+	};
+
+	const TArray<FVector2D> FaceUVStartOffset = {
+		FVector2D(0.0f, 0.0f),
+		FVector2D(1.0f, 0.0f),
+		FVector2D(2.0f, 0.0f),
+		FVector2D(2.0f, 1.0f),
+		FVector2D(1.0f, 1.0f),
+		FVector2D(0.0f, 1.0f),
+	};
+
+	const TArray<FVector> SurfaceScale = {
+		FVector(1.0f, 1.0f, 0.0f),
+		FVector(0.0f, 1.0f, 1.0f),
+		FVector(1.0f, 0.0f, 1.0f),
+		FVector(0.0f, 1.0f, 1.0f),
+		FVector(1.0f, 0.0f, 1.0f),
+		FVector(1.0f, 1.0f, 0.0f),
+	};
+
+	const TArray<int32> SurfaceDirectionID = {
+		5,0,3,1,2,4
+	};
+
+	const float LumenUpOffset = 5.0f;
+};
+
+struct FBaseVoxelMeshSectionData
+{
 	/** Raw Vertex Generated For The Function */
-	UPROPERTY() TArray<FVector3f> VertexList;
+	TArray<FVector3f> VertexList;
 
 	/** Raw Triangle Index Generated For The Function */
-	UPROPERTY() TArray<uint32> TriangleIndexList;
+	TArray<uint32> TriangleIndexList;
 
 	/** Raw UV Generated For The Function */
-	UPROPERTY() TArray<FVector2f> UVList;
+	TArray<FVector2f> UVList;
 
 	/** Color For The Vertex */
-	UPROPERTY() TArray<FColor> VoxelColorList;
+	TArray<FColor> VoxelColorList;
 
 	/** How Many Triangle Has Been Generated */
-	UPROPERTY() uint32 TriangleCount = 0;
+	uint32 TriangleCount = 0;
 
 	/** Index For The Voxel Trace */
-	UPROPERTY() TArray<int32> VoxelIndexList;
+	TArray<int32> VoxelIndexList;
 };
 
 /* This Contains Every Data Need To Render This Voxel Mesh */
-USTRUCT()
-struct FVoxelMeshRenderData
+struct FBaseVoxelMeshRenderData
 {
-	GENERATED_USTRUCT_BODY()
+	~FBaseVoxelMeshRenderData();
 
-	~FVoxelMeshRenderData();
+	TArray<FBaseVoxelMeshSectionData> Sections;
 
-public:
-
-	UPROPERTY() TArray<FVoxelMeshSectionData> Sections;
-
-	UPROPERTY() TArray<FTransform> DistanceFieldInstanceData;
-
-	/** Lumen Box To Calculate Lumen Card : X-, X+, Y-, Y+, Z-, Z+ */
-	UPROPERTY() TMap<FIntPoint, FBox> LumenBox;
+	TArray<FTransform> DistanceFieldInstanceData;
 
 	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
 
 	class FCardRepresentationData* LumenCardData = nullptr;
 };
 
-/**
- * This Class Main Function Is To Render Out The Voxel
- *  - Render Voxel Mesh
- *  - Handle Collision
- * 
- * Secondary Function Is To Generate Out Ths Voxel Mesh Data From Voxel Coordination Data
- */
+//**
+// * This Class Main Function Is To Render Out The Voxel
+// *  - Render Voxel Mesh
+// *  - Handle Collision
+// * 
+// * Secondary Function Is To Generate Out Ths Voxel Mesh Data From Voxel Coordination Data
+// */
+
 UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
 class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
@@ -80,10 +145,10 @@ public:
 
 	ULFPBaseVoxelMeshComponent();
 
-public:
+public: /* Functions For Setting Up Component */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FVector NewVoxelHalfSize, const FName InitializeName);
+		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void SetVoxelMaterial(const TArray<UMaterialInterface*>& Material);
@@ -93,27 +158,17 @@ public:
 
 protected:
 
-	FORCEINLINE void AddVoxelFace(FVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector3f VoxelLocation, const FVector2f UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
-
-	FORCEINLINE int32 GetVoxelLength() const;
-
-	FORCEINLINE void GetVoxelAttributeList(TArray<FLFPVoxelAttributeV2>& VoxelAttributeList, TBitArray<>& VisibleList);
-
-	FORCEINLINE FBox GetVoxelMeshBound() const
-	{ 
-		return FBox(FVector3d(-VoxelHalfSize), VoxelContainer != nullptr ? 
-			((FVector3d)VoxelHalfSize * 2) * ((FVector3d)VoxelContainer->GetContainerSetting().VoxelGridSize) + FVector3d(VoxelHalfSize) 
-			: 
-			FVector3d(VoxelHalfSize)).ExpandBy(BoundExpand);
-	}
-
-protected:
-
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+private: // Helper Functions
+
+	FORCEINLINE void AddVoxelFace(FBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
+
+	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
+
+protected: // Rendering Handler
 
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
-
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
@@ -147,56 +202,31 @@ public: // Collision Handler
 
 protected:
 
-	FVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
-
-	UPROPERTY() bool bIsVoxelMeshDirty = false;
-
-	UPROPERTY() bool bIsGeneratingMesh = false;
-
-	UPROPERTY() bool bIsBodyInvalid = false;
-
-	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> BaseMaterials;
-
-	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> MeshBodySetup;
-
-protected:
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
-		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
-		float BoundExpand = 5.0f;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
-		int32 LumenCardBatch = 1;
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		TArray<FTransform> VoxelDistanceField;
-
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		FIntVector VoxelStartLocation = FIntVector(0);
+		FLFPVoxelChuckInfo ChuckInfo;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		int32 ChuckIndex = INDEX_NONE;
+		FBaseVoxelMeshStatus ChuckStatus;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		FVector VoxelHalfSize = FVector(100);
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		FVector2D VoxelUVSize = FVector2D(1.0f);
+		FBaseVoxelMeshSetting ChuckSetting;
 
 private:
 
-const TArray<FRotator3f> VertexRotationList =
-	{
-		FRotator3f(0.0f,   0.0f, 0.0f),
-		FRotator3f(90.0f,   0.0f, 0.0f),
-		FRotator3f(90.0f, 270.0f, 0.0f),
-		FRotator3f(90.0f, 180.0f, 0.0f),
-		FRotator3f(90.0f,  90.0f, 0.0f),
-		FRotator3f(180.0f,   0.0f, 0.0f),
-	};
+	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> VoxelMaterialList;
+
+	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> VoxelMeshBodySetup;
+
+	FBaseVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
+
+	FBaseVoxelMeshConstantData VoxelMeshConstantData;
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
+		TObjectPtr<UStaticMesh> VoxelDistanceFieldMesh = nullptr;
+
 };
