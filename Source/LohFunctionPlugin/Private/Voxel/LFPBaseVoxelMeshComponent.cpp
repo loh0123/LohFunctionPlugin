@@ -13,7 +13,7 @@
 
 DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
 
-FBaseVoxelMeshRenderData::~FBaseVoxelMeshRenderData()
+FLFPBaseVoxelMeshRenderData::~FLFPBaseVoxelMeshRenderData()
 {
 	if (LumenCardData != nullptr) delete LumenCardData;
 }
@@ -96,9 +96,9 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 					FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
 
-					FBaseVoxelMeshRenderData* NewRenderData = new FBaseVoxelMeshRenderData();
+					FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
 
-					NewRenderData->Sections.Init(FBaseVoxelMeshSectionData(), SectionSize);
+					NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), SectionSize);
 					NewRenderData->DistanceFieldInstanceData.Reserve(LocalVoxelContainer->GetContainerSetting().VoxelLength);
 
 					const TArray<FName>& VoxelNameList = LocalVoxelContainer->GetVoxelNameList(LocalChuckInfo.ChuckIndex);
@@ -132,7 +132,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
 							{
-								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + VoxelMeshConstantData.FaceCheckDirection[FaceIndex] + LocalChuckInfo.StartVoxelLocation)) == false)
+								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + ConstantData.FaceCheckDirection[FaceIndex] + LocalChuckInfo.StartVoxelLocation)) == false)
 								{
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
@@ -163,15 +163,15 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						{
 							FLumenCardBuildData LumenCard;
 
-							LumenCard.AxisAlignedDirectionIndex = VoxelMeshConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
+							LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
 
 							LumenCard.LODLevel = 0;
 
 							FVector BoxExtent = LumenBoxMap.Value.GetExtent();
 
-							LumenCard.OBB.Extent = FVector3f(VoxelMeshConstantData.VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(BoxExtent).GetAbs());
+							LumenCard.OBB.Extent = FVector3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(BoxExtent).GetAbs());
 
-							FRotationMatrix44f R(FRotator3f(VoxelMeshConstantData.VertexRotationList[LumenBoxMap.Key.X]));
+							FRotationMatrix44f R(FRotator3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X]));
 							R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
 
 							LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
@@ -182,14 +182,14 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 					NewRenderData->DistanceFieldInstanceData.Shrink();
 
-					AsyncTask(ENamedThreads::GameThread, [RenderData = NewRenderData, this]() {
+					AsyncTask(ENamedThreads::GameThread, [NewRenderData, this]() {
 						if (IsValid(this) == false) return;
 
 						ChuckStatus.bIsGeneratingMesh = false;
 
 						bool bIsVoxelMeshValid = false;
 
-						for (const FBaseVoxelMeshSectionData& Buffer : RenderData->Sections)
+						for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
 						{
 							if (Buffer.TriangleCount > 0)
 							{
@@ -199,16 +199,16 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 						if (bIsVoxelMeshValid)
 						{
-							VoxelMeshRenderData = RenderData;
+							RenderData = NewRenderData;
 
-							if (IsValid(VoxelDistanceFieldMesh))
-								VoxelMeshRenderData->DistanceFieldMeshData = VoxelDistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
+							if (IsValid(DistanceFieldMesh))
+								RenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
 						}
 						else
 						{
-							VoxelMeshRenderData = nullptr;
+							RenderData = nullptr;
 
-							delete RenderData;
+							delete NewRenderData;
 						}
 
 						MarkRenderStateDirty();
@@ -221,7 +221,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize)
 {
 	{
 		const uint32 StartIndex = EditMesh.VertexList.Num();
@@ -230,17 +230,17 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FBaseVoxelMeshSectionData& EditMes
 	}
 
 	EditMesh.VertexList.Append({
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(VoxelMeshConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
+		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
 	});
 
 	{
 		const FVector2f UVSize = FVector2f(1.0f / 3.0f, 0.5f);
-		const FVector2f FaceUVOffset = FVector2f(VoxelMeshConstantData.FaceUVStartOffset[FaceIndex] + UVOffset);
+		const FVector2f FaceUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex] + UVOffset);
 
 		EditMesh.UVList.Append({
 			(FVector2f(0.0f,0.0f) + FaceUVOffset) * UVSize,
@@ -262,11 +262,11 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FBaseVoxelMeshSectionData& EditMes
 
 void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch)
 {
-	FVector MinSurface = VoxelBounds.Min * VoxelMeshConstantData.SurfaceScale[FaceIndex];
-	FVector MaxSurface = VoxelBounds.Max * VoxelMeshConstantData.SurfaceScale[FaceIndex];
+	FVector MinSurface = VoxelBounds.Min * ConstantData.SurfaceScale[FaceIndex];
+	FVector MaxSurface = VoxelBounds.Max * ConstantData.SurfaceScale[FaceIndex];
 
-	FVector CardOriginOffset = (VoxelLocation * FVector(VoxelMeshConstantData.FaceCheckDirection[FaceIndex]).GetAbs()) + (VoxelHalfSize * FVector(VoxelMeshConstantData.FaceCheckDirection[FaceIndex]));
-	FVector Extention = VoxelMeshConstantData.LumenUpOffset * FVector(VoxelMeshConstantData.FaceCheckDirection[FaceIndex]).GetAbs();
+	FVector CardOriginOffset = (VoxelLocation * FVector(ConstantData.FaceCheckDirection[FaceIndex]).GetAbs()) + (VoxelHalfSize * FVector(ConstantData.FaceCheckDirection[FaceIndex]));
+	FVector Extention = ConstantData.LumenUpOffset * FVector(ConstantData.FaceCheckDirection[FaceIndex]).GetAbs();
 
 	MinSurface += CardOriginOffset - Extention;
 	MaxSurface += CardOriginOffset + Extention;
@@ -303,7 +303,7 @@ void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, co
 
 FPrimitiveSceneProxy* ULFPBaseVoxelMeshComponent::CreateSceneProxy()
 {
-	if (VoxelMeshRenderData && VoxelMeshRenderData->Sections.Num() == GetNumMaterials() && GetNumMaterials() != 0)
+	if (RenderData && RenderData->Sections.Num() == GetNumMaterials() && GetNumMaterials() != 0)
 	{
 		return new FLFPBaseVoxelMeshSceneProxy(this);
 	}
@@ -339,7 +339,7 @@ FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalT
 
 void ULFPBaseVoxelMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
 {
-	OutMaterials.Append(VoxelMaterialList);
+	OutMaterials.Append(MaterialList);
 }
 
 UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
@@ -347,14 +347,14 @@ UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceInde
 	UMaterialInterface* Result = nullptr;
 	SectionIndex = 0;
 
-	if (VoxelMeshRenderData && FaceIndex >= 0)
+	if (RenderData && FaceIndex >= 0)
 	{
 		// Look for section that corresponds to the supplied face
 		int32 TotalFaceCount = 0;
 
-		for (int32 SectionIdx = 0; SectionIdx < VoxelMeshRenderData->Sections.Num(); SectionIdx++)
+		for (int32 SectionIdx = 0; SectionIdx < RenderData->Sections.Num(); SectionIdx++)
 		{
-			const FBaseVoxelMeshSectionData& Section = VoxelMeshRenderData->Sections[SectionIdx];
+			const FLFPBaseVoxelMeshSectionData& Section = RenderData->Sections[SectionIdx];
 
 			TotalFaceCount += Section.TriangleCount;
 
@@ -375,43 +375,43 @@ UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterialFromCollisionFaceInde
 
 int32 ULFPBaseVoxelMeshComponent::GetNumMaterials() const
 {
-	return VoxelMaterialList.Num();
+	return MaterialList.Num();
 }
 
 UMaterialInterface* ULFPBaseVoxelMeshComponent::GetMaterial(int32 ElementIndex) const
 {
-	return VoxelMaterialList.IsValidIndex(ElementIndex) ? VoxelMaterialList[ElementIndex] : nullptr;
+	return MaterialList.IsValidIndex(ElementIndex) ? MaterialList[ElementIndex] : nullptr;
 }
 
 void ULFPBaseVoxelMeshComponent::SetMaterial(int32 ElementIndex, UMaterialInterface* Material)
 {
 	check(ElementIndex >= 0);
 
-	if (ElementIndex >= VoxelMaterialList.Num())
+	if (ElementIndex >= MaterialList.Num())
 	{
-		VoxelMaterialList.SetNum(ElementIndex + 1, false);
+		MaterialList.SetNum(ElementIndex + 1, false);
 	}
 
-	VoxelMaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
+	MaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
 }
 
 bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* CollisionData, bool InUseAllTriData)
 {
-	if (VoxelMeshRenderData == nullptr) return false;
+	if (RenderData == nullptr) return false;
 
 	int32 VertexBase = 0; // Base vertex index for current section
 
 	CollisionData->UVs.AddZeroed(1);
 
 	// For each section..
-	for (int32 SectionIdx = 0; SectionIdx < VoxelMeshRenderData->Sections.Num(); SectionIdx++)
+	for (int32 SectionIdx = 0; SectionIdx < RenderData->Sections.Num(); SectionIdx++)
 	{
-		if (VoxelMeshRenderData->Sections[SectionIdx].TriangleCount == 0)
+		if (RenderData->Sections[SectionIdx].TriangleCount == 0)
 		{
 			continue;
 		}
 
-		FBaseVoxelMeshSectionData& Section = VoxelMeshRenderData->Sections[SectionIdx];
+		FLFPBaseVoxelMeshSectionData& Section = RenderData->Sections[SectionIdx];
 
 		CollisionData->Vertices.Append(Section.VertexList);
 		CollisionData->UVs[0].Append(Section.UVList);
@@ -444,7 +444,7 @@ bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPBaseVoxelMeshComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	return VoxelMeshRenderData != nullptr;
+	return RenderData != nullptr;
 }
 
 bool ULFPBaseVoxelMeshComponent::WantsNegXTriMesh()
@@ -454,12 +454,12 @@ bool ULFPBaseVoxelMeshComponent::WantsNegXTriMesh()
 
 UBodySetup* ULFPBaseVoxelMeshComponent::GetBodySetup()
 {
-	if (IsValid(VoxelMeshBodySetup) == false)
+	if (IsValid(BodySetup) == false)
 	{
-		VoxelMeshBodySetup = CreateBodySetup();
+		BodySetup = CreateBodySetup();
 	}
 
-	return VoxelMeshBodySetup;
+	return BodySetup;
 }
 
 UBodySetup* ULFPBaseVoxelMeshComponent::CreateBodySetup()
@@ -475,13 +475,13 @@ UBodySetup* ULFPBaseVoxelMeshComponent::CreateBodySetup()
 
 void ULFPBaseVoxelMeshComponent::RebuildPhysicsData()
 {
-	if (VoxelMeshBodySetup->CurrentCookHelper)
+	if (BodySetup->CurrentCookHelper)
 	{
 		ChuckStatus.bIsBodyInvalid = true;
 	}
 	else
 	{
-		VoxelMeshBodySetup->CreatePhysicsMeshesAsync(FOnAsyncPhysicsCookFinished::CreateUObject(this, &ULFPBaseVoxelMeshComponent::FinishPhysicsAsyncCook, VoxelMeshBodySetup.Get()));
+		BodySetup->CreatePhysicsMeshesAsync(FOnAsyncPhysicsCookFinished::CreateUObject(this, &ULFPBaseVoxelMeshComponent::FinishPhysicsAsyncCook, BodySetup.Get()));
 	}
 }
 

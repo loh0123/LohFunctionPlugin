@@ -15,7 +15,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
 
 USTRUCT(BlueprintType)
-struct FBaseVoxelMeshSetting
+struct FLFPBaseVoxelMeshSetting
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -32,7 +32,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FBaseVoxelMeshStatus
+struct FLFPBaseVoxelMeshStatus
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -45,7 +45,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
 };
 
-struct FBaseVoxelMeshConstantData
+static const struct FLFPBaseVoxelMeshConstantData
 {
 	const TArray<FRotator> VertexRotationList =
 	{
@@ -91,7 +91,7 @@ struct FBaseVoxelMeshConstantData
 	const float LumenUpOffset = 5.0f;
 };
 
-struct FBaseVoxelMeshSectionData
+struct FLFPBaseVoxelMeshSectionData
 {
 	/** Raw Vertex Generated For The Function */
 	TArray<FVector3f> VertexList;
@@ -113,11 +113,11 @@ struct FBaseVoxelMeshSectionData
 };
 
 /* This Contains Every Data Need To Render This Voxel Mesh */
-struct FBaseVoxelMeshRenderData
+struct FLFPBaseVoxelMeshRenderData
 {
-	~FBaseVoxelMeshRenderData();
+	~FLFPBaseVoxelMeshRenderData();
 
-	TArray<FBaseVoxelMeshSectionData> Sections;
+	TArray<FLFPBaseVoxelMeshSectionData> Sections;
 
 	TArray<FTransform> DistanceFieldInstanceData;
 
@@ -162,7 +162,7 @@ protected:
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
 
@@ -209,24 +209,24 @@ protected:
 		FLFPVoxelChuckInfo ChuckInfo;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		FBaseVoxelMeshStatus ChuckStatus;
+		FLFPBaseVoxelMeshStatus ChuckStatus;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		FBaseVoxelMeshSetting ChuckSetting;
+		FLFPBaseVoxelMeshSetting ChuckSetting;
 
 private:
 
-	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> VoxelMaterialList;
+	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
 
-	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> VoxelMeshBodySetup;
+	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> BodySetup;
 
-	FBaseVoxelMeshRenderData* VoxelMeshRenderData = nullptr;
+	FLFPBaseVoxelMeshRenderData* RenderData = nullptr;
 
-	FBaseVoxelMeshConstantData VoxelMeshConstantData;
+	FLFPBaseVoxelMeshConstantData ConstantData;
 
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
-		TObjectPtr<UStaticMesh> VoxelDistanceFieldMesh = nullptr;
+		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
 
 };
