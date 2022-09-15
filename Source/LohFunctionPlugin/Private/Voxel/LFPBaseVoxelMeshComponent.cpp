@@ -73,6 +73,16 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	}
 }
 
+void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (RenderData)
+	{
+		delete RenderData;
+
+		RenderData = nullptr;
+	}
+}
+
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	if (ChuckStatus.bIsVoxelMeshDirty)
@@ -105,6 +115,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 					const FVector VoxelHalfSize = LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
 					const FVector VoxelRenderOffset = -LocalVoxelContainer->GetContainerSetting().HalfRenderBound + LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+					const FIntPoint VoxelUVRound = LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
 
 					FIntVector LumenBatch = LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
 					
@@ -132,11 +143,27 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
 							{
-								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGridLocation + ConstantData.FaceCheckDirection[FaceIndex] + LocalChuckInfo.StartVoxelLocation)) == false)
+								const FIntVector GlobalVoxelLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
+
+								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(GlobalVoxelLocation + ConstantData.FaceDirection[FaceIndex].Up)) == false)
 								{
 									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor, VoxelHalfSize);
+									FIntPoint VoxelFacePosition = FIntPoint(0);
+
+									switch (FaceIndex)
+									{
+										case 0: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.X, GlobalVoxelLocation.Y); break;
+										case 1: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.Z, GlobalVoxelLocation.Y); break;
+										case 2: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.Z, GlobalVoxelLocation.X); break;
+										case 3: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.Z, GlobalVoxelLocation.Y); break;
+										case 4: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.Z, GlobalVoxelLocation.X); break;
+										case 5: VoxelFacePosition = FIntPoint( GlobalVoxelLocation.X, GlobalVoxelLocation.Y); break;
+									}
+
+									VoxelFacePosition = FIntPoint((VoxelFacePosition.Y % VoxelUVRound.X), VoxelUVRound.Y - 1 - (VoxelFacePosition.X % VoxelUVRound.Y));
+
+									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, VoxelUVRound, VoxelFacePosition, VoxelUVOffset, FaceIndex, VoxelAttribute.VertexColor, VoxelHalfSize);
 
 									AddLumenBox(LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
 
@@ -197,18 +224,16 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 							}
 						}
 
+						delete RenderData;
+
+						RenderData = nullptr;
+
 						if (bIsVoxelMeshValid)
 						{
 							RenderData = NewRenderData;
 
 							if (IsValid(DistanceFieldMesh))
 								RenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
-						}
-						else
-						{
-							RenderData = nullptr;
-
-							delete NewRenderData;
 						}
 
 						MarkRenderStateDirty();
@@ -221,41 +246,69 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntPoint UVRound, const FIntPoint UVFaceOffset, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize)
 {
 	{
 		const uint32 StartIndex = EditMesh.VertexList.Num();
 
-		EditMesh.TriangleIndexList.Append({ StartIndex,1 + StartIndex,2 + StartIndex,3 + StartIndex,4 + StartIndex,5 + StartIndex });
+		EditMesh.TriangleIndexList.Append({ StartIndex, 1 + StartIndex, 2 + StartIndex, 3 + StartIndex, 4 + StartIndex, 5 + StartIndex });
 	}
-
-	EditMesh.VertexList.Append({
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector( LocalVoxelHalfSize.X, LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-		FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(-LocalVoxelHalfSize.X,-LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z)) + VoxelLocation),
-	});
 
 	{
-		const FVector2f UVSize = FVector2f(1.0f / 3.0f, 0.5f);
-		const FVector2f FaceUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex] + UVOffset);
+		const FVector3f MinVertex = FVector3f(-LocalVoxelHalfSize.X, -LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z);
+		const FVector3f MaxVertex = FVector3f(LocalVoxelHalfSize);
 
-		EditMesh.UVList.Append({
-			(FVector2f(0.0f,0.0f) + FaceUVOffset) * UVSize,
-			(FVector2f(0.0f,1.0f) + FaceUVOffset) * UVSize,
-			(FVector2f(1.0f,0.0f) + FaceUVOffset) * UVSize,
-			(FVector2f(1.0f,1.0f) + FaceUVOffset) * UVSize,
-			(FVector2f(1.0f,0.0f) + FaceUVOffset) * UVSize,
-			(FVector2f(0.0f,1.0f) + FaceUVOffset) * UVSize
-		});
+		const TArray<FVector3f> VertexList =
+		{
+			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MinVertex.Y, MaxVertex.Z)) + VoxelLocation),
+			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MinVertex.Y, MaxVertex.Z)) + VoxelLocation),
+			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MaxVertex.Y, MaxVertex.Z)) + VoxelLocation),
+			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MaxVertex.Y, MaxVertex.Z)) + VoxelLocation)
+		};
+
+		EditMesh.VertexList.Append({
+			VertexList[1],
+			VertexList[0],
+			VertexList[3],
+			VertexList[2],
+			VertexList[3],
+			VertexList[0],
+			});
 	}
 
-	EditMesh.VoxelColorList.Append({ VoxelColor ,VoxelColor });
+	{
+		const FVector2f MinUVFaceOffset = FVector2f(1.0f / UVRound.X, 1.0f / UVRound.Y) * (UVFaceOffset);
+		const FVector2f MaxUVFaceOffset = FVector2f(1.0f / UVRound.X, 1.0f / UVRound.Y) * (UVFaceOffset + 1);
+		const FVector2f MinUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MinUVFaceOffset + FVector2f(UVOffset);
+		const FVector2f MaxUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MaxUVFaceOffset + FVector2f(UVOffset);
 
-	/* Add Index Trace */
-	EditMesh.VoxelIndexList.Append({ VoxelIndex, VoxelIndex });
+		EditMesh.UVList.Append({
+			FVector2f(MinUVOffset.X, MinUVOffset.Y),
+			FVector2f(MinUVOffset.X, MaxUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MinUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MaxUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MinUVOffset.Y),
+			FVector2f(MinUVOffset.X, MaxUVOffset.Y)
+			});
+
+		//EditMesh.UVList.Append({
+		//	FVector2f(MaxUVOffset.X, MinUVOffset.Y),
+		//	FVector2f(MinUVOffset.X, MinUVOffset.Y),
+		//	FVector2f(MaxUVOffset.X, MaxUVOffset.Y),
+		//	FVector2f(MinUVOffset.X, MaxUVOffset.Y),
+		//	FVector2f(MaxUVOffset.X, MaxUVOffset.Y),
+		//	FVector2f(MinUVOffset.X, MinUVOffset.Y)
+		//	});
+	}
+
+	EditMesh.VoxelColorList.Reserve(EditMesh.VoxelColorList.Num() + 2);
+	EditMesh.VoxelIndexList.Reserve(EditMesh.VoxelIndexList.Num() + 2);
+
+	for (int32 i = 0; i < 2; i++)
+	{
+		EditMesh.VoxelColorList.Add(VoxelColor);
+		EditMesh.VoxelIndexList.Add(VoxelIndex);
+	}
 
 	EditMesh.TriangleCount += 2;
 }
@@ -265,8 +318,8 @@ void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, co
 	FVector MinSurface = VoxelBounds.Min * ConstantData.SurfaceScale[FaceIndex];
 	FVector MaxSurface = VoxelBounds.Max * ConstantData.SurfaceScale[FaceIndex];
 
-	FVector CardOriginOffset = (VoxelLocation * FVector(ConstantData.FaceCheckDirection[FaceIndex]).GetAbs()) + (VoxelHalfSize * FVector(ConstantData.FaceCheckDirection[FaceIndex]));
-	FVector Extention = ConstantData.LumenUpOffset * FVector(ConstantData.FaceCheckDirection[FaceIndex]).GetAbs();
+	FVector CardOriginOffset = (VoxelLocation * FVector(ConstantData.FaceDirection[FaceIndex].Up).GetAbs()) + (VoxelHalfSize * FVector(ConstantData.FaceDirection[FaceIndex].Up));
+	FVector Extention = ConstantData.LumenUpOffset * FVector(ConstantData.FaceDirection[FaceIndex].Up).GetAbs();
 
 	MinSurface += CardOriginOffset - Extention;
 	MaxSurface += CardOriginOffset + Extention;
@@ -298,6 +351,22 @@ void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, co
 	else
 	{
 		LumenBox.Add(FIntPoint(FaceIndex, VoxelSurfaceIndex), FBox(MinSurface, MaxSurface));
+	}
+}
+
+uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
+{
+	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up)))
+	{
+		return 2;
+	}
+	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction)))
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
 	}
 }
 

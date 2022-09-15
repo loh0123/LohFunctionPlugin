@@ -154,6 +154,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FVector VoxelHalfSize = FVector(100);
 
+	/* Size Of The UV This Mesh Is Render On */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
+		FIntPoint VoxelUVRound = FIntPoint(1);
+
 public:
 
 	FORCEINLINE void InitSetting()
@@ -161,6 +165,7 @@ public:
 		if (VoxelGridSize.GetMin() <= 0) VoxelGridSize = FIntVector(1);
 		if (ChuckGridSize.GetMin() <= 0) ChuckGridSize = FIntVector(1);
 		if (VoxelHalfSize.GetMin() <= 0) VoxelHalfSize = FVector(50.0f);
+		if (VoxelUVRound.GetMin() <= 0) VoxelUVRound = FIntPoint(1);
 
 		VoxelLength = VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z;
 		ChuckLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
@@ -324,7 +329,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE void UpdateChuck();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex);
+		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE bool SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FLFPVoxelContainerSettingV2 NewSetting);

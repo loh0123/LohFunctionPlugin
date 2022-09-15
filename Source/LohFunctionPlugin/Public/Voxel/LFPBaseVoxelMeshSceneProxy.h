@@ -240,8 +240,6 @@ public:
 	{
 		VoxelComponent = nullptr;
 
-		delete RenderData;
-
 		for (FLFPVoxelMeshRenderBufferSet* Buffer : AllocatedBufferSets)
 		{
 			if (Buffer != nullptr)

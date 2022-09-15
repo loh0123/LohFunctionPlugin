@@ -29,6 +29,12 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
 		int32 LumenCardBatch = 1;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		int32 BevelAmount = 1;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		float BevelRange = 0.2f;
 };
 
 USTRUCT(BlueprintType)
@@ -45,6 +51,13 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
 };
 
+struct FLFPBaseVoxelFaceDirection
+{
+	FLFPBaseVoxelFaceDirection(FIntVector F, FIntVector R, FIntVector U) : Forward(F), Right(R), Up(U) {}
+
+	FIntVector Forward, Right, Up = FIntVector::NoneValue;
+};
+
 static const struct FLFPBaseVoxelMeshConstantData
 {
 	const TArray<FRotator> VertexRotationList =
@@ -57,14 +70,23 @@ static const struct FLFPBaseVoxelMeshConstantData
 		FRotator(180.0f,   0.0f, 0.0f),
 	};
 
-	const TArray<FIntVector> FaceCheckDirection = {
-		FIntVector( 0.0f, 0.0f, 1.0f),
-		FIntVector(-1.0f, 0.0f, 0.0f),
-		FIntVector( 0.0f, 1.0f, 0.0f),
-		FIntVector( 1.0f, 0.0f, 0.0f),
-		FIntVector( 0.0f,-1.0f, 0.0f),
-		FIntVector( 0.0f, 0.0f,-1.0f),
+	const TArray<FLFPBaseVoxelFaceDirection> FaceDirection = {
+		FLFPBaseVoxelFaceDirection(FIntVector( 1, 0, 0), FIntVector( 0, 1, 0), FIntVector( 0, 0, 1)),
+		FLFPBaseVoxelFaceDirection(FIntVector( 0, 0, 1), FIntVector( 0, 1, 0), FIntVector(-1, 0, 0)),
+		FLFPBaseVoxelFaceDirection(FIntVector( 0, 0, 1), FIntVector( 1, 0, 0), FIntVector( 0, 1, 0)),
+		FLFPBaseVoxelFaceDirection(FIntVector( 0, 0, 1), FIntVector( 0,-1, 0), FIntVector( 1, 0, 0)),
+		FLFPBaseVoxelFaceDirection(FIntVector( 0, 0, 1), FIntVector(-1, 0, 0), FIntVector( 0,-1, 0)),
+		FLFPBaseVoxelFaceDirection(FIntVector(-1, 0, 0), FIntVector( 0, 1, 0), FIntVector( 0, 0,-1)),
 	};
+
+	//const TArray<FIntVector> FaceCheckDirection = {
+	//	FIntVector( 0.0f, 0.0f, 1.0f),
+	//	FIntVector(-1.0f, 0.0f, 0.0f),
+	//	FIntVector( 0.0f, 1.0f, 0.0f),
+	//	FIntVector( 1.0f, 0.0f, 0.0f),
+	//	FIntVector( 0.0f,-1.0f, 0.0f),
+	//	FIntVector( 0.0f, 0.0f,-1.0f),
+	//};
 
 	const TArray<FVector2D> FaceUVStartOffset = {
 		FVector2D(0.0f, 0.0f),
@@ -93,6 +115,17 @@ static const struct FLFPBaseVoxelMeshConstantData
 
 struct FLFPBaseVoxelMeshSectionData
 {
+	FLFPBaseVoxelMeshSectionData()
+	{
+		VertexList.Empty();
+		TriangleIndexList.Empty();
+		UVList.Empty();
+		VoxelColorList.Empty();
+		VoxelIndexList.Empty();
+
+		TriangleCount = 0;
+	}
+
 	/** Raw Vertex Generated For The Function */
 	TArray<FVector3f> VertexList;
 
@@ -101,6 +134,9 @@ struct FLFPBaseVoxelMeshSectionData
 
 	/** Raw UV Generated For The Function */
 	TArray<FVector2f> UVList;
+
+	/** Edge UV Generated For Material To Smooth Mesh */
+	//TArray<FVector2f> EdgeUVList;
 
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
@@ -158,13 +194,17 @@ public: /* Functions For Setting Up Component */
 
 protected:
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntPoint UVRound, const FIntPoint UVFaceOffset, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
+
+	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
 protected: // Rendering Handler
 

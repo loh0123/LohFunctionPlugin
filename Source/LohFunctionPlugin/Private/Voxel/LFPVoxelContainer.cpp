@@ -6,6 +6,7 @@
 
 
 #include "Voxel/LFPVoxelContainer.h"
+#include "./Math/LFPGridLibrary.h"
 
 int32 ULFPVoxelContainer::GetContainerSize()
 {
@@ -26,8 +27,31 @@ void ULFPVoxelContainer::UpdateChuck()
 	return;
 }
 
-void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex)
+void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
+	if (bUpdateNearbyChuck)
+	{
+		const TArray<FIntVector> UpdateDirection =
+		{
+			FIntVector(0, 0, 1),
+			FIntVector(0, 0,-1),
+			FIntVector(0, 1, 0),
+			FIntVector(0,-1, 0),
+			FIntVector(1, 0, 0),
+			FIntVector(-1, 0, 0)
+		};
+
+		const FIntVector ChuckLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+
+		for (const FIntVector& Direction : UpdateDirection)
+		{
+			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
+			{
+				BatchChuckUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+			}
+		}
+	}
+
 	BatchChuckUpdateList.Add(ChuckIndex);
 
 	return;
@@ -87,7 +111,9 @@ void ULFPVoxelContainer::SetVoxelGridData(const FLFPVoxelGridIndex VoxelGridInde
 			ChuckData[VoxelGridIndex.ChuckIndex].SetVoxel(VoxelGridIndex.VoxelIndex, VoxelAttributeName);
 		}
 
-		MarkChuckForUpdate(VoxelGridIndex.ChuckIndex);
+		const FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelGridIndex.VoxelIndex, ContainerSetting.VoxelGridSize);
+
+		MarkChuckForUpdate(VoxelGridIndex.ChuckIndex, ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 
 		if (bUpdateMesh)
 		{
