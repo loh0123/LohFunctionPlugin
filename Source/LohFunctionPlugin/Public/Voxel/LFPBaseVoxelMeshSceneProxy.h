@@ -159,13 +159,16 @@ class FLFPBaseVoxelMeshSceneProxy : public FPrimitiveSceneProxy
 public:
 	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
 		  VoxelComponent(Component)
-		, RenderData(Component->RenderData)
+		, RenderData(Component->RenderData.GetReference())
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
+		bCastDynamicShadow = true;
+		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
+		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
+		bVerifyUsedMaterials = false;
+
 		bSupportsDistanceFieldRepresentation = true;
 		bSupportsMeshCardRepresentation = true;
-
-		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
 		const TArray<FLFPBaseVoxelMeshSectionData>& BufferDataList = Component->RenderData->Sections;
 
@@ -200,6 +203,12 @@ public:
 					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
 				};
 
+				FVector2f TriEdgeUVs[3] = {
+					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart]],
+					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
+					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
+				};
+
 				FVector3f Tangent, Bitangent, Normal;
 
 				Normal = VectorUtil::Normal(TriVertices[0], TriVertices[1], TriVertices[2]);
@@ -214,6 +223,7 @@ public:
 				for (int32 VertexInd = VertexIndStart; VertexInd < VertexIndStart + 3; VertexInd++)
 				{
 					Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 0, TriUVs[VertexInd - VertexIndStart]);
+					//Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 1, TriEdgeUVs[VertexInd - VertexIndStart]);
 
 					Buffer->StaticMeshVertexBuffer.SetVertexTangents(VertexInd, ProjectedTangent, ReconsBitangent, Normal);
 
@@ -238,6 +248,7 @@ public:
 
 	virtual ~FLFPBaseVoxelMeshSceneProxy()
 	{
+		RenderData = nullptr;
 		VoxelComponent = nullptr;
 
 		for (FLFPVoxelMeshRenderBufferSet* Buffer : AllocatedBufferSets)
@@ -314,6 +325,8 @@ public:
 
 				DrawBatch(MeshBatch, *BufferSet, BufferSet->Material->GetRenderProxy(), false);
 
+				MeshBatch.LODIndex = 0;
+
 				PDI->DrawMesh(MeshBatch, 1.f);
 			}
 		}
@@ -325,20 +338,29 @@ public:
 		uint32 VisibilityMap,
 		FMeshElementCollector& Collector) const override
 	{
-		// set up wireframe material. Probably bad to reference GEngine here...also this material is very bad?
-		FColoredMaterialRenderProxy* WireframeMaterialInstance = new FColoredMaterialRenderProxy(
-			GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
-			FLinearColor(0, 0.5f, 1.f)
-		);
+		const bool bWireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
 
-		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
-	
+		FColoredMaterialRenderProxy* WireframeMaterialInstance = nullptr;
+
+		// set up wireframe material. Probably bad to reference GEngine here...also this material is very bad?
+		if (bWireframe) 
+		{
+			WireframeMaterialInstance = new FColoredMaterialRenderProxy(
+				GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
+				FLinearColor(0, 0.5f, 1.f)
+			);
+
+			Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
+		}
+
 		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 		{
-			if (VisibilityMap & (1 << ViewIndex))
-			{
-				const FSceneView* View = Views[ViewIndex];
+			const FSceneView* View = Views[ViewIndex];
 
+			bool bNeedDynamicPath = IsRichView(*Views[ViewIndex]->Family) || Views[ViewIndex]->Family->EngineShowFlags.Wireframe || IsSelected();
+
+			if (bNeedDynamicPath && IsShown(View) && (VisibilityMap & (1 << ViewIndex)))
+			{
 				FFrozenSceneViewMatricesGuard FrozenMatricesGuard(*const_cast<FSceneView*>(Views[ViewIndex]));
 	
 				// Draw the mesh.
@@ -353,9 +375,10 @@ public:
 					{
 						FMeshBatch& MeshBatch = Collector.AllocateMesh();
 	
-						DrawBatch(MeshBatch, *BufferSet, WireframeMaterialInstance, false);
+						DrawBatch(MeshBatch, *BufferSet, bWireframe ? WireframeMaterialInstance : BufferSet->Material->GetRenderProxy(), false);
 
-						MeshBatch.bWireframe = true;
+						MeshBatch.bWireframe = bWireframe;
+						MeshBatch.bDitheredLODTransition = false;
 					
 						Collector.AddMesh(ViewIndex, MeshBatch);
 					}
@@ -370,6 +393,7 @@ public:
 		bool bForRayTracing) const
 	{
 		FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+		BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
 		BatchElement.IndexBuffer = &RenderBuffers.IndexBuffer;
 		BatchElement.FirstIndex = 0;
 		BatchElement.NumPrimitives = RenderBuffers.IndexBuffer.Indices.Num() / 3;
@@ -378,19 +402,15 @@ public:
 
 		MeshBatch.VertexFactory = &RenderBuffers.VertexFactory;
 		MeshBatch.MaterialRenderProxy = UseMaterial;
+		MeshBatch.bDitheredLODTransition = !bForRayTracing && !IsMovable() && UseMaterial->GetMaterialInterface()->IsDitheredLODTransition();
 
 		MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
 		MeshBatch.Type = PT_TriangleList;
 		MeshBatch.DepthPriorityGroup = SDPG_World;
 		MeshBatch.bCanApplyViewModeOverrides = false;
 		MeshBatch.SegmentIndex = RenderBuffers.SectionID;
-		MeshBatch.LODIndex = 0;
 
-		MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
-
-#if RHI_RAYTRACING
-		MeshBatch.CastRayTracedShadow = MeshBatch.CastShadow && bCastDynamicShadow;
-#endif
+		//MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
 
 		return;
 	}
@@ -438,44 +458,20 @@ public:
 
 				if (Section->RayTracingGeometry.RayTracingGeometryRHI.IsValid())
 				{
+					check(Section->RayTracingGeometry.Initializer.TotalPrimitiveCount > 0);
 					check(Section->RayTracingGeometry.Initializer.IndexBuffer.IsValid());
 
 					FRayTracingInstance RayTracingInstance;
 					RayTracingInstance.Geometry = &Section->RayTracingGeometry;
 					RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
 
-					uint32 SectionIdx = 0;
 					FMeshBatch MeshBatch;
 
-					MeshBatch.VertexFactory = &Section->VertexFactory;
-					MeshBatch.SegmentIndex = 0;
-					MeshBatch.MaterialRenderProxy = Section->Material->GetRenderProxy();
-					MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
-					MeshBatch.Type = PT_TriangleList;
-					MeshBatch.DepthPriorityGroup = SDPG_World;
-					MeshBatch.bCanApplyViewModeOverrides = false;
+					DrawBatch(MeshBatch, *Section, Section->Material->GetRenderProxy(), false);
+
 					MeshBatch.CastRayTracedShadow = IsShadowCast(Context.ReferenceView);
 
-					FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
-					BatchElement.IndexBuffer = &Section->IndexBuffer;
-
-					bool bHasPrecomputedVolumetricLightmap;
-					FMatrix PreviousLocalToWorld;
-					int32 SingleCaptureIndex;
-					bool bOutputVelocity;
-					GetScene().GetPrimitiveUniformShaderParameters_RenderThread(GetPrimitiveSceneInfo(), bHasPrecomputedVolumetricLightmap, PreviousLocalToWorld, SingleCaptureIndex, bOutputVelocity);
-
-					FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Context.RayTracingMeshResourceCollector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-					DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, DrawsVelocity(), bOutputVelocity, GetCustomPrimitiveData());
-					BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
-
-					BatchElement.FirstIndex = 0;
-					BatchElement.NumPrimitives = Section->IndexBuffer.Indices.Num() / 3;
-					BatchElement.MinVertexIndex = 0;
-					BatchElement.MaxVertexIndex = Section->PositionVertexBuffer.GetNumVertices() - 1;
-
 					RayTracingInstance.Materials.Add(MeshBatch);
-
 					RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
 					OutRayTracingInstances.Add(RayTracingInstance);
 				}
@@ -489,7 +485,7 @@ public:
 	{
 		FPrimitiveViewRelevance Result;
 
-		if (AllowDebugViewmodes() && View->Family->EngineShowFlags.Wireframe)
+		if (IsRichView(*View->Family) || IsSelected() || View->Family->EngineShowFlags.Wireframe)
 		{
 			Result.bDynamicRelevance = true;
 		}
@@ -506,7 +502,7 @@ public:
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		Result.bTranslucentSelfShadow = bCastVolumetricTranslucentShadow;
 		MaterialRelevance.SetPrimitiveViewRelevance(Result);
-		Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bVelocityRelevance = IsMovable() && DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
 		return Result;
 	}
 
@@ -535,7 +531,7 @@ protected:
 
 	ULFPBaseVoxelMeshComponent* VoxelComponent = nullptr;
 
-	FLFPBaseVoxelMeshRenderData* RenderData = nullptr;
+	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 

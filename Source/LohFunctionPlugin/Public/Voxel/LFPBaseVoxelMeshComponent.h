@@ -79,14 +79,14 @@ static const struct FLFPBaseVoxelMeshConstantData
 		FLFPBaseVoxelFaceDirection(FIntVector(-1, 0, 0), FIntVector( 0, 1, 0), FIntVector( 0, 0,-1)),
 	};
 
-	//const TArray<FIntVector> FaceCheckDirection = {
-	//	FIntVector( 0.0f, 0.0f, 1.0f),
-	//	FIntVector(-1.0f, 0.0f, 0.0f),
-	//	FIntVector( 0.0f, 1.0f, 0.0f),
-	//	FIntVector( 1.0f, 0.0f, 0.0f),
-	//	FIntVector( 0.0f,-1.0f, 0.0f),
-	//	FIntVector( 0.0f, 0.0f,-1.0f),
-	//};
+	const TArray<FIntPoint> FaceUVPositionMapping = {
+		FIntPoint(0, 1),
+		FIntPoint(2, 1),
+		FIntPoint(2, 0),
+		FIntPoint(2, 1),
+		FIntPoint(2, 0),
+		FIntPoint(0, 1),
+	};
 
 	const TArray<FVector2D> FaceUVStartOffset = {
 		FVector2D(0.0f, 0.0f),
@@ -136,7 +136,7 @@ struct FLFPBaseVoxelMeshSectionData
 	TArray<FVector2f> UVList;
 
 	/** Edge UV Generated For Material To Smooth Mesh */
-	//TArray<FVector2f> EdgeUVList;
+	TArray<FVector2f> EdgeUVList;
 
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
@@ -160,6 +160,30 @@ struct FLFPBaseVoxelMeshRenderData
 	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
 
 	class FCardRepresentationData* LumenCardData = nullptr;
+
+
+
+	int32 RefCount = 0;
+
+	FORCEINLINE void AddRef()
+	{
+		RefCount += 1;
+	}
+
+	FORCEINLINE void Release()
+	{
+		RefCount -= 1;
+
+		if (RefCount == 0)
+		{
+			delete this;
+		}
+	}
+
+	FORCEINLINE int32 GetRefCount()
+	{
+		return RefCount;
+	}
 };
 
 //**
@@ -200,11 +224,11 @@ protected:
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntPoint UVRound, const FIntPoint UVFaceOffset, const FVector2D UVOffset, const int32 FaceIndex, const FColor VoxelColor, const FVector LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
 
-	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
+	FORCEINLINE float CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
 protected: // Rendering Handler
 
@@ -260,7 +284,7 @@ private:
 
 	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> BodySetup;
 
-	FLFPBaseVoxelMeshRenderData* RenderData = nullptr;
+	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
 	FLFPBaseVoxelMeshConstantData ConstantData;
 
