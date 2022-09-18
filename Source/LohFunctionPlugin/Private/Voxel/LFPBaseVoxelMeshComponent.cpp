@@ -34,10 +34,10 @@ ULFPBaseVoxelMeshComponent::ULFPBaseVoxelMeshComponent()
 
 void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName)
 {
-	VoxelContainer = NewVoxelContainer;
-
-	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckIndexValid(NewChuckIndex))
+	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
+		VoxelContainer = NewVoxelContainer;
+
 		ChuckInfo = VoxelContainer->GetChuckInfo(NewChuckIndex);
 
 		VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh);
@@ -304,8 +304,8 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 			(VoxelEdgeList[2] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
 		};
 
-		const uint8 EdgeCount = VoxelEdgeList[0] + VoxelEdgeList[1] + VoxelEdgeList[2] + VoxelEdgeList[3];
-		const uint8 PointCount = VoxelPointList[0] + VoxelPointList[1] + VoxelPointList[2] + VoxelPointList[3];
+		const uint8 EdgeCount = (VoxelEdgeList[0] != 0 ? 1 : 0) + (VoxelEdgeList[1] != 0 ? 1 : 0) + (VoxelEdgeList[2] != 0 ? 1 : 0) + (VoxelEdgeList[3] != 0 ? 1 : 0);
+		const uint8 PointCount = (VoxelPointList[0] != 0 ? 1 : 0) + (VoxelPointList[1] != 0 ? 1 : 0) + (VoxelPointList[2] != 0 ? 1 : 0) + (VoxelPointList[3] != 0 ? 1 : 0);
 
 		int32 RotationIndex = 0;
 
@@ -327,7 +327,7 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 				{
 					int32 PreIndex = (Index + 3) % 4;
 
-					if (VoxelEdgeList[PreIndex] == 0 && VoxelEdgeList[Index] == 1)
+					if (VoxelEdgeList[PreIndex] == 0 && VoxelEdgeList[Index] != 0)
 					{
 						RotationIndex = Index + 1;
 
@@ -385,7 +385,7 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 				{
 					int32 PreIndex = (Index + 3) % 4;
 
-					if (VoxelPointList[PreIndex] == 0 && VoxelPointList[Index] == 1)
+					if (VoxelPointList[PreIndex] == 0 && VoxelPointList[Index] != 0)
 					{
 						RotationIndex = Index + 1;
 
@@ -493,7 +493,7 @@ uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelCont
 	}
 	else
 	{
-		return 1;
+		return 2;
 	}
 }
 
