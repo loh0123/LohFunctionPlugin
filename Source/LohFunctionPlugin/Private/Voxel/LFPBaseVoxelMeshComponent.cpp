@@ -98,7 +98,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 			const int32 SectionSize = FMath::Max(GetNumMaterials(), 1);
 
-			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [&LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalBounds, SectionSize, this]()
+			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalChuckSetting = ChuckSetting, LocalBounds, SectionSize, this]()
 				{
 					if (IsValid(this) == false || IsValid(LocalVoxelContainer) == false)
 					{
@@ -260,7 +260,7 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 			VertexList[2],
 			VertexList[3],
 			VertexList[0],
-			});
+		});
 	}
 
 	/* Handle UV Data */
@@ -288,37 +288,154 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 	}
 
 	{
-		const TArray<float> NeigbhourVoxelHeightMap =
+		const TArray<uint8> VoxelEdgeList =
 		{
 			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward, ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward * -1, ConstantData.FaceDirection[FaceIndex].Up),
 			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right, ConstantData.FaceDirection[FaceIndex].Up),
+			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward * -1, ConstantData.FaceDirection[FaceIndex].Up),
 			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right * -1, ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right), ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward) + (ConstantData.FaceDirection[FaceIndex].Right), ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up)
 		};
 
-		EditMesh.EdgeUVList.Append({
-			FVector2f(NeigbhourVoxelHeightMap[0], NeigbhourVoxelHeightMap[7]),
-			FVector2f(NeigbhourVoxelHeightMap[3], NeigbhourVoxelHeightMap[5]),
-			FVector2f(NeigbhourVoxelHeightMap[2], NeigbhourVoxelHeightMap[6]),
-			FVector2f(NeigbhourVoxelHeightMap[1], NeigbhourVoxelHeightMap[4]),
-			FVector2f(NeigbhourVoxelHeightMap[2], NeigbhourVoxelHeightMap[6]),
-			FVector2f(NeigbhourVoxelHeightMap[3], NeigbhourVoxelHeightMap[5])
-		});
+		const TArray<uint8> VoxelPointList =
+		{
+			(VoxelEdgeList[0] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward	 ) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[0] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward     ) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[2] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[2] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
+		};
+
+		const uint8 EdgeCount = VoxelEdgeList[0] + VoxelEdgeList[1] + VoxelEdgeList[2] + VoxelEdgeList[3];
+		const uint8 PointCount = VoxelPointList[0] + VoxelPointList[1] + VoxelPointList[2] + VoxelPointList[3];
+
+		int32 RotationIndex = 0;
+
+		FVector2f TexPos = FVector2f(-1.0f, 0.0f);
+
+		/* This Handle Edge UV */
+		{
+			RotationIndex = 0;
+
+			TexPos = FVector2f(-1.0f, 0.0f);
+
+			if (EdgeCount != 0)
+			{
+				const bool bIsSeperate =
+					VoxelEdgeList[0] != 0 && VoxelEdgeList[2] != 0 && VoxelEdgeList[1] == 0 && VoxelEdgeList[3] == 0 ||
+					VoxelEdgeList[1] != 0 && VoxelEdgeList[3] != 0 && VoxelEdgeList[0] == 0 && VoxelEdgeList[2] == 0;
+
+				for (int32 Index = 0; Index < 4; Index++)
+				{
+					int32 PreIndex = (Index + 3) % 4;
+
+					if (VoxelEdgeList[PreIndex] == 0 && VoxelEdgeList[Index] == 1)
+					{
+						RotationIndex = Index + 1;
+
+						break;
+					}
+				}
+
+				if (bIsSeperate)
+				{
+					TexPos = FVector2f(4.0f, 0.0f);
+				}
+				else
+				{
+					switch (EdgeCount)
+					{
+					case 1: TexPos = FVector2f(0.0f, 0.0f); break;
+					case 2: TexPos = FVector2f(1.0f, 0.0f); break;
+					case 3: TexPos = FVector2f(2.0f, 0.0f); break;
+					case 4: TexPos = FVector2f(3.0f, 0.0f); break;
+					}
+				}
+			}
+
+			const TArray<FVector2f> UVPosList =
+			{
+				(FVector2f(0.5f,-0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(-0.5f,-0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(0.5f, 0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(-0.5f, 0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+			};
+
+			EditMesh.EdgeUVList.Append({
+				UVPosList[0] + TexPos,
+				UVPosList[1] + TexPos,
+				UVPosList[2] + TexPos,
+				UVPosList[3] + TexPos,
+				UVPosList[2] + TexPos,
+				UVPosList[1] + TexPos
+				});
+		}
+
+		/* This Handle Point UV */
+		{
+			RotationIndex = 0;
+
+			TexPos = FVector2f(-1.0f, 0.0f);
+
+			if (PointCount != 0)
+			{
+				const bool bIsSeperate =
+					VoxelPointList[0] != 0 && VoxelPointList[2] != 0 && VoxelPointList[1] == 0 && VoxelPointList[3] == 0 ||
+					VoxelPointList[1] != 0 && VoxelPointList[3] != 0 && VoxelPointList[0] == 0 && VoxelPointList[2] == 0;
+
+				for (int32 Index = 0; Index < 4; Index++)
+				{
+					int32 PreIndex = (Index + 3) % 4;
+
+					if (VoxelPointList[PreIndex] == 0 && VoxelPointList[Index] == 1)
+					{
+						RotationIndex = Index + 1;
+
+						break;
+					}
+				}
+
+				if (bIsSeperate)
+				{
+					TexPos = FVector2f(4.0f, 1.0f);
+				}
+				else
+				{
+					switch (PointCount)
+					{
+					case 1: TexPos = FVector2f(0.0f, 1.0f); break;
+					case 2: TexPos = FVector2f(1.0f, 1.0f); break;
+					case 3: TexPos = FVector2f(2.0f, 1.0f); break;
+					case 4: TexPos = FVector2f(3.0f, 1.0f); break;
+					}
+				}
+			}
+
+			const TArray<FVector2f> UVPosList =
+			{
+				(FVector2f(0.5f,-0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(-0.5f,-0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(0.5f, 0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+				(FVector2f(-0.5f, 0.5f).GetRotated(RotationIndex * -90.0f) + FVector2f(0.5f)),
+			};
+
+			EditMesh.PointUVList.Append({
+				UVPosList[0] + TexPos,
+				UVPosList[1] + TexPos,
+				UVPosList[2] + TexPos,
+				UVPosList[3] + TexPos,
+				UVPosList[2] + TexPos,
+				UVPosList[1] + TexPos
+			});
+		}
 	}
 
-
-	EditMesh.VoxelColorList.Reserve(EditMesh.VoxelColorList.Num() + 2);
-	EditMesh.VoxelIndexList.Reserve(EditMesh.VoxelIndexList.Num() + 2);
-
-	for (int32 i = 0; i < 2; i++)
-	{
-		EditMesh.VoxelColorList.Add(VoxelAttribute.VertexColor);
-		EditMesh.VoxelIndexList.Add(VoxelIndex);
-	}
+	EditMesh.VoxelColorList.Append({
+		VoxelAttribute.VertexColor,
+		VoxelAttribute.VertexColor,
+		VoxelAttribute.VertexColor,
+		VoxelAttribute.VertexColor,
+		VoxelAttribute.VertexColor,
+		VoxelAttribute.VertexColor,
+	});
 
 	EditMesh.TriangleCount += 2;
 }
@@ -364,19 +481,19 @@ void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, co
 	}
 }
 
-float ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
+uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
 {
 	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up)))
 	{
-		return 1.0f;
+		return 1;
 	}
 	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction)))
 	{
-		return 0.0f;
+		return 0;
 	}
 	else
 	{
-		return -1.0f;
+		return 1;
 	}
 }
 

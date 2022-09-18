@@ -29,12 +29,6 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
 		int32 LumenCardBatch = 1;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		int32 BevelAmount = 1;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		float BevelRange = 0.2f;
 };
 
 USTRUCT(BlueprintType)
@@ -115,17 +109,6 @@ static const struct FLFPBaseVoxelMeshConstantData
 
 struct FLFPBaseVoxelMeshSectionData
 {
-	FLFPBaseVoxelMeshSectionData()
-	{
-		VertexList.Empty();
-		TriangleIndexList.Empty();
-		UVList.Empty();
-		VoxelColorList.Empty();
-		VoxelIndexList.Empty();
-
-		TriangleCount = 0;
-	}
-
 	/** Raw Vertex Generated For The Function */
 	TArray<FVector3f> VertexList;
 
@@ -135,8 +118,11 @@ struct FLFPBaseVoxelMeshSectionData
 	/** Raw UV Generated For The Function */
 	TArray<FVector2f> UVList;
 
-	/** Edge UV Generated For Material To Smooth Mesh */
+	/** Edge UV Generated For Material To Use Edge Texture */
 	TArray<FVector2f> EdgeUVList;
+
+	/** Point UV Generated For Material To Use Point Texture */
+	TArray<FVector2f> PointUVList;
 
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
@@ -145,7 +131,7 @@ struct FLFPBaseVoxelMeshSectionData
 	uint32 TriangleCount = 0;
 
 	/** Index For The Voxel Trace */
-	TArray<int32> VoxelIndexList;
+	//TArray<int32> VoxelIndexList;
 };
 
 /* This Contains Every Data Need To Render This Voxel Mesh */
@@ -228,7 +214,7 @@ private: // Helper Functions
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
 
-	FORCEINLINE float CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
+	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
 protected: // Rendering Handler
 

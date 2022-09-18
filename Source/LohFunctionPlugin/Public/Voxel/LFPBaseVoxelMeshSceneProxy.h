@@ -184,29 +184,30 @@ public:
 
 			Buffer->IndexBuffer.Indices = BufferData.TriangleIndexList;
 
-			Buffer->ColorVertexBuffer.Init(BufferData.VertexList.Num());
+			Buffer->ColorVertexBuffer.InitFromColorArray(BufferData.VoxelColorList);
 
-			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 1);
+			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 3);
+
+			ParallelFor(BufferData.UVList.Num(), [&](const int32 Index)
+				{
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 0, BufferData.UVList[Index]);
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 1, BufferData.EdgeUVList[Index]);
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 2, BufferData.PointUVList[Index]);
+				});
 
 			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
 				int32 VertexIndStart = Index * 3;
 
-				FVector3f TriVertices[3] = {
+				const FVector3f TriVertices[3] = {
 					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart]],
 					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 1]],
 					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 2]],
 				};
 
-				FVector2f TriUVs[3] = {
+				const FVector2f TriUVs[3] = {
 					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
 					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
 					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
-				};
-
-				FVector2f TriEdgeUVs[3] = {
-					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart]],
-					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
-					BufferData.EdgeUVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
 				};
 
 				FVector3f Tangent, Bitangent, Normal;
@@ -222,12 +223,7 @@ public:
 
 				for (int32 VertexInd = VertexIndStart; VertexInd < VertexIndStart + 3; VertexInd++)
 				{
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 0, TriUVs[VertexInd - VertexIndStart]);
-					//Buffer->StaticMeshVertexBuffer.SetVertexUV(VertexInd, 1, TriEdgeUVs[VertexInd - VertexIndStart]);
-
 					Buffer->StaticMeshVertexBuffer.SetVertexTangents(VertexInd, ProjectedTangent, ReconsBitangent, Normal);
-
-					Buffer->ColorVertexBuffer.VertexColor(VertexInd) = BufferData.VoxelColorList[Index];
 				}
 			});
 
@@ -280,7 +276,7 @@ public:
 	}
 
 	FORCEINLINE void ComputeFaceTangent(
-		FVector3f TriVertices[3], FVector2f TriUVs[3],
+		const FVector3f TriVertices[3], const FVector2f TriUVs[3],
 		FVector3f& TangentOut, FVector3f& BitangentOut)
 	{
 		FVector2f UVEdge1 = TriUVs[1] - TriUVs[0];
