@@ -128,6 +128,9 @@ struct FLFPBaseVoxelMeshSectionData
 	/** Point UV Generated For Material To Use Point Texture */
 	TArray<FVector2f> PointUVList;
 
+	/** Point UV Generated For Material To Use Point Texture */
+	TArray<FVector2f> PositionUVList;
+
 	/** Color For The Vertex */
 	TArray<FColor> VoxelColorList;
 
@@ -197,6 +200,7 @@ public:
 
 public: /* Functions For Setting Up Component */
 
+	/* Setup This Component And Reset Color Map : Please Rebind Colour Map After This */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName);
 
@@ -217,7 +221,7 @@ protected:
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
 
@@ -278,13 +282,11 @@ private:
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
 
-	UPROPERTY(Instanced) TObjectPtr<class UBodySetup> BodySetup;
+	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 
 	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
 	FLFPBaseVoxelMeshConstantData ConstantData;
-
-	TUniquePtr<FUpdateTextureRegion2D> ColorMapRegion = nullptr;
 
 protected:
 

@@ -7,11 +7,12 @@
 			"LFPWorldGrid.cpp.obj",
 			"VoxelChuckManager.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
-			"LohFunctionPluginBPLibrary.cpp.obj",
+			"LohFunctionPluginLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
 			"LFPMazeLibrary.cpp.obj",
 			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
+			"LFPRenderLibrary.cpp.obj",
 			"LFPBaseVoxelMeshComponent.cpp.obj",
 			"LFPVoxelContainer.cpp.obj"
 		],
@@ -20,12 +21,13 @@
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
+			"LFPRenderLibrary.gen.cpp.obj",
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTickManager.gen.cpp.obj",
 			"LFPVoxelContainer.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
-			"LohFunctionPluginBPLibrary.gen.cpp.obj",
+			"LohFunctionPluginLibrary.gen.cpp.obj",
 			"VoxelChuckActor.gen.cpp.obj",
 			"VoxelChuckManager.gen.cpp.obj"
 		]

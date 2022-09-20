@@ -9,6 +9,7 @@
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
 #include "MeshCardRepresentation.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Render/LFPRenderLibrary.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
 
@@ -38,27 +39,16 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 		/* This Clean Up Color Map If Valid */
 		if (IsValid(VoxelColorMap))
 		{
-			VoxelColorMap = nullptr;
+			VoxelColorMap->MarkAsGarbage();
 
-			ColorMapRegion.Reset(nullptr);
+			VoxelColorMap = nullptr;
 		}
 
 		/* THis Setup Color Map */
 		{
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
-			VoxelColorMap = UTexture2D::CreateTransient(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z);
-
-#if WITH_EDITORONLY_DATA
-			VoxelColorMap->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-#endif
-			VoxelColorMap->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
-			VoxelColorMap->SRGB = 1;
-			//VoxelColorMap->AddToRoot();
-			VoxelColorMap->Filter = TextureFilter::TF_Nearest;
-			VoxelColorMap->UpdateResource();
-
-			ColorMapRegion = TUniquePtr<FUpdateTextureRegion2D>(new FUpdateTextureRegion2D(0, 0, 0, 0, VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z));
+			VoxelColorMap = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
 		}
 
 		/* This Setup Voxel */
@@ -121,45 +111,23 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	
+	if (IsValid(VoxelColorMap))
+	{
+		VoxelColorMap->MarkAsGarbage();
+
+		VoxelColorMap = nullptr;
+	}
 }
 
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	if (ChuckStatus.bIsVoxelColorDirty && ChuckStatus.bIsGeneratingColor == false)
-	{
-		ChuckStatus.bIsGeneratingColor = false;
-	
+	if (ChuckStatus.bIsVoxelColorDirty)
+	{	
 		ChuckStatus.bIsVoxelColorDirty = false;
 	
-		const FIntVector VoxelGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize;
-
 		const TArray<FColor>& VoxelColorList = VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex);
 
-		TUniquePtr<uint8[]> CPUColorData = TUniquePtr<uint8[]>(new uint8[VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z * 4]);
-
-		VoxelColorMap->TemporarilyDisableStreaming();
-
-		for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength; VoxelIndex++)
-		{
-			const FColor& VoxelColor = VoxelColorList[VoxelIndex];
-
-			const int32 PixelPos = VoxelIndex * 4;
-
-			*(CPUColorData.Get() + PixelPos) = VoxelColor.B;
-			*(CPUColorData.Get() + PixelPos + 1) = VoxelColor.G;
-			*(CPUColorData.Get() + PixelPos + 2) = VoxelColor.R;
-			*(CPUColorData.Get() + PixelPos + 3) = VoxelColor.A;
-		}
-
-		VoxelColorMap->UpdateTextureRegions(0, 1, ColorMapRegion.Get(), VoxelGridSize.X * 4, 4, CPUColorData.Release(),
-			[&](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
-			{
-				delete SrcData;
-			}
-		);
-
-		//FlushRenderingCommands();
+		ULFPRenderLibrary::UpdateTexture2D(VoxelColorMap, VoxelColorList);
 	}
 
 	if (ChuckStatus.bIsVoxelMeshDirty && ChuckStatus.bIsGeneratingMesh == false)
@@ -222,7 +190,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 							{
 								const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-								AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
+								AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
 
 								AddLumenBox(LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
 
@@ -304,7 +272,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize)
 {
 	/* Handle Index Data */
 	{
@@ -360,6 +328,7 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 		});
 	}
 
+	/* Handle Edge And Point UV Data */
 	{
 		const TArray<uint8> VoxelEdgeList =
 		{
@@ -499,6 +468,24 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 				UVPosList[1] + TexPos
 			});
 		}
+	}
+
+	/* Handle Position UV Data */
+	{
+		const FIntPoint ColorMapSize = FIntPoint(LocalVoxelContainer->GetContainerSetting().VoxelGridSize.X, LocalVoxelContainer->GetContainerSetting().VoxelGridSize.Y * LocalVoxelContainer->GetContainerSetting().VoxelGridSize.Z);
+		
+		const FIntPoint CurrentIntUVPos = FIntPoint(VoxelGridLocation.X, VoxelGridLocation.Y + (LocalVoxelContainer->GetContainerSetting().VoxelGridSize.Y * VoxelGridLocation.Z));
+		
+		const FVector2f UVPos = FVector2f(CurrentIntUVPos) / FVector2f(ColorMapSize);
+		
+		EditMesh.PositionUVList.Append({
+			UVPos,
+			UVPos,
+			UVPos,
+			UVPos,
+			UVPos,
+			UVPos
+			});
 	}
 
 	EditMesh.VoxelColorList.Append({

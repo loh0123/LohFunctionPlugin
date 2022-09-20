@@ -186,13 +186,14 @@ public:
 
 			Buffer->ColorVertexBuffer.InitFromColorArray(BufferData.VoxelColorList);
 
-			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 3);
+			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 4);
 
 			ParallelFor(BufferData.UVList.Num(), [&](const int32 Index)
 				{
 					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 0, BufferData.UVList[Index]);
 					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 1, BufferData.EdgeUVList[Index]);
 					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 2, BufferData.PointUVList[Index]);
+					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 3, BufferData.PositionUVList[Index]);
 				});
 
 			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
