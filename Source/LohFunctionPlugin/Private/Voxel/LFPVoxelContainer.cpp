@@ -27,6 +27,20 @@ void ULFPVoxelContainer::UpdateChuck()
 	return;
 }
 
+void ULFPVoxelContainer::UpdateChuckColor()
+{
+	if (BatchChuckColorUpdateList.Num() == 0) return;
+
+	for (const int32 ChuckIndex : BatchChuckColorUpdateList)
+	{
+		ChuckData[ChuckIndex].SendColorUpdateEvent();
+	}
+
+	BatchChuckColorUpdateList.Empty();
+
+	return;
+}
+
 void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
 	if (bUpdateNearbyChuck)
@@ -53,6 +67,13 @@ void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool b
 	}
 
 	BatchChuckUpdateList.Add(ChuckIndex);
+
+	return;
+}
+
+void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex)
+{
+	BatchChuckColorUpdateList.Add(ChuckIndex);
 
 	return;
 }
@@ -103,6 +124,35 @@ FIntVector ULFPVoxelContainer::VoxelGridIndexToVoxelGridLocation(const FLFPVoxel
 	return VoxelLocation + FIntVector(ChuckLocation.X * ContainerSetting.VoxelGridSize.X, ChuckLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckLocation.Z * ContainerSetting.VoxelGridSize.Z);
 }
 
+void ULFPVoxelContainer::SetVoxelGridColor(const FLFPVoxelGridIndex VoxelGridIndex, const FColor VoxelColor, const bool bUpdateColor, const bool bInitializeChuck)
+{
+	FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
+
+	if (IsVoxelIndexValid(VoxelGridIndex))
+	{
+		if (ChuckData[VoxelGridIndex.ChuckIndex].IsInitialized() == false)
+		{
+			if (bInitializeChuck == false) return;
+
+			ChuckData[VoxelGridIndex.ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, ContainerSetting.InvisibleName);
+		}
+
+		if (ChuckData[VoxelGridIndex.ChuckIndex].VoxelData.IsValidIndex(VoxelGridIndex.VoxelIndex))
+		{
+			ChuckData[VoxelGridIndex.ChuckIndex].SetVoxelColor(VoxelGridIndex.VoxelIndex, VoxelColor);
+		}
+
+		MarkChuckForColorUpdate(VoxelGridIndex.ChuckIndex);
+
+		if (bUpdateColor)
+		{
+			UpdateChuckColor();
+		}
+	}
+
+	return;
+}
+
 void ULFPVoxelContainer::SetVoxelGridData(const FLFPVoxelGridIndex VoxelGridIndex, const FName VoxelAttributeName, const bool bUpdateMesh, const bool bInitializeChuck)
 {
 	FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
@@ -113,7 +163,7 @@ void ULFPVoxelContainer::SetVoxelGridData(const FLFPVoxelGridIndex VoxelGridInde
 		{
 			if (bInitializeChuck == false) return;
 
-			ChuckData[VoxelGridIndex.ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, FName("None"));
+			ChuckData[VoxelGridIndex.ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, ContainerSetting.InvisibleName);
 		}
 
 		if (ChuckData[VoxelGridIndex.ChuckIndex].VoxelData.IsValidIndex(VoxelGridIndex.VoxelIndex))

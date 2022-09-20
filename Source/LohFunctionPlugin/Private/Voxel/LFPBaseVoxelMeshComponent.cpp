@@ -6,7 +6,6 @@
 
 #include "Voxel/LFPBaseVoxelMeshComponent.h"
 #include "./Math/LFPGridLibrary.h"
-//#include "PhysicsEngine/PhysicsSettings.h"
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
 #include "MeshCardRepresentation.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -36,13 +35,42 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 {
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
-		VoxelContainer = NewVoxelContainer;
+		/* This Clean Up Color Map If Valid */
+		if (IsValid(VoxelColorMap))
+		{
+			VoxelColorMap = nullptr;
 
-		ChuckInfo = VoxelContainer->GetChuckInfo(NewChuckIndex);
+			ColorMapRegion.Reset(nullptr);
+		}
 
-		VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh);
+		/* THis Setup Color Map */
+		{
+			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
-		VoxelContainer->InitializeOrUpdateChuck(NewChuckIndex, InitializeName);
+			VoxelColorMap = UTexture2D::CreateTransient(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z);
+
+#if WITH_EDITORONLY_DATA
+			VoxelColorMap->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+#endif
+			VoxelColorMap->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
+			VoxelColorMap->SRGB = 1;
+			//VoxelColorMap->AddToRoot();
+			VoxelColorMap->Filter = TextureFilter::TF_Nearest;
+			VoxelColorMap->UpdateResource();
+
+			ColorMapRegion = TUniquePtr<FUpdateTextureRegion2D>(new FUpdateTextureRegion2D(0, 0, 0, 0, VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z));
+		}
+
+		/* This Setup Voxel */
+		{
+			VoxelContainer = NewVoxelContainer;
+
+			ChuckInfo = VoxelContainer->GetChuckInfo(NewChuckIndex);
+
+			VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh, &ULFPBaseVoxelMeshComponent::UpdateVoxelColor);
+
+			VoxelContainer->InitializeOrUpdateChuck(NewChuckIndex, InitializeName);
+		}
 	}
 	else
 	{
@@ -79,6 +107,18 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	}
 }
 
+void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
+{
+	if (IsValid(VoxelContainer))
+	{
+		ChuckStatus.bIsVoxelColorDirty = true;
+	}
+	else
+	{
+		UE_LOG(LFPVoxelMeshComponentLog, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
+	}
+}
+
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	
@@ -86,148 +126,181 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	if (ChuckStatus.bIsVoxelMeshDirty)
+	if (ChuckStatus.bIsVoxelColorDirty && ChuckStatus.bIsGeneratingColor == false)
 	{
-		if (ChuckStatus.bIsGeneratingMesh == false)
+		ChuckStatus.bIsGeneratingColor = false;
+	
+		ChuckStatus.bIsVoxelColorDirty = false;
+	
+		const FIntVector VoxelGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize;
+
+		const TArray<FColor>& VoxelColorList = VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex);
+
+		TUniquePtr<uint8[]> CPUColorData = TUniquePtr<uint8[]>(new uint8[VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z * 4]);
+
+		VoxelColorMap->TemporarilyDisableStreaming();
+
+		for (int32 VoxelIndex = 0; VoxelIndex < VoxelContainer->GetContainerSetting().VoxelLength; VoxelIndex++)
 		{
-			ChuckStatus.bIsGeneratingMesh = true;
+			const FColor& VoxelColor = VoxelColorList[VoxelIndex];
 
-			ChuckStatus.bIsVoxelMeshDirty = false;
+			const int32 PixelPos = VoxelIndex * 4;
 
-			const FBoxSphereBounds LocalBounds = GetLocalBounds();
-
-			const int32 SectionSize = FMath::Max(GetNumMaterials(), 1);
-
-			AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalChuckSetting = ChuckSetting, LocalBounds, SectionSize, this]()
-				{
-					if (IsValid(this) == false || IsValid(LocalVoxelContainer) == false)
-					{
-						return;
-					}
-
-					FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
-
-					FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
-
-					NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), SectionSize);
-					NewRenderData->DistanceFieldInstanceData.Reserve(LocalVoxelContainer->GetContainerSetting().VoxelLength);
-
-					const TArray<FName>& VoxelNameList = LocalVoxelContainer->GetVoxelNameList(LocalChuckInfo.ChuckIndex);
-
-					const FVector VoxelHalfSize = LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
-					const FVector VoxelRenderOffset = -LocalVoxelContainer->GetContainerSetting().HalfRenderBound + LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
-					const FIntPoint VoxelUVRound = LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
-
-					FIntVector LumenBatch = LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
-					
-					if (LumenBatch.X == 0) LumenBatch.X = 1;
-					if (LumenBatch.Y == 0) LumenBatch.Y = 1;
-					if (LumenBatch.Z == 0) LumenBatch.Z = 1;
-
-					TMap<FIntPoint, FBox> LumenBox;
-
-					for (int32 VoxelIndex = 0; VoxelIndex < LocalVoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
-					{
-						const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
-
-						const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
-
-						const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
-
-						if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
-						{
-							bool HasFace = false;
-
-							const FBox VoxelBounds = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize);
-
-							for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
-							{
-								const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
-
-								if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up)) == false)
-								{
-									const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
-
-									AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
-
-									AddLumenBox(LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
-
-									HasFace = true;
-								}
-							}
-
-							if (HasFace)
-							{
-								NewRenderData->DistanceFieldInstanceData.Add(FTransform(FVector(VoxelLocation)));
-							}
-						}
-					}
-
-					/* Fill In Lumen Data */
-					{
-						NewRenderData->LumenCardData = new FCardRepresentationData();
-
-						NewRenderData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
-
-						NewRenderData->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds.GetBox();
-
-						for (const auto& LumenBoxMap : LumenBox)
-						{
-							FLumenCardBuildData LumenCard;
-
-							LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
-
-							LumenCard.LODLevel = 0;
-
-							FVector BoxExtent = LumenBoxMap.Value.GetExtent();
-
-							LumenCard.OBB.Extent = FVector3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(BoxExtent).GetAbs());
-
-							FRotationMatrix44f R(FRotator3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X]));
-							R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
-
-							LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
-
-							NewRenderData->LumenCardData->MeshCardsBuildData.CardBuildData.Add(LumenCard);
-						}
-					}
-
-					NewRenderData->DistanceFieldInstanceData.Shrink();
-
-					AsyncTask(ENamedThreads::GameThread, [NewRenderData, this]() {
-						if (IsValid(this) == false) return;
-
-						ChuckStatus.bIsGeneratingMesh = false;
-
-						bool bIsVoxelMeshValid = false;
-
-						for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
-						{
-							if (Buffer.TriangleCount > 0)
-							{
-								bIsVoxelMeshValid = true;
-							}
-						}
-
-						if (bIsVoxelMeshValid)
-						{
-							RenderData = NewRenderData;
-
-							if (IsValid(DistanceFieldMesh))
-								RenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
-						}
-						else
-						{
-							RenderData = nullptr;
-						}
-
-						MarkRenderStateDirty();
-						RebuildPhysicsData();
-						});
-
-				}
-			);
+			*(CPUColorData.Get() + PixelPos) = VoxelColor.B;
+			*(CPUColorData.Get() + PixelPos + 1) = VoxelColor.G;
+			*(CPUColorData.Get() + PixelPos + 2) = VoxelColor.R;
+			*(CPUColorData.Get() + PixelPos + 3) = VoxelColor.A;
 		}
+
+		VoxelColorMap->UpdateTextureRegions(0, 1, ColorMapRegion.Get(), VoxelGridSize.X * 4, 4, CPUColorData.Release(),
+			[&](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
+			{
+				delete SrcData;
+			}
+		);
+
+		//FlushRenderingCommands();
+	}
+
+	if (ChuckStatus.bIsVoxelMeshDirty && ChuckStatus.bIsGeneratingMesh == false)
+	{
+		ChuckStatus.bIsGeneratingMesh = true;
+
+		ChuckStatus.bIsVoxelMeshDirty = false;
+
+		const FBoxSphereBounds LocalBounds = GetLocalBounds();
+
+		const int32 SectionSize = FMath::Max(GetNumMaterials(), 1);
+
+		AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalChuckSetting = ChuckSetting, LocalBounds, SectionSize, this]()
+			{
+				if (IsValid(this) == false || IsValid(LocalVoxelContainer) == false)
+				{
+					return;
+				}
+
+				FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
+
+				FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
+
+				NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), SectionSize);
+				NewRenderData->DistanceFieldInstanceData.Reserve(LocalVoxelContainer->GetContainerSetting().VoxelLength);
+
+				const TArray<FName>& VoxelNameList = LocalVoxelContainer->GetVoxelNameList(LocalChuckInfo.ChuckIndex);
+
+				const FVector VoxelHalfSize = LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+				const FVector VoxelRenderOffset = -LocalVoxelContainer->GetContainerSetting().HalfRenderBound + LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+				const FIntPoint VoxelUVRound = LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
+
+				FIntVector LumenBatch = LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
+				
+				if (LumenBatch.X == 0) LumenBatch.X = 1;
+				if (LumenBatch.Y == 0) LumenBatch.Y = 1;
+				if (LumenBatch.Z == 0) LumenBatch.Z = 1;
+
+				TMap<FIntPoint, FBox> LumenBox;
+
+				for (int32 VoxelIndex = 0; VoxelIndex < LocalVoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
+				{
+					const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
+
+					const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
+
+					const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+
+					if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
+					{
+						bool HasFace = false;
+
+						const FBox VoxelBounds = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize);
+
+						for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
+						{
+							const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
+
+							if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up)) == false)
+							{
+								const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
+
+								AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
+
+								AddLumenBox(LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
+
+								HasFace = true;
+							}
+						}
+
+						if (HasFace)
+						{
+							NewRenderData->DistanceFieldInstanceData.Add(FTransform(FVector(VoxelLocation)));
+						}
+					}
+				}
+
+				/* Fill In Lumen Data */
+				{
+					NewRenderData->LumenCardData = new FCardRepresentationData();
+
+					NewRenderData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
+
+					NewRenderData->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds.GetBox();
+
+					for (const auto& LumenBoxMap : LumenBox)
+					{
+						FLumenCardBuildData LumenCard;
+
+						LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
+
+						LumenCard.LODLevel = 0;
+
+						FVector BoxExtent = LumenBoxMap.Value.GetExtent();
+
+						LumenCard.OBB.Extent = FVector3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(BoxExtent).GetAbs());
+
+						FRotationMatrix44f R(FRotator3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X]));
+						R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
+
+						LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
+
+						NewRenderData->LumenCardData->MeshCardsBuildData.CardBuildData.Add(LumenCard);
+					}
+				}
+
+				NewRenderData->DistanceFieldInstanceData.Shrink();
+
+				AsyncTask(ENamedThreads::GameThread, [NewRenderData, this]() {
+					if (IsValid(this) == false) return;
+
+					ChuckStatus.bIsGeneratingMesh = false;
+
+					bool bIsVoxelMeshValid = false;
+
+					for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
+					{
+						if (Buffer.TriangleCount > 0)
+						{
+							bIsVoxelMeshValid = true;
+						}
+					}
+
+					if (bIsVoxelMeshValid)
+					{
+						RenderData = NewRenderData;
+
+						if (IsValid(DistanceFieldMesh))
+							RenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
+					}
+					else
+					{
+						RenderData = nullptr;
+					}
+
+					MarkRenderStateDirty();
+					RebuildPhysicsData();
+					});
+
+			}
+		);
 	}
 }
 

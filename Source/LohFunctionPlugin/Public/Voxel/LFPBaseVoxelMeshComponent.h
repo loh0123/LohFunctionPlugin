@@ -38,6 +38,10 @@ struct FLFPBaseVoxelMeshStatus
 
 public:
 
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelColorDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingColor : 1;
+
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
 	
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingMesh : 1;
@@ -202,11 +206,14 @@ public: /* Functions For Setting Up Component */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelMesh();
 
+	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
+		FORCEINLINE void UpdateVoxelColor();
+
 protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private: // Helper Functions
 
@@ -253,6 +260,9 @@ public: // Collision Handler
 protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+		TObjectPtr<UTexture2D> VoxelColorMap = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
@@ -273,6 +283,8 @@ private:
 	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
 	FLFPBaseVoxelMeshConstantData ConstantData;
+
+	TUniquePtr<FUpdateTextureRegion2D> ColorMapRegion = nullptr;
 
 protected:
 
