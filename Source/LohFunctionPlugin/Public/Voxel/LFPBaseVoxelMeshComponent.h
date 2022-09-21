@@ -225,7 +225,7 @@ private: // Helper Functions
 
 	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
 
-	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
+	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
 protected: // Rendering Handler
 
@@ -264,7 +264,10 @@ public: // Collision Handler
 protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
-		TObjectPtr<UTexture2D> VoxelColorMap = nullptr;
+		TObjectPtr<UTexture2D> VoxelDataTexture = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+		TObjectPtr<UTexture2D> VoxelColorTexture = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;

@@ -312,13 +312,15 @@ public: /* Function For Render Component To Get Container Data */
 	}
 
 	/* This Is Use To Access Voxel Visible Outside Of The Local Chuck */
-	FORCEINLINE bool IsVoxelVisible(const FLFPVoxelGridIndex VoxelGridIndex) const
+	FORCEINLINE bool IsVoxelVisible(const FLFPVoxelGridIndex VoxelGridIndex, const int32 CurrentMaterialID ) const
 	{
-		return GetVoxelName(VoxelGridIndex) != ContainerSetting.InvisibleName;
+		const FName& CheckName = GetVoxelName(VoxelGridIndex);
+
+		return CheckName != ContainerSetting.InvisibleName && GetVoxelAttributeByName(CheckName).MaterialID == CurrentMaterialID;
 	}
 
 	/* This Is Use To Access Voxel Visible On Local Chuck */
-	FORCEINLINE bool IsVoxelVisibleByName(const FName VoxelName) const
+	FORCEINLINE bool IsVoxelVisibleByName(const FName& VoxelName) const
 	{
 		return VoxelName != ContainerSetting.InvisibleName;
 	}

@@ -37,18 +37,27 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
 		/* This Clean Up Color Map If Valid */
-		if (IsValid(VoxelColorMap))
+		if (IsValid(VoxelColorTexture))
 		{
-			VoxelColorMap->MarkAsGarbage();
+			VoxelColorTexture->MarkAsGarbage();
 
-			VoxelColorMap = nullptr;
+			VoxelColorTexture = nullptr;
 		}
 
-		/* THis Setup Color Map */
+		/* This Clean Up Data Map If Valid */
+		if (IsValid(VoxelDataTexture))
+		{
+			VoxelDataTexture->MarkAsGarbage();
+
+			VoxelDataTexture = nullptr;
+		}
+
+		/* THis Setup Texture */
 		{
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
-			VoxelColorMap = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
+			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
+			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
 		}
 
 		/* This Setup Voxel */
@@ -111,11 +120,18 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (IsValid(VoxelColorMap))
+	if (IsValid(VoxelColorTexture))
 	{
-		VoxelColorMap->MarkAsGarbage();
+		VoxelColorTexture->MarkAsGarbage();
 
-		VoxelColorMap = nullptr;
+		VoxelColorTexture = nullptr;
+	}
+
+	if (IsValid(VoxelDataTexture))
+	{
+		VoxelDataTexture->MarkAsGarbage();
+
+		VoxelDataTexture = nullptr;
 	}
 }
 
@@ -127,7 +143,22 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	
 		const TArray<FColor>& VoxelColorList = VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex);
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelColorMap, VoxelColorList);
+		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelColorList);
+
+		TArray<FColor> DataColorList;
+
+		DataColorList.SetNum(VoxelContainer->GetContainerSetting().VoxelLength);
+
+		const TArray<FName>& VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckInfo.ChuckIndex);
+
+		ParallelFor(VoxelContainer->GetContainerSetting().VoxelLength, 
+			[&](const int32 Index) 
+			{
+				DataColorList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelNameList[Index]) ? 255 : 0;
+			}
+		);
+
+		ULFPRenderLibrary::UpdateTexture2D(VoxelDataTexture, DataColorList);
 	}
 
 	if (ChuckStatus.bIsVoxelMeshDirty && ChuckStatus.bIsGeneratingMesh == false)
@@ -186,7 +217,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 						{
 							const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
 
-							if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up)) == false)
+							if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up), VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
 							{
 								const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
@@ -332,18 +363,18 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 	{
 		const TArray<uint8> VoxelEdgeList =
 		{
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward, ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right, ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward * -1, ConstantData.FaceDirection[FaceIndex].Up),
-			CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right * -1, ConstantData.FaceDirection[FaceIndex].Up),
+			CheckVoxelDirectionVisible(LocalVoxelContainer , VoxelAttribute.MaterialID, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward, ConstantData.FaceDirection[FaceIndex].Up),
+			CheckVoxelDirectionVisible(LocalVoxelContainer , VoxelAttribute.MaterialID, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right, ConstantData.FaceDirection[FaceIndex].Up),
+			CheckVoxelDirectionVisible(LocalVoxelContainer , VoxelAttribute.MaterialID, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Forward * -1, ConstantData.FaceDirection[FaceIndex].Up),
+			CheckVoxelDirectionVisible(LocalVoxelContainer , VoxelAttribute.MaterialID, VoxelGlobalGridLocation, ConstantData.FaceDirection[FaceIndex].Right * -1, ConstantData.FaceDirection[FaceIndex].Up),
 		};
 
 		const TArray<uint8> VoxelPointList =
 		{
-			(VoxelEdgeList[0] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward	 ) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
-			(VoxelEdgeList[0] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward     ) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
-			(VoxelEdgeList[2] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
-			(VoxelEdgeList[2] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[0] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelAttribute.MaterialID, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward	 ) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[0] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelAttribute.MaterialID, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward     ) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[2] != 0 || VoxelEdgeList[1] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelAttribute.MaterialID, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right     ), ConstantData.FaceDirection[FaceIndex].Up),
+			(VoxelEdgeList[2] != 0 || VoxelEdgeList[3] != 0) ? uint8(0) : CheckVoxelDirectionVisible(LocalVoxelContainer, VoxelAttribute.MaterialID, VoxelGlobalGridLocation, (ConstantData.FaceDirection[FaceIndex].Forward * -1) + (ConstantData.FaceDirection[FaceIndex].Right * -1), ConstantData.FaceDirection[FaceIndex].Up),
 		};
 
 		const uint8 EdgeCount = (VoxelEdgeList[0] != 0 ? 1 : 0) + (VoxelEdgeList[1] != 0 ? 1 : 0) + (VoxelEdgeList[2] != 0 ? 1 : 0) + (VoxelEdgeList[3] != 0 ? 1 : 0);
@@ -541,13 +572,13 @@ void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, co
 	}
 }
 
-uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
+uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
 {
-	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up)))
+	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up), MateriaID))
 	{
 		return 1;
 	}
-	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction)))
+	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction), MateriaID))
 	{
 		return 0;
 	}
