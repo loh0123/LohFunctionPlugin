@@ -199,10 +199,16 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChuckInitialize, const int32, Chu
 /**
  *
  */
-UCLASS(BlueprintType)
-class LOHFUNCTIONPLUGIN_API ULFPVoxelContainer : public UObject
+UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Voxel)
+class LOHFUNCTIONPLUGIN_API ULFPVoxelContainer : public UActorComponent
 {
 	GENERATED_BODY()
+
+public:
+
+	ULFPVoxelContainer();
+
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 protected:
 
@@ -215,15 +221,16 @@ public:
 
 protected: // Initialize Data
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "VoxelData | Setting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelData | Setting")
 		FLFPVoxelContainerSettingV2 ContainerSetting;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelData | Setting") 
+		TObjectPtr<UDataTable> VoxelAttributeTable;
 
 
 protected:  // Runtime Data
 
-	UPROPERTY() TObjectPtr<UDataTable> VoxelAttributeTable;
-
-	UPROPERTY() TArray<FLFPVoxelChuckDataV2> ChuckData;
+	UPROPERTY(replicated) TArray<FLFPVoxelChuckDataV2> ChuckData;
 
 	UPROPERTY() TSet<int32> BatchChuckUpdateList;
 
@@ -352,6 +359,14 @@ public: /* Function For Prepare Render Component To Use Container Data */
 		
 		VoxelChuckUpdateEvent.Broadcast(ChuckIndex);
 	}
+
+protected:
+
+	virtual void BeginPlay() override;
+
+public:
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
 public: /* Function For External Blueprint Or C++ To Use */

@@ -7,6 +7,36 @@
 
 #include "Voxel/LFPVoxelContainer.h"
 #include "./Math/LFPGridLibrary.h"
+#include "Net/UnrealNetwork.h"
+
+ULFPVoxelContainer::ULFPVoxelContainer()
+{
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
+}
+
+void ULFPVoxelContainer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ULFPVoxelContainer, ChuckData);
+}
+
+void ULFPVoxelContainer::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetupVoxelData(VoxelAttributeTable, ContainerSetting);
+}
+
+void ULFPVoxelContainer::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	UpdateChuck();
+	UpdateChuckColor();
+}
 
 int32 ULFPVoxelContainer::GetContainerSize()
 {
@@ -107,7 +137,13 @@ bool ULFPVoxelContainer::SetupVoxelData(UDataTable* NewVoxelAttributeTable, cons
 {
 	FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
 
-	if (NewVoxelAttributeTable == nullptr || NewVoxelAttributeTable->GetRowStruct()->IsChildOf(FLFPVoxelAttributeV2::StaticStruct()) == false) return false;
+	if (NewVoxelAttributeTable == nullptr || NewVoxelAttributeTable->GetRowStruct()->IsChildOf(FLFPVoxelAttributeV2::StaticStruct()) == false)
+	{
+		VoxelAttributeTable = nullptr;
+		ContainerSetting = FLFPVoxelContainerSettingV2();
+
+		return false;
+	}
 
 	ContainerSetting = NewSetting;
 
