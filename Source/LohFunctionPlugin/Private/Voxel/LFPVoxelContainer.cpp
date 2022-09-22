@@ -237,13 +237,18 @@ void ULFPVoxelContainer::SetChuckGridData(const int32 ChuckIndex, const FName Vo
 	return;
 }
 
-void ULFPVoxelContainer::SetChuckGridDataWithHeight(const int32 ChuckIndex, const FIntPoint VoxelGridPosition, const float Height, const FName VoxelAttributeName)
+void ULFPVoxelContainer::SetChuckGridDataWithHeight(const int32 ChuckIndex, const FIntPoint VoxelGridPosition, const float Height, const FName VoxelAttributeName, const bool bInitializeChuck)
 {
 	FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
 
 	if (ChuckData.IsValidIndex(ChuckIndex) && ULFPGridLibrary::IsLocationValid(FIntVector(VoxelGridPosition.X, VoxelGridPosition.Y, 0), ContainerSetting.VoxelGridSize))
 	{
-		if (ChuckData[ChuckIndex].IsInitialized() == false) return;
+		if (ChuckData[ChuckIndex].IsInitialized() == false)
+		{
+			if (bInitializeChuck == false) return;
+
+			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, ContainerSetting.InvisibleName);
+		}
 		
 		const int32 HeightIndex = ContainerSetting.VoxelGridSize.Z * Height;
 
