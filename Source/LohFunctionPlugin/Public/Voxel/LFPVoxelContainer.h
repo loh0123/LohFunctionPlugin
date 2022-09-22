@@ -54,7 +54,7 @@ public:
 		int32 MaterialID = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
-		FVector2D UVOffset = FVector2D(0);
+		uint8 TextureOffset = uint8(0);
 };
 
 DECLARE_DELEGATE(FOnVoxelChuckUpdate);
@@ -369,7 +369,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void MarkChuckForColorUpdate(const int32 ChuckIndex);
+		FORCEINLINE void MarkChuckForColorUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE bool SetupVoxelData(UDataTable* NewVoxelAttributeTable, const FLFPVoxelContainerSettingV2 NewSetting);

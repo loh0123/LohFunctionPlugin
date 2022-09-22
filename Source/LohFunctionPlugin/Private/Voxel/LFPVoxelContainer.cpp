@@ -43,6 +43,8 @@ void ULFPVoxelContainer::UpdateChuckColor()
 
 void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
+	MarkChuckForColorUpdate(ChuckIndex, bUpdateNearbyChuck);
+
 	if (bUpdateNearbyChuck)
 	{
 		const TArray<FIntVector> UpdateDirection =
@@ -71,8 +73,31 @@ void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool b
 	return;
 }
 
-void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex)
+void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
+	if (bUpdateNearbyChuck)
+	{
+		const TArray<FIntVector> UpdateDirection =
+		{
+			FIntVector(0, 0, 1),
+			FIntVector(0, 0,-1),
+			FIntVector(0, 1, 0),
+			FIntVector(0,-1, 0),
+			FIntVector(1, 0, 0),
+			FIntVector(-1, 0, 0)
+		};
+
+		const FIntVector ChuckLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+
+		for (const FIntVector& Direction : UpdateDirection)
+		{
+			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
+			{
+				BatchChuckColorUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+			}
+		}
+	}
+
 	BatchChuckColorUpdateList.Add(ChuckIndex);
 
 	return;
@@ -142,7 +167,9 @@ void ULFPVoxelContainer::SetVoxelGridColor(const FLFPVoxelGridIndex VoxelGridInd
 			ChuckData[VoxelGridIndex.ChuckIndex].SetVoxelColor(VoxelGridIndex.VoxelIndex, VoxelColor);
 		}
 
-		MarkChuckForColorUpdate(VoxelGridIndex.ChuckIndex);
+		const FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelGridIndex.VoxelIndex, ContainerSetting.VoxelGridSize);
+
+		MarkChuckForColorUpdate(VoxelGridIndex.ChuckIndex, ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 	}
 
 	return;

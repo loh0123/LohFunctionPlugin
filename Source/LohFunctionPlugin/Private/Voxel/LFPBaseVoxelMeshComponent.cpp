@@ -57,7 +57,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
 			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
-			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
+			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X + 2, (VoxelGridSize.Y + 2) * (VoxelGridSize.Z + 2)), TF_Nearest);
 		}
 
 		/* This Setup Voxel */
@@ -147,14 +147,22 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		TArray<FColor> DataColorList;
 
-		DataColorList.SetNum(VoxelContainer->GetContainerSetting().VoxelLength);
+		const FIntVector DataColorGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize + FIntVector(2);
+		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
 
-		const TArray<FName>& VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckInfo.ChuckIndex);
+		DataColorList.SetNum(DataColorSize);
 
-		ParallelFor(VoxelContainer->GetContainerSetting().VoxelLength, 
+		// const TArray<FName>& VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckInfo.ChuckIndex);
+
+		ParallelFor(DataColorSize,
 			[&](const int32 Index) 
 			{
-				DataColorList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelNameList[Index]) ? 255 : 0;
+				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::IndexToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + ChuckInfo.StartVoxelLocation;
+
+				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation));
+				
+				DataColorList[Index].R = VoxelContainer->GetVoxelAttributeByName(VoxelName).TextureOffset;
+				DataColorList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelName) ? 255 : 0;
 			}
 		);
 
@@ -346,8 +354,8 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 		const FVector2f MinUVFaceOffset = FVector2f(VoxelUVPosition    ) / FVector2f(VoxelUVRound);
 		const FVector2f MaxUVFaceOffset = FVector2f(VoxelUVPosition + 1) / FVector2f(VoxelUVRound);
 
-		const FVector2f MinUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MinUVFaceOffset + FVector2f(VoxelAttribute.UVOffset);
-		const FVector2f MaxUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MaxUVFaceOffset + FVector2f(VoxelAttribute.UVOffset);
+		const FVector2f MinUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MinUVFaceOffset;
+		const FVector2f MaxUVOffset = FVector2f(ConstantData.FaceUVStartOffset[FaceIndex]) + MaxUVFaceOffset;
 
 		EditMesh.UVList.Append({
 			FVector2f(MinUVOffset.X, MinUVOffset.Y),
