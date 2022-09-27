@@ -160,6 +160,7 @@ public:
 	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
 		  VoxelComponent(Component)
 		, RenderData(Component->RenderData.GetReference())
+		, LumenData(Component->LumenData.GetReference())
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
 		bCastDynamicShadow = true;
@@ -167,8 +168,8 @@ public:
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 		bVerifyUsedMaterials = false;
 
-		bSupportsDistanceFieldRepresentation = true;
-		bSupportsMeshCardRepresentation = true;
+		bSupportsDistanceFieldRepresentation = LumenData != nullptr;
+		bSupportsMeshCardRepresentation = LumenData != nullptr;
 
 		const TArray<FLFPBaseVoxelMeshSectionData>& BufferDataList = Component->RenderData->Sections;
 
@@ -246,6 +247,7 @@ public:
 	virtual ~FLFPBaseVoxelMeshSceneProxy()
 	{
 		RenderData = nullptr;
+		LumenData = nullptr;
 		VoxelComponent = nullptr;
 
 		for (FLFPVoxelMeshRenderBufferSet* Buffer : AllocatedBufferSets)
@@ -414,12 +416,12 @@ public:
 
 	virtual const FCardRepresentationData* GetMeshCardRepresentation() const
 	{
-		return RenderData->LumenCardData;
+		return LumenData->LumenCardData;
 	}
 
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
 	{
-		OutDistanceFieldData = RenderData->DistanceFieldMeshData;
+		OutDistanceFieldData = LumenData->DistanceFieldMeshData;
 		SelfShadowBias = 1.0f;
 	}
 
@@ -427,15 +429,12 @@ public:
 	{
 		FRenderTransform CurrentLocal = (FMatrix44f)GetLocalToWorld();
 
-		for (const FTransform& DFTransform : RenderData->DistanceFieldInstanceData)
-		{
-			ObjectLocalToWorldTransforms.Add(DFTransform.ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
-		}
+		ObjectLocalToWorldTransforms.Add(FTransform().ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
 	}
 
 	virtual bool HasDistanceFieldRepresentation() const override
 	{
-		return RenderData->DistanceFieldMeshData != nullptr;
+		return LumenData != nullptr;
 	}
 
 #if RHI_RAYTRACING
@@ -529,6 +528,8 @@ protected:
 	ULFPBaseVoxelMeshComponent* VoxelComponent = nullptr;
 
 	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
+
+	TRefCountPtr<FLFPBaseVoxelMeshLumenData> LumenData = nullptr;
 
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 

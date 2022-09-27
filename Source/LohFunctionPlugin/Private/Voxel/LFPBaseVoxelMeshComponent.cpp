@@ -9,15 +9,21 @@
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
 #include "MeshCardRepresentation.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Misc/QueuedThreadPoolWrapper.h"
 #include "Render/LFPRenderLibrary.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelMeshComponentLog);
 
-FLFPBaseVoxelMeshRenderData::~FLFPBaseVoxelMeshRenderData()
+FLFPBaseVoxelMeshLumenData::~FLFPBaseVoxelMeshLumenData()
 {
 	if (LumenCardData)
 	{
 		delete LumenCardData;
+	}
+
+	if (DistanceFieldMeshData)
+	{
+		delete DistanceFieldMeshData;
 	}
 
 	DistanceFieldMeshData = nullptr;
@@ -30,12 +36,30 @@ ULFPBaseVoxelMeshComponent::ULFPBaseVoxelMeshComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+void ULFPBaseVoxelMeshComponent::BeginDestroy()
+{
+	if (RenderTask && RenderTask->IsDone() == false)
+	{
+		RenderTask->EnsureCompletion(false);
+	}
 
+	if (LumenTask && LumenTask->IsDone() == false)
+	{
+		LumenTask->EnsureCompletion(false);
+	}
+
+	Super::BeginDestroy();
+}
 
 void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName)
 {
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
+		if (!MeshUtilities)
+		{
+			MeshUtilities = &FModuleManager::Get().LoadModuleChecked<IMeshUtilities>(TEXT("MeshUtilities"));
+		}
+
 		/* This Clean Up Color Map If Valid */
 		if (IsValid(VoxelColorTexture))
 		{
@@ -99,6 +123,7 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	if (IsValid(VoxelContainer))
 	{
 		ChuckStatus.bIsVoxelMeshDirty = true;
+		ChuckStatus.bIsVoxelDataDirty = true;
 	}
 	else
 	{
@@ -120,6 +145,19 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (RenderTask)
+	{
+		RenderTask->Cancel();
+	}
+	
+	if (LumenTask)
+	{
+		LumenTask->Cancel();
+	}
+
+	RenderData = nullptr;
+	LumenData = nullptr;
+
 	if (IsValid(VoxelColorTexture))
 	{
 		VoxelColorTexture->MarkAsGarbage();
@@ -133,26 +171,29 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 
 		VoxelDataTexture = nullptr;
 	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	if (ChuckStatus.bIsVoxelColorDirty)
-	{	
+	{
 		ChuckStatus.bIsVoxelColorDirty = false;
-	
-		const TArray<FColor>& VoxelColorList = VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex);
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelColorList);
+		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex));
+	}
 
-		TArray<FColor> DataColorList;
+	if (ChuckStatus.bIsVoxelDataDirty)
+	{
+		ChuckStatus.bIsVoxelDataDirty = false;
 
 		const FIntVector DataColorGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize + FIntVector(2);
 		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
 
-		DataColorList.SetNum(DataColorSize);
+		TArray<FColor> DataColorList;
 
-		// const TArray<FName>& VoxelNameList = VoxelContainer->GetVoxelNameList(ChuckInfo.ChuckIndex);
+		DataColorList.SetNum(DataColorSize);
 
 		ParallelFor(DataColorSize,
 			[&](const int32 Index) 
@@ -175,139 +216,294 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		ChuckStatus.bIsVoxelMeshDirty = false;
 
-		const FBoxSphereBounds LocalBounds = GetLocalBounds();
+		FLFPBaseBoxelRenderParam RenderParam;
 
-		const int32 SectionSize = FMath::Max(GetNumMaterials(), 1);
+		RenderParam.LocalBounds = GetLocalBounds();
+		RenderParam.LocalChuckInfo = ChuckInfo;
+		RenderParam.LocalChuckSetting = ChuckSetting;
+		RenderParam.LocalVoxelContainer = VoxelContainer;
+		RenderParam.SectionSize = FMath::Max(GetNumMaterials(), 1);
+		RenderParam.SharePtr = this;
 
-		AsyncTask(ENamedThreads::AnyNormalThreadNormalTask, [LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalChuckSetting = ChuckSetting, LocalBounds, SectionSize, this]()
+		if (RenderTask == nullptr)
+		{
+			RenderTask = new FAsyncTask<FLFPBaseBoxelRenderTask>(RenderParam);
+		}
+		else
+		{
+			RenderTask->GetTask().RenderParam = RenderParam;
+		}
+
+		RenderTask->StartBackgroundTask();
+
+		//Async(EAsyncExecution::TaskGraph, [LocalVoxelContainer = VoxelContainer, LocalChuckInfo = ChuckInfo, LocalChuckSetting = ChuckSetting, LocalBounds, SectionSize, this]()
+		//	{
+		//		if (IsValid(this) == false || HasBegunPlay() == false) return;
+		//
+		//		FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
+		//
+		//		FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
+		//
+		//		NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), SectionSize);
+		//
+		//		const TArray<FName>& VoxelNameList = LocalVoxelContainer->GetVoxelNameList(LocalChuckInfo.ChuckIndex);
+		//
+		//		const FVector VoxelHalfSize = LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+		//		const FVector VoxelRenderOffset = -LocalVoxelContainer->GetContainerSetting().HalfRenderBound + LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+		//		const FIntPoint VoxelUVRound = LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
+		//
+		//		FIntVector LumenBatch = LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
+		//		
+		//		if (LumenBatch.X == 0) LumenBatch.X = 1;
+		//		if (LumenBatch.Y == 0) LumenBatch.Y = 1;
+		//		if (LumenBatch.Z == 0) LumenBatch.Z = 1;
+		//
+		//		for (int32 VoxelIndex = 0; VoxelIndex < LocalVoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
+		//		{
+		//			const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
+		//
+		//			const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
+		//
+		//			const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+		//
+		//			if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
+		//			{
+		//				const FBox VoxelBounds = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize);
+		//
+		//				for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
+		//				{
+		//					const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
+		//
+		//					if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up), VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
+		//					{
+		//						const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
+		//
+		//						AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
+		//
+		//						AddLumenBox(NewRenderData->LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
+		//					}
+		//				}
+		//			}
+		//		}
+		//
+		//		AsyncTask(ENamedThreads::GameThread, [NewRenderData, this]() {
+		//			if (IsValid(this) == false || HasBegunPlay() == false)
+		//			{
+		//				delete NewRenderData;
+		//			}
+		//			else
+		//			{
+		//				bool bIsVoxelMeshValid = false;
+		//
+		//				for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
+		//				{
+		//					if (Buffer.TriangleCount > 0)
+		//					{
+		//						bIsVoxelMeshValid = true;
+		//					}
+		//				}
+		//
+		//				if (bIsVoxelMeshValid)
+		//				{
+		//					RenderData = NewRenderData;
+		//
+		//					ChuckStatus.bIsLumenDataDirty = true;
+		//				}
+		//				else
+		//				{
+		//					RenderData = nullptr;
+		//
+		//					delete NewRenderData;
+		//				}
+		//
+		//				ChuckStatus.bIsGeneratingMesh = false;
+		//
+		//				MarkRenderStateDirty();
+		//				RebuildPhysicsData();
+		//			}
+		//		});
+		//
+		//		return;
+		//	}
+		//);
+	}
+
+	if (ChuckStatus.bIsLumenDataDirty && ChuckStatus.bIsGeneratingMesh == false && ChuckStatus.bIsGeneratingLumen == false)
+	{
+		ChuckStatus.bIsLumenDataDirty = false;
+		ChuckStatus.bIsGeneratingLumen = true;
+
+		FLFPBaseBoxelLumenParam LumenParam;
+
+		LumenParam.LODSectionData = new FStaticMeshLODResources();
+		LumenParam.SharePtr = this;
+		LumenParam.LocalBounds = GetLocalBounds();
+		LumenParam.LocalChuckSetting = ChuckSetting;
+		LumenParam.LumenBox = RenderData->LumenBox;
+
+		for (int32 SectionIndex = 0; SectionIndex < RenderData->Sections.Num(); SectionIndex++)
+		{
 			{
-				if (IsValid(this) == false || IsValid(LocalVoxelContainer) == false)
-				{
-					return;
-				}
+				FStaticMeshSection Section;
+				Section.MaterialIndex = SectionIndex;
 
-				FRWScopeLock ReadLock(LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
-
-				FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
-
-				NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), SectionSize);
-				NewRenderData->DistanceFieldInstanceData.Reserve(LocalVoxelContainer->GetContainerSetting().VoxelLength);
-
-				const TArray<FName>& VoxelNameList = LocalVoxelContainer->GetVoxelNameList(LocalChuckInfo.ChuckIndex);
-
-				const FVector VoxelHalfSize = LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
-				const FVector VoxelRenderOffset = -LocalVoxelContainer->GetContainerSetting().HalfRenderBound + LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
-				const FIntPoint VoxelUVRound = LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
-
-				FIntVector LumenBatch = LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
-				
-				if (LumenBatch.X == 0) LumenBatch.X = 1;
-				if (LumenBatch.Y == 0) LumenBatch.Y = 1;
-				if (LumenBatch.Z == 0) LumenBatch.Z = 1;
-
-				TMap<FIntPoint, FBox> LumenBox;
-
-				for (int32 VoxelIndex = 0; VoxelIndex < LocalVoxelContainer->GetContainerSetting().VoxelLength && IsValid(this); VoxelIndex++)
-				{
-					const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
-
-					const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
-
-					const FLFPVoxelAttributeV2& VoxelAttribute = LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
-
-					if (LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
-					{
-						bool HasFace = false;
-
-						const FBox VoxelBounds = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize);
-
-						for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
-						{
-							const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + LocalChuckInfo.StartVoxelLocation;
-
-							if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + ConstantData.FaceDirection[FaceIndex].Up), VoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
-							{
-								const int32 MaterialID = VoxelAttribute.MaterialID < GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
-
-								AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
-
-								AddLumenBox(LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
-
-								HasFace = true;
-							}
-						}
-
-						if (HasFace)
-						{
-							NewRenderData->DistanceFieldInstanceData.Add(FTransform(FVector(VoxelLocation)));
-						}
-					}
-				}
-
-				/* Fill In Lumen Data */
-				{
-					NewRenderData->LumenCardData = new FCardRepresentationData();
-
-					NewRenderData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
-
-					NewRenderData->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds.GetBox();
-
-					for (const auto& LumenBoxMap : LumenBox)
-					{
-						FLumenCardBuildData LumenCard;
-
-						LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
-
-						LumenCard.LODLevel = 0;
-
-						FVector BoxExtent = LumenBoxMap.Value.GetExtent();
-
-						LumenCard.OBB.Extent = FVector3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X].UnrotateVector(BoxExtent).GetAbs());
-
-						FRotationMatrix44f R(FRotator3f(ConstantData.VertexRotationList[LumenBoxMap.Key.X]));
-						R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
-
-						LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
-
-						NewRenderData->LumenCardData->MeshCardsBuildData.CardBuildData.Add(LumenCard);
-					}
-				}
-
-				NewRenderData->DistanceFieldInstanceData.Shrink();
-
-				AsyncTask(ENamedThreads::GameThread, [NewRenderData, this]() {
-					if (IsValid(this) == false) return;
-
-					ChuckStatus.bIsGeneratingMesh = false;
-
-					bool bIsVoxelMeshValid = false;
-
-					for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
-					{
-						if (Buffer.TriangleCount > 0)
-						{
-							bIsVoxelMeshValid = true;
-						}
-					}
-
-					if (bIsVoxelMeshValid)
-					{
-						RenderData = NewRenderData;
-
-						if (IsValid(DistanceFieldMesh))
-							RenderData->DistanceFieldMeshData = DistanceFieldMesh->GetRenderData()->LODResources[0].DistanceFieldData;
-					}
-					else
-					{
-						RenderData = nullptr;
-					}
-
-					MarkRenderStateDirty();
-					RebuildPhysicsData();
-					});
-
+				LumenParam.LODSectionData->Sections.Add(Section);
 			}
-		);
+
+			{
+				FSignedDistanceFieldBuildMaterialData MaterialData;
+				// Default material blend mode
+				MaterialData.BlendMode = BLEND_Opaque;
+				MaterialData.bTwoSided = false;
+
+				if (IsValid(GetMaterial(SectionIndex)))
+				{
+					MaterialData.BlendMode = GetMaterial(SectionIndex)->GetBlendMode();
+					MaterialData.bTwoSided = GetMaterial(SectionIndex)->IsTwoSided();
+				}
+
+				if (MaterialData.bTwoSided)
+				{
+					LumenParam.bIsTwoSide = true;
+				}
+
+				LumenParam.LocalMaterialBlendModes.Add(MaterialData);
+			}
+
+			{
+				const FLFPBaseVoxelMeshSectionData& SectionData = RenderData->Sections[SectionIndex];
+
+				LumenParam.LocalSourceMeshData.VertexPositions.Append(SectionData.VertexList);
+
+				const uint32 StartIndex = LumenParam.LocalSourceMeshData.TriangleIndices.Num();
+
+				LumenParam.LocalSourceMeshData.TriangleIndices.Reserve(LumenParam.LocalSourceMeshData.TriangleIndices.Num() + SectionData.TriangleIndexList.Num());
+
+				for (const uint32 TriangleIndex : SectionData.TriangleIndexList)
+				{
+					LumenParam.LocalSourceMeshData.TriangleIndices.Add(TriangleIndex + StartIndex);
+				}
+			}
+		}
+
+		if (LumenTask == nullptr)
+		{
+			LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
+		}
+		else
+		{
+			LumenTask->GetTask().LumenParam = LumenParam;
+		}
+
+		LumenTask->StartBackgroundTask();
+
+		//LumenDataTask = Async(EAsyncExecution::ThreadPool, [SharePtr = TStrongObjectPtr<ULFPBaseVoxelMeshComponent>(this), bLocalUseNativeLumenCalculation = bUseNativeLumenCalculation, LumenBox = RenderData->LumenBox, DSResolution = DistanceFieldResolution, LocalBounds, LocalMaterialBlendModes = MoveTemp(MaterialBlendModes), LocalSourceMeshData = MoveTemp(SourceMeshData), LODSectionData, bIsTwoSide]()
+		//	{
+		//		ULFPBaseVoxelMeshComponent* OwnerPtr = SharePtr.Get();
+		//
+		//		if (IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false || SharePtr.IsValid() == false)
+		//		{
+		//			LODSectionData->Release();
+		//			return;
+		//		}
+		//
+		//		FLFPBaseVoxelMeshLumenData* NewLumenData = new FLFPBaseVoxelMeshLumenData();
+		//
+		//		NewLumenData->DistanceFieldMeshData = new FDistanceFieldVolumeData();
+		//
+		//		NewLumenData->LumenCardData = new FCardRepresentationData();;
+		//
+		//		FQueuedThreadPoolTaskGraphWrapper SDPPool(ENamedThreads::AnyBackgroundThreadNormalTask);
+		//
+		//		OwnerPtr->MeshUtilities->GenerateSignedDistanceFieldVolumeData(
+		//			"VoxelMesh",
+		//			LocalSourceMeshData,
+		//			*LODSectionData,
+		//			SDPPool,
+		//			LocalMaterialBlendModes,
+		//			LocalBounds,
+		//			DSResolution,
+		//			bIsTwoSide,
+		//			*NewLumenData->DistanceFieldMeshData
+		//		);
+		//
+		//		/* Fill In Lumen Data */
+		//		if (!bLocalUseNativeLumenCalculation)
+		//		{
+		//			NewLumenData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
+		//
+		//			NewLumenData->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds.GetBox();
+		//
+		//			NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData.SetNumUninitialized(LumenBox.Num());
+		//
+		//			int32 Index = 0;
+		//
+		//			for (const auto& LumenBoxMap : LumenBox)
+		//			{
+		//				FLumenCardBuildData LumenCard;
+		//
+		//				LumenCard.AxisAlignedDirectionIndex = OwnerPtr->ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
+		//
+		//				LumenCard.LODLevel = 0;
+		//
+		//				FVector BoxExtent = LumenBoxMap.Value.GetExtent();
+		//
+		//				const FRotator& VertexRotation = OwnerPtr->ConstantData.VertexRotationList[LumenBoxMap.Key.X];
+		//
+		//				LumenCard.OBB.Extent = FVector3f(VertexRotation.UnrotateVector(BoxExtent).GetAbs());
+		//
+		//				FRotationMatrix44f R = FRotationMatrix44f(FRotator3f(VertexRotation));
+		//				R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
+		//
+		//				LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
+		//
+		//				NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData[Index++] = (LumenCard);
+		//			}
+		//		}
+		//		else
+		//		{
+		//			OwnerPtr->MeshUtilities->GenerateCardRepresentationData(
+		//				"VoxelMesh",
+		//				LocalSourceMeshData,
+		//				*LODSectionData,
+		//				SDPPool,
+		//				LocalMaterialBlendModes,
+		//				LocalBounds,
+		//				NewLumenData->DistanceFieldMeshData,
+		//				32,
+		//				bIsTwoSide,
+		//				*NewLumenData->LumenCardData
+		//			);
+		//		}
+		//
+		//
+		//		LODSectionData->Release();
+		//
+		//		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr]() {
+		//			ULFPBaseVoxelMeshComponent* OwnerPtr = SharePtr.Get();
+		//
+		//			if (IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false || SharePtr.IsValid() == false)
+		//			{
+		//				delete NewLumenData;
+		//			}
+		//			else
+		//			{
+		//				OwnerPtr->LumenData = NewLumenData;
+		//
+		//				if (OwnerPtr->LumenData->DistanceFieldMeshData == nullptr || OwnerPtr->LumenData->LumenCardData == nullptr)
+		//				{
+		//					OwnerPtr->LumenData = nullptr;
+		//				}
+		//
+		//				OwnerPtr->ChuckStatus.bIsGeneratingLumen = false;
+		//				OwnerPtr->LumenDataTask.Reset();
+		//				OwnerPtr->MarkRenderStateDirty();
+		//			}
+		//			});
+		//
+		//		return;
+		//	}
+		//);
 	}
 }
 
@@ -615,9 +811,9 @@ FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalT
 	if (IsValid(VoxelContainer))
 	{
 		FRWScopeLock ReadLock(VoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
-
+	
 		const FVector& VoxelSize = VoxelContainer->GetContainerSetting().HalfRenderBound;
-
+	
 		VoxelBox = FBox(-VoxelSize, VoxelSize);
 	}
 	else
@@ -796,3 +992,199 @@ void ULFPBaseVoxelMeshComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetu
 	}
 }
 
+void FLFPBaseBoxelLumenTask::DoWork()
+{
+	ULFPBaseVoxelMeshComponent* OwnerPtr = LumenParam.SharePtr;
+
+	FLFPBaseVoxelMeshLumenData* NewLumenData = new FLFPBaseVoxelMeshLumenData();
+
+	NewLumenData->DistanceFieldMeshData = new FDistanceFieldVolumeData();
+
+	NewLumenData->LumenCardData = new FCardRepresentationData();;
+
+	FQueuedThreadPoolTaskGraphWrapper SDPPool(ENamedThreads::AnyBackgroundThreadNormalTask);
+
+	OwnerPtr->MeshUtilities->GenerateSignedDistanceFieldVolumeData(
+		"VoxelMesh",
+		LumenParam.LocalSourceMeshData,
+		*LumenParam.LODSectionData,
+		SDPPool,
+		LumenParam.LocalMaterialBlendModes,
+		LumenParam.LocalBounds,
+		LumenParam.LocalChuckSetting.DistanceFieldResolution,
+		LumenParam.bIsTwoSide,
+		*NewLumenData->DistanceFieldMeshData
+	);
+
+	/* Fill In Lumen Data */
+	if (!LumenParam.LocalChuckSetting.bUseNativeLumenCalculation)
+	{
+		const FLFPBaseVoxelMeshConstantData& ConstantData = OwnerPtr->ConstantData;
+
+		NewLumenData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
+
+		NewLumenData->LumenCardData->MeshCardsBuildData.Bounds = LumenParam.LocalBounds.GetBox();
+
+		NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData.SetNumUninitialized(LumenParam.LumenBox.Num());
+
+		int32 Index = 0;
+
+		for (const auto& LumenBoxMap : LumenParam.LumenBox)
+		{
+			FLumenCardBuildData LumenCard;
+
+			LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
+
+			LumenCard.LODLevel = 0;
+
+			FVector BoxExtent = LumenBoxMap.Value.GetExtent();
+
+			const FRotator& VertexRotation = ConstantData.VertexRotationList[LumenBoxMap.Key.X];
+
+			LumenCard.OBB.Extent = FVector3f(VertexRotation.UnrotateVector(BoxExtent).GetAbs());
+
+			FRotationMatrix44f R = FRotationMatrix44f(FRotator3f(VertexRotation));
+			R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
+
+			LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
+
+			NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData[Index++] = (LumenCard);
+		}
+	}
+	else
+	{
+		OwnerPtr->MeshUtilities->GenerateCardRepresentationData(
+			"VoxelMesh",
+			LumenParam.LocalSourceMeshData,
+			*LumenParam.LODSectionData,
+			SDPPool,
+			LumenParam.LocalMaterialBlendModes,
+			LumenParam.LocalBounds,
+			NewLumenData->DistanceFieldMeshData,
+			32,
+			LumenParam.bIsTwoSide,
+			*NewLumenData->LumenCardData
+		);
+	}
+
+	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
+		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(LumenParam.SharePtr)]() {
+			ULFPBaseVoxelMeshComponent* OwnerPtr = SharePtr.Get();
+
+			if (SharePtr.IsValid() == false || IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false)
+			{
+				delete NewLumenData;
+			}
+			else
+			{
+				OwnerPtr->LumenData = NewLumenData;
+
+				if (OwnerPtr->LumenData->DistanceFieldMeshData == nullptr || OwnerPtr->LumenData->LumenCardData == nullptr)
+				{
+					OwnerPtr->LumenData = nullptr;
+				}
+
+				OwnerPtr->ChuckStatus.bIsGeneratingLumen = false;
+				OwnerPtr->MarkRenderStateDirty();
+			}
+		});
+	else
+		delete NewLumenData;
+
+	LumenParam.Reset();
+
+	return;
+}
+
+void FLFPBaseBoxelRenderTask::DoWork()
+{
+	ULFPBaseVoxelMeshComponent* OwnerPtr = RenderParam.SharePtr;
+
+	FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
+
+	FRWScopeLock ReadLock(RenderParam.LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
+
+	NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), RenderParam.SectionSize);
+
+	const TArray<FName>& VoxelNameList = RenderParam.LocalVoxelContainer->GetVoxelNameList(RenderParam.LocalChuckInfo.ChuckIndex);
+
+	const FVector VoxelHalfSize = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+	const FVector VoxelRenderOffset = -RenderParam.LocalVoxelContainer->GetContainerSetting().HalfRenderBound + RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
+	const FIntPoint VoxelUVRound = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
+
+	FIntVector LumenBatch = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
+
+	if (LumenBatch.X == 0) LumenBatch.X = 1;
+	if (LumenBatch.Y == 0) LumenBatch.Y = 1;
+	if (LumenBatch.Z == 0) LumenBatch.Z = 1;
+
+	for (int32 VoxelIndex = 0; VoxelIndex < RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelLength; VoxelIndex++)
+	{
+		const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
+
+		const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
+
+		const FLFPVoxelAttributeV2& VoxelAttribute = RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+
+		if (RenderParam.LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
+		{
+			const FBox VoxelBounds = FBox::BuildAABB(FVector3d(VoxelLocation), VoxelHalfSize);
+
+			for (int32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
+			{
+				const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + RenderParam.LocalChuckInfo.StartVoxelLocation;
+
+				if (RenderParam.LocalVoxelContainer->IsVoxelVisible(RenderParam.LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + OwnerPtr->ConstantData.FaceDirection[FaceIndex].Up), RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
+				{
+					const int32 MaterialID = VoxelAttribute.MaterialID < OwnerPtr->GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
+
+					OwnerPtr->AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
+
+					OwnerPtr->AddLumenBox(NewRenderData->LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
+				}
+			}
+		}
+	}
+
+	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
+		AsyncTask(ENamedThreads::GameThread, [NewRenderData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(RenderParam.SharePtr)]() {
+			ULFPBaseVoxelMeshComponent* OwnerPtr = SharePtr.Get();
+			
+			if (SharePtr.IsValid() == false || IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false)
+			{
+				delete NewRenderData;
+			}
+			else
+			{
+				bool bIsVoxelMeshValid = false;
+
+				for (const FLFPBaseVoxelMeshSectionData& Buffer : NewRenderData->Sections)
+				{
+					if (Buffer.TriangleCount > 0)
+					{
+						bIsVoxelMeshValid = true;
+					}
+				}
+
+				if (bIsVoxelMeshValid)
+				{
+					OwnerPtr->RenderData = NewRenderData;
+
+					OwnerPtr->ChuckStatus.bIsLumenDataDirty = true;
+				}
+				else
+				{
+					OwnerPtr->RenderData = nullptr;
+
+					delete NewRenderData;
+				}
+
+				OwnerPtr->ChuckStatus.bIsGeneratingMesh = false;
+
+				OwnerPtr->MarkRenderStateDirty();
+				OwnerPtr->RebuildPhysicsData();
+			}
+		});
+	else
+		delete NewRenderData;
+}

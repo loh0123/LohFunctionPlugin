@@ -10,6 +10,7 @@
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainer.h"
 #include "PhysicsEngine/BodySetup.h"
+#include "DistanceFieldAtlas.h"
 #include "LFPBaseVoxelMeshComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelMeshComponentLog, Log, All);
@@ -28,25 +29,10 @@ public:
 		float BoundExpand = 5.0f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		int32 LumenCardBatch = 1;
-};
+		float DistanceFieldResolution = 1.0f;
 
-USTRUCT(BlueprintType)
-struct FLFPBaseVoxelMeshStatus
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelColorDirty : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingColor : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
-	
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingMesh : 1;
-	
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+		bool bUseNativeLumenCalculation = false;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -56,7 +42,7 @@ struct FLFPBaseVoxelFaceDirection
 	FIntVector Forward, Right, Up = FIntVector::NoneValue;
 };
 
-static const struct FLFPBaseVoxelMeshConstantData
+const struct FLFPBaseVoxelMeshConstantData
 {
 	const TArray<FRotator> VertexRotationList =
 	{
@@ -144,17 +130,9 @@ struct FLFPBaseVoxelMeshSectionData
 /* This Contains Every Data Need To Render This Voxel Mesh */
 struct FLFPBaseVoxelMeshRenderData
 {
-	~FLFPBaseVoxelMeshRenderData();
-
 	TArray<FLFPBaseVoxelMeshSectionData> Sections;
 
-	TArray<FTransform> DistanceFieldInstanceData;
-
-	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
-
-	class FCardRepresentationData* LumenCardData = nullptr;
-
-
+	TMap<FIntPoint, FBox> LumenBox;
 
 	int32 RefCount = 0;
 
@@ -179,6 +157,63 @@ struct FLFPBaseVoxelMeshRenderData
 	}
 };
 
+/* This Contains Every Data Need For Lumen Support */
+struct FLFPBaseVoxelMeshLumenData
+{
+	~FLFPBaseVoxelMeshLumenData();
+
+	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
+
+	class FCardRepresentationData* LumenCardData = nullptr;
+
+	int32 RefCount = 0;
+
+	FORCEINLINE void AddRef()
+	{
+		RefCount += 1;
+	}
+
+	FORCEINLINE void Release()
+	{
+		RefCount -= 1;
+
+		if (RefCount == 0)
+		{
+			delete this;
+		}
+	}
+
+	FORCEINLINE int32 GetRefCount()
+	{
+		return RefCount;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPBaseVoxelMeshStatus
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelColorDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelDataDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingMesh : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsLumenDataDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingLumen : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
+};
+
+class FLFPBaseBoxelRenderTask;
+class FLFPBaseBoxelLumenTask;
+
 //**
 // * This Class Main Function Is To Render Out The Voxel
 // *  - Render Voxel Mesh
@@ -186,17 +221,20 @@ struct FLFPBaseVoxelMeshRenderData
 // * 
 // * Secondary Function Is To Generate Out Ths Voxel Mesh Data From Voxel Coordination Data
 // */
-
 UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
 class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	friend class FLFPBaseVoxelMeshSceneProxy;
+	friend class FLFPBaseBoxelRenderTask;
+	friend class FLFPBaseBoxelLumenTask;
 
 	GENERATED_BODY()
 
 public:
 
 	ULFPBaseVoxelMeshComponent();
+
+	virtual void BeginDestroy() override;
 
 public: /* Functions For Setting Up Component */
 
@@ -278,7 +316,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		FLFPBaseVoxelMeshStatus ChuckStatus;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		FLFPBaseVoxelMeshSetting ChuckSetting;
 
 private:
@@ -289,11 +327,82 @@ private:
 
 	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
-	FLFPBaseVoxelMeshConstantData ConstantData;
+	TRefCountPtr<FLFPBaseVoxelMeshLumenData> LumenData = nullptr;
 
-protected:
+	const FLFPBaseVoxelMeshConstantData ConstantData;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Setting")
-		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
+	class IMeshUtilities* MeshUtilities = nullptr;
 
+	FAsyncTask<FLFPBaseBoxelRenderTask>* RenderTask = nullptr;
+
+	FAsyncTask<FLFPBaseBoxelLumenTask>* LumenTask = nullptr;
+};
+
+struct FLFPBaseBoxelRenderParam
+{
+	ULFPBaseVoxelMeshComponent* SharePtr = nullptr;
+	ULFPVoxelContainer* LocalVoxelContainer = nullptr;
+	FLFPVoxelChuckInfo	LocalChuckInfo;
+	FLFPBaseVoxelMeshSetting LocalChuckSetting;
+	FBoxSphereBounds LocalBounds;
+	int32 SectionSize = 0;
+
+	void Reset()
+	{
+		SharePtr = nullptr;
+		LocalVoxelContainer = nullptr;
+		SectionSize = 0;
+	}
+};
+
+class FLFPBaseBoxelRenderTask : public FNonAbandonableTask {
+	friend class FAsyncTask<FLFPBaseBoxelRenderTask>;
+
+public:
+
+	FLFPBaseBoxelRenderParam RenderParam;
+
+	FLFPBaseBoxelRenderTask(const FLFPBaseBoxelRenderParam& Param) : RenderParam(Param) { }
+
+	void DoWork();
+
+	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseBoxelRenderTask, STATGROUP_ThreadPoolAsyncTasks); }
+};
+
+struct FLFPBaseBoxelLumenParam
+{
+	ULFPBaseVoxelMeshComponent* SharePtr = nullptr;
+	FLFPBaseVoxelMeshSetting LocalChuckSetting;
+	TMap<FIntPoint, FBox> LumenBox;
+	FBoxSphereBounds LocalBounds;
+	TArray<FSignedDistanceFieldBuildMaterialData> LocalMaterialBlendModes;
+	FSourceMeshDataForDerivedDataTask LocalSourceMeshData;
+	FStaticMeshLODResources* LODSectionData = nullptr;
+	bool bIsTwoSide = false;
+
+	void Reset()
+	{
+		SharePtr = nullptr;
+		LumenBox.Empty();
+		LocalMaterialBlendModes.Empty();
+		LocalSourceMeshData.TriangleIndices.Empty();
+		LocalSourceMeshData.VertexPositions.Empty();
+		LODSectionData->Release();
+		LODSectionData = nullptr;
+		bIsTwoSide = false;
+	}
+};
+
+class FLFPBaseBoxelLumenTask : public FNonAbandonableTask {
+	friend class FAsyncTask<FLFPBaseBoxelLumenTask>;
+
+public:
+
+	FLFPBaseBoxelLumenParam LumenParam;
+
+	FLFPBaseBoxelLumenTask(const FLFPBaseBoxelLumenParam& Param) : LumenParam(Param) { }
+
+	void DoWork();
+
+	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseBoxelLumenTask, STATGROUP_ThreadPoolAsyncTasks); }
 };
