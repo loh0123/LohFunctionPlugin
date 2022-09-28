@@ -341,7 +341,6 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		LumenParam.SharePtr = this;
 		LumenParam.LocalBounds = GetLocalBounds();
 		LumenParam.LocalChuckSetting = ChuckSetting;
-		LumenParam.LumenBox = RenderData->LumenBox;
 
 		for (int32 SectionIndex = 0; SectionIndex < RenderData->Sections.Num(); SectionIndex++)
 		{
@@ -742,47 +741,6 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 	EditMesh.TriangleCount += 2;
 }
 
-void ULFPBaseVoxelMeshComponent::AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch)
-{
-	FVector MinSurface = VoxelBounds.Min * ConstantData.SurfaceScale[FaceIndex];
-	FVector MaxSurface = VoxelBounds.Max * ConstantData.SurfaceScale[FaceIndex];
-
-	FVector CardOriginOffset = (VoxelLocation * FVector(ConstantData.FaceDirection[FaceIndex].Up).GetAbs()) + (VoxelHalfSize * FVector(ConstantData.FaceDirection[FaceIndex].Up));
-	FVector Extention = ConstantData.LumenUpOffset * FVector(ConstantData.FaceDirection[FaceIndex].Up).GetAbs();
-
-	MinSurface += CardOriginOffset - Extention;
-	MaxSurface += CardOriginOffset + Extention;
-
-	int32 VoxelSurfaceIndex = 0;
-
-	switch (FaceIndex)
-	{
-	    case 0: if (VoxelGridLocation.Z != 0) VoxelSurfaceIndex = VoxelGridLocation.Z / LumenBatch.Z; break;
-		case 1: if (VoxelGridLocation.X != 0) VoxelSurfaceIndex = VoxelGridLocation.X / LumenBatch.X; break;
-		case 2: if (VoxelGridLocation.Y != 0) VoxelSurfaceIndex = VoxelGridLocation.Y / LumenBatch.Y; break;
-		case 3: if (VoxelGridLocation.X != 0) VoxelSurfaceIndex = VoxelGridLocation.X / LumenBatch.X; break;
-		case 4: if (VoxelGridLocation.Y != 0) VoxelSurfaceIndex = VoxelGridLocation.Y / LumenBatch.Y; break;
-		case 5: if (VoxelGridLocation.Z != 0) VoxelSurfaceIndex = VoxelGridLocation.Z / LumenBatch.Z; break;
-	}
-
-	if (LumenBox.Contains(FIntPoint(FaceIndex, VoxelSurfaceIndex)))
-	{
-		FBox& LocalLumenBox = LumenBox.FindChecked(FIntPoint(FaceIndex, VoxelSurfaceIndex));
-
-		if (LocalLumenBox.Min.X > MinSurface.X) LocalLumenBox.Min.X = MinSurface.X;
-		if (LocalLumenBox.Min.Y > MinSurface.Y) LocalLumenBox.Min.Y = MinSurface.Y;
-		if (LocalLumenBox.Min.Z > MinSurface.Z) LocalLumenBox.Min.Z = MinSurface.Z;
-
-		if (LocalLumenBox.Max.X < MaxSurface.X) LocalLumenBox.Max.X = MaxSurface.X;
-		if (LocalLumenBox.Max.Y < MaxSurface.Y) LocalLumenBox.Max.Y = MaxSurface.Y;
-		if (LocalLumenBox.Max.Z < MaxSurface.Z) LocalLumenBox.Max.Z = MaxSurface.Z;
-	}
-	else
-	{
-		LumenBox.Add(FIntPoint(FaceIndex, VoxelSurfaceIndex), FBox(MinSurface, MaxSurface));
-	}
-}
-
 uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
 {
 	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up), MateriaID))
@@ -1020,55 +978,18 @@ void FLFPBaseBoxelLumenTask::DoWork()
 	);
 
 	/* Fill In Lumen Data */
-	if (!LumenParam.LocalChuckSetting.bUseNativeLumenCalculation)
-	{
-		const FLFPBaseVoxelMeshConstantData& ConstantData = OwnerPtr->ConstantData;
-
-		NewLumenData->LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
-
-		NewLumenData->LumenCardData->MeshCardsBuildData.Bounds = LumenParam.LocalBounds.GetBox();
-
-		NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData.SetNumUninitialized(LumenParam.LumenBox.Num());
-
-		int32 Index = 0;
-
-		for (const auto& LumenBoxMap : LumenParam.LumenBox)
-		{
-			FLumenCardBuildData LumenCard;
-
-			LumenCard.AxisAlignedDirectionIndex = ConstantData.SurfaceDirectionID[LumenBoxMap.Key.X];
-
-			LumenCard.LODLevel = 0;
-
-			FVector BoxExtent = LumenBoxMap.Value.GetExtent();
-
-			const FRotator& VertexRotation = ConstantData.VertexRotationList[LumenBoxMap.Key.X];
-
-			LumenCard.OBB.Extent = FVector3f(VertexRotation.UnrotateVector(BoxExtent).GetAbs());
-
-			FRotationMatrix44f R = FRotationMatrix44f(FRotator3f(VertexRotation));
-			R.GetScaledAxes(LumenCard.OBB.AxisX, LumenCard.OBB.AxisY, LumenCard.OBB.AxisZ);
-
-			LumenCard.OBB.Origin = FVector3f(LumenBoxMap.Value.GetCenter());
-
-			NewLumenData->LumenCardData->MeshCardsBuildData.CardBuildData[Index++] = (LumenCard);
-		}
-	}
-	else
-	{
-		OwnerPtr->MeshUtilities->GenerateCardRepresentationData(
-			"VoxelMesh",
-			LumenParam.LocalSourceMeshData,
-			*LumenParam.LODSectionData,
-			SDPPool,
-			LumenParam.LocalMaterialBlendModes,
-			LumenParam.LocalBounds,
-			NewLumenData->DistanceFieldMeshData,
-			32,
-			LumenParam.bIsTwoSide,
-			*NewLumenData->LumenCardData
-		);
-	}
+	OwnerPtr->MeshUtilities->GenerateCardRepresentationData(
+		"VoxelMesh",
+		LumenParam.LocalSourceMeshData,
+		*LumenParam.LODSectionData,
+		SDPPool,
+		LumenParam.LocalMaterialBlendModes,
+		LumenParam.LocalBounds,
+		NewLumenData->DistanceFieldMeshData,
+		LumenParam.LocalChuckSetting.LumenCardAmount,
+		LumenParam.bIsTwoSide,
+		*NewLumenData->LumenCardData
+	);
 
 	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
 		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(LumenParam.SharePtr)]() {
@@ -1142,8 +1063,6 @@ void FLFPBaseBoxelRenderTask::DoWork()
 					const int32 MaterialID = VoxelAttribute.MaterialID < OwnerPtr->GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
 					OwnerPtr->AddVoxelFace(NewRenderData->Sections[MaterialID], NewRenderData->LocalBounds, VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
-
-					OwnerPtr->AddLumenBox(NewRenderData->LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
 				}
 			}
 		}

@@ -23,16 +23,13 @@ struct FLFPBaseVoxelMeshSetting
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		TObjectPtr<UStaticMesh> DistanceFieldMesh = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
 		float BoundExpand = 5.0f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
 		float DistanceFieldResolution = 1.0f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		bool bUseNativeLumenCalculation = false;
+		int32 LumenCardAmount = 32;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -131,8 +128,6 @@ struct FLFPBaseVoxelMeshSectionData
 struct FLFPBaseVoxelMeshRenderData
 {
 	TArray<FLFPBaseVoxelMeshSectionData> Sections;
-
-	TMap<FIntPoint, FBox> LumenBox;
 
 	FBox LocalBounds = FBox();
 
@@ -263,8 +258,6 @@ private: // Helper Functions
 
 	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, FBox& LocalBounds, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
 
-	FORCEINLINE void AddLumenBox(TMap<FIntPoint, FBox>& LumenBox, const FVector VoxelLocation, const int32 FaceIndex, const FVector VoxelHalfSize, const FIntVector VoxelGridLocation, const FBox VoxelBounds, const FIntVector LumenBatch);
-
 	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
 protected: // Rendering Handler
@@ -375,7 +368,6 @@ struct FLFPBaseBoxelLumenParam
 {
 	ULFPBaseVoxelMeshComponent* SharePtr = nullptr;
 	FLFPBaseVoxelMeshSetting LocalChuckSetting;
-	TMap<FIntPoint, FBox> LumenBox;
 	FBoxSphereBounds LocalBounds;
 	TArray<FSignedDistanceFieldBuildMaterialData> LocalMaterialBlendModes;
 	FSourceMeshDataForDerivedDataTask LocalSourceMeshData;
@@ -385,7 +377,6 @@ struct FLFPBaseBoxelLumenParam
 	void Reset()
 	{
 		SharePtr = nullptr;
-		LumenBox.Empty();
 		LocalMaterialBlendModes.Empty();
 		LocalSourceMeshData.TriangleIndices.Empty();
 		LocalSourceMeshData.VertexPositions.Empty();
