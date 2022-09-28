@@ -34,6 +34,8 @@ ULFPBaseVoxelMeshComponent::ULFPBaseVoxelMeshComponent()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	//bComputeFastLocalBounds = true;
 }
 
 void ULFPBaseVoxelMeshComponent::BeginDestroy()
@@ -507,7 +509,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, FBox& LocalBounds, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize)
 {
 	/* Handle Index Data */
 	{
@@ -537,6 +539,11 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshSectionData& Edit
 			VertexList[3],
 			VertexList[0],
 		});
+
+		for (const FVector3f& Vertex : VertexList)
+		{
+			LocalBounds += FVector(Vertex);
+		}
 	}
 
 	/* Handle UV Data */
@@ -808,13 +815,9 @@ FBoxSphereBounds ULFPBaseVoxelMeshComponent::CalcBounds(const FTransform& LocalT
 {
 	FBox VoxelBox;
 
-	if (IsValid(VoxelContainer))
+	if (IsValid(VoxelContainer) && RenderData != nullptr)
 	{
-		FRWScopeLock ReadLock(VoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
-	
-		const FVector& VoxelSize = VoxelContainer->GetContainerSetting().HalfRenderBound;
-	
-		VoxelBox = FBox(-VoxelSize, VoxelSize);
+		VoxelBox = RenderData->LocalBounds.ExpandBy(ChuckSetting.BoundExpand);
 	}
 	else
 	{
@@ -1138,7 +1141,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 				{
 					const int32 MaterialID = VoxelAttribute.MaterialID < OwnerPtr->GetNumMaterials() ? VoxelAttribute.MaterialID : 0;
 
-					OwnerPtr->AddVoxelFace(NewRenderData->Sections[MaterialID], VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
+					OwnerPtr->AddVoxelFace(NewRenderData->Sections[MaterialID], NewRenderData->LocalBounds, VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
 
 					OwnerPtr->AddLumenBox(NewRenderData->LumenBox, VoxelLocation, FaceIndex, VoxelHalfSize, VoxelGridLocation, VoxelBounds, LumenBatch);
 				}
@@ -1181,6 +1184,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 				OwnerPtr->ChuckStatus.bIsGeneratingMesh = false;
 
+				OwnerPtr->UpdateBounds();
 				OwnerPtr->MarkRenderStateDirty();
 				OwnerPtr->RebuildPhysicsData();
 			}
