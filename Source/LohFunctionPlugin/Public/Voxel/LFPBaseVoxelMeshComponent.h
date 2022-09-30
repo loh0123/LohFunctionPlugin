@@ -129,7 +129,7 @@ struct FLFPBaseVoxelMeshRenderData
 {
 	TArray<FLFPBaseVoxelMeshSectionData> Sections;
 
-	FBox LocalBounds = FBox();
+	FBox LocalBounds = FBox(EForceInit::ForceInitToZero);
 
 	int32 RefCount = 0;
 

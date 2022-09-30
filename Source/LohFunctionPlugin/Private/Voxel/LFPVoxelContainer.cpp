@@ -25,9 +25,9 @@ void ULFPVoxelContainer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
 
 void ULFPVoxelContainer::BeginPlay()
 {
-	Super::BeginPlay();
-
 	SetupVoxelData(VoxelAttributeTable, ContainerSetting);
+
+	Super::BeginPlay();
 }
 
 void ULFPVoxelContainer::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

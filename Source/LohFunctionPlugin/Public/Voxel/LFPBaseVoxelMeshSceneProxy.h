@@ -168,8 +168,8 @@ public:
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 		bVerifyUsedMaterials = false;
 
-		bSupportsDistanceFieldRepresentation = LumenData != nullptr;
-		bSupportsMeshCardRepresentation = LumenData != nullptr;
+		bSupportsDistanceFieldRepresentation = LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
+		bSupportsMeshCardRepresentation = LumenData.GetReference() != nullptr && LumenData->LumenCardData != nullptr;
 
 		const TArray<FLFPBaseVoxelMeshSectionData>& BufferDataList = Component->RenderData->Sections;
 
@@ -434,7 +434,7 @@ public:
 
 	virtual bool HasDistanceFieldRepresentation() const override
 	{
-		return LumenData != nullptr;
+		return LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
 	}
 
 #if RHI_RAYTRACING
