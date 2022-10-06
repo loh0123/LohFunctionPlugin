@@ -22,14 +22,23 @@ struct FLFPBaseVoxelMeshSetting
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+	//	TObjectPtr<UStaticMesh> TestMesh = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		float BoundExpand = 5.0f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
-		float DistanceFieldResolution = 1.0f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+		bool bForceTwoSide = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		int32 LumenCardAmount = 32;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
+		uint8 VoxelPerDistanceField = 2;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
+		uint8 LumenCardPerVoxelDimension = 2;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -128,6 +137,8 @@ struct FLFPBaseVoxelMeshSectionData
 struct FLFPBaseVoxelMeshRenderData
 {
 	TArray<FLFPBaseVoxelMeshSectionData> Sections;
+
+	TArray<uint8> VoxelMaterialList; // This Is Use For Distance Field And Lumen Acceleration
 
 	FBox LocalBounds = FBox(EForceInit::ForceInitToZero);
 
@@ -248,6 +259,9 @@ public: /* Functions For Setting Up Component */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelColor();
 
+	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
+		FORCEINLINE uint8 TestFunc(const FIntVector IndirectionDimensions, const FBox LocalSpaceMeshBounds, const float Distance, FVector2D& DistanceFieldToVolumeScaleBias, FVector& VolumeToVirtualUVScale, FVector& VolumeToVirtualUVAdd);
+
 protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -256,7 +270,7 @@ protected:
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshSectionData& EditMesh, FBox& LocalBounds, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshRenderData& RenderParam, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
 
 	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 
@@ -305,13 +319,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent")
 		FLFPVoxelChuckInfo ChuckInfo;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent")
 		FLFPBaseVoxelMeshStatus ChuckStatus;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent")
 		FLFPBaseVoxelMeshSetting ChuckSetting;
 
 private:
@@ -341,12 +355,14 @@ struct FLFPBaseBoxelRenderParam
 	FLFPBaseVoxelMeshSetting LocalChuckSetting;
 	FBoxSphereBounds LocalBounds;
 	int32 SectionSize = 0;
+	int32 MaterialNum = 0;
 
 	void Reset()
 	{
 		SharePtr = nullptr;
 		LocalVoxelContainer = nullptr;
 		SectionSize = 0;
+		MaterialNum = 0;
 	}
 };
 
@@ -372,6 +388,8 @@ struct FLFPBaseBoxelLumenParam
 	TArray<FSignedDistanceFieldBuildMaterialData> LocalMaterialBlendModes;
 	FSourceMeshDataForDerivedDataTask LocalSourceMeshData;
 	FStaticMeshLODResources* LODSectionData = nullptr;
+	TArray<uint8> VoxelMaterialList;
+	FLFPVoxelContainerSettingV2 VoxelSetting = FLFPVoxelContainerSettingV2();
 	bool bIsTwoSide = false;
 
 	void Reset()
@@ -383,7 +401,23 @@ struct FLFPBaseBoxelLumenParam
 		LODSectionData->Release();
 		LODSectionData = nullptr;
 		bIsTwoSide = false;
+		VoxelMaterialList.Empty();
+		VoxelSetting = FLFPVoxelContainerSettingV2();
 	}
+};
+
+struct FLFPDFMipInfo
+{
+	FLFPDFMipInfo() {}
+
+	FVector TexelObjectSpaceSize;
+	FBox DistanceFieldVolumeBounds;
+
+	FVector IndirectionVoxelSize;
+	FVector VolumeSpaceDistanceFieldVoxelSize;
+	float MaxDistanceForEncoding;
+	float LocalSpaceTraceDistance;
+	FVector2D DistanceFieldToVolumeScaleBias;
 };
 
 class FLFPBaseBoxelLumenTask : public FNonAbandonableTask {
@@ -396,6 +430,12 @@ public:
 	FLFPBaseBoxelLumenTask(const FLFPBaseBoxelLumenParam& Param) : LumenParam(Param) { }
 
 	void DoWork();
+
+	FORCEINLINE FDistanceFieldVolumeData* GenerateDistanceField();
+
+	FORCEINLINE void SetDistanceFieldMipInfo(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale, FLFPDFMipInfo& MipsInfo);
+
+	FORCEINLINE float GetDistanceToClosetSurface(const FVector& LocalLocation, const float MaxDistance, const int32 CheckRange) const;
 
 	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseBoxelLumenTask, STATGROUP_ThreadPoolAsyncTasks); }
 };
