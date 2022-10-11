@@ -46,6 +46,15 @@ struct FLFPBaseVoxelFaceDirection
 	FLFPBaseVoxelFaceDirection(FIntVector F, FIntVector R, FIntVector U) : Forward(F), Right(R), Up(U) {}
 
 	FIntVector Forward, Right, Up = FIntVector::NoneValue;
+
+public:
+
+	FORCEINLINE void SetAxis(FVector3f& X, FVector3f& Y, FVector3f& Z) const
+	{
+		X = FVector3f(Forward);
+		Y = FVector3f(Right);
+		Z = FVector3f(Up);
+	}
 };
 
 const struct FLFPBaseVoxelMeshConstantData
@@ -385,22 +394,12 @@ struct FLFPBaseBoxelLumenParam
 	ULFPBaseVoxelMeshComponent* SharePtr = nullptr;
 	FLFPBaseVoxelMeshSetting LocalChuckSetting;
 	FBoxSphereBounds LocalBounds;
-	TArray<FSignedDistanceFieldBuildMaterialData> LocalMaterialBlendModes;
-	FSourceMeshDataForDerivedDataTask LocalSourceMeshData;
-	FStaticMeshLODResources* LODSectionData = nullptr;
 	TArray<uint8> VoxelMaterialList;
 	FLFPVoxelContainerSettingV2 VoxelSetting = FLFPVoxelContainerSettingV2();
-	bool bIsTwoSide = false;
 
 	void Reset()
 	{
 		SharePtr = nullptr;
-		LocalMaterialBlendModes.Empty();
-		LocalSourceMeshData.TriangleIndices.Empty();
-		LocalSourceMeshData.VertexPositions.Empty();
-		LODSectionData->Release();
-		LODSectionData = nullptr;
-		bIsTwoSide = false;
 		VoxelMaterialList.Empty();
 		VoxelSetting = FLFPVoxelContainerSettingV2();
 	}
@@ -436,6 +435,8 @@ public:
 	FORCEINLINE void SetDistanceFieldMipInfo(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale, FLFPDFMipInfo& MipsInfo);
 
 	FORCEINLINE float GetDistanceToClosetSurface(const FVector& LocalLocation, const float MaxDistance, const int32 CheckRange) const;
+
+	FORCEINLINE FCardRepresentationData* GenerateLumenCard();
 
 	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseBoxelLumenTask, STATGROUP_ThreadPoolAsyncTasks); }
 };

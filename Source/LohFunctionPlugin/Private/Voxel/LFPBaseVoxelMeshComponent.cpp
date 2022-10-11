@@ -8,6 +8,7 @@
 #include "./Math/LFPGridLibrary.h"
 #include "Voxel/LFPBaseVoxelMeshSceneProxy.h"
 #include "MeshCardRepresentation.h"
+#include "Containers/ContainerAllocationPolicies.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Misc/QueuedThreadPoolWrapper.h"
 #include "Render/LFPRenderLibrary.h"
@@ -277,57 +278,57 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		FLFPBaseBoxelLumenParam LumenParam;
 
-		LumenParam.LODSectionData = new FStaticMeshLODResources();
+		//LumenParam.LODSectionData = new FStaticMeshLODResources();
 		LumenParam.SharePtr = this;
-		LumenParam.LocalBounds = FBox(-VoxelContainer->GetContainerSetting().HalfRenderBound - (VoxelContainer->GetContainerSetting().VoxelHalfSize * 2), VoxelContainer->GetContainerSetting().HalfRenderBound + (VoxelContainer->GetContainerSetting().VoxelHalfSize * 2)).ExpandBy(ChuckSetting.BoundExpand);
+		LumenParam.LocalBounds = GetLocalBounds();
 		LumenParam.LocalChuckSetting = ChuckSetting;
 		LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
 		LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
 
-		for (int32 SectionIndex = 0; SectionIndex < RenderData->Sections.Num(); SectionIndex++)
-		{
-			{
-				FStaticMeshSection Section;
-				Section.MaterialIndex = SectionIndex;
-
-				LumenParam.LODSectionData->Sections.Add(Section);
-			}
-
-			{
-				FSignedDistanceFieldBuildMaterialData MaterialData;
-				// Default material blend mode
-				MaterialData.BlendMode = BLEND_Opaque;
-				MaterialData.bTwoSided = false;
-
-				if (IsValid(GetMaterial(SectionIndex)))
-				{
-					MaterialData.BlendMode = GetMaterial(SectionIndex)->GetBlendMode();
-					MaterialData.bTwoSided = GetMaterial(SectionIndex)->IsTwoSided();
-				}
-
-				if (MaterialData.bTwoSided)
-				{
-					LumenParam.bIsTwoSide = true;
-				}
-
-				LumenParam.LocalMaterialBlendModes.Add(MaterialData);
-			}
-
-			{
-				const FLFPBaseVoxelMeshSectionData& SectionData = RenderData->Sections[SectionIndex];
-
-				LumenParam.LocalSourceMeshData.VertexPositions.Append(SectionData.VertexList);
-
-				const uint32 StartIndex = LumenParam.LocalSourceMeshData.TriangleIndices.Num();
-
-				LumenParam.LocalSourceMeshData.TriangleIndices.Reserve(LumenParam.LocalSourceMeshData.TriangleIndices.Num() + SectionData.TriangleIndexList.Num());
-
-				for (const uint32 TriangleIndex : SectionData.TriangleIndexList)
-				{
-					LumenParam.LocalSourceMeshData.TriangleIndices.Add(TriangleIndex + StartIndex);
-				}
-			}
-		}
+		//for (int32 SectionIndex = 0; SectionIndex < RenderData->Sections.Num(); SectionIndex++)
+		//{
+		//	{
+		//		FStaticMeshSection Section;
+		//		Section.MaterialIndex = SectionIndex;
+		//
+		//		LumenParam.LODSectionData->Sections.Add(Section);
+		//	}
+		//
+		//	{
+		//		FSignedDistanceFieldBuildMaterialData MaterialData;
+		//		// Default material blend mode
+		//		MaterialData.BlendMode = BLEND_Opaque;
+		//		MaterialData.bTwoSided = false;
+		//
+		//		if (IsValid(GetMaterial(SectionIndex)))
+		//		{
+		//			MaterialData.BlendMode = GetMaterial(SectionIndex)->GetBlendMode();
+		//			MaterialData.bTwoSided = GetMaterial(SectionIndex)->IsTwoSided();
+		//		}
+		//
+		//		if (MaterialData.bTwoSided)
+		//		{
+		//			LumenParam.bIsTwoSide = true;
+		//		}
+		//
+		//		LumenParam.LocalMaterialBlendModes.Add(MaterialData);
+		//	}
+		//
+		//	{
+		//		const FLFPBaseVoxelMeshSectionData& SectionData = RenderData->Sections[SectionIndex];
+		//
+		//		LumenParam.LocalSourceMeshData.VertexPositions.Append(SectionData.VertexList);
+		//
+		//		const uint32 StartIndex = LumenParam.LocalSourceMeshData.TriangleIndices.Num();
+		//
+		//		LumenParam.LocalSourceMeshData.TriangleIndices.Reserve(LumenParam.LocalSourceMeshData.TriangleIndices.Num() + SectionData.TriangleIndexList.Num());
+		//
+		//		for (const uint32 TriangleIndex : SectionData.TriangleIndexList)
+		//		{
+		//			LumenParam.LocalSourceMeshData.TriangleIndices.Add(TriangleIndex + StartIndex);
+		//		}
+		//	}
+		//}
 
 		if (LumenTask == nullptr)
 		{
@@ -790,40 +791,9 @@ void FLFPBaseBoxelLumenTask::DoWork()
 
 	FLFPBaseVoxelMeshLumenData* NewLumenData = new FLFPBaseVoxelMeshLumenData();
 
-	if (LumenParam.LocalSourceMeshData.IsValid())
-	{
-		NewLumenData->DistanceFieldMeshData = GenerateDistanceField();
+	NewLumenData->DistanceFieldMeshData = GenerateDistanceField();
 
-		NewLumenData->LumenCardData = new FCardRepresentationData();;
-
-		FQueuedThreadPoolTaskGraphWrapper SDPPool(ENamedThreads::AnyBackgroundThreadNormalTask);
-
-		//OwnerPtr->MeshUtilities->GenerateSignedDistanceFieldVolumeData(
-		//	"VoxelMesh",
-		//	LumenParam.LocalSourceMeshData,
-		//	*LumenParam.LODSectionData,
-		//	SDPPool,
-		//	LumenParam.LocalMaterialBlendModes,
-		//	LumenParam.LocalBounds,
-		//	LumenParam.LocalChuckSetting.DistanceFieldResolution,
-		//	LumenParam.bIsTwoSide || LumenParam.LocalChuckSetting.bForceTwoSide,
-		//	*NewLumenData->DistanceFieldMeshData
-		//);
-
-		/* Fill In Lumen Data */
-		OwnerPtr->MeshUtilities->GenerateCardRepresentationData(
-			"VoxelMesh",
-			LumenParam.LocalSourceMeshData,
-			*LumenParam.LODSectionData,
-			SDPPool,
-			LumenParam.LocalMaterialBlendModes,
-			LumenParam.LocalBounds,
-			NewLumenData->DistanceFieldMeshData,
-			LumenParam.LocalChuckSetting.LumenCardAmount,
-			LumenParam.bIsTwoSide || LumenParam.LocalChuckSetting.bForceTwoSide,
-			*NewLumenData->LumenCardData
-		);
-	}
+	NewLumenData->LumenCardData = GenerateLumenCard();
 
 	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
 		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(LumenParam.SharePtr)]() {
@@ -856,7 +826,7 @@ void FLFPBaseBoxelLumenTask::DoWork()
 
 FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 {
-	const double StartTime = FPlatformTime::Seconds();
+	//const double StartTime = FPlatformTime::Seconds();
 
 	FDistanceFieldVolumeData* DistanceFieldMeshData = new FDistanceFieldVolumeData();
 	
@@ -1011,48 +981,6 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 			FPlatformMemory::Memcpy(&DistanceFieldBrickData[BrickIndex * BrickSizeBytes], Brick.BrickDataList.GetData(), CopySize);
 		}
 	
-		//int32 ValidBrickCount = 0;
-		//
-		//for (int32 BrickIndex = 0; BrickIndex < IndirectionDimensionsLength; BrickIndex++)
-		//{
-		//	const FIntVector BrickLocation = (ULFPGridLibrary::IndexToGridLocation(BrickIndex, IndirectionDimensions));
-		//
-		//	const FVector BrickSpaceLocation = (FVector(BrickLocation) * BrickSpaceSize) + BrickOffset;
-		//
-		//	TArray<uint8, TFixedAllocator<512>> BrickDataList;
-		//
-		//	BrickDataList.Init(0, 512);
-		//
-		//	uint8 BrickMaxDistance(MIN_uint8);
-		//	uint8 BrickMinDistance(MAX_uint8);
-		//
-		//	for (int32 DataIndex = 0; DataIndex < 512 /* Brick Length */; DataIndex++)
-		//	{
-		//		const FIntVector DataLocation(ULFPGridLibrary::IndexToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
-		//
-		//		const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
-		//
-		//		const float ClosetPoint = GetDistanceToClosetSurface(BrickVoxelLocation, MipInfo.LocalSpaceTraceDistance, CheckRange);
-		//
-		//		// Transform to the tracing shader's Volume space
-		//		const float VolumeSpaceDistance = ClosetPoint * LocalToVolumeScale;
-		//		// Transform to the Distance Field texture's space
-		//		const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
-		//
-		//		BrickDataList[DataIndex] = FMath::Clamp<int32>(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
-		//
-		//		BrickMaxDistance = FMath::Max(BrickMaxDistance, BrickDataList[DataIndex]);
-		//		BrickMinDistance = FMath::Min(BrickMinDistance, BrickDataList[DataIndex]);
-		//	}
-		//
-		//	if (BrickMinDistance < MAX_uint8 && BrickMaxDistance > MIN_uint8)
-		//	{
-		//		IndirectionTable[BrickIndex] = ValidBrickCount++;
-		//
-		//		DistanceFieldBrickData.Append(BrickDataList);
-		//	}
-		//}
-	
 		const int32 IndirectionTableBytes = IndirectionTable.Num() * IndirectionTable.GetTypeSize();
 		const int32 MipDataBytes = IndirectionTableBytes + DistanceFieldBrickData.Num();
 	
@@ -1093,7 +1021,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	DistanceFieldMeshData->StreamableMips.Unlock();
 	DistanceFieldMeshData->StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
 
-	UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 
 	return DistanceFieldMeshData;
 }
@@ -1157,6 +1085,195 @@ float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLoc
 	}
 
 	return SelfMaterial != 0 ? ClosetDistance * -1 : ClosetDistance;
+}
+
+FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
+{
+	auto SetCoverIndex = [&](FIntPoint& CoverIndex, int32 Index)
+	{
+		if (Index <= -1)
+		{
+			CoverIndex = FIntPoint(INDEX_NONE);
+		}
+		else if (CoverIndex.GetMin() == INDEX_NONE)
+		{
+			CoverIndex = FIntPoint(Index);
+		}
+		else if (CoverIndex.X > Index)
+		{
+			CoverIndex.X = Index;
+		}
+		else if (CoverIndex.Y < Index)
+		{
+			CoverIndex.Y = Index;
+		}
+	};
+
+	auto CheckFaceVisible = [&](const FIntVector& From, const FIntVector& Direction)
+	{
+		const int32 SelfMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::GridLocationToIndex(From, LumenParam.VoxelSetting.VoxelGridSize)];
+
+		if (ULFPGridLibrary::IsLocationValid(From + Direction, LumenParam.VoxelSetting.VoxelGridSize))
+		{
+			const int32 CheckMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::GridLocationToIndex(From + Direction, LumenParam.VoxelSetting.VoxelGridSize)];
+
+			return SelfMaterial != 0 && SelfMaterial != CheckMaterial;
+		}
+
+		return SelfMaterial != 0;
+	};
+
+	auto AddCardBuild = [&](TArray<FLumenCardBuildData>& CardBuildList, const FIntPoint& CoverIndex, const FBox& Bounds, const int32 DirectionIndex)
+	{
+		FBox LumenBox; 
+
+		switch (DirectionIndex)
+		{
+		case 0:
+		case 5:
+			LumenBox = FBox(
+				FVector(Bounds.Min.X, Bounds.Min.Y, (CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.Z * 2) - LumenParam.VoxelSetting.HalfRenderBound.Z - LumenParam.LocalChuckSetting.BoundExpand),
+				FVector(Bounds.Max.X, Bounds.Max.Y, (CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.Z * 2) - LumenParam.VoxelSetting.HalfRenderBound.Z + LumenParam.LocalChuckSetting.BoundExpand)
+			);
+
+			if (DirectionIndex == 0) LumenBox = LumenBox.ShiftBy(FVector(0.0f, 0.0f, LumenParam.VoxelSetting.VoxelHalfSize.Z) * 2.0f);
+			break;
+
+		case 1:
+		case 3:
+			LumenBox = FBox(
+				FVector((CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.X * 2) - LumenParam.VoxelSetting.HalfRenderBound.X - LumenParam.LocalChuckSetting.BoundExpand, Bounds.Min.Y, Bounds.Min.Z),
+				FVector((CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.X * 2) - LumenParam.VoxelSetting.HalfRenderBound.X + LumenParam.LocalChuckSetting.BoundExpand, Bounds.Max.Y, Bounds.Max.Z)
+			);
+
+			if (DirectionIndex == 3) LumenBox = LumenBox.ShiftBy(FVector(LumenParam.VoxelSetting.VoxelHalfSize.X, 0.0f, 0.0f) * 2.0f);
+			break;
+
+		case 2:
+		case 4:
+			LumenBox = FBox(
+				FVector(Bounds.Min.X, (CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.Y * 2) - LumenParam.VoxelSetting.HalfRenderBound.Y - LumenParam.LocalChuckSetting.BoundExpand, Bounds.Min.Z),
+				FVector(Bounds.Max.X, (CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.Y * 2) - LumenParam.VoxelSetting.HalfRenderBound.Y + LumenParam.LocalChuckSetting.BoundExpand, Bounds.Max.Z)
+			);
+			if (DirectionIndex == 2) LumenBox = LumenBox.ShiftBy(FVector(0.0f, LumenParam.VoxelSetting.VoxelHalfSize.Y, 0.0f) * 2.0f);
+			break;
+		}
+
+		FLumenCardBuildData BuildData;
+
+		BuildData.AxisAlignedDirectionIndex = LumenParam.SharePtr->ConstantData.SurfaceDirectionID[DirectionIndex];
+		BuildData.LODLevel = 0;
+
+		LumenParam.SharePtr->ConstantData.FaceDirection[DirectionIndex].SetAxis(
+			BuildData.OBB.AxisX,
+			BuildData.OBB.AxisY,
+			BuildData.OBB.AxisZ
+		);
+
+		BuildData.OBB.Origin = FVector3f(LumenBox.GetCenter());
+		BuildData.OBB.Extent = FVector3f(LumenParam.SharePtr->ConstantData.VertexRotationList[DirectionIndex].UnrotateVector(LumenBox.GetExtent()).GetAbs());
+
+		CardBuildList.Add(BuildData);
+
+		return;
+	};
+
+	//const double StartTime = FPlatformTime::Seconds();
+
+	FCardRepresentationData* LumenCardData = new FCardRepresentationData();
+
+	const FBox& Bounds = LumenParam.LocalBounds.GetBox();
+
+	LumenCardData->MeshCardsBuildData.Bounds = Bounds;
+	LumenCardData->MeshCardsBuildData.MaxLODLevel = 0;
+
+	check(LumenCardData);
+
+	TArray<FLumenCardBuildData>& CardBuildList = LumenCardData->MeshCardsBuildData.CardBuildData;
+
+	struct FLFPFaceListData
+	{
+		FLFPFaceListData(const FIntVector InID, const int32 InFaceID, const bool InbIsReverse) : ID(InID), FaceID(InFaceID), bIsReverse(InbIsReverse) {}
+
+		const FIntVector ID = FIntVector(0, 1, 2);
+		const int32 FaceID = 0;
+		const bool bIsReverse = false;
+	};
+
+	const TArray<FLFPFaceListData> FaceList =
+	{
+		FLFPFaceListData(FIntVector(0, 1, 2), 0, true),
+		FLFPFaceListData(FIntVector(2, 1, 0), 1, false),
+		FLFPFaceListData(FIntVector(2, 0, 1), 2, true),
+		FLFPFaceListData(FIntVector(2, 1, 0), 3, true),
+		FLFPFaceListData(FIntVector(2, 0, 1), 4, false),
+		FLFPFaceListData(FIntVector(0, 1, 2), 5, false),
+	};
+
+	for (const FLFPFaceListData& FaceData : FaceList)
+	{
+		const FIntVector VoxelDimension = FIntVector(
+			LumenParam.VoxelSetting.VoxelGridSize[FaceData.ID.X],
+			LumenParam.VoxelSetting.VoxelGridSize[FaceData.ID.Y],
+			LumenParam.VoxelSetting.VoxelGridSize[FaceData.ID.Z]
+		);
+
+		const int32 VoxelPlaneLength = VoxelDimension.X * VoxelDimension.Y;
+	
+		FIntPoint CoverIndex = FIntPoint(INDEX_NONE);
+
+		TBitArray<> BlockMap = TBitArray(false, VoxelPlaneLength);
+	
+		for (int32 DepthIndex = FaceData.bIsReverse ? VoxelDimension.Z - 1 : 0; FaceData.bIsReverse ? DepthIndex > -1 : DepthIndex < VoxelDimension.Z; FaceData.bIsReverse ? DepthIndex-- : DepthIndex++)
+		{
+			StartCheck:
+
+			for (int32 X = 0; X < VoxelDimension.X; X++)
+			{
+				for (int32 Y = 0; Y < VoxelDimension.Y; Y++)
+				{
+					FIntVector VoxelGridLocation;
+					VoxelGridLocation[FaceData.ID.X] = X;
+					VoxelGridLocation[FaceData.ID.Y] = Y;
+					VoxelGridLocation[FaceData.ID.Z] = DepthIndex;
+
+					const int32 VoxelPlaneIndex = X + (Y * VoxelDimension.X);
+
+					const bool bIsFaceVisible = CheckFaceVisible(VoxelGridLocation, LumenParam.SharePtr->ConstantData.FaceDirection[FaceData.FaceID].Up);
+
+					if (BlockMap[VoxelPlaneIndex])
+					{
+						if (bIsFaceVisible)
+						{
+							AddCardBuild(CardBuildList, CoverIndex, Bounds, FaceData.FaceID);
+
+							/* Reset */
+							BlockMap = TBitArray(false, VoxelPlaneLength);
+
+							SetCoverIndex(CoverIndex, INDEX_NONE);
+
+							goto StartCheck;
+						}
+					}
+					else if (bIsFaceVisible)
+					{	
+						BlockMap[VoxelPlaneIndex] = bIsFaceVisible;
+
+						SetCoverIndex(CoverIndex, DepthIndex);				
+					}
+				}
+			}
+		}
+
+		if (CoverIndex.GetMin() != INDEX_NONE)
+		{
+			AddCardBuild(CardBuildList, CoverIndex, Bounds, FaceData.FaceID);
+		}
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Lumen Card Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+
+	return LumenCardData;
 }
 
 void FLFPBaseBoxelRenderTask::DoWork()
