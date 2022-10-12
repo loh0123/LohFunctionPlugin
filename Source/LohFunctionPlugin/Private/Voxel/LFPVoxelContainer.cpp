@@ -99,6 +99,8 @@ void ULFPVoxelContainer::UpdateChuckWriteAction(const int32 Amount)
 		ChuckWriteActionList.Remove(IndexToRemove);
 	}
 
+	ChuckWriteActionList.Shrink();
+
 	return;
 }
 
@@ -327,10 +329,16 @@ void ULFPVoxelContainer::SetChuckGridName(const int32 ChuckIndex, const FName Vo
 {
 	const int32 ChuckGridMaxIndex = ContainerSetting.ChuckGridSize.X * ContainerSetting.ChuckGridSize.Y * ContainerSetting.ChuckGridSize.Z;
 
+	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
+
+	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
+
 	for (int32 VoxelIndex = 0; VoxelIndex < ChuckGridMaxIndex; VoxelIndex++)
 	{
-		SetVoxelGridName(FLFPVoxelGridIndex(ChuckIndex, VoxelIndex), VoxelAttributeName, bInitializeChuck);
+		Action->NameData.Add(VoxelIndex, VoxelAttributeName);
 	}
+
+	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
 
 	return;
 }
@@ -339,12 +347,18 @@ void ULFPVoxelContainer::SetChuckGridNameWithHeight(const int32 ChuckIndex, cons
 {
 	const int32 HeightIndex = ContainerSetting.VoxelGridSize.Z * Height;
 
+	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
+
+	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
+
 	for (int32 VoxelHeightIndex = 0; VoxelHeightIndex < HeightIndex; VoxelHeightIndex++)
 	{
 		const int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridPosition.X, VoxelGridPosition.Y, VoxelHeightIndex), ContainerSetting.VoxelGridSize);
 
-		SetVoxelGridName(FLFPVoxelGridIndex(ChuckIndex, VoxelIndex), VoxelAttributeName, bInitializeChuck);
+		Action->NameData.Add(VoxelIndex, VoxelAttributeName);
 	}
+
+	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
 
 	return;
 }
