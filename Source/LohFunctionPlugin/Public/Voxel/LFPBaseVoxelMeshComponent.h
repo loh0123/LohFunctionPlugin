@@ -268,9 +268,6 @@ public: /* Functions For Setting Up Component */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void UpdateVoxelColor();
 
-	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE uint8 TestFunc(const FIntVector IndirectionDimensions, const FBox LocalSpaceMeshBounds, const float Distance, FVector2D& DistanceFieldToVolumeScaleBias, FVector& VolumeToVirtualUVScale, FVector& VolumeToVirtualUVAdd);
-
 protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

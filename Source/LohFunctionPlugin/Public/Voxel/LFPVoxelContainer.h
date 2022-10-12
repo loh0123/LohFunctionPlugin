@@ -29,7 +29,11 @@ public:
 USTRUCT(BlueprintType)
 struct FLFPVoxelGridIndex
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
+
+	FLFPVoxelGridIndex() {}
+
+	FLFPVoxelGridIndex(const int32 ChuckIndex, const int32 VoxelIndex) : ChuckIndex(ChuckIndex), VoxelIndex(VoxelIndex) {}
 
 public:
 
@@ -57,7 +61,23 @@ public:
 		uint8 TextureOffset = uint8(0);
 };
 
-DECLARE_DELEGATE(FOnVoxelChuckUpdate);
+USTRUCT()
+struct FLFPVoxelWriteAction
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY() TMap<int32, FName> NameData = TMap<int32, FName>();
+
+	UPROPERTY() TMap<int32, FColor> ColorData = TMap<int32, FColor>();
+
+	UPROPERTY() bool bWantUpdateName = false;
+
+	UPROPERTY() bool bWantUpdateColor = false;
+};
+
+DECLARE_DELEGATE(FOnVoxelChuckNameUpdate);
 
 DECLARE_DELEGATE(FOnVoxelChuckColorUpdate);
 
@@ -68,18 +88,18 @@ struct FLFPVoxelChuckDataV2
 
 	FLFPVoxelChuckDataV2() {}
 
-	FLFPVoxelChuckDataV2(const FLFPVoxelChuckDataV2& Data) : VoxelData(Data.VoxelData) {}
+	FLFPVoxelChuckDataV2(const FLFPVoxelChuckDataV2& Data) : VoxelNameData(Data.VoxelNameData) {}
 
 public:
 
-	UPROPERTY() TArray<FName> VoxelData = {};
+	UPROPERTY() TArray<FName> VoxelNameData = {};
 
 	UPROPERTY() TArray<FColor> VoxelColorData = {};
 
 public:
 
 	// Update Event For Notify Chuck On Voxel Update
-	FOnVoxelChuckUpdate VoxelChuckUpdateEvent;
+	FOnVoxelChuckNameUpdate VoxelChuckNameUpdateEvent;
 
 	// Update Event For Notify Chuck On Change Of Color
 	FOnVoxelChuckColorUpdate VoxelChuckColorUpdateEvent;
@@ -88,25 +108,25 @@ public:
 
 	FORCEINLINE bool IsInitialized() const
 	{
-		return VoxelData.IsEmpty() == false;
+		return VoxelNameData.IsEmpty() == false;
 	}
 
 	FORCEINLINE void InitChuckData(const int32 VoxelLength, const FName& VoxelName)
 	{
-		VoxelData.Init(VoxelName, VoxelLength);
+		VoxelNameData.Init(VoxelName, VoxelLength);
 		VoxelColorData.Init(FColor(0), VoxelLength);
 	}
 
-	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FName& VoxelName)
+	FORCEINLINE void SetVoxelName(const int32 VoxelIndex, const FName& VoxelName)
 	{
-		check(VoxelData.IsValidIndex(VoxelIndex));
+		check(VoxelNameData.IsValidIndex(VoxelIndex));
 
-		VoxelData[VoxelIndex] = VoxelName;
+		VoxelNameData[VoxelIndex] = VoxelName;
 	}
 
 	FORCEINLINE void SetVoxelColor(const int32 VoxelIndex, const FColor& VoxelColor)
 	{
-		check(VoxelData.IsValidIndex(VoxelIndex));
+		check(VoxelColorData.IsValidIndex(VoxelIndex));
 
 		VoxelColorData[VoxelIndex] = VoxelColor;
 	}
@@ -114,13 +134,13 @@ public:
 	template <typename UserClass, typename Func01, typename Func02>
 	FORCEINLINE void Connect(UserClass* InUserObject, Func01 InVoxelFunc, Func02 InColorFunc)
 	{
-		VoxelChuckUpdateEvent.BindUObject(InUserObject, InVoxelFunc);
+		VoxelChuckNameUpdateEvent.BindUObject(InUserObject, InVoxelFunc);
 		VoxelChuckColorUpdateEvent.BindUObject(InUserObject, InColorFunc);
 	}
 
-	FORCEINLINE void SendUpdateEvent()
+	FORCEINLINE void SendNameUpdateEvent()
 	{
-		VoxelChuckUpdateEvent.ExecuteIfBound();
+		VoxelChuckNameUpdateEvent.ExecuteIfBound();
 	}
 
 	FORCEINLINE void SendColorUpdateEvent()
@@ -130,7 +150,8 @@ public:
 
 	FORCEINLINE void Disconnect()
 	{
-		VoxelChuckUpdateEvent.Unbind();
+		VoxelChuckNameUpdateEvent.Unbind();
+		VoxelChuckColorUpdateEvent.Unbind();
 	}
 };
 
@@ -214,10 +235,12 @@ protected:
 
 	FRWLock ContainerThreadLock;
 
+	TAtomic<bool> bIsThreadReading = false;
+
 public:
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnChuckInitialize VoxelChuckUpdateEvent;
+		FOnChuckInitialize VoxelChuckNameUpdateEvent;
 
 protected: // Initialize Data
 
@@ -236,6 +259,8 @@ protected:  // Runtime Data
 
 	UPROPERTY() TSet<int32> BatchChuckColorUpdateList;
 
+	UPROPERTY() TMap<int32, FLFPVoxelWriteAction> ChuckWriteActionList;
+
 
 protected: // Empty Data
 
@@ -245,6 +270,8 @@ protected: // Empty Data
 public: /* Function For Render Component To Multithread */
 
 	FORCEINLINE FRWLock& GetContainerThreadLock() { return ContainerThreadLock; }
+
+	FORCEINLINE void SetContainerThreadReading(const bool bIsReading) { bIsThreadReading = bIsReading; }
 
 
 public: /* Function For Render Component To Getting Container Init Data */
@@ -256,7 +283,7 @@ public:  /* Function For Render Component To Check Container Data Is Safe */
 
 	FORCEINLINE bool IsChuckIndexValid(const int32 ChuckIndex) const { return ChuckData.IsValidIndex(ChuckIndex); }
 
-	FORCEINLINE bool IsVoxelIndexValid(const FLFPVoxelGridIndex VoxelGridIndex) const { return IsChuckIndexValid(VoxelGridIndex.ChuckIndex) ? ChuckData[VoxelGridIndex.ChuckIndex].VoxelData.IsValidIndex(VoxelGridIndex.VoxelIndex) : false; }
+	FORCEINLINE bool IsVoxelIndexValid(const FLFPVoxelGridIndex VoxelGridIndex) const { return IsChuckIndexValid(VoxelGridIndex.ChuckIndex) ? ChuckData[VoxelGridIndex.ChuckIndex].VoxelNameData.IsValidIndex(VoxelGridIndex.VoxelIndex) : false; }
 
 
 public: /* Function For Render Component To Get Container Data */
@@ -299,7 +326,7 @@ public: /* Function For Render Component To Get Container Data */
 	/* This Is Use To Access Voxel Name Outside Of The Local Chuck */
 	FORCEINLINE const FName& GetVoxelName(const FLFPVoxelGridIndex VoxelGridIndex) const
 	{
-		return IsVoxelIndexValid(VoxelGridIndex) && IsChuckInitialized(VoxelGridIndex.ChuckIndex) ? ChuckData[VoxelGridIndex.ChuckIndex].VoxelData[VoxelGridIndex.VoxelIndex] : ContainerSetting.InvisibleName;
+		return IsVoxelIndexValid(VoxelGridIndex) && IsChuckInitialized(VoxelGridIndex.ChuckIndex) ? ChuckData[VoxelGridIndex.ChuckIndex].VoxelNameData[VoxelGridIndex.VoxelIndex] : ContainerSetting.InvisibleName;
 	}
 
 	/* This Is Use To Access Voxel Name On Local Chuck */
@@ -307,7 +334,7 @@ public: /* Function For Render Component To Get Container Data */
 	{
 		check(IsChuckIndexValid(ChuckIndex));
 
-		return ChuckData[ChuckIndex].VoxelData;
+		return ChuckData[ChuckIndex].VoxelNameData;
 	}
 
 	/* This Is Use To Access Voxel Name On Local Chuck */
@@ -343,6 +370,13 @@ public: /* Function For Prepare Render Component To Use Container Data */
 		ChuckData[ChuckIndex].Connect(InUserObject, InVoxelFunc, InColorFunc);
 	}
 
+	FORCEINLINE void DiconnectVoxelUpdateEvent(const int32 ChuckIndex)
+	{
+		check(ChuckData.IsValidIndex(ChuckIndex));
+
+		ChuckData[ChuckIndex].Disconnect();
+	}
+
 	FORCEINLINE void InitializeOrUpdateChuck(const int32 ChuckIndex, const FName& VoxelName)
 	{
 		check(IsChuckIndexValid(ChuckIndex));
@@ -354,10 +388,60 @@ public: /* Function For Prepare Render Component To Use Container Data */
 			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, VoxelName);
 		}
 
-		ChuckData[ChuckIndex].SendUpdateEvent();
+		ChuckData[ChuckIndex].SendNameUpdateEvent();
 		ChuckData[ChuckIndex].SendColorUpdateEvent();
 		
-		VoxelChuckUpdateEvent.Broadcast(ChuckIndex);
+		VoxelChuckNameUpdateEvent.Broadcast(ChuckIndex);
+	}
+
+protected: /* Helper Function */
+
+	FORCEINLINE void AddChuckWriteNameAction(const FLFPVoxelGridIndex& VoxelGridIndex, const FName& VoxelName, const bool bWantUpdate)
+	{
+		FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(VoxelGridIndex.ChuckIndex);
+
+		if (Action == nullptr)
+		{
+			FLFPVoxelWriteAction NewAction;
+
+			NewAction.bWantUpdateName = bWantUpdate;
+
+			NewAction.NameData.Add(VoxelGridIndex.VoxelIndex, VoxelName);
+
+			ChuckWriteActionList.Add(VoxelGridIndex.ChuckIndex, NewAction);
+		}
+		else
+		{
+			Action->bWantUpdateName = Action->bWantUpdateName || bWantUpdate;
+
+			Action->NameData.Add(VoxelGridIndex.VoxelIndex, VoxelName);
+		}
+
+		return;
+	}
+
+	FORCEINLINE void AddChuckWriteColorAction(const FLFPVoxelGridIndex& VoxelGridIndex, const FColor& VoxelColor, const bool bWantUpdate)
+	{
+		FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(VoxelGridIndex.ChuckIndex);
+
+		if (Action == nullptr)
+		{
+			FLFPVoxelWriteAction NewAction;
+
+			NewAction.bWantUpdateColor = bWantUpdate;
+
+			NewAction.ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
+
+			ChuckWriteActionList.Add(VoxelGridIndex.ChuckIndex, NewAction);
+		}
+		else
+		{
+			Action->bWantUpdateColor = Action->bWantUpdateName || bWantUpdate;
+
+			Action->ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
+		}
+
+		return;
 	}
 
 protected:
@@ -375,7 +459,10 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE int32 GetContainerSize();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void UpdateChuck();
+		FORCEINLINE void UpdateChuckWriteAction(const int32 Amount = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
+		FORCEINLINE void UpdateChuckName();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void UpdateChuckColor();
@@ -402,18 +489,18 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE void SetVoxelGridColor(const FLFPVoxelGridIndex VoxelGridIndex, const FColor VoxelColor, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetVoxelGridData(const FLFPVoxelGridIndex VoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
+		FORCEINLINE void SetVoxelGridName(const FLFPVoxelGridIndex VoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetVoxelGridDataList(const TArray<FLFPVoxelGridIndex>& VoxelGridIndexList, const FName VoxelAttributeName, const bool bInitializeChuck = true);
+		FORCEINLINE void SetVoxelGridNameList(const TArray<FLFPVoxelGridIndex>& VoxelGridIndexList, const FName VoxelAttributeName, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetVoxelGridDataWithArea(const FLFPVoxelGridIndex FromVoxelGridIndex, const FLFPVoxelGridIndex ToVoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
+		FORCEINLINE void SetVoxelGridNameWithArea(const FLFPVoxelGridIndex FromVoxelGridIndex, const FLFPVoxelGridIndex ToVoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetChuckGridData(const int32 ChuckIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
+		FORCEINLINE void SetChuckGridName(const int32 ChuckIndex, const FName VoxelAttributeName, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void SetChuckGridDataWithHeight(const int32 ChuckIndex, const FIntPoint VoxelGridPosition, const float Height, const FName VoxelAttributeName, const bool bInitializeChuck = true);
+		FORCEINLINE void SetChuckGridNameWithHeight(const int32 ChuckIndex, const FIntPoint VoxelGridPosition, const float Height, const FName VoxelAttributeName, const bool bInitializeChuck = true);
 };
 

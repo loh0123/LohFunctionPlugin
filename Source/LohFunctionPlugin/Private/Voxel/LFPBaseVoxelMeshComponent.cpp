@@ -51,6 +51,10 @@ void ULFPBaseVoxelMeshComponent::BeginDestroy()
 		LumenTask->EnsureCompletion(false);
 	}
 
+	RenderData = nullptr;
+
+	LumenData = nullptr;
+
 	Super::BeginDestroy();
 }
 
@@ -79,7 +83,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 			VoxelDataTexture = nullptr;
 		}
 
-		/* THis Setup Texture */
+		/* This Setup Texture */
 		{
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
@@ -146,36 +150,6 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 	}
 }
 
-uint8 ULFPBaseVoxelMeshComponent::TestFunc(const FIntVector IndirectionDimensions, const FBox LocalSpaceMeshBounds, const float Distance, FVector2D& DistanceFieldToVolumeScaleBias, FVector& VolumeToVirtualUVScale, FVector& VolumeToVirtualUVAdd)
-{
-	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
-
-	const FVector TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
-	const FBox DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
-
-	const FVector IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
-	const FVector VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector(DistanceField::UniqueDataBrickSize);
-	const float MaxDistanceForEncoding = VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
-	DistanceFieldToVolumeScaleBias = FVector2D(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
-
-	// Account for the border voxels we added
-	const FVector VirtualUVMin = FVector(DistanceField::MeshDistanceFieldObjectBorder) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-	const FVector VirtualUVSize = FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-
-	const FVector VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
-
-	// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
-	VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
-	VolumeToVirtualUVAdd = VolumePositionExtent * VolumeToVirtualUVScale + VirtualUVMin;
-
-	// Transform to the tracing shader's Volume space
-	const float VolumeSpaceDistance = Distance * LocalToVolumeScale;
-	// Transform to the Distance Field texture's space
-	const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
-	const uint8 QuantizedDistance = FMath::Clamp<int32>(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
-	return QuantizedDistance;
-}
-
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (RenderTask)
@@ -187,9 +161,6 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	{
 		LumenTask->Cancel();
 	}
-
-	RenderData = nullptr;
-	LumenData = nullptr;
 
 	if (IsValid(VoxelColorTexture))
 	{
@@ -203,6 +174,13 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 		VoxelDataTexture->MarkAsGarbage();
 
 		VoxelDataTexture = nullptr;
+	}
+
+	if (IsValid(VoxelContainer))
+	{
+		VoxelContainer->DiconnectVoxelUpdateEvent(ChuckInfo.ChuckIndex);
+
+		VoxelContainer = nullptr;
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -356,15 +334,15 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshRenderData& Rende
 
 	/* Handle Vertex Data */
 	{
-		const FVector3f MinVertex = FVector3f(-LocalVoxelHalfSize.X, -LocalVoxelHalfSize.Y, LocalVoxelHalfSize.Z);
-		const FVector3f MaxVertex = FVector3f(LocalVoxelHalfSize);
+		const FVector2f MinVertex = FVector2f(-1.0f);
+		const FVector2f MaxVertex = FVector2f(1.0f);
 
 		const TArray<FVector3f> VertexList =
 		{
-			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MinVertex.Y, MaxVertex.Z)) + VoxelLocation),
-			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MinVertex.Y, MaxVertex.Z)) + VoxelLocation),
-			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MaxVertex.Y, MaxVertex.Z)) + VoxelLocation),
-			FVector3f(ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MaxVertex.Y, MaxVertex.Z)) + VoxelLocation)
+			FVector3f((ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MinVertex.Y, 1.0f)) * LocalVoxelHalfSize) + VoxelLocation),
+			FVector3f((ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MinVertex.Y, 1.0f)) * LocalVoxelHalfSize) + VoxelLocation),
+			FVector3f((ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MinVertex.X, MaxVertex.Y, 1.0f)) * LocalVoxelHalfSize) + VoxelLocation),
+			FVector3f((ConstantData.VertexRotationList[FaceIndex].RotateVector(FVector(MaxVertex.X, MaxVertex.Y, 1.0f)) * LocalVoxelHalfSize) + VoxelLocation)
 		};
 
 		EditMesh.VertexList.Append({
@@ -1282,6 +1260,8 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 	FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
 
+	RenderParam.LocalVoxelContainer->SetContainerThreadReading(true);
+
 	FRWScopeLock ReadLock(RenderParam.LocalVoxelContainer->GetContainerThreadLock(), SLT_ReadOnly);
 
 	NewRenderData->Sections.Init(FLFPBaseVoxelMeshSectionData(), RenderParam.SectionSize);
@@ -1325,6 +1305,8 @@ void FLFPBaseBoxelRenderTask::DoWork()
 			}
 		}
 	}
+
+	RenderParam.LocalVoxelContainer->SetContainerThreadReading(false);
 
 	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
 		AsyncTask(ENamedThreads::GameThread, [NewRenderData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(RenderParam.SharePtr)]() {
