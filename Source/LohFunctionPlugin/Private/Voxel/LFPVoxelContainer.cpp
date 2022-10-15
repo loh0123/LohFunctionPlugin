@@ -23,6 +23,19 @@ void ULFPVoxelContainer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
 	DOREPLIFETIME(ULFPVoxelContainer, ChuckData);
 }
 
+FLFPVoxelWriteAction* ULFPVoxelContainer::FindChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay)
+{
+	if (IsChuckIndexValid(ChuckIndex) == false) return nullptr;
+
+	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
+
+	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
+
+	if (bResetDelay) Action->TickDelayCount = ContainerSetting.WriteActionTickDelay;
+
+	return Action;
+}
+
 void ULFPVoxelContainer::BeginPlay()
 {
 	SetupVoxelData(VoxelAttributeTable, ContainerSetting);
@@ -248,48 +261,26 @@ FIntVector ULFPVoxelContainer::VoxelGridIndexToVoxelGridLocation(const FLFPVoxel
 
 void ULFPVoxelContainer::SetVoxelGridColor(const FLFPVoxelGridIndex VoxelGridIndex, const FColor VoxelColor, const bool bInitializeChuck)
 {
-	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(VoxelGridIndex.ChuckIndex);
+	FLFPVoxelWriteAction* Action = FindChuckWriteAction(VoxelGridIndex.ChuckIndex);
 
-	if (Action == nullptr)
-	{
-		FLFPVoxelWriteAction NewAction;
+	if (Action == nullptr) return;
 
-		NewAction.bWantUpdateColor = bInitializeChuck;
+	Action->bWantUpdateColor = Action->bWantUpdateName || bInitializeChuck;
 
-		NewAction.ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
-
-		ChuckWriteActionList.Add(VoxelGridIndex.ChuckIndex, NewAction);
-	}
-	else
-	{
-		Action->bWantUpdateColor = Action->bWantUpdateName || bInitializeChuck;
-
-		Action->ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
-	}
+	Action->ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
 
 	return;
 }
 
 void ULFPVoxelContainer::SetVoxelGridName(const FLFPVoxelGridIndex VoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck)
 {
-	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(VoxelGridIndex.ChuckIndex);
+	FLFPVoxelWriteAction* Action = FindChuckWriteAction(VoxelGridIndex.ChuckIndex);
 
-	if (Action == nullptr)
-	{
-		FLFPVoxelWriteAction NewAction;
+	if (Action == nullptr) return;
 
-		NewAction.bWantUpdateName = bInitializeChuck;
+	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
 
-		NewAction.NameData.Add(VoxelGridIndex.VoxelIndex, VoxelAttributeName);
-
-		ChuckWriteActionList.Add(VoxelGridIndex.ChuckIndex, NewAction);
-	}
-	else
-	{
-		Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
-
-		Action->NameData.Add(VoxelGridIndex.VoxelIndex, VoxelAttributeName);
-	}
+	Action->NameData.Add(VoxelGridIndex.VoxelIndex, VoxelAttributeName);
 
 	return;
 }
@@ -327,13 +318,13 @@ void ULFPVoxelContainer::SetVoxelGridNameWithArea(const FLFPVoxelGridIndex FromV
 
 void ULFPVoxelContainer::SetChuckGridName(const int32 ChuckIndex, const FName VoxelAttributeName, const bool bInitializeChuck)
 {
-	const int32 ChuckGridMaxIndex = ContainerSetting.ChuckGridSize.X * ContainerSetting.ChuckGridSize.Y * ContainerSetting.ChuckGridSize.Z;
+	FLFPVoxelWriteAction* Action = FindChuckWriteAction(ChuckIndex);
 
-	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
+	if (Action == nullptr) return;
 
-	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
+	Action->NameData.Reserve(ContainerSetting.VoxelLength);
 
-	for (int32 VoxelIndex = 0; VoxelIndex < ChuckGridMaxIndex; VoxelIndex++)
+	for (int32 VoxelIndex = 0; VoxelIndex < ContainerSetting.VoxelLength; VoxelIndex++)
 	{
 		Action->NameData.Add(VoxelIndex, VoxelAttributeName);
 	}
@@ -345,11 +336,11 @@ void ULFPVoxelContainer::SetChuckGridName(const int32 ChuckIndex, const FName Vo
 
 void ULFPVoxelContainer::SetChuckGridNameWithHeight(const int32 ChuckIndex, const FIntPoint VoxelGridPosition, const float Height, const FName VoxelAttributeName, const bool bInitializeChuck)
 {
+	FLFPVoxelWriteAction* Action = FindChuckWriteAction(ChuckIndex);
+
+	if (Action == nullptr) return;
+
 	const int32 HeightIndex = ContainerSetting.VoxelGridSize.Z * Height;
-
-	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
-
-	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
 
 	for (int32 VoxelHeightIndex = 0; VoxelHeightIndex < HeightIndex; VoxelHeightIndex++)
 	{

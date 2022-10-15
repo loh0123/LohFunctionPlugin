@@ -75,6 +75,8 @@ public:
 	UPROPERTY() bool bWantUpdateName = false;
 
 	UPROPERTY() bool bWantUpdateColor = false;
+
+	UPROPERTY() uint16 TickDelayCount = 0;
 };
 
 DECLARE_DELEGATE(FOnVoxelChuckNameUpdate);
@@ -199,6 +201,9 @@ public:
 	/* Size Of The UV This Mesh Is Render On */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FIntPoint VoxelUVRound = FIntPoint(1);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
+		int32 WriteActionTickDelay = 10;
 
 public:
 
@@ -443,6 +448,8 @@ protected: /* Helper Function */
 
 		return;
 	}
+
+	FORCEINLINE FLFPVoxelWriteAction* FindChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay = true);
 
 protected:
 
