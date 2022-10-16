@@ -346,8 +346,6 @@ private:
 
 	const FLFPBaseVoxelMeshConstantData ConstantData;
 
-	class IMeshUtilities* MeshUtilities = nullptr;
-
 	FAsyncTask<FLFPBaseBoxelRenderTask>* RenderTask = nullptr;
 
 	FAsyncTask<FLFPBaseBoxelLumenTask>* LumenTask = nullptr;

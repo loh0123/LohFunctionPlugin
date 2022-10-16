@@ -10,6 +10,7 @@
 #include "UObject/NoExportTypes.h"
 #include "Engine/DataTable.h"
 #include "Math/LFPGridLibrary.h"
+#include "Voxel/LFPVoxelContainerInterface.h"
 #include "LFPVoxelContainer.generated.h"
 
 USTRUCT(BlueprintType)
@@ -395,15 +396,43 @@ public: /* Function For Prepare Render Component To Use Container Data */
 		ChuckData[ChuckIndex].Disconnect();
 	}
 
-	FORCEINLINE void InitializeOrUpdateChuck(const int32 ChuckIndex, const FName& VoxelName)
+	FORCEINLINE void InitializeOrUpdateChuck(const int32 ChuckIndex, const FName& VoxelName, const bool bSkipLock = false)
 	{
 		check(IsChuckIndexValid(ChuckIndex));
 
-		FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
+		if (bSkipLock == false) FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
 
 		if (ChuckData[ChuckIndex].IsInitialized() == false)
 		{
 			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, VoxelName);
+
+			if (GetOwner()->Implements<ULFPVoxelContainerInterface>())
+			{
+				const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+			
+				const FIntVector VoxelStartLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
+			
+				//for (int32 VoxelIndex = 0; VoxelIndex < ContainerSetting.VoxelLength; VoxelIndex++)
+				//{
+				//	FName TargetVoxelName;
+				//	FColor TargetVoxelColor;
+				//
+				//	ILFPVoxelContainerInterface::Execute_InitializeVoxelData(GetOwner(), VoxelStartLocation + ULFPGridLibrary::IndexToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), TargetVoxelName, TargetVoxelColor);
+				//
+				//	ChuckData[ChuckIndex].SetVoxelName(VoxelIndex, TargetVoxelName);
+				//	ChuckData[ChuckIndex].SetVoxelColor(VoxelIndex, TargetVoxelColor);
+				//}
+
+				ParallelFor(ContainerSetting.VoxelLength, [&](const int32 VoxelIndex) {
+					FName TargetVoxelName;
+					FColor TargetVoxelColor;
+
+					ILFPVoxelContainerInterface::Execute_InitializeVoxelData(GetOwner(), VoxelStartLocation + ULFPGridLibrary::IndexToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), TargetVoxelName, TargetVoxelColor);
+
+					ChuckData[ChuckIndex].SetVoxelName(VoxelIndex, TargetVoxelName);
+					ChuckData[ChuckIndex].SetVoxelColor(VoxelIndex, TargetVoxelColor);
+					});
+			}
 		}
 
 		ChuckData[ChuckIndex].SendNameUpdateEvent();
@@ -462,7 +491,9 @@ protected: /* Helper Function */
 		return;
 	}
 
-	FORCEINLINE FLFPVoxelWriteAction* FindChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay = true);
+public:
+
+	FORCEINLINE FLFPVoxelWriteAction* FindOrAddChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay = true);
 
 protected:
 

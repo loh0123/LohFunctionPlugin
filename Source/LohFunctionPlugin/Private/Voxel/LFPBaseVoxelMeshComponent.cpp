@@ -62,11 +62,6 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 {
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
-		if (!MeshUtilities)
-		{
-			MeshUtilities = &FModuleManager::Get().LoadModuleChecked<IMeshUtilities>(TEXT("MeshUtilities"));
-		}
-
 		/* This Clean Up Color Map If Valid */
 		if (IsValid(VoxelColorTexture))
 		{
@@ -99,7 +94,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 
 			VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh, &ULFPBaseVoxelMeshComponent::UpdateVoxelColor);
 
-			VoxelContainer->InitializeOrUpdateChuck(NewChuckIndex, InitializeName);
+			VoxelContainer->FindOrAddChuckWriteAction(NewChuckIndex);
 		}
 	}
 	else
@@ -127,7 +122,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelMaterial(const TArray<UMaterialInterfac
 
 void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 {
-	if (IsValid(VoxelContainer))
+	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(ChuckInfo.ChuckIndex))
 	{
 		ChuckStatus.bIsVoxelMeshDirty = true;
 		ChuckStatus.bIsVoxelDataDirty = true;
@@ -140,7 +135,7 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 
 void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 {
-	if (IsValid(VoxelContainer))
+	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(ChuckInfo.ChuckIndex))
 	{
 		ChuckStatus.bIsVoxelColorDirty = true;
 	}

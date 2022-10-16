@@ -12,3 +12,4 @@
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Render/LFPRenderLibrary.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Voxel/LFPBaseVoxelMeshComponent.cpp"
 #include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Voxel/LFPVoxelContainer.cpp"
+#include "D:/Unreal Engine/Project File/PluginLab5/Plugins/LohFunctionPlugin/Source/LohFunctionPlugin/Private/Voxel/LFPVoxelContainerInterface.cpp"

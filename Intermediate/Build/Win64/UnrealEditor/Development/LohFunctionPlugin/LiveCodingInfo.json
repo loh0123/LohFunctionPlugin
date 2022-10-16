@@ -14,7 +14,8 @@
 			"LFProceduralRoomLibrary.cpp.obj",
 			"LFPRenderLibrary.cpp.obj",
 			"LFPBaseVoxelMeshComponent.cpp.obj",
-			"LFPVoxelContainer.cpp.obj"
+			"LFPVoxelContainer.cpp.obj",
+			"LFPVoxelContainerInterface.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
@@ -25,6 +26,7 @@
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTickManager.gen.cpp.obj",
 			"LFPVoxelContainer.gen.cpp.obj",
+			"LFPVoxelContainerInterface.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginLibrary.gen.cpp.obj",
