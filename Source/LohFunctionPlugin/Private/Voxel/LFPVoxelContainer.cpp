@@ -54,7 +54,7 @@ void ULFPVoxelContainer::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	}
 	else if (bIsThreadReading == false)
 	{
-		UpdateChuckWriteAction(1);
+		UpdateChuckWriteAction();
 	}
 }
 
@@ -63,25 +63,24 @@ int32 ULFPVoxelContainer::GetContainerSize()
 	return GetResourceSizeBytes(EResourceSizeMode::EstimatedTotal);
 }
 
-void ULFPVoxelContainer::UpdateChuckWriteAction(const int32 Amount)
+void ULFPVoxelContainer::UpdateChuckWriteAction()
 {
 	if (ChuckWriteActionList.IsEmpty()) return;
 
 	FRWScopeLock WriteLock(GetContainerThreadLock(), SLT_Write);
 
-	int32 Index = 0;
-
 	TArray<int32> RemoveAction;
 
-	RemoveAction.Reserve(Amount);
-
-	for (const auto& ChuckWriteAction : ChuckWriteActionList)
+	for (auto& ChuckWriteAction : ChuckWriteActionList)
 	{
-		if (Index >= Amount) break;
+		if (ChuckWriteAction.Value.TickDelayCount != 0)
+		{
+			ChuckWriteAction.Value.TickDelayCount -= 1;
+
+			continue;
+		}
 
 		RemoveAction.Add(ChuckWriteAction.Key);
-
-		check(ChuckData.IsValidIndex(ChuckWriteAction.Key));
 
 		if (ChuckData[ChuckWriteAction.Key].IsInitialized() == false)
 		{

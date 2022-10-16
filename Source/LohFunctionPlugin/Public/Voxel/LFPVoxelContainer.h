@@ -77,6 +77,19 @@ public:
 	UPROPERTY() bool bWantUpdateColor = false;
 
 	UPROPERTY() uint16 TickDelayCount = 0;
+
+	FLFPVoxelWriteAction& operator+=(const FLFPVoxelWriteAction& Other)
+	{
+		NameData.Append(Other.NameData);
+		ColorData.Append(Other.ColorData);
+
+		bWantUpdateName = bWantUpdateName || Other.bWantUpdateName;
+		bWantUpdateColor = bWantUpdateColor || Other.bWantUpdateColor;
+
+		TickDelayCount = FMath::Max(TickDelayCount, Other.TickDelayCount);
+
+		return *this;
+	}
 };
 
 DECLARE_DELEGATE(FOnVoxelChuckNameUpdate);
@@ -466,7 +479,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE int32 GetContainerSize();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void UpdateChuckWriteAction(const int32 Amount = 1);
+		FORCEINLINE void UpdateChuckWriteAction();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void UpdateChuckName();
