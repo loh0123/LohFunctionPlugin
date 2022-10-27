@@ -22,23 +22,20 @@ struct FLFPBaseVoxelMeshSetting
 
 public:
 
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-	//	TObjectPtr<UStaticMesh> TestMesh = nullptr;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		float BoundExpand = 5.0f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-		bool bForceTwoSide = false;
+	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+	//	bool bForceTwoSide = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-		int32 LumenCardAmount = 32;
+	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+	//	int32 LumenCardAmount = 32;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
 		uint8 VoxelPerDistanceField = 2;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
-		uint8 LumenCardPerVoxelDimension = 2;
+	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
+	//	uint8 LumenCardPerVoxelDimension = 2;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -325,13 +322,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<ULFPVoxelContainer> VoxelContainer = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere,	Category = "LFPBaseVoxelMeshComponent")
 		FLFPVoxelChuckInfo ChuckInfo;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere,	Category = "LFPBaseVoxelMeshComponent")
 		FLFPBaseVoxelMeshStatus ChuckStatus;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPBaseVoxelMeshComponent")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "LFPBaseVoxelMeshComponent")
 		FLFPBaseVoxelMeshSetting ChuckSetting;
 
 private:

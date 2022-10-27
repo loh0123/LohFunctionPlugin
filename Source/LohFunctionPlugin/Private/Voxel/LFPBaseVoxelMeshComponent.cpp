@@ -258,51 +258,6 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
 		LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
 
-		//for (int32 SectionIndex = 0; SectionIndex < RenderData->Sections.Num(); SectionIndex++)
-		//{
-		//	{
-		//		FStaticMeshSection Section;
-		//		Section.MaterialIndex = SectionIndex;
-		//
-		//		LumenParam.LODSectionData->Sections.Add(Section);
-		//	}
-		//
-		//	{
-		//		FSignedDistanceFieldBuildMaterialData MaterialData;
-		//		// Default material blend mode
-		//		MaterialData.BlendMode = BLEND_Opaque;
-		//		MaterialData.bTwoSided = false;
-		//
-		//		if (IsValid(GetMaterial(SectionIndex)))
-		//		{
-		//			MaterialData.BlendMode = GetMaterial(SectionIndex)->GetBlendMode();
-		//			MaterialData.bTwoSided = GetMaterial(SectionIndex)->IsTwoSided();
-		//		}
-		//
-		//		if (MaterialData.bTwoSided)
-		//		{
-		//			LumenParam.bIsTwoSide = true;
-		//		}
-		//
-		//		LumenParam.LocalMaterialBlendModes.Add(MaterialData);
-		//	}
-		//
-		//	{
-		//		const FLFPBaseVoxelMeshSectionData& SectionData = RenderData->Sections[SectionIndex];
-		//
-		//		LumenParam.LocalSourceMeshData.VertexPositions.Append(SectionData.VertexList);
-		//
-		//		const uint32 StartIndex = LumenParam.LocalSourceMeshData.TriangleIndices.Num();
-		//
-		//		LumenParam.LocalSourceMeshData.TriangleIndices.Reserve(LumenParam.LocalSourceMeshData.TriangleIndices.Num() + SectionData.TriangleIndexList.Num());
-		//
-		//		for (const uint32 TriangleIndex : SectionData.TriangleIndexList)
-		//		{
-		//			LumenParam.LocalSourceMeshData.TriangleIndices.Add(TriangleIndex + StartIndex);
-		//		}
-		//	}
-		//}
-
 		if (LumenTask == nullptr)
 		{
 			LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
