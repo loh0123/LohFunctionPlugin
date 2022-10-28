@@ -274,7 +274,7 @@ protected:  // Runtime Data
 
 	UPROPERTY(replicated) TArray<FLFPVoxelChuckDataV2> ChuckData;
 
-	UPROPERTY() TSet<int32> BatchChuckUpdateList;
+	UPROPERTY() TSet<int32> BatchChuckNameUpdateList;
 
 	UPROPERTY() TSet<int32> BatchChuckColorUpdateList;
 
@@ -396,7 +396,7 @@ public: /* Function For Prepare Render Component To Use Container Data */
 		ChuckData[ChuckIndex].Disconnect();
 	}
 
-	FORCEINLINE void InitializeOrUpdateChuck(const int32 ChuckIndex, const FName& VoxelName, const bool bSkipLock = false)
+	FORCEINLINE void InitializeChuck(const int32 ChuckIndex, const FName& VoxelName, const bool bSkipLock = false)
 	{
 		check(IsChuckIndexValid(ChuckIndex));
 
@@ -424,8 +424,8 @@ public: /* Function For Prepare Render Component To Use Container Data */
 			}
 		}
 
-		ChuckData[ChuckIndex].SendNameUpdateEvent();
-		ChuckData[ChuckIndex].SendColorUpdateEvent();
+		//ChuckData[ChuckIndex].SendNameUpdateEvent();
+		//ChuckData[ChuckIndex].SendColorUpdateEvent();
 		
 		VoxelChuckNameUpdateEvent.Broadcast(ChuckIndex);
 	}
@@ -508,7 +508,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE void UpdateChuckColor();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);
+		FORCEINLINE void MarkChuckForNameUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void MarkChuckForColorUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck = true);

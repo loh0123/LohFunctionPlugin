@@ -125,7 +125,6 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(ChuckInfo.ChuckIndex))
 	{
 		ChuckStatus.bIsVoxelMeshDirty = true;
-		ChuckStatus.bIsVoxelDataDirty = true;
 	}
 	else
 	{
@@ -143,6 +142,11 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
 	{
 		UE_LOG(LFPVoxelMeshComponentLog, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
 	}
+}
+
+void ULFPBaseVoxelMeshComponent::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -188,11 +192,6 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ChuckStatus.bIsVoxelColorDirty = false;
 
 		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex));
-	}
-
-	if (ChuckStatus.bIsVoxelDataDirty)
-	{
-		ChuckStatus.bIsVoxelDataDirty = false;
 
 		const FIntVector DataColorGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize + FIntVector(2);
 		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
@@ -807,7 +806,9 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		const FVector BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
 		const FVector BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min - LocalSpaceMeshBounds.Min;
 
-		const int32 CheckRange = FMath::Max(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale, MipIndex + 1);
+		//const int32 CheckRange = FMath::Max(FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale), MipIndex + 1);
+		const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale) + MipIndex;
+
 
 		struct FLFPDFBrickTask
 		{

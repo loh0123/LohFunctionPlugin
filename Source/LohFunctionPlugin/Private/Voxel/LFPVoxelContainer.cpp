@@ -47,15 +47,13 @@ void ULFPVoxelContainer::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (ChuckWriteActionList.IsEmpty())
-	{
-		UpdateChuckName();
-		UpdateChuckColor();
-	}
-	else if (bIsThreadReading == false)
+	if (bIsThreadReading == false)
 	{
 		UpdateChuckWriteAction();
 	}
+
+	UpdateChuckName();
+	UpdateChuckColor();
 }
 
 int32 ULFPVoxelContainer::GetContainerSize()
@@ -81,16 +79,29 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 		{
 			if (ChuckData[ChuckWriteAction.Key()].IsInitialized() == false)
 			{
-				InitializeOrUpdateChuck(ChuckWriteAction.Key(), ContainerSetting.InvisibleName, true);
+				InitializeChuck(ChuckWriteAction.Key(), ContainerSetting.InvisibleName, true);
+
+				MarkChuckForNameUpdate(ChuckWriteAction.Key(), true);
 			}
 
 			for (const auto& VoxelName : ChuckWriteAction.Value().NameData)
 			{
+				const FName OldName = ChuckData[ChuckWriteAction.Key()].VoxelNameData[VoxelName.Key];
+
+				if (OldName == VoxelName.Value) continue;
+
 				ChuckData[ChuckWriteAction.Key()].SetVoxelName(VoxelName.Key, VoxelName.Value);
 
 				const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
 
-				MarkChuckForUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+				if (OldName == ContainerSetting.InvisibleName || VoxelName.Value == ContainerSetting.InvisibleName)
+				{
+					MarkChuckForNameUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+				}
+				else
+				{
+					MarkChuckForColorUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+				}
 			}
 
 			for (const auto& VoxelColor : ChuckWriteAction.Value().ColorData)
@@ -113,14 +124,14 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 
 void ULFPVoxelContainer::UpdateChuckName()
 {
-	if (BatchChuckUpdateList.IsEmpty()) return;
+	if (BatchChuckNameUpdateList.IsEmpty()) return;
 
-	for (const int32 ChuckIndex : BatchChuckUpdateList)
+	for (const int32 ChuckIndex : BatchChuckNameUpdateList)
 	{
 		ChuckData[ChuckIndex].SendNameUpdateEvent();
 	}
 
-	BatchChuckUpdateList.Empty();
+	BatchChuckNameUpdateList.Empty();
 
 	return;
 }
@@ -139,7 +150,7 @@ void ULFPVoxelContainer::UpdateChuckColor()
 	return;
 }
 
-void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
+void ULFPVoxelContainer::MarkChuckForNameUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
 	MarkChuckForColorUpdate(ChuckIndex, bUpdateNearbyChuck);
 
@@ -161,12 +172,12 @@ void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool b
 		{
 			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
 			{
-				BatchChuckUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckNameUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
 			}
 		}
 	}
 
-	BatchChuckUpdateList.Add(ChuckIndex);
+	BatchChuckNameUpdateList.Add(ChuckIndex);
 
 	return;
 }
