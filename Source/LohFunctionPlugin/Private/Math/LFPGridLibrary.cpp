@@ -17,14 +17,14 @@ bool ULFPGridLibrary::IsOnGridEdge(const FIntVector& Location, const FIntVector&
 	return Location.GetMin() == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
 }
 
-int32 ULFPGridLibrary::GridLocationToIndex(const FIntVector& Location, const FIntVector& GridSize)
+int32 ULFPGridLibrary::ToIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
 	if (Location.GetMin() < 0 || Location.X >= GridSize.X || Location.Y >= GridSize.Y || Location.Z >= GridSize.Z) return INDEX_NONE;
 
 	return Location.X + (Location.Y * GridSize.X) + (Location.Z * (GridSize.X * GridSize.Y));
 }
 
-TArray<int32> ULFPGridLibrary::GridLocationsToIndex(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize)
+TArray<int32> ULFPGridLibrary::ToIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize)
 {
 	TArray<int32> ReturnData;
 
@@ -32,13 +32,13 @@ TArray<int32> ULFPGridLibrary::GridLocationsToIndex(const TArray<FIntVector>& Gr
 	{
 		if (!IsLocationValid(Item + Offset, GridSize)) continue;
 
-		ReturnData.Add(GridLocationToIndex(Item + Offset, GridSize));
+		ReturnData.Add(ToIndex(Item + Offset, GridSize));
 	}
 
 	return ReturnData;
 }
 
-FIntVector ULFPGridLibrary::IndexToGridLocation(const int32& Index, const FIntVector& GridSize)
+FIntVector ULFPGridLibrary::ToGridLocation(const int32& Index, const FIntVector& GridSize)
 {
 	FIntVector ReturnData;
 
@@ -49,7 +49,7 @@ FIntVector ULFPGridLibrary::IndexToGridLocation(const int32& Index, const FIntVe
 	return ReturnData;
 }
 
-TArray<FIntVector> ULFPGridLibrary::IndexsToGridLocation(const TArray<int32>& Indexs, const int32 Offset, const FIntVector& GridSize)
+TArray<FIntVector> ULFPGridLibrary::ToGridLocationList(const TArray<int32>& Indexs, const int32 Offset, const FIntVector& GridSize)
 {
 	TArray<FIntVector> ReturnData;
 
@@ -59,7 +59,7 @@ TArray<FIntVector> ULFPGridLibrary::IndexsToGridLocation(const TArray<int32>& In
 	{
 		if (GridArratSize <= Item || Item < 0) continue;
 
-		ReturnData.Add(IndexToGridLocation(Item, GridSize));
+		ReturnData.Add(ToGridLocation(Item, GridSize));
 	}
 
 	return ReturnData;
@@ -80,7 +80,7 @@ TArray<int32> ULFPGridLibrary::SectionGridIndex(const FIntVector SectionSize, co
 		for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
 			for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
 			{
-				int32 Index = GridLocationToIndex(FIntVector(X, Y, Z), GridSize);
+				int32 Index = ToIndex(FIntVector(X, Y, Z), GridSize);
 
 				if (!IgnoreIndexs.Contains(Index)) ReturnData.Add(Index);
 			}
@@ -105,7 +105,7 @@ TArray<int32> ULFPGridLibrary::RandomSectionGridIndex(const int32 Amount, const 
 		for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
 			for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
 			{
-				int32 Index = GridLocationToIndex(FIntVector(X, Y, Z), GridSize);
+				int32 Index = ToIndex(FIntVector(X, Y, Z), GridSize);
 
 				if (!IgnoreIndexs.Contains(Index)) UnVisit.Add(Index);
 			}
@@ -128,7 +128,7 @@ TArray<int32> ULFPGridLibrary::RandomSectionGridIndex(const int32 Amount, const 
 
 TArray<int32> ULFPGridLibrary::GetGridAreaIndex(const int32 Index, const FIntVector Offset, const FIntVector AreaSize, const FIntVector& GridSize)
 {
-	FIntVector StartLoc = IndexToGridLocation(Index, GridSize) + Offset;
+	FIntVector StartLoc = ToGridLocation(Index, GridSize) + Offset;
 	TArray<int32> ReturnData;
 
 	ReturnData.Reserve(((AreaSize.X * AreaSize.Y * AreaSize.Z) * 2) + 1);
@@ -141,7 +141,7 @@ TArray<int32> ULFPGridLibrary::GetGridAreaIndex(const int32 Index, const FIntVec
 
 				if (IsLocationValid(LoopLoc, GridSize))
 				{
-					ReturnData.Add(GridLocationToIndex(LoopLoc, GridSize));
+					ReturnData.Add(ToIndex(LoopLoc, GridSize));
 				}
 			}
 

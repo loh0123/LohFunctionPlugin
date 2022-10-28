@@ -204,7 +204,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ParallelFor(DataColorSize,
 			[&](const int32 Index) 
 			{
-				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::IndexToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + ChuckInfo.StartVoxelLocation;
+				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + ChuckInfo.StartVoxelLocation;
 
 				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation));
 				
@@ -821,7 +821,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 
 				for (int32 DataIndex = 0; DataIndex < 512 /* Brick Length */; DataIndex++)
 				{
-					const FIntVector DataLocation(ULFPGridLibrary::IndexToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
+					const FIntVector DataLocation(ULFPGridLibrary::ToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
 
 					const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
 
@@ -859,7 +859,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 
 		for (int32 BrickIndex = 0; BrickIndex < IndirectionDimensionsLength; BrickIndex++)
 		{
-			const FIntVector BrickLocation = (ULFPGridLibrary::IndexToGridLocation(BrickIndex, IndirectionDimensions));
+			const FIntVector BrickLocation = (ULFPGridLibrary::ToGridLocation(BrickIndex, IndirectionDimensions));
 			const FVector BrickSpaceLocation = (FVector(BrickLocation) * BrickSpaceSize) + BrickOffset;
 
 			BrickTaskList.Add(FLFPDFBrickTask(
@@ -985,7 +985,7 @@ float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLoc
 	const FVector VoxelSize = LumenParam.VoxelSetting.VoxelHalfSize * 2;
 	const FVector LocalSpace = LocalLocation / VoxelSize;
 	const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
-	const int32 GridIndex = ULFPGridLibrary::GridLocationToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
 	const uint8 SelfMaterial = GridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[GridIndex];
 
 	float ClosetDistance = MaxDistance;
@@ -999,7 +999,7 @@ float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLoc
 				const FIntVector CheckVoxelDirection = FIntVector(IndexX, IndexY, IndexZ);
 				const FIntVector CheckVoxelLocation = GridLocation + CheckVoxelDirection;
 
-				const int32 CheckGridIndex = ULFPGridLibrary::GridLocationToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
+				const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
 				const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
 
 				if (CheckMaterial != SelfMaterial)
@@ -1039,11 +1039,11 @@ FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
 
 	auto CheckFaceVisible = [&](const FIntVector& From, const FIntVector& Direction)
 	{
-		const int32 SelfMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::GridLocationToIndex(From, LumenParam.VoxelSetting.VoxelGridSize)];
+		const int32 SelfMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::ToIndex(From, LumenParam.VoxelSetting.VoxelGridSize)];
 
 		if (ULFPGridLibrary::IsLocationValid(From + Direction, LumenParam.VoxelSetting.VoxelGridSize))
 		{
-			const int32 CheckMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::GridLocationToIndex(From + Direction, LumenParam.VoxelSetting.VoxelGridSize)];
+			const int32 CheckMaterial = LumenParam.VoxelMaterialList[ULFPGridLibrary::ToIndex(From + Direction, LumenParam.VoxelSetting.VoxelGridSize)];
 
 			return SelfMaterial != 0 && SelfMaterial != CheckMaterial;
 		}
@@ -1232,7 +1232,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 	for (int32 VoxelIndex = 0; VoxelIndex < RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelLength; VoxelIndex++)
 	{
-		const FIntVector VoxelGridLocation = ULFPGridLibrary::IndexToGridLocation(VoxelIndex, RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
+		const FIntVector VoxelGridLocation = ULFPGridLibrary::ToGridLocation(VoxelIndex, RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelGridSize);
 
 		const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
 

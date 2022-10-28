@@ -34,7 +34,7 @@ void ULFPWorldGrid::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 
 int32 ULFPWorldGrid::WordlLocationToIndex(const FVector& Location) const
 {
-	return ULFPGridLibrary::GridLocationToIndex(WordlLocationToGridLocation(Location), GridSize);
+	return ULFPGridLibrary::ToIndex(WordlLocationToGridLocation(Location), GridSize);
 }
 
 FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) const
@@ -87,5 +87,5 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 
 bool ULFPWorldGrid::IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const
 {
-	return GridLocationToWorldLocation(ULFPGridLibrary::IndexToGridLocation(Index, GridSize), AddHalfGap, ReturnLocation, ReturnRotation);
+	return GridLocationToWorldLocation(ULFPGridLibrary::ToGridLocation(Index, GridSize), AddHalfGap, ReturnLocation, ReturnRotation);
 }

@@ -28,16 +28,16 @@ public:
 		static bool IsOnGridEdge(const FIntVector& Location, const FIntVector& GridSize);
 	
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
-		static int32 GridLocationToIndex(const FIntVector& Location, const FIntVector& GridSize);
+		static int32 ToIndex(const FIntVector& Location, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")
-		static TArray<int32> GridLocationsToIndex(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize);
+		static TArray<int32> ToIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
-		static FIntVector IndexToGridLocation(const int32& Index, const FIntVector& GridSize);
+		static FIntVector ToGridLocation(const int32& Index, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")
-		static TArray<FIntVector> IndexsToGridLocation(const TArray<int32>& Indexs, const int32 Offset, const FIntVector& GridSize);
+		static TArray<FIntVector> ToGridLocationList(const TArray<int32>& Indexs, const int32 Offset, const FIntVector& GridSize);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")

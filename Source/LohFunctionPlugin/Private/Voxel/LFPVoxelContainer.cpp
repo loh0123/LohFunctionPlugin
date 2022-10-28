@@ -88,7 +88,7 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 			{
 				ChuckData[ChuckWriteAction.Key()].SetVoxelName(VoxelName.Key, VoxelName.Value);
 
-				const FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
+				const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
 
 				MarkChuckForUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 			}
@@ -97,7 +97,7 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 			{
 				ChuckData[ChuckWriteAction.Key()].SetVoxelColor(VoxelColor.Key, VoxelColor.Value);
 
-				const FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelColor.Key, ContainerSetting.VoxelGridSize);
+				const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelColor.Key, ContainerSetting.VoxelGridSize);
 
 				MarkChuckForColorUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 			}
@@ -155,13 +155,13 @@ void ULFPVoxelContainer::MarkChuckForUpdate(const int32 ChuckIndex, const bool b
 			FIntVector(-1, 0, 0)
 		};
 
-		const FIntVector ChuckLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+		const FIntVector ChuckLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
 		for (const FIntVector& Direction : UpdateDirection)
 		{
 			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
 			{
-				BatchChuckUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
 			}
 		}
 	}
@@ -185,13 +185,13 @@ void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex, const b
 			FIntVector(-1, 0, 0)
 		};
 
-		const FIntVector ChuckLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+		const FIntVector ChuckLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
 		for (const FIntVector& Direction : UpdateDirection)
 		{
 			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
 			{
-				BatchChuckColorUpdateList.Add(ULFPGridLibrary::GridLocationToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckColorUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
 			}
 		}
 	}
@@ -237,8 +237,8 @@ FLFPVoxelGridIndex ULFPVoxelContainer::ToVoxelGridIndex(const FIntVector VoxelGr
 
 	if (VoxelGridLocation.GetMin() < 0) return ReturnData;
 
-	ReturnData.ChuckIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y / ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z / ContainerSetting.VoxelGridSize.Z), ContainerSetting.ChuckGridSize);
-	ReturnData.VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y % ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z % ContainerSetting.VoxelGridSize.Z), ContainerSetting.VoxelGridSize);
+	ReturnData.ChuckIndex = ULFPGridLibrary::ToIndex(FIntVector(VoxelGridLocation.X / ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y / ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z / ContainerSetting.VoxelGridSize.Z), ContainerSetting.ChuckGridSize);
+	ReturnData.VoxelIndex = ULFPGridLibrary::ToIndex(FIntVector(VoxelGridLocation.X % ContainerSetting.VoxelGridSize.X, VoxelGridLocation.Y % ContainerSetting.VoxelGridSize.Y, VoxelGridLocation.Z % ContainerSetting.VoxelGridSize.Z), ContainerSetting.VoxelGridSize);
 
 	return ReturnData;
 }
@@ -247,8 +247,8 @@ FIntVector ULFPVoxelContainer::ToVoxelGridLocation(const FLFPVoxelGridIndex Voxe
 {
 	if (IsVoxelIndexValid(VoxelGridIndex) == false) return FIntVector(-1);
 
-	const FIntVector ChuckLocation = ULFPGridLibrary::IndexToGridLocation(VoxelGridIndex.ChuckIndex, ContainerSetting.ChuckGridSize);
-	const FIntVector VoxelLocation = ULFPGridLibrary::IndexToGridLocation(VoxelGridIndex.VoxelIndex, ContainerSetting.VoxelGridSize);
+	const FIntVector ChuckLocation = ULFPGridLibrary::ToGridLocation(VoxelGridIndex.ChuckIndex, ContainerSetting.ChuckGridSize);
+	const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelGridIndex.VoxelIndex, ContainerSetting.VoxelGridSize);
 
 	return VoxelLocation + FIntVector(ChuckLocation.X * ContainerSetting.VoxelGridSize.X, ChuckLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckLocation.Z * ContainerSetting.VoxelGridSize.Z);
 }
@@ -317,7 +317,7 @@ void ULFPVoxelContainer::SetChuckGridNameWithHeight(const int32 ChuckIndex, cons
 
 	for (int32 VoxelHeightIndex = 0; VoxelHeightIndex < HeightIndex; VoxelHeightIndex++)
 	{
-		const int32 VoxelIndex = ULFPGridLibrary::GridLocationToIndex(FIntVector(VoxelGridPosition.X, VoxelGridPosition.Y, VoxelHeightIndex), ContainerSetting.VoxelGridSize);
+		const int32 VoxelIndex = ULFPGridLibrary::ToIndex(FIntVector(VoxelGridPosition.X, VoxelGridPosition.Y, VoxelHeightIndex), ContainerSetting.VoxelGridSize);
 
 		Action->NameData.Add(VoxelIndex, VoxelAttributeName);
 	}

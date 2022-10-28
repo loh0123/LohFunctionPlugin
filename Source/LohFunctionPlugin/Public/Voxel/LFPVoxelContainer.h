@@ -313,7 +313,7 @@ public: /* Function For Render Component To Get Container Data */
 
 		FLFPVoxelChuckInfo ChuckInfo;
 
-		const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+		const FIntVector ChuckGridLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
 		ChuckInfo.ChuckIndex = ChuckIndex;
 		ChuckInfo.StartVoxelLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
@@ -408,7 +408,7 @@ public: /* Function For Prepare Render Component To Use Container Data */
 
 			if (GetOwner()->Implements<ULFPVoxelContainerInterface>())
 			{
-				const FIntVector ChuckGridLocation = ULFPGridLibrary::IndexToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+				const FIntVector ChuckGridLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 			
 				const FIntVector VoxelStartLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
 
@@ -416,7 +416,7 @@ public: /* Function For Prepare Render Component To Use Container Data */
 					FName TargetVoxelName;
 					FColor TargetVoxelColor;
 
-					ILFPVoxelContainerInterface::Execute_InitializeVoxelData(GetOwner(), VoxelStartLocation + ULFPGridLibrary::IndexToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), TargetVoxelName, TargetVoxelColor);
+					ILFPVoxelContainerInterface::Execute_InitializeVoxelData(GetOwner(), VoxelStartLocation + ULFPGridLibrary::ToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), TargetVoxelName, TargetVoxelColor);
 
 					ChuckData[ChuckIndex].SetVoxelName(VoxelIndex, TargetVoxelName);
 					ChuckData[ChuckIndex].SetVoxelColor(VoxelIndex, TargetVoxelColor);

@@ -21,10 +21,10 @@ struct FRandomStream;
 	DECLARE_FUNCTION(execGetGridAreaIndex); \
 	DECLARE_FUNCTION(execRandomSectionGridIndex); \
 	DECLARE_FUNCTION(execSectionGridIndex); \
-	DECLARE_FUNCTION(execIndexsToGridLocation); \
-	DECLARE_FUNCTION(execIndexToGridLocation); \
-	DECLARE_FUNCTION(execGridLocationsToIndex); \
-	DECLARE_FUNCTION(execGridLocationToIndex); \
+	DECLARE_FUNCTION(execToGridLocationList); \
+	DECLARE_FUNCTION(execToGridLocation); \
+	DECLARE_FUNCTION(execToIndexList); \
+	DECLARE_FUNCTION(execToIndex); \
 	DECLARE_FUNCTION(execIsOnGridEdge); \
 	DECLARE_FUNCTION(execIsLocationValid);
 
@@ -34,10 +34,10 @@ struct FRandomStream;
 	DECLARE_FUNCTION(execGetGridAreaIndex); \
 	DECLARE_FUNCTION(execRandomSectionGridIndex); \
 	DECLARE_FUNCTION(execSectionGridIndex); \
-	DECLARE_FUNCTION(execIndexsToGridLocation); \
-	DECLARE_FUNCTION(execIndexToGridLocation); \
-	DECLARE_FUNCTION(execGridLocationsToIndex); \
-	DECLARE_FUNCTION(execGridLocationToIndex); \
+	DECLARE_FUNCTION(execToGridLocationList); \
+	DECLARE_FUNCTION(execToGridLocation); \
+	DECLARE_FUNCTION(execToIndexList); \
+	DECLARE_FUNCTION(execToIndex); \
 	DECLARE_FUNCTION(execIsOnGridEdge); \
 	DECLARE_FUNCTION(execIsLocationValid);
 
