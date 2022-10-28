@@ -231,7 +231,7 @@ bool ULFPVoxelContainer::IsChuckInitialized(const int32 ChuckIndex) const
 	return ChuckData[ChuckIndex].IsInitialized();
 }
 
-FLFPVoxelGridIndex ULFPVoxelContainer::VoxelGridLocationToVoxelGridIndex(const FIntVector VoxelGridLocation) const
+FLFPVoxelGridIndex ULFPVoxelContainer::ToVoxelGridIndex(const FIntVector VoxelGridLocation) const
 {
 	FLFPVoxelGridIndex ReturnData;
 
@@ -243,7 +243,7 @@ FLFPVoxelGridIndex ULFPVoxelContainer::VoxelGridLocationToVoxelGridIndex(const F
 	return ReturnData;
 }
 
-FIntVector ULFPVoxelContainer::VoxelGridIndexToVoxelGridLocation(const FLFPVoxelGridIndex VoxelGridIndex) const
+FIntVector ULFPVoxelContainer::ToVoxelGridLocation(const FLFPVoxelGridIndex VoxelGridIndex) const
 {
 	if (IsVoxelIndexValid(VoxelGridIndex) == false) return FIntVector(-1);
 
@@ -284,27 +284,6 @@ void ULFPVoxelContainer::SetVoxelGridNameList(const TArray<FLFPVoxelGridIndex>& 
 	for (int32 ListIndex = 0; ListIndex < VoxelGridIndexList.Num(); ListIndex++)
 	{
 		SetVoxelGridName(VoxelGridIndexList[ListIndex], VoxelAttributeName, bInitializeChuck);
-	}
-
-	return;
-}
-
-void ULFPVoxelContainer::SetVoxelGridNameWithArea(const FLFPVoxelGridIndex FromVoxelGridIndex, const FLFPVoxelGridIndex ToVoxelGridIndex, const FName VoxelAttributeName, const bool bInitializeChuck)
-{
-	if (IsVoxelIndexValid(FromVoxelGridIndex) == false || IsVoxelIndexValid(ToVoxelGridIndex) == false) return;
-
-	const FIntVector FromLocation = VoxelGridIndexToVoxelGridLocation(FromVoxelGridIndex);
-	const FIntVector ToLocation = VoxelGridIndexToVoxelGridLocation(ToVoxelGridIndex);
-
-	for (int32 Z = FromLocation.Z; Z <= ToLocation.Z; Z++)
-	{
-		for (int32 Y = FromLocation.Y; Y <= ToLocation.Y; Y++)
-		{
-			for (int32 X = FromLocation.X; X <= ToLocation.X; X++)
-			{
-				SetVoxelGridName(VoxelGridLocationToVoxelGridIndex(FIntVector(X, Y, Z)), VoxelAttributeName, bInitializeChuck);
-			}
-		}
 	}
 
 	return;

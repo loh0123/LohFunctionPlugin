@@ -206,7 +206,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			{
 				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::IndexToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + ChuckInfo.StartVoxelLocation;
 
-				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation));
+				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation));
 				
 				DataColorList[Index].R = VoxelContainer->GetVoxelAttributeByName(VoxelName).TextureOffset;
 				DataColorList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelName) ? 255 : 0;
@@ -510,11 +510,11 @@ void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshRenderData& Rende
 
 uint8 ULFPBaseVoxelMeshComponent::CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const
 {
-	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction + Up), MateriaID))
+	if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->ToVoxelGridIndex(From + Direction + Up), MateriaID))
 	{
 		return 1;
 	}
-	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(From + Direction), MateriaID))
+	else if (LocalVoxelContainer->IsVoxelVisible(LocalVoxelContainer->ToVoxelGridIndex(From + Direction), MateriaID))
 	{
 		return 0;
 	}
@@ -1248,7 +1248,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 			{
 				const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + RenderParam.LocalChuckInfo.StartVoxelLocation;
 
-				if (RenderParam.LocalVoxelContainer->IsVoxelVisible(RenderParam.LocalVoxelContainer->VoxelGridLocationToVoxelGridIndex(VoxelGlobalGridLocation + OwnerPtr->ConstantData.FaceDirection[FaceIndex].Up), RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
+				if (RenderParam.LocalVoxelContainer->IsVoxelVisible(RenderParam.LocalVoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation + OwnerPtr->ConstantData.FaceDirection[FaceIndex].Up), RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
 				{
 					OwnerPtr->AddVoxelFace(*NewRenderData, VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
 				}
