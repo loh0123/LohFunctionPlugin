@@ -424,9 +424,6 @@ public: /* Function For Prepare Render Component To Use Container Data */
 			}
 		}
 
-		//ChuckData[ChuckIndex].SendNameUpdateEvent();
-		//ChuckData[ChuckIndex].SendColorUpdateEvent();
-		
 		VoxelChuckNameUpdateEvent.Broadcast(ChuckIndex);
 	}
 

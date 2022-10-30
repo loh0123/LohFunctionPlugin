@@ -806,8 +806,8 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		const FVector BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
 		const FVector BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min - LocalSpaceMeshBounds.Min;
 
-		//const int32 CheckRange = FMath::Max(FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale), MipIndex + 1);
-		const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale) + MipIndex;
+		const int32 CheckRange = FMath::Max(FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale), MipIndex + 1);
+		//const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVolumeScale) + MipIndex;
 
 
 		struct FLFPDFBrickTask

@@ -25,17 +25,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		float BoundExpand = 5.0f;
 
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-	//	bool bForceTwoSide = false;
-
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-	//	int32 LumenCardAmount = 32;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
 		uint8 VoxelPerDistanceField = 2;
-
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
-	//	uint8 LumenCardPerVoxelDimension = 2;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -93,20 +84,9 @@ const struct FLFPBaseVoxelMeshConstantData
 		FVector2D(0.0f, 1.0f),
 	};
 
-	const TArray<FVector> SurfaceScale = {
-		FVector(1.0f, 1.0f, 0.0f),
-		FVector(0.0f, 1.0f, 1.0f),
-		FVector(1.0f, 0.0f, 1.0f),
-		FVector(0.0f, 1.0f, 1.0f),
-		FVector(1.0f, 0.0f, 1.0f),
-		FVector(1.0f, 1.0f, 0.0f),
-	};
-
 	const TArray<int32> SurfaceDirectionID = {
 		5,0,3,1,2,4
 	};
-
-	const float LumenUpOffset = 5.0f;
 };
 
 struct FLFPBaseVoxelMeshSectionData
@@ -337,11 +317,11 @@ private:
 
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 
+	const FLFPBaseVoxelMeshConstantData ConstantData;
+
 	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
 
 	TRefCountPtr<FLFPBaseVoxelMeshLumenData> LumenData = nullptr;
-
-	const FLFPBaseVoxelMeshConstantData ConstantData;
 
 	FAsyncTask<FLFPBaseBoxelRenderTask>* RenderTask = nullptr;
 
