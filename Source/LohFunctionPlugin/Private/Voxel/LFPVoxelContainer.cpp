@@ -126,14 +126,7 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 
 				const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
 
-				if (OldName == ContainerSetting.InvisibleName || VoxelName.Value == ContainerSetting.InvisibleName)
-				{
-					MarkChuckForNameUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
-				}
-				else
-				{
-					MarkChuckForAttributeUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
-				}
+				MarkChuckForNameUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 			}
 
 			for (const auto& VoxelColor : ChuckWriteAction.Value().AttributeData)
