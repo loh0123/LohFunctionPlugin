@@ -53,7 +53,7 @@ void ULFPVoxelContainer::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	}
 
 	UpdateChuckName();
-	UpdateChuckColor();
+	UpdateChuckAttribute();
 }
 
 int32 ULFPVoxelContainer::GetContainerSize()
@@ -100,17 +100,17 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 				}
 				else
 				{
-					MarkChuckForColorUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+					MarkChuckForAttributeUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 				}
 			}
 
-			for (const auto& VoxelColor : ChuckWriteAction.Value().ColorData)
+			for (const auto& VoxelColor : ChuckWriteAction.Value().AttributeData)
 			{
-				ChuckData[ChuckWriteAction.Key()].SetVoxelColor(VoxelColor.Key, VoxelColor.Value);
+				ChuckData[ChuckWriteAction.Key()].SetVoxelAttribute(VoxelColor.Key, VoxelColor.Value);
 
 				const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelColor.Key, ContainerSetting.VoxelGridSize);
 
-				MarkChuckForColorUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+				MarkChuckForAttributeUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 			}
 
 			ChuckWriteActionList.Remove(ChuckWriteAction.Key());
@@ -136,23 +136,23 @@ void ULFPVoxelContainer::UpdateChuckName()
 	return;
 }
 
-void ULFPVoxelContainer::UpdateChuckColor()
+void ULFPVoxelContainer::UpdateChuckAttribute()
 {
-	if (BatchChuckColorUpdateList.IsEmpty()) return;
+	if (BatchChuckAttributeUpdateList.IsEmpty()) return;
 
-	for (const int32 ChuckIndex : BatchChuckColorUpdateList)
+	for (const int32 ChuckIndex : BatchChuckAttributeUpdateList)
 	{
-		ChuckData[ChuckIndex].SendColorUpdateEvent();
+		ChuckData[ChuckIndex].SendAttributeUpdateEvent();
 	}
 
-	BatchChuckColorUpdateList.Empty();
+	BatchChuckAttributeUpdateList.Empty();
 
 	return;
 }
 
 void ULFPVoxelContainer::MarkChuckForNameUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
-	MarkChuckForColorUpdate(ChuckIndex, bUpdateNearbyChuck);
+	MarkChuckForAttributeUpdate(ChuckIndex, bUpdateNearbyChuck);
 
 	if (bUpdateNearbyChuck)
 	{
@@ -182,7 +182,7 @@ void ULFPVoxelContainer::MarkChuckForNameUpdate(const int32 ChuckIndex, const bo
 	return;
 }
 
-void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
+void ULFPVoxelContainer::MarkChuckForAttributeUpdate(const int32 ChuckIndex, const bool bUpdateNearbyChuck)
 {
 	if (bUpdateNearbyChuck)
 	{
@@ -202,12 +202,12 @@ void ULFPVoxelContainer::MarkChuckForColorUpdate(const int32 ChuckIndex, const b
 		{
 			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
 			{
-				BatchChuckColorUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckAttributeUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
 			}
 		}
 	}
 
-	BatchChuckColorUpdateList.Add(ChuckIndex);
+	BatchChuckAttributeUpdateList.Add(ChuckIndex);
 
 	return;
 }
@@ -264,15 +264,15 @@ FIntVector ULFPVoxelContainer::ToVoxelGridLocation(const FLFPVoxelGridIndex Voxe
 	return VoxelLocation + FIntVector(ChuckLocation.X * ContainerSetting.VoxelGridSize.X, ChuckLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckLocation.Z * ContainerSetting.VoxelGridSize.Z);
 }
 
-void ULFPVoxelContainer::SetVoxelGridColor(const FLFPVoxelGridIndex VoxelGridIndex, const FColor VoxelColor, const bool bInitializeChuck)
+void ULFPVoxelContainer::SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, const FColor VoxelColor, const bool bInitializeChuck)
 {
 	FLFPVoxelWriteAction* Action = FindOrAddChuckWriteAction(VoxelGridIndex.ChuckIndex);
 
 	if (Action == nullptr) return;
 
-	Action->bWantUpdateColor = Action->bWantUpdateName || bInitializeChuck;
+	Action->bWantUpdateAttribute = Action->bWantUpdateName || bInitializeChuck;
 
-	Action->ColorData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
+	Action->AttributeData.Add(VoxelGridIndex.VoxelIndex, VoxelColor);
 
 	return;
 }

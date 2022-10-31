@@ -92,7 +92,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 
 			ChuckInfo = VoxelContainer->GetChuckInfo(NewChuckIndex);
 
-			VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh, &ULFPBaseVoxelMeshComponent::UpdateVoxelColor);
+			VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh, &ULFPBaseVoxelMeshComponent::UpdateVoxelAttribute);
 
 			VoxelContainer->FindOrAddChuckWriteAction(NewChuckIndex);
 		}
@@ -132,11 +132,11 @@ void ULFPBaseVoxelMeshComponent::UpdateVoxelMesh()
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::UpdateVoxelColor()
+void ULFPBaseVoxelMeshComponent::UpdateVoxelAttribute()
 {
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(ChuckInfo.ChuckIndex))
 	{
-		ChuckStatus.bIsVoxelColorDirty = true;
+		ChuckStatus.bIsVoxelAttributeDirty = true;
 	}
 	else
 	{
@@ -187,11 +187,11 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 
 void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	if (ChuckStatus.bIsVoxelColorDirty)
+	if (ChuckStatus.bIsVoxelAttributeDirty)
 	{
-		ChuckStatus.bIsVoxelColorDirty = false;
+		ChuckStatus.bIsVoxelAttributeDirty = false;
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelContainer->GetVoxelColorList(ChuckInfo.ChuckIndex));
+		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelContainer->GetVoxelAttributeList(ChuckInfo.ChuckIndex));
 
 		const FIntVector DataColorGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize + FIntVector(2);
 		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;

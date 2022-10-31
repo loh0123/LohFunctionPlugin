@@ -190,7 +190,7 @@ struct FLFPBaseVoxelMeshStatus
 
 public:
 
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelColorDirty : 1;
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelAttributeDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
 
@@ -241,7 +241,7 @@ public: /* Functions For Setting Up Component */
 		FORCEINLINE void UpdateVoxelMesh();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE void UpdateVoxelColor();
+		FORCEINLINE void UpdateVoxelAttribute();
 
 protected:
 
