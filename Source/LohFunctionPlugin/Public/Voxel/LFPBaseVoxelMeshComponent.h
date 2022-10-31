@@ -253,7 +253,7 @@ protected:
 
 private: // Helper Functions
 
-	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshRenderData& RenderParam, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize);
+	FORCEINLINE void AddVoxelFace(FLFPBaseVoxelMeshRenderData& RenderParam, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelStaticAttributeData& VoxelAttribute, const FVector& LocalVoxelHalfSize);
 
 	FORCEINLINE uint8 CheckVoxelDirectionVisible(const ULFPVoxelContainer* LocalVoxelContainer, const int32 MateriaID, const FIntVector From, const FIntVector Direction, const FIntVector Up) const;
 

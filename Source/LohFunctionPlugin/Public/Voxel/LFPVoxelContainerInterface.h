@@ -28,7 +28,7 @@ public:
 
 	/* Warning This Function Run On Other Thread */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = LFPVoxelContainerInterface, meta = (NotBlueprintThreadSafe))
-		void InitializeVoxelData(const FIntVector& VoxelLocation, FName& VoxelName, FColor& VoxelColor) const;
+		void InitializeVoxelData(const FIntVector& VoxelLocation, FName& VoxelName, FLFPVoxelDynamicAttributeData& VoxelAttribute) const;
 
-		virtual void InitializeVoxelData_Implementation(const FIntVector& VoxelLocation, FName& VoxelName, FColor& VoxelColor) const {}
+		virtual void InitializeVoxelData_Implementation(const FIntVector& VoxelLocation, FName& VoxelName, FLFPVoxelDynamicAttributeData& VoxelAttribute) const {}
 };

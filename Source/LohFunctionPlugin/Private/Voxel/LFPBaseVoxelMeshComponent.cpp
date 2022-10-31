@@ -82,8 +82,10 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelC
 		{
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
 
-			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X, VoxelGridSize.Y * VoxelGridSize.Z), TF_Nearest);
-			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(FIntPoint(VoxelGridSize.X + 2, (VoxelGridSize.Y + 2) * (VoxelGridSize.Z + 2)), TF_Nearest);
+			const FIntPoint VoxelTextureSize(VoxelGridSize.X + 2, (VoxelGridSize.Y + 2) * (VoxelGridSize.Z + 2));
+
+			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
 		}
 
 		/* This Setup Voxel */
@@ -191,28 +193,35 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	{
 		ChuckStatus.bIsVoxelAttributeDirty = false;
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, VoxelContainer->GetVoxelAttributeList(ChuckInfo.ChuckIndex));
-
 		const FIntVector DataColorGridSize = VoxelContainer->GetContainerSetting().VoxelGridSize + FIntVector(2);
 		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
 
-		TArray<FColor> DataColorList;
+		TArray<FColor> ColorList;
+		TArray<FColor> AttributeList;
 
-		DataColorList.SetNum(DataColorSize);
+		ColorList.SetNum(DataColorSize);
+		AttributeList.SetNum(DataColorSize);
 
 		ParallelFor(DataColorSize,
 			[&](const int32 Index) 
 			{
 				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + ChuckInfo.StartVoxelLocation;
+				const FLFPVoxelGridIndex VoxelGridIndex = VoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation);
 
-				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation));
+				const FName& VoxelName = VoxelContainer->GetVoxelName(VoxelGridIndex);
+				const FLFPVoxelDynamicAttributeData& VoxelAttribute = VoxelContainer->GetVoxelDynamicAttribute(VoxelGridIndex);
+
+				ColorList[Index] = VoxelAttribute.VoxelColor;
 				
-				DataColorList[Index].R = VoxelContainer->GetVoxelAttributeByName(VoxelName).TextureOffset;
-				DataColorList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelName) ? 255 : 0;
+				AttributeList[Index].R = VoxelContainer->GetVoxelStaticAttributeByName(VoxelName).TextureOffset;
+				AttributeList[Index].G = VoxelAttribute.VoxelStatus;
+				AttributeList[Index].B = VoxelAttribute.VoxelType;
+				AttributeList[Index].A = VoxelContainer->IsVoxelVisibleByName(VoxelName) ? 255 : 0;
 			}
 		);
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelDataTexture, DataColorList);
+		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, ColorList);
+		ULFPRenderLibrary::UpdateTexture2D(VoxelDataTexture, AttributeList);
 	}
 
 	if (ChuckStatus.bIsVoxelMeshDirty && (RenderTask == nullptr || RenderTask->IsDone()))
@@ -270,7 +279,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshRenderData& RenderParam, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelAttributeV2& VoxelAttribute, const FVector& LocalVoxelHalfSize)
+void ULFPBaseVoxelMeshComponent::AddVoxelFace(FLFPBaseVoxelMeshRenderData& RenderParam, const int32 VoxelIndex, const FIntVector VoxelGridLocation, const FVector VoxelLocation, const FIntVector VoxelGlobalGridLocation, const int32 FaceIndex, const ULFPVoxelContainer* LocalVoxelContainer, const FLFPVoxelStaticAttributeData& VoxelAttribute, const FVector& LocalVoxelHalfSize)
 {
 	auto& EditMesh = RenderParam.Sections[RenderParam.VoxelMaterialList[VoxelIndex] - 1];
 
@@ -1237,7 +1246,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 		const FVector VoxelLocation = (FVector(VoxelGridLocation) * (VoxelHalfSize * 2)) + VoxelRenderOffset;
 
-		const FLFPVoxelAttributeV2& VoxelAttribute = RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]);
+		const FLFPVoxelStaticAttributeData& VoxelAttribute = RenderParam.LocalVoxelContainer->GetVoxelStaticAttributeByName(VoxelNameList[VoxelIndex]);
 
 		if (RenderParam.LocalVoxelContainer->IsVoxelVisibleByName(VoxelNameList[VoxelIndex]))
 		{
@@ -1249,7 +1258,7 @@ void FLFPBaseBoxelRenderTask::DoWork()
 			{
 				const FIntVector VoxelGlobalGridLocation = VoxelGridLocation + RenderParam.LocalChuckInfo.StartVoxelLocation;
 
-				if (RenderParam.LocalVoxelContainer->IsVoxelVisible(RenderParam.LocalVoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation + OwnerPtr->ConstantData.FaceDirection[FaceIndex].Up), RenderParam.LocalVoxelContainer->GetVoxelAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
+				if (RenderParam.LocalVoxelContainer->IsVoxelVisible(RenderParam.LocalVoxelContainer->ToVoxelGridIndex(VoxelGlobalGridLocation + OwnerPtr->ConstantData.FaceDirection[FaceIndex].Up), RenderParam.LocalVoxelContainer->GetVoxelStaticAttributeByName(VoxelNameList[VoxelIndex]).MaterialID) == false)
 				{
 					OwnerPtr->AddVoxelFace(*NewRenderData, VoxelIndex, VoxelGridLocation, VoxelLocation, VoxelGlobalGridLocation, FaceIndex, RenderParam.LocalVoxelContainer, VoxelAttribute, VoxelHalfSize);
 				}
