@@ -5,7 +5,7 @@
 
 
 
-#include "Helper/LFPTickManager.h"
+#include "Components/LFPTickManager.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 

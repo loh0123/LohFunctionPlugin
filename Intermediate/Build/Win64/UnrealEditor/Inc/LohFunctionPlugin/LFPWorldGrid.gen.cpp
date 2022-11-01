@@ -5,7 +5,7 @@
 ===========================================================================*/
 
 #include "UObject/GeneratedCppIncludes.h"
-#include "LohFunctionPlugin/Public/Helper/LFPWorldGrid.h"
+#include "LohFunctionPlugin/Public/Components/LFPWorldGrid.h"
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 // Cross Module References
@@ -49,7 +49,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 		{ "BlueprintType", "true" },
 		{ "Hexagon.DisplayName", "Hexagon" },
 		{ "Hexagon.Name", "ELFPGridType::Hexagon" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 		{ "Rectangular.DisplayName", "Rectangular" },
 		{ "Rectangular.Name", "ELFPGridType::Rectangular" },
 		{ "Triangle.DisplayName", "Triangle" },
@@ -196,7 +196,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPWorldGrid, nullptr, "GridLocationToWorldLocation", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::LFPWorldGrid_eventGridLocationToWorldLocation_Parms), Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation_Statics::Function_MetaDataParams)) };
@@ -271,7 +271,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPWorldGrid, nullptr, "IndexToWorldLocation", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::LFPWorldGrid_eventIndexToWorldLocation_Parms), Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation_Statics::Function_MetaDataParams)) };
@@ -321,7 +321,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPWorldGrid, nullptr, "IsWorldLocationValid", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::LFPWorldGrid_eventIsWorldLocationValid_Parms), Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54820401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid_Statics::Function_MetaDataParams)) };
@@ -366,7 +366,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPWorldGrid, nullptr, "WordlLocationToGridLocation", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::LFPWorldGrid_eventWordlLocationToGridLocation_Parms), Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation_Statics::Function_MetaDataParams)) };
@@ -411,7 +411,7 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPGridSystem" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_ULFPWorldGrid, nullptr, "WordlLocationToIndex", nullptr, nullptr, sizeof(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::LFPWorldGrid_eventWordlLocationToIndex_Parms), Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::PropPointers, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::PropPointers), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54C20401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex_Statics::Function_MetaDataParams)) };
@@ -458,32 +458,32 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPWorldGrid_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation, "GridLocationToWorldLocation" }, // 3949138572
-		{ &Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation, "IndexToWorldLocation" }, // 956131045
-		{ &Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid, "IsWorldLocationValid" }, // 3580347484
-		{ &Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation, "WordlLocationToGridLocation" }, // 2080118757
-		{ &Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex, "WordlLocationToIndex" }, // 398329511
+		{ &Z_Construct_UFunction_ULFPWorldGrid_GridLocationToWorldLocation, "GridLocationToWorldLocation" }, // 2886816444
+		{ &Z_Construct_UFunction_ULFPWorldGrid_IndexToWorldLocation, "IndexToWorldLocation" }, // 1433783241
+		{ &Z_Construct_UFunction_ULFPWorldGrid_IsWorldLocationValid, "IsWorldLocationValid" }, // 1259855478
+		{ &Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToGridLocation, "WordlLocationToGridLocation" }, // 1538045106
+		{ &Z_Construct_UFunction_ULFPWorldGrid_WordlLocationToIndex, "WordlLocationToIndex" }, // 1879360498
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPWorldGrid_Statics::Class_MetaDataParams[] = {
 		{ "BlueprintSpawnableComponent", "" },
 		{ "ClassGroupNames", "Custom" },
 		{ "HideCategories", "Trigger PhysicsVolume" },
-		{ "IncludePath", "Helper/LFPWorldGrid.h" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "IncludePath", "Components/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridSize_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridSize = { "GridSize", nullptr, (EPropertyFlags)0x0020080000000015, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPWorldGrid, GridSize), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridSize_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridSize_MetaData)) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridGap_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridGap = { "GridGap", nullptr, (EPropertyFlags)0x0020080000000015, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPWorldGrid, GridGap), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridGap_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridGap_MetaData)) };
@@ -491,10 +491,10 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType_MetaData[] = {
 		{ "Category", "LFPGridSystem | Variable" },
-		{ "ModuleRelativePath", "Public/Helper/LFPWorldGrid.h" },
+		{ "ModuleRelativePath", "Public/Components/LFPWorldGrid.h" },
 	};
 #endif
-	const UECodeGen_Private::FEnumPropertyParams Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType = { "GridType", nullptr, (EPropertyFlags)0x0020080000000015, UECodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPWorldGrid, GridType), Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType, METADATA_PARAMS(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType_MetaData)) }; // 2120054296
+	const UECodeGen_Private::FEnumPropertyParams Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType = { "GridType", nullptr, (EPropertyFlags)0x0020080000000015, UECodeGen_Private::EPropertyGenFlags::Enum, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(ULFPWorldGrid, GridType), Z_Construct_UEnum_LohFunctionPlugin_ELFPGridType, METADATA_PARAMS(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridType_MetaData)) }; // 2599491439
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ULFPWorldGrid_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridSize,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ULFPWorldGrid_Statics::NewProp_GridGap,
@@ -532,19 +532,19 @@ void EmptyLinkFunctionForGeneratedCodeLFPWorldGrid() {}
 		return ULFPWorldGrid::StaticClass();
 	}
 	DEFINE_VTABLE_PTR_HELPER_CTOR(ULFPWorldGrid);
-	struct Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics
+	struct Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics
 	{
 		static const FEnumRegisterCompiledInInfo EnumInfo[];
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
-	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::EnumInfo[] = {
-		{ ELFPGridType_StaticEnum, TEXT("ELFPGridType"), &Z_Registration_Info_UEnum_ELFPGridType, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2120054296U) },
+	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::EnumInfo[] = {
+		{ ELFPGridType_StaticEnum, TEXT("ELFPGridType"), &Z_Registration_Info_UEnum_ELFPGridType, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2599491439U) },
 	};
-	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_ULFPWorldGrid, ULFPWorldGrid::StaticClass, TEXT("ULFPWorldGrid"), &Z_Registration_Info_UClass_ULFPWorldGrid, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPWorldGrid), 1562578121U) },
+	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::ClassInfo[] = {
+		{ Z_Construct_UClass_ULFPWorldGrid, ULFPWorldGrid::StaticClass, TEXT("ULFPWorldGrid"), &Z_Registration_Info_UClass_ULFPWorldGrid, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPWorldGrid), 2575696254U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_3537141784(TEXT("/Script/LohFunctionPlugin"),
-		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::ClassInfo),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_3179483505(TEXT("/Script/LohFunctionPlugin"),
+		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::ClassInfo),
 		nullptr, 0,
-		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Helper_LFPWorldGrid_h_Statics::EnumInfo));
+		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_Statics::EnumInfo));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

@@ -519,6 +519,12 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE FIntVector ToVoxelGridLocation(const FLFPVoxelGridIndex VoxelGridIndex) const;
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
+		FORCEINLINE bool GetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, FLFPVoxelDynamicAttributeData& VoxelAttribute) const;
+
+	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
+		FORCEINLINE bool GetVoxelGridName(const FLFPVoxelGridIndex VoxelGridIndex, FName& VoxelName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, const FLFPVoxelDynamicAttributeData VoxelAttribute, const bool bInitializeChuck = true);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")

@@ -4,7 +4,7 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Helper/LFPWorldGrid.h"
+#include "Components/LFPWorldGrid.h"
 
 // Sets default values for this component's properties
 ULFPWorldGrid::ULFPWorldGrid()

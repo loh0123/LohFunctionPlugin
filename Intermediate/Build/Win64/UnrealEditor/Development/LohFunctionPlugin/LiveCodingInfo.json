@@ -2,10 +2,10 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.cpp.obj": [
-			"VoxelChuckActor.cpp.obj",
+			"LFPGridTickManager.cpp.obj",
+			"LFPInstanceGridComponent.cpp.obj",
 			"LFPTickManager.cpp.obj",
 			"LFPWorldGrid.cpp.obj",
-			"VoxelChuckManager.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
@@ -20,6 +20,8 @@
 		"Module.LohFunctionPlugin.gen.cpp.obj": [
 			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
+			"LFPGridTickManager.gen.cpp.obj",
+			"LFPInstanceGridComponent.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFPRenderLibrary.gen.cpp.obj",
@@ -29,9 +31,7 @@
 			"LFPVoxelContainerInterface.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
-			"LohFunctionPluginLibrary.gen.cpp.obj",
-			"VoxelChuckActor.gen.cpp.obj",
-			"VoxelChuckManager.gen.cpp.obj"
+			"LohFunctionPluginLibrary.gen.cpp.obj"
 		]
 	}
 }

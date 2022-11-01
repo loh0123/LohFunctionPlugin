@@ -289,6 +289,20 @@ FIntVector ULFPVoxelContainer::ToVoxelGridLocation(const FLFPVoxelGridIndex Voxe
 	return VoxelLocation + FIntVector(ChuckLocation.X * ContainerSetting.VoxelGridSize.X, ChuckLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckLocation.Z * ContainerSetting.VoxelGridSize.Z);
 }
 
+bool ULFPVoxelContainer::GetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, FLFPVoxelDynamicAttributeData& VoxelAttribute) const
+{
+	VoxelAttribute = GetVoxelDynamicAttribute(VoxelGridIndex);
+
+	return (IsVoxelIndexValid(VoxelGridIndex) == false || IsChuckInitialized(VoxelGridIndex.ChuckIndex) == false);
+}
+
+bool ULFPVoxelContainer::GetVoxelGridName(const FLFPVoxelGridIndex VoxelGridIndex, FName& VoxelName) const
+{
+	VoxelName = GetVoxelName(VoxelGridIndex);
+
+	return (IsVoxelIndexValid(VoxelGridIndex) == false || IsChuckInitialized(VoxelGridIndex.ChuckIndex) == false);
+}
+
 void ULFPVoxelContainer::SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, const FLFPVoxelDynamicAttributeData VoxelAttribute, const bool bInitializeChuck)
 {
 	FLFPVoxelWriteAction* Action = FindOrAddChuckWriteAction(VoxelGridIndex.ChuckIndex);
