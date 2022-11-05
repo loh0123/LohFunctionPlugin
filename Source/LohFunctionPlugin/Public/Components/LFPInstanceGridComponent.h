@@ -12,6 +12,9 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
+	UPROPERTY() TArray<TObjectPtr<class UInstancedStaticMeshComponent>> ISMList;
+
+
 public:	
 	// Sets default values for this component's properties
 	ULFPInstanceGridComponent();
@@ -19,6 +22,9 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	// Called when the game end
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame

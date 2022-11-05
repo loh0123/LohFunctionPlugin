@@ -22,11 +22,17 @@ struct FLFPBaseVoxelMeshSetting
 
 public:
 
+	/* Increase Cover Range But Decrease Quality */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		float BoundExpand = 5.0f;
 
+	/* How Much Data Can Be In The Distance Field (High Value Will Slow Down Computation Time) */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1"))
-		uint8 VoxelPerDistanceField = 2;
+		uint8 VoxelPerDistanceField = 4;
+
+	/* Decrease Accuracy To Fix Lumen Surface */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "0.5", ClampMax = "2.0"))
+		float VoxelDistanceMultiply = 0.95f;
 };
 
 struct FLFPBaseVoxelFaceDirection
