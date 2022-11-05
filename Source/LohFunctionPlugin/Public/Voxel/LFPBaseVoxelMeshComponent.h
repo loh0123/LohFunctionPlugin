@@ -34,9 +34,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "0.5", ClampMax = "2.0"))
 		float VoxelDistanceMultiply = 0.95f;
 
-	/* Decrease Accuracy To Fix Lumen Surface */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
-		bool StabilityVoxelDistanceField = true;
+	/* Decrease Accuracy To Improve Build Time */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1.0", ClampMax = "8.0"))
+		float VoxelDistanceFieldJump = 4.0f;
 };
 
 struct FLFPBaseVoxelFaceDirection

@@ -809,7 +809,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	DistanceFieldMeshData->bMostlyTwoSided = true;
 	
 	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
-	const float LocalToVoxelScale = 1.0f / (LumenParam.VoxelSetting.VoxelHalfSize.GetMax() * 2);
+	const float LocalToVoxelScale = 1.0f / (LumenParam.VoxelSetting.VoxelHalfSize.GetMax() * LumenParam.LocalChuckSetting.VoxelDistanceFieldJump);
 	
 	TArray<uint8> StreamableMipData;
 	
@@ -839,11 +839,9 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		const FVector BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
 		const FVector BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min + LumenParam.VoxelSetting.HalfRenderBound;
 
-		const int32 CheckRange = LumenParam.LocalChuckSetting.StabilityVoxelDistanceField ? 
-			FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale) 
-			: 
-			FMath::Min(FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale), MipIndex + 1);
+		const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
 
+		UE_LOG(LogTemp, Warning, TEXT("The integer value is: %d"), CheckRange);
 
 		struct FLFPDFBrickTask
 		{
