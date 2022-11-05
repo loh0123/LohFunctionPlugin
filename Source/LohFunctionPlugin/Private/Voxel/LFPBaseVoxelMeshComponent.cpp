@@ -58,10 +58,18 @@ void ULFPBaseVoxelMeshComponent::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-void ULFPBaseVoxelMeshComponent::SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName)
+void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName)
 {
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
+		if (Material.IsEmpty() == false)
+		{
+			for (int k = 0; k < Material.Num(); ++k)
+			{
+				SetMaterial(k, Material[k]);
+			}
+		}
+
 		/* This Clean Up Color Map If Valid */
 		if (IsValid(VoxelColorTexture))
 		{
@@ -115,6 +123,7 @@ void ULFPBaseVoxelMeshComponent::SetVoxelMaterial(const TArray<UMaterialInterfac
 		}
 
 		UpdateVoxelMesh();
+		UpdateVoxelAttribute();
 	}
 	else
 	{
@@ -254,28 +263,36 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (ChuckStatus.bIsLumenDataDirty && (RenderTask == nullptr || RenderTask->IsDone()) && (LumenTask == nullptr || LumenTask->IsDone()))
 	{
-		ChuckStatus.bIsLumenDataDirty = false;
-		ChuckStatus.bIsGeneratingLumen = true;
-
-		FLFPBaseBoxelLumenParam LumenParam;
-
-		//LumenParam.LODSectionData = new FStaticMeshLODResources();
-		LumenParam.SharePtr = this;
-		LumenParam.LocalBounds = GetLocalBounds().ExpandBy(ChuckSetting.BoundExpand);
-		LumenParam.LocalChuckSetting = ChuckSetting;
-		LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
-		LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
-
-		if (LumenTask == nullptr)
+		if (ChuckStatus.LumenDelay > 0)
 		{
-			LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
+			ChuckStatus.LumenDelay--;
 		}
 		else
 		{
-			LumenTask->GetTask().LumenParam = LumenParam;
-		}
+			ChuckStatus.bIsLumenDataDirty = false;
+			ChuckStatus.bIsGeneratingLumen = true;
+			ChuckStatus.LumenDelay = 30;
 
-		LumenTask->StartBackgroundTask();
+			FLFPBaseBoxelLumenParam LumenParam;
+
+			//LumenParam.LODSectionData = new FStaticMeshLODResources();
+			LumenParam.SharePtr = this;
+			LumenParam.LocalBounds = GetLocalBounds().ExpandBy(ChuckSetting.BoundExpand);
+			LumenParam.LocalChuckSetting = ChuckSetting;
+			LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
+			LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
+
+			if (LumenTask == nullptr)
+			{
+				LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
+			}
+			else
+			{
+				LumenTask->GetTask().LumenParam = LumenParam;
+			}
+
+			LumenTask->StartBackgroundTask();
+		}
 	}
 }
 
@@ -727,9 +744,9 @@ void FLFPBaseBoxelLumenTask::DoWork()
 
 	FLFPBaseVoxelMeshLumenData* NewLumenData = new FLFPBaseVoxelMeshLumenData();
 
-	NewLumenData->DistanceFieldMeshData = GenerateDistanceField();
-
 	NewLumenData->LumenCardData = GenerateLumenCard();
+
+	NewLumenData->DistanceFieldMeshData = GenerateDistanceField();
 
 	if (IsValid(OwnerPtr) && OwnerPtr->HasBegunPlay())
 		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(LumenParam.SharePtr)]() {
@@ -822,7 +839,10 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		const FVector BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
 		const FVector BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min + LumenParam.VoxelSetting.HalfRenderBound;
 
-		const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
+		const int32 CheckRange = LumenParam.LocalChuckSetting.StabilityVoxelDistanceField ? 
+			FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale) 
+			: 
+			FMath::Min(FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale), MipIndex + 1);
 
 
 		struct FLFPDFBrickTask
@@ -838,18 +858,18 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 				for (int32 DataIndex = 0; DataIndex < 512 /* Brick Length */; DataIndex++)
 				{
 					const FIntVector DataLocation(ULFPGridLibrary::ToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
-
+				
 					const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
-
+				
 					const float ClosetPoint = Owner->GetDistanceToClosetSurface(BrickVoxelLocation, LocalSpaceTraceDistance, CheckRange);
-
+				
 					// Transform to the tracing shader's Volume space
 					const float VolumeSpaceDistance = ClosetPoint * LocalToVolumeScale;
 					// Transform to the Distance Field texture's space
 					const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
-
+				
 					BrickDataList[DataIndex] = FMath::Clamp<int32>(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
-
+				
 					BrickMaxDistance = FMath::Max(BrickMaxDistance, BrickDataList[DataIndex]);
 					BrickMinDistance = FMath::Min(BrickMinDistance, BrickDataList[DataIndex]);
 				}
@@ -1006,6 +1026,7 @@ float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLoc
 
 	float ClosetDistance = MaxDistance;
 
+
 	for (int32 IndexZ = -CheckRange; IndexZ <= CheckRange; IndexZ++)
 	{
 		for (int32 IndexY = -CheckRange; IndexY <= CheckRange; IndexY++)
@@ -1014,14 +1035,14 @@ float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLoc
 			{
 				const FIntVector CheckVoxelDirection = FIntVector(IndexX, IndexY, IndexZ);
 				const FIntVector CheckVoxelLocation = GridLocation + CheckVoxelDirection;
-
+	
 				const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
 				const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
-
+	
 				if (CheckMaterial != SelfMaterial)
 				{
 					const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
-
+	
 					ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
 				}
 			}
@@ -1203,7 +1224,7 @@ FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
 					{	
 						BlockMap[VoxelPlaneIndex] = bIsFaceVisible;
 
-						SetCoverIndex(CoverIndex, DepthIndex);				
+						SetCoverIndex(CoverIndex, DepthIndex);	
 					}
 				}
 			}

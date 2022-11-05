@@ -19,7 +19,7 @@ bool ULFPGridLibrary::IsOnGridEdge(const FIntVector& Location, const FIntVector&
 
 int32 ULFPGridLibrary::ToIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
-	if (Location.GetMin() < 0 || Location.X >= GridSize.X || Location.Y >= GridSize.Y || Location.Z >= GridSize.Z) return INDEX_NONE;
+	if (IsLocationValid(Location, GridSize) == false) return INDEX_NONE;
 
 	return Location.X + (Location.Y * GridSize.X) + (Location.Z * (GridSize.X * GridSize.Y));
 }

@@ -195,9 +195,11 @@ void ULFPVoxelContainer::MarkChuckForNameUpdate(const int32 ChuckIndex, const bo
 
 		for (const FIntVector& Direction : UpdateDirection)
 		{
-			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
+			const int32 CurChuckIndex = ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize);
+
+			if (CurChuckIndex != INDEX_NONE && IsChuckInitialized(CurChuckIndex))
 			{
-				BatchChuckNameUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckNameUpdateList.Add(CurChuckIndex);
 			}
 		}
 	}
@@ -225,9 +227,11 @@ void ULFPVoxelContainer::MarkChuckForAttributeUpdate(const int32 ChuckIndex, con
 
 		for (const FIntVector& Direction : UpdateDirection)
 		{
-			if (ULFPGridLibrary::IsLocationValid(ChuckLocation + Direction, ContainerSetting.ChuckGridSize))
+			const int32 CurChuckIndex = ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize);
+
+			if (CurChuckIndex != INDEX_NONE && IsChuckInitialized(CurChuckIndex))
 			{
-				BatchChuckAttributeUpdateList.Add(ULFPGridLibrary::ToIndex(ChuckLocation + Direction, ContainerSetting.ChuckGridSize));
+				BatchChuckAttributeUpdateList.Add(CurChuckIndex);
 			}
 		}
 	}

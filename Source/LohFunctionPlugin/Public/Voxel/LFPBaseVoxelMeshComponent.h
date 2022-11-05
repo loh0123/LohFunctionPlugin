@@ -33,6 +33,10 @@ public:
 	/* Decrease Accuracy To Fix Lumen Surface */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "0.5", ClampMax = "2.0"))
 		float VoxelDistanceMultiply = 0.95f;
+
+	/* Decrease Accuracy To Fix Lumen Surface */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+		bool StabilityVoxelDistanceField = true;
 };
 
 struct FLFPBaseVoxelFaceDirection
@@ -207,6 +211,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingLumen : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 LumenDelay = 30;
 };
 
 class FLFPBaseBoxelRenderTask;
@@ -238,7 +244,7 @@ public: /* Functions For Setting Up Component */
 
 	/* Setup This Component And Reset Color Map : Please Rebind Colour Map After This */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE void SetVoxelContainer(ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName);
+		FORCEINLINE void SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void SetVoxelMaterial(const TArray<UMaterialInterface*>& Material);
@@ -408,13 +414,13 @@ public:
 
 	void DoWork();
 
-	FORCEINLINE FDistanceFieldVolumeData* GenerateDistanceField();
+	FORCEINLINE class FDistanceFieldVolumeData* GenerateDistanceField();
 
 	FORCEINLINE void SetDistanceFieldMipInfo(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale, FLFPDFMipInfo& MipsInfo);
 
 	FORCEINLINE float GetDistanceToClosetSurface(const FVector& LocalLocation, const float MaxDistance, const int32 CheckRange) const;
 
-	FORCEINLINE FCardRepresentationData* GenerateLumenCard();
+	FORCEINLINE class FCardRepresentationData* GenerateLumenCard();
 
 	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseBoxelLumenTask, STATGROUP_ThreadPoolAsyncTasks); }
 };
