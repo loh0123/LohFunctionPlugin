@@ -779,7 +779,197 @@ void FLFPBaseBoxelLumenTask::DoWork()
 
 FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 {
-	//const double StartTime = FPlatformTime::Seconds();
+	const double StartTime = FPlatformTime::Seconds();
+
+	struct FLFPDFMipInfo
+	{
+		FLFPDFMipInfo() {}
+
+		FLFPDFMipInfo(const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale) 
+		{
+			// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
+			TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
+			DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
+
+			IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
+			VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector(DistanceField::UniqueDataBrickSize);
+			MaxDistanceForEncoding = VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
+			LocalSpaceTraceDistance = MaxDistanceForEncoding / LocalToVolumeScale;
+			DistanceFieldToVolumeScaleBias = FVector2D(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
+		}
+
+		FVector TexelObjectSpaceSize;
+		FBox DistanceFieldVolumeBounds;
+
+		FVector IndirectionVoxelSize;
+		FVector VolumeSpaceDistanceFieldVoxelSize;
+		float MaxDistanceForEncoding;
+		float LocalSpaceTraceDistance;
+		FVector2D DistanceFieldToVolumeScaleBias;
+
+		FORCEINLINE void SetSparseDistanceFieldMip(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale)
+		{
+			DistanceMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
+			DistanceMip.IndirectionDimensions = IndirectionDimensions;
+
+			// Account for the border voxels we added
+			const FVector VirtualUVMin = FVector(DistanceField::MeshDistanceFieldObjectBorder) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+			const FVector VirtualUVSize = FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+
+			const FVector VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
+
+			// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
+			DistanceMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
+			DistanceMip.VolumeToVirtualUVAdd = VolumePositionExtent * DistanceMip.VolumeToVirtualUVScale + VirtualUVMin;
+		}
+	};
+
+	struct FLFPDFCacheInfo
+	{
+		FLFPDFCacheInfo() {}
+
+		FIntVector			CacheLocation = FIntVector(INDEX_NONE);
+		TArray<FIntVector>	CacheLoop;
+		int32				CacheDistance = INDEX_NONE;
+	};
+
+	struct FLFPDFBrickTask
+	{
+		FLFPDFBrickTask(const int32 InBrickLength, const FVector& InBrickVoxelSize, const int32 InBrickIndex, const FVector& InBrickSpaceLocation, const int32 InCheckRange, const float InLocalSpaceTraceDistance, const float InLocalToVolumeScale, const FVector2D& InDistanceFieldToVolumeScaleBias, const FLFPBaseBoxelLumenParam& InLumenParam, const TArray<FLFPDFCacheInfo>& InCacheList)
+			: BrickLength(InBrickLength), BrickIndex(InBrickIndex), BrickSpaceLocation(InBrickSpaceLocation), BrickVoxelSize(InBrickVoxelSize), CheckRange(InCheckRange), LocalSpaceTraceDistance(InLocalSpaceTraceDistance), LocalToVolumeScale(InLocalToVolumeScale), DistanceFieldToVolumeScaleBias(InDistanceFieldToVolumeScaleBias), LumenParam(InLumenParam), CacheList(InCacheList)
+		{}
+
+		FORCEINLINE float GetDistanceToClosetSurface(const FVector LocalLocation) const
+		{
+			const FVector VoxelSize = LumenParam.VoxelSetting.VoxelHalfSize * 2;
+			const FVector LocalSpace = LocalLocation / VoxelSize;
+			const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
+			const int32 GridIndex = ULFPGridLibrary::ToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
+			const uint8 SelfMaterial = GridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[GridIndex];
+
+			float ClosetDistance = LocalSpaceTraceDistance;
+
+			if (GridIndex == INDEX_NONE)
+			{
+				for (int32 CacheDistance = 1; CacheDistance <= CheckRange; CacheDistance++)
+				{
+					bool IsValidDist = false;
+				
+					for (int32 OrderIndex = 0; OrderIndex < 6; OrderIndex++)
+					{
+						const FIntVector& CurOrder = OrderList[OrderIndex];
+						const int32 CheckSwitch = OrderIndex % 3;
+				
+						FIntVector CheckPosList(OrderIndex > 2 ? -CacheDistance : CacheDistance);
+				
+						for (
+							CheckPosList.Y = -CacheDistance + (CheckSwitch > 0 ? 1 : 0);
+							CheckPosList.Y <= CacheDistance - (CheckSwitch > 0 ? 1 : 0);
+							CheckPosList.Y++
+							)
+						{
+							for (
+								CheckPosList.Z = -CacheDistance + (CheckSwitch > 1 ? 1 : 0);
+								CheckPosList.Z <= CacheDistance - (CheckSwitch > 1 ? 1 : 0);
+								CheckPosList.Z++
+								)
+							{
+								FIntVector CheckLocation = GridLocation + FIntVector(CheckPosList[CurOrder.X], CheckPosList[CurOrder.Y], CheckPosList[CurOrder.Z]);
+				
+								const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckLocation, LumenParam.VoxelSetting.VoxelGridSize);
+								const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
+				
+								if (CheckMaterial != SelfMaterial)
+								{
+									IsValidDist = true;
+
+									const FBox VoxelBox = FBox::BuildAABB((FVector(CheckLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
+									
+									ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+								}
+							}
+						}
+					}
+				
+					if (IsValidDist)
+					{
+						break;
+					}
+				}
+			}
+			else
+			{
+				if (CacheList[GridIndex].CacheDistance > CheckRange)
+				{
+					return ClosetDistance;
+				}
+			
+				for (const FIntVector& CheckLocation : CacheList[GridIndex].CacheLoop)
+				{
+					const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckLocation, LumenParam.VoxelSetting.VoxelGridSize);
+					const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
+			
+					if (CheckMaterial != SelfMaterial)
+					{
+						const FBox VoxelBox = FBox::BuildAABB((FVector(CheckLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
+			
+						ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+					}
+				}
+			}
+
+			return SelfMaterial != 0 ? ClosetDistance * -1 : ClosetDistance;
+		};
+
+		FORCEINLINE void DoTask()
+		{
+			BrickDataList.Init(0, BrickLength);
+
+			for (int32 DataIndex = 0; DataIndex < 512 /* Brick Length */; DataIndex++)
+			{
+				const FIntVector DataLocation(ULFPGridLibrary::ToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
+
+				const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
+
+				const float ClosetPoint = GetDistanceToClosetSurface(BrickVoxelLocation);
+
+				// Transform to the tracing shader's Volume space
+				const float VolumeSpaceDistance = ClosetPoint * LocalToVolumeScale;
+				// Transform to the Distance Field texture's space
+				const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
+
+				BrickDataList[DataIndex] = FMath::Clamp<int32>(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
+
+				BrickMaxDistance = FMath::Max(BrickMaxDistance, BrickDataList[DataIndex]);
+				BrickMinDistance = FMath::Min(BrickMinDistance, BrickDataList[DataIndex]);
+			}
+		}
+
+		const int32 BrickLength;
+		const int32 BrickIndex;
+		const FVector BrickSpaceLocation;
+		const FVector BrickVoxelSize;
+		const int32 CheckRange;
+		const float LocalSpaceTraceDistance;
+		const float LocalToVolumeScale;
+		const FVector2D DistanceFieldToVolumeScaleBias;
+		const FLFPBaseBoxelLumenParam& LumenParam;
+		const TArray<FLFPDFCacheInfo>& CacheList;
+
+		const TArray<FIntVector> OrderList =
+		{
+			FIntVector(0,1,2),
+			FIntVector(1,0,2),
+			FIntVector(1,2,0),
+			FIntVector(0,1,2),
+			FIntVector(1,0,2),
+			FIntVector(1,2,0),
+		};
+
+		TArray<uint8> BrickDataList;
+		uint8 BrickMaxDistance = (MIN_uint8);
+		uint8 BrickMinDistance = (MAX_uint8);
+	};
 
 	FDistanceFieldVolumeData* DistanceFieldMeshData = new FDistanceFieldVolumeData();
 	
@@ -793,28 +983,109 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		FMath::Clamp(FMath::RoundToInt32(TargetDimensions.Z), 1, int32(DistanceField::MaxIndirectionDimension))
 	);
 
-	FBox LocalSpaceMeshBounds(LumenParam.LocalBounds.GetBox());
-	{
-		const FVector DesiredDimensions = FVector(LocalSpaceMeshBounds.GetSize() * FVector((float)DistanceField::UniqueDataBrickSize));
-		
-		const float CentralDifferencingExpandInVoxels = .25f;
-		const FVector TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(MaxIndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * CentralDifferencingExpandInVoxels));
-		LocalSpaceMeshBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
-	}
+	const FIntVector MinIndirectionDimensions = FIntVector(
+		FMath::DivideAndRoundUp(MaxIndirectionDimensions.X, 1 << (DistanceField::NumMips - 1)),
+		FMath::DivideAndRoundUp(MaxIndirectionDimensions.Y, 1 << (DistanceField::NumMips - 1)),
+		FMath::DivideAndRoundUp(MaxIndirectionDimensions.Z, 1 << (DistanceField::NumMips - 1))
+	);
+
+	const FBox LocalSpaceMeshBounds(LumenParam.LocalBounds.GetBox().ExpandBy(
+		LumenParam.LocalBounds.GetBox().GetSize() / FVector(MinIndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * 0.25f))
+	));
 	
 	const int32 BrickLength = DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize;
+
+	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
+	const float LocalToVoxelScale = 1.0f / (LumenParam.VoxelSetting.VoxelHalfSize.GetMax() * LumenParam.LocalChuckSetting.VoxelDistanceFieldJump);
 
 	DistanceFieldMeshData->AssetName = "Voxel Mesh";
 	DistanceFieldMeshData->LocalSpaceMeshBounds = LocalSpaceMeshBounds;
 	DistanceFieldMeshData->bMostlyTwoSided = true;
-	
-	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
-	const float LocalToVoxelScale = 1.0f / (LumenParam.VoxelSetting.VoxelHalfSize.GetMax() * LumenParam.LocalChuckSetting.VoxelDistanceFieldJump);
+
+	TArray<FLFPDFCacheInfo> DistanceCacheMap;
+	{
+		const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
+
+		const TArray<FIntVector> OrderList =
+		{
+			FIntVector(0,1,2),
+			FIntVector(1,0,2),
+			FIntVector(1,2,0),
+			FIntVector(0,1,2),
+			FIntVector(1,0,2),
+			FIntVector(1,2,0),
+		};
+
+		/* Calculate MaxCheckDistance */
+		FLFPDFMipInfo MipInfo(MinIndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
+
+		const int32 MaxCheckDistance = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance* LocalToVoxelScale);
+		/////////////////////////////////
+
+		DistanceCacheMap.Init(FLFPDFCacheInfo(), LumenParam.VoxelSetting.VoxelLength);
+
+		for (int32 VoxelIndex = 0; VoxelIndex < LumenParam.VoxelSetting.VoxelLength; VoxelIndex++)
+		{
+			const uint8& SelfMaterial = LumenParam.VoxelMaterialList[VoxelIndex];
+
+			FLFPDFCacheInfo& CurrentCacheInfo = DistanceCacheMap[VoxelIndex];
+
+			CurrentCacheInfo.CacheLocation = ULFPGridLibrary::ToGridLocation(VoxelIndex, LumenParam.VoxelSetting.VoxelGridSize);
+			
+			for (CurrentCacheInfo.CacheDistance = 1; CurrentCacheInfo.CacheDistance <= MaxCheckDistance; CurrentCacheInfo.CacheDistance++)
+			{
+				bool IsValidDist = false;
+
+				for (int32 OrderIndex = 0; OrderIndex < 6; OrderIndex++)
+				{
+					const FIntVector& CurOrder = OrderList[OrderIndex];
+					const int32 CheckSwitch = OrderIndex % 3;
+
+					FIntVector CheckPosList(OrderIndex > 2 ? -CurrentCacheInfo.CacheDistance : CurrentCacheInfo.CacheDistance);
+
+					for (
+						CheckPosList.Y = -CurrentCacheInfo.CacheDistance + (CheckSwitch > 0 ? 1 : 0);
+						CheckPosList.Y <= CurrentCacheInfo.CacheDistance - (CheckSwitch > 0 ? 1 : 0);
+						CheckPosList.Y++
+						)
+					{
+						for (
+							CheckPosList.Z = -CurrentCacheInfo.CacheDistance + (CheckSwitch > 1 ? 1 : 0); 
+							CheckPosList.Z <= CurrentCacheInfo.CacheDistance - (CheckSwitch > 1 ? 1 : 0); 
+							CheckPosList.Z++
+							)
+						{
+							FIntVector CheckLocation = CurrentCacheInfo.CacheLocation + FIntVector(CheckPosList[CurOrder.X], CheckPosList[CurOrder.Y], CheckPosList[CurOrder.Z]);
+						
+							const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckLocation, LumenParam.VoxelSetting.VoxelGridSize);
+							const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
+
+							if (CheckMaterial != SelfMaterial)
+							{
+								IsValidDist = true;
+
+								CurrentCacheInfo.CacheLoop.Add(CheckLocation);
+							}
+						}
+					}
+				}
+
+				if (IsValidDist)
+				{
+					break;
+				}
+			}
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
+	}
 	
 	TArray<uint8> StreamableMipData;
 	
 	for (int32 MipIndex = 0; MipIndex < DistanceField::NumMips; MipIndex++)
 	{
+		const double MipStartTime = FPlatformTime::Seconds();
+
 		FSparseDistanceFieldMip& OutMip = DistanceFieldMeshData->Mips[MipIndex];
 	
 		const FIntVector IndirectionDimensions = FIntVector(
@@ -830,9 +1101,9 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	
 		IndirectionTable.Init(DistanceField::InvalidBrickIndex, IndirectionDimensionsLength);
 
-		FLFPDFMipInfo MipInfo;
-	
-		SetDistanceFieldMipInfo(OutMip, IndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale, MipInfo);
+		FLFPDFMipInfo MipInfo(IndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
+
+		MipInfo.SetSparseDistanceFieldMip(OutMip, IndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
 	
 
 		const FVector BrickSpaceSize = MipInfo.DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
@@ -841,52 +1112,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 
 		const int32 CheckRange = FMath::CeilToInt(MipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
 
-		UE_LOG(LogTemp, Warning, TEXT("The integer value is: %d"), CheckRange);
-
-		struct FLFPDFBrickTask
-		{
-			FLFPDFBrickTask(const int32 InBrickLength, const FVector& InBrickVoxelSize, const int32 InBrickIndex, const FVector& InBrickSpaceLocation, const int32 InCheckRange, const float InLocalSpaceTraceDistance, const float InLocalToVolumeScale, const FVector2D& InDistanceFieldToVolumeScaleBias, const FLFPBaseBoxelLumenTask* InOwner)
-				: BrickLength(InBrickLength), BrickIndex(InBrickIndex), BrickSpaceLocation(InBrickSpaceLocation), BrickVoxelSize(InBrickVoxelSize), CheckRange(InCheckRange), LocalSpaceTraceDistance(InLocalSpaceTraceDistance), LocalToVolumeScale(InLocalToVolumeScale), DistanceFieldToVolumeScaleBias(InDistanceFieldToVolumeScaleBias), Owner(InOwner)
-			{}
-
-			void DoTask()
-			{
-				BrickDataList.Init(0, BrickLength);
-
-				for (int32 DataIndex = 0; DataIndex < 512 /* Brick Length */; DataIndex++)
-				{
-					const FIntVector DataLocation(ULFPGridLibrary::ToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
-				
-					const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
-				
-					const float ClosetPoint = Owner->GetDistanceToClosetSurface(BrickVoxelLocation, LocalSpaceTraceDistance, CheckRange);
-				
-					// Transform to the tracing shader's Volume space
-					const float VolumeSpaceDistance = ClosetPoint * LocalToVolumeScale;
-					// Transform to the Distance Field texture's space
-					const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
-				
-					BrickDataList[DataIndex] = FMath::Clamp<int32>(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
-				
-					BrickMaxDistance = FMath::Max(BrickMaxDistance, BrickDataList[DataIndex]);
-					BrickMinDistance = FMath::Min(BrickMinDistance, BrickDataList[DataIndex]);
-				}
-			}
-
-			const int32 BrickLength;
-			const int32 BrickIndex;
-			const FVector BrickSpaceLocation;
-			const FVector BrickVoxelSize;
-			const int32 CheckRange;
-			const float LocalSpaceTraceDistance;
-			const float LocalToVolumeScale;
-			const FVector2D DistanceFieldToVolumeScaleBias;
-			const FLFPBaseBoxelLumenTask* Owner;
-
-			TArray<uint8> BrickDataList;
-			uint8 BrickMaxDistance = (MIN_uint8);
-			uint8 BrickMinDistance = (MAX_uint8);
-		};
+		//UE_LOG(LogTemp, Warning, TEXT("The integer value is: %d"), CheckRange);
 
 		TArray<FLFPDFBrickTask> BrickTaskList;
 		BrickTaskList.Reserve(IndirectionDimensionsLength);
@@ -905,7 +1131,8 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 				MipInfo.LocalSpaceTraceDistance,
 				LocalToVolumeScale,
 				MipInfo.DistanceFieldToVolumeScaleBias,
-				this
+				LumenParam,
+				DistanceCacheMap
 			));
 		}
 
@@ -975,6 +1202,8 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 		}
 	
 		OutMip.NumDistanceFieldBricks = ValidBricks.Num();
+
+		UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Mip %d Generate Time Use : %f with Range Of %d and %d Brick"), MipIndex, (float)(FPlatformTime::Seconds() - MipStartTime), CheckRange, BrickTaskList.Num());
 	}
 	
 	DistanceFieldMeshData->StreamableMips.Lock(LOCK_READ_WRITE);
@@ -983,72 +1212,60 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	DistanceFieldMeshData->StreamableMips.Unlock();
 	DistanceFieldMeshData->StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
 
-	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 
 	return DistanceFieldMeshData;
 }
 
-void FLFPBaseBoxelLumenTask::SetDistanceFieldMipInfo(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale, FLFPDFMipInfo& MipsInfo)
-{	 
-	// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
-	MipsInfo.TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
-	MipsInfo.DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(MipsInfo.TexelObjectSpaceSize);
-
-	MipsInfo.IndirectionVoxelSize = MipsInfo.DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
-	MipsInfo.VolumeSpaceDistanceFieldVoxelSize = MipsInfo.IndirectionVoxelSize * LocalToVolumeScale / FVector(DistanceField::UniqueDataBrickSize);
-	MipsInfo.MaxDistanceForEncoding = MipsInfo.VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
-	MipsInfo.LocalSpaceTraceDistance = MipsInfo.MaxDistanceForEncoding / LocalToVolumeScale;
-	MipsInfo.DistanceFieldToVolumeScaleBias = FVector2D(2.0f * MipsInfo.MaxDistanceForEncoding, -MipsInfo.MaxDistanceForEncoding);
-
-	DistanceMip.DistanceFieldToVolumeScaleBias = MipsInfo.DistanceFieldToVolumeScaleBias;
-	DistanceMip.IndirectionDimensions = IndirectionDimensions;
-
-	// Account for the border voxels we added
-	const FVector VirtualUVMin = FVector(DistanceField::MeshDistanceFieldObjectBorder) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-	const FVector VirtualUVSize = FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-
-	const FVector VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
-
-	// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
-	DistanceMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
-	DistanceMip.VolumeToVirtualUVAdd = VolumePositionExtent * DistanceMip.VolumeToVirtualUVScale + VirtualUVMin;
-}
-
-float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FVector& LocalLocation, const float MaxDistance, const int32 CheckRange) const
-{
-	const FVector VoxelSize = LumenParam.VoxelSetting.VoxelHalfSize * 2;
-	const FVector LocalSpace = LocalLocation / VoxelSize;
-	const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
-	const uint8 SelfMaterial = GridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[GridIndex];
-
-	float ClosetDistance = MaxDistance;
-
-
-	for (int32 IndexZ = -CheckRange; IndexZ <= CheckRange; IndexZ++)
-	{
-		for (int32 IndexY = -CheckRange; IndexY <= CheckRange; IndexY++)
-		{
-			for (int32 IndexX = -CheckRange; IndexX <= CheckRange; IndexX++)
-			{
-				const FIntVector CheckVoxelDirection = FIntVector(IndexX, IndexY, IndexZ);
-				const FIntVector CheckVoxelLocation = GridLocation + CheckVoxelDirection;
-	
-				const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
-				const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
-	
-				if (CheckMaterial != SelfMaterial)
-				{
-					const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
-	
-					ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
-				}
-			}
-		}
-	}
-
-	return SelfMaterial != 0 ? ClosetDistance * -1 : ClosetDistance;
-}
+//float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FIntVector& GridLocation, const float MaxDistance, const TArray<FIntVector>& CheckList) const
+//{
+//	//const FVector VoxelSize = LumenParam.VoxelSetting.VoxelHalfSize * 2;
+//	//const FVector LocalSpace = LocalLocation / VoxelSize;
+//	//const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
+//	const int32 GridIndex = ULFPGridLibrary::ToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
+//	const uint8 SelfMaterial = GridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[GridIndex];
+//
+//	float ClosetDistance = MaxDistance;
+//
+//	for (const FIntVector& CheckLocation : CheckList)
+//	{
+//		const FIntVector CheckVoxelLocation = GridLocation + CheckLocation;
+//
+//		const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
+//		const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
+//
+//		if (CheckMaterial != SelfMaterial)
+//		{
+//			const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
+//
+//			ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+//		}
+//	}
+//
+//	//for (int32 IndexZ = -CheckRange; IndexZ <= CheckRange; IndexZ++)
+//	//{
+//	//	for (int32 IndexY = -CheckRange; IndexY <= CheckRange; IndexY++)
+//	//	{
+//	//		for (int32 IndexX = -CheckRange; IndexX <= CheckRange; IndexX++)
+//	//		{
+//	//			const FIntVector CheckVoxelDirection = FIntVector(IndexX, IndexY, IndexZ);
+//	//			const FIntVector CheckVoxelLocation = GridLocation + CheckVoxelDirection;
+//	//
+//	//			const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
+//	//			const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
+//	//
+//	//			if (CheckMaterial != SelfMaterial)
+//	//			{
+//	//				const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
+//	//
+//	//				ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+//	//			}
+//	//		}
+//	//	}
+//	//}
+//
+//	return SelfMaterial != 0 ? ClosetDistance * -1 : ClosetDistance;
+//}
 
 FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
 {
