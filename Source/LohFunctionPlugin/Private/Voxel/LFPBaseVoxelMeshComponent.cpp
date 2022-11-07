@@ -779,7 +779,7 @@ void FLFPBaseBoxelLumenTask::DoWork()
 
 FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 {
-	const double StartTime = FPlatformTime::Seconds();
+	//const double StartTime = FPlatformTime::Seconds();
 
 	struct FLFPDFMipInfo
 	{
@@ -1004,7 +1004,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 
 	TArray<FLFPDFCacheInfo> DistanceCacheMap;
 	{
-		const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
+		//const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
 
 		const TArray<FIntVector> OrderList =
 		{
@@ -1077,14 +1077,14 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 			}
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
+		//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
 	}
 	
 	TArray<uint8> StreamableMipData;
 	
 	for (int32 MipIndex = 0; MipIndex < DistanceField::NumMips; MipIndex++)
 	{
-		const double MipStartTime = FPlatformTime::Seconds();
+		//const double MipStartTime = FPlatformTime::Seconds();
 
 		FSparseDistanceFieldMip& OutMip = DistanceFieldMeshData->Mips[MipIndex];
 	
@@ -1203,7 +1203,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	
 		OutMip.NumDistanceFieldBricks = ValidBricks.Num();
 
-		UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Mip %d Generate Time Use : %f with Range Of %d and %d Brick"), MipIndex, (float)(FPlatformTime::Seconds() - MipStartTime), CheckRange, BrickTaskList.Num());
+		//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Mip %d Generate Time Use : %f with Range Of %d and %d Brick"), MipIndex, (float)(FPlatformTime::Seconds() - MipStartTime), CheckRange, BrickTaskList.Num());
 	}
 	
 	DistanceFieldMeshData->StreamableMips.Lock(LOCK_READ_WRITE);
@@ -1212,60 +1212,10 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 	DistanceFieldMeshData->StreamableMips.Unlock();
 	DistanceFieldMeshData->StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
 
-	UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 
 	return DistanceFieldMeshData;
 }
-
-//float FLFPBaseBoxelLumenTask::GetDistanceToClosetSurface(const FIntVector& GridLocation, const float MaxDistance, const TArray<FIntVector>& CheckList) const
-//{
-//	//const FVector VoxelSize = LumenParam.VoxelSetting.VoxelHalfSize * 2;
-//	//const FVector LocalSpace = LocalLocation / VoxelSize;
-//	//const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
-//	const int32 GridIndex = ULFPGridLibrary::ToIndex(GridLocation, LumenParam.VoxelSetting.VoxelGridSize);
-//	const uint8 SelfMaterial = GridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[GridIndex];
-//
-//	float ClosetDistance = MaxDistance;
-//
-//	for (const FIntVector& CheckLocation : CheckList)
-//	{
-//		const FIntVector CheckVoxelLocation = GridLocation + CheckLocation;
-//
-//		const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
-//		const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
-//
-//		if (CheckMaterial != SelfMaterial)
-//		{
-//			const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
-//
-//			ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
-//		}
-//	}
-//
-//	//for (int32 IndexZ = -CheckRange; IndexZ <= CheckRange; IndexZ++)
-//	//{
-//	//	for (int32 IndexY = -CheckRange; IndexY <= CheckRange; IndexY++)
-//	//	{
-//	//		for (int32 IndexX = -CheckRange; IndexX <= CheckRange; IndexX++)
-//	//		{
-//	//			const FIntVector CheckVoxelDirection = FIntVector(IndexX, IndexY, IndexZ);
-//	//			const FIntVector CheckVoxelLocation = GridLocation + CheckVoxelDirection;
-//	//
-//	//			const int32 CheckGridIndex = ULFPGridLibrary::ToIndex(CheckVoxelLocation, LumenParam.VoxelSetting.VoxelGridSize);
-//	//			const uint8 CheckMaterial = CheckGridIndex == INDEX_NONE ? 0 : LumenParam.VoxelMaterialList[CheckGridIndex];
-//	//
-//	//			if (CheckMaterial != SelfMaterial)
-//	//			{
-//	//				const FBox VoxelBox = FBox::BuildAABB((FVector(CheckVoxelLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
-//	//
-//	//				ClosetDistance = FMath::Min(ClosetDistance, FMath::Sqrt(VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation)) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
-//	//			}
-//	//		}
-//	//	}
-//	//}
-//
-//	return SelfMaterial != 0 ? ClosetDistance * -1 : ClosetDistance;
-//}
 
 FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
 {

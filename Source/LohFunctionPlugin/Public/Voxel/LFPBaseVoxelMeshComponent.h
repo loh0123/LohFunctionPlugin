@@ -27,7 +27,7 @@ public:
 		float BoundExpand = 5.0f;
 
 	/* How Much Data Can Be In The Distance Field (High Value Will Slow Down Computation Time) */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1", ClampMax = "32.0"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "3", ClampMax = "32.0"))
 		uint8 VoxelPerDistanceField = 3;
 
 	/* Decrease Accuracy To Fix Lumen Surface */
@@ -389,46 +389,6 @@ struct FLFPBaseBoxelLumenParam
 	}
 };
 
-//struct FLFPDFMipInfo
-//{
-//	FLFPDFMipInfo() {}
-//
-//	FVector TexelObjectSpaceSize;
-//	FBox DistanceFieldVolumeBounds;
-//
-//	FVector IndirectionVoxelSize;
-//	FVector VolumeSpaceDistanceFieldVoxelSize;
-//	float MaxDistanceForEncoding;
-//	float LocalSpaceTraceDistance;
-//	FVector2D DistanceFieldToVolumeScaleBias;
-//
-//	FORCEINLINE void SetDistanceFieldMipInfo(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale)
-//	{
-//		// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
-//		TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
-//		DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
-//
-//		IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
-//		VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector(DistanceField::UniqueDataBrickSize);
-//		MaxDistanceForEncoding = VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
-//		LocalSpaceTraceDistance = MaxDistanceForEncoding / LocalToVolumeScale;
-//		DistanceFieldToVolumeScaleBias = FVector2D(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
-//
-//		DistanceMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
-//		DistanceMip.IndirectionDimensions = IndirectionDimensions;
-//
-//		// Account for the border voxels we added
-//		const FVector VirtualUVMin = FVector(DistanceField::MeshDistanceFieldObjectBorder) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-//		const FVector VirtualUVSize = FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-//
-//		const FVector VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
-//
-//		// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
-//		DistanceMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
-//		DistanceMip.VolumeToVirtualUVAdd = VolumePositionExtent * DistanceMip.VolumeToVirtualUVScale + VirtualUVMin;
-//	}
-//};
-
 class FLFPBaseBoxelLumenTask : public FNonAbandonableTask {
 	friend class FAsyncTask<FLFPBaseBoxelLumenTask>;
 
@@ -441,8 +401,6 @@ public:
 	void DoWork();
 
 	FORCEINLINE class FDistanceFieldVolumeData* GenerateDistanceField();
-
-	//FORCEINLINE float GetDistanceToClosetSurface(const FIntVector& GridLocation, const float MaxDistance, const TArray<FIntVector>& CheckList) const;
 
 	FORCEINLINE class FCardRepresentationData* GenerateLumenCard();
 
