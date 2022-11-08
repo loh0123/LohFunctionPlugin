@@ -58,7 +58,7 @@ void ULFPBaseVoxelMeshComponent::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName)
+void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName, const bool bAutoCreateMaterialInstance, TArray<UMaterialInstanceDynamic*>& MaterialInstanceDynamicList, UTexture2D*& OutVoxelDataTexture, UTexture2D*& OutVoxelColorTexture)
 {
 	if (IsValid(NewVoxelContainer) && NewVoxelContainer->IsChuckIndexValid(NewChuckIndex))
 	{
@@ -94,6 +94,19 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 
 			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
 			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+
+			OutVoxelColorTexture = VoxelColorTexture;
+			OutVoxelDataTexture = VoxelDataTexture;
+		}
+
+		if (bAutoCreateMaterialInstance)
+		{
+			MaterialInstanceDynamicList.Init(nullptr, Material.Num());
+
+			for (int32 MaterialIndex = 0; MaterialIndex < Material.Num(); MaterialIndex++)
+			{
+				if (IsValid(GetMaterial(MaterialIndex))) MaterialInstanceDynamicList[MaterialIndex] = CreateDynamicMaterialInstance(MaterialIndex, nullptr, "");
+			}
 		}
 
 		/* This Setup Voxel */
@@ -630,6 +643,19 @@ void ULFPBaseVoxelMeshComponent::SetMaterial(int32 ElementIndex, UMaterialInterf
 	}
 
 	MaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
+}
+
+UMaterialInstanceDynamic* ULFPBaseVoxelMeshComponent::CreateDynamicMaterialInstance(int32 ElementIndex, UMaterialInterface* SourceMaterial, FName OptionalName)
+{
+	UMaterialInstanceDynamic* MID = Super::CreateDynamicMaterialInstance(ElementIndex, SourceMaterial, OptionalName);
+
+	if (IsValid(MID))
+	{
+		MID->SetTextureParameterValue("VoxelDataTexture", VoxelDataTexture);
+		MID->SetTextureParameterValue("VoxelColorTexture", VoxelColorTexture);
+	}
+
+	return MID;
 }
 
 bool ULFPBaseVoxelMeshComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* CollisionData, bool InUseAllTriData)

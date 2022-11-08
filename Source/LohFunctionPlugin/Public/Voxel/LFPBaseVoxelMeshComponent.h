@@ -242,9 +242,9 @@ public:
 
 public: /* Functions For Setting Up Component */
 
-	/* Setup This Component And Reset Color Map : Please Rebind Colour Map After This */
+	/* Setup This Component And Reset VoxelDataTexture And VoxelColorTexture : Please Rebind VoxelDataTexture And VoxelColorTexture After This */
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
-		FORCEINLINE void SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName);
+		FORCEINLINE void SetVoxelContainer(const TArray<UMaterialInterface*>& Material, ULFPVoxelContainer* NewVoxelContainer, const int32 NewChuckIndex, const FName InitializeName, const bool bAutoCreateMaterialInstance, TArray<UMaterialInstanceDynamic*>& MaterialInstanceDynamicList, UTexture2D*& OutVoxelDataTexture, UTexture2D*& OutVoxelColorTexture);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPBaseVoxelMeshComponent | Function")
 		FORCEINLINE void SetVoxelMaterial(const TArray<UMaterialInterface*>& Material);
@@ -286,6 +286,9 @@ public: // Material Handler
 	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
 
 	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
+
+	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
+	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
 
 public: // Collision Handler
 
