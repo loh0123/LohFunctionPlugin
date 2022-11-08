@@ -276,36 +276,29 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (ChuckStatus.bIsLumenDataDirty && (RenderTask == nullptr || RenderTask->IsDone()) && (LumenTask == nullptr || LumenTask->IsDone()))
 	{
-		if (ChuckStatus.LumenDelay > 0)
+		
+		ChuckStatus.bIsLumenDataDirty = false;
+		ChuckStatus.bIsGeneratingLumen = true;
+
+		FLFPBaseBoxelLumenParam LumenParam;
+
+		//LumenParam.LODSectionData = new FStaticMeshLODResources();
+		LumenParam.SharePtr = this;
+		LumenParam.LocalBounds = GetLocalBounds().ExpandBy(ChuckSetting.BoundExpand);
+		LumenParam.LocalChuckSetting = ChuckSetting;
+		LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
+		LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
+
+		if (LumenTask == nullptr)
 		{
-			ChuckStatus.LumenDelay--;
+			LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
 		}
 		else
 		{
-			ChuckStatus.bIsLumenDataDirty = false;
-			ChuckStatus.bIsGeneratingLumen = true;
-			ChuckStatus.LumenDelay = 30;
-
-			FLFPBaseBoxelLumenParam LumenParam;
-
-			//LumenParam.LODSectionData = new FStaticMeshLODResources();
-			LumenParam.SharePtr = this;
-			LumenParam.LocalBounds = GetLocalBounds().ExpandBy(ChuckSetting.BoundExpand);
-			LumenParam.LocalChuckSetting = ChuckSetting;
-			LumenParam.VoxelMaterialList = RenderData->VoxelMaterialList;
-			LumenParam.VoxelSetting = VoxelContainer->GetContainerSetting();
-
-			if (LumenTask == nullptr)
-			{
-				LumenTask = new FAsyncTask<FLFPBaseBoxelLumenTask>(LumenParam);
-			}
-			else
-			{
-				LumenTask->GetTask().LumenParam = LumenParam;
-			}
-
-			LumenTask->StartBackgroundTask();
+			LumenTask->GetTask().LumenParam = LumenParam;
 		}
+
+		LumenTask->StartBackgroundTask();
 	}
 }
 
@@ -1437,6 +1430,8 @@ void FLFPBaseBoxelRenderTask::DoWork()
 	ULFPBaseVoxelMeshComponent* OwnerPtr = RenderParam.SharePtr;
 
 	FLFPBaseVoxelMeshRenderData* NewRenderData = new FLFPBaseVoxelMeshRenderData();
+
+	NewRenderData->LocalBounds = RenderParam.LocalBounds.GetBox();
 
 	RenderParam.LocalVoxelContainer->SetContainerThreadReading(true);
 

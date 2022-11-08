@@ -150,6 +150,29 @@ public:
 		VoxelAttributeData.Init(FLFPVoxelDynamicAttributeData(), VoxelLength);
 	}
 
+	FORCEINLINE void InitChuckData(const int32 VoxelLength, const TArray<FName>& VoxelNameList, const TArray<FLFPVoxelDynamicAttributeData>& VoxelAttributeList)
+	{
+		check(VoxelLength == VoxelNameList.Num());
+		check(VoxelLength == VoxelAttributeList.Num());
+
+		VoxelNameData = VoxelNameList;
+		VoxelAttributeData = VoxelAttributeList;
+	}
+
+	FORCEINLINE void SetVoxelNameList(const TArray<FName>& VoxelNameList)
+	{
+		check(VoxelNameList.Num() == VoxelNameData.Num());
+
+		VoxelNameData = VoxelNameList;
+	}
+
+	FORCEINLINE void SetVoxelAttributeList(const TArray<FLFPVoxelDynamicAttributeData>& VoxelAttributeList)
+	{
+		check(VoxelAttributeList.Num() == VoxelAttributeData.Num());
+
+		VoxelAttributeData = VoxelAttributeList;
+	}
+
 	FORCEINLINE void SetVoxelName(const int32 VoxelIndex, const FName& VoxelName)
 	{
 		check(VoxelNameData.IsValidIndex(VoxelIndex));

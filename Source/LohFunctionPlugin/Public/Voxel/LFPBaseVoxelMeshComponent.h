@@ -211,8 +211,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsGeneratingLumen : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsBodyInvalid : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 LumenDelay = 30;
 };
 
 class FLFPBaseBoxelRenderTask;
