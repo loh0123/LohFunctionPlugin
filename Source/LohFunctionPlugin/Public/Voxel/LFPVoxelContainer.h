@@ -10,7 +10,6 @@
 #include "UObject/NoExportTypes.h"
 #include "Engine/DataTable.h"
 #include "Math/LFPGridLibrary.h"
-//#include "Voxel/LFPVoxelContainerInterface.h"
 #include "LFPVoxelContainer.generated.h"
 
 USTRUCT(BlueprintType)
@@ -251,6 +250,10 @@ public:
 	/* Size Of The UV This Mesh Is Render On */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FIntPoint VoxelUVRound = FIntPoint(1);
+
+	/*  */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
+		int32 WriteActionBatchAmount = 10;
 
 public:
 
