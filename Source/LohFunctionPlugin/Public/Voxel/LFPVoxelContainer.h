@@ -94,8 +94,6 @@ public:
 
 	UPROPERTY() bool bWantUpdateAttribute = false;
 
-	UPROPERTY() uint16 TickDelayCount = 0;
-
 	FLFPVoxelWriteAction& operator+=(const FLFPVoxelWriteAction& Other)
 	{
 		NameData.Append(Other.NameData);
@@ -103,8 +101,6 @@ public:
 
 		bWantUpdateName = bWantUpdateName || Other.bWantUpdateName;
 		bWantUpdateAttribute = bWantUpdateAttribute || Other.bWantUpdateAttribute;
-
-		TickDelayCount = FMath::Max(TickDelayCount, Other.TickDelayCount);
 
 		return *this;
 	}
@@ -255,9 +251,6 @@ public:
 	/* Size Of The UV This Mesh Is Render On */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FIntPoint VoxelUVRound = FIntPoint(1);
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
-		int32 WriteActionTickDelay = 10;
 
 public:
 
@@ -498,7 +491,7 @@ protected: /* Helper Function */
 
 public:
 
-	FORCEINLINE FLFPVoxelWriteAction* FindOrAddChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay = true);
+	FORCEINLINE FLFPVoxelWriteAction* FindOrAddChuckWriteAction(const int32& ChuckIndex);
 
 protected:
 

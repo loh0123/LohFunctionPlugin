@@ -22,6 +22,10 @@ struct FLFPBaseVoxelMeshSetting
 
 public:
 
+	/* Generate Distance Field And Lumen */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
+		bool bGenerateLumenData = false;
+
 	/* Increase Cover Range But Decrease Quality */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen")
 		float BoundExpand = 5.0f;

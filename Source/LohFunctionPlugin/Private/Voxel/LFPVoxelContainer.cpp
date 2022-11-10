@@ -59,15 +59,13 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 	VoxelChuckNameUpdateEvent.Broadcast(ChuckIndex);
 }
 
-FLFPVoxelWriteAction* ULFPVoxelContainer::FindOrAddChuckWriteAction(const int32& ChuckIndex, const bool bResetDelay)
+FLFPVoxelWriteAction* ULFPVoxelContainer::FindOrAddChuckWriteAction(const int32& ChuckIndex)
 {
 	if (IsChuckIndexValid(ChuckIndex) == false) return nullptr;
 
 	FLFPVoxelWriteAction* Action = ChuckWriteActionList.Find(ChuckIndex);
 
 	if (Action == nullptr) Action = &ChuckWriteActionList.Add(ChuckIndex, FLFPVoxelWriteAction());
-
-	if (bResetDelay) Action->TickDelayCount = ContainerSetting.WriteActionTickDelay;
 
 	return Action;
 }
@@ -147,43 +145,38 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 
 	auto ChuckWriteAction = ChuckWriteActionList.CreateIterator();
 	
-	if (ChuckWriteAction.Value().TickDelayCount > 0)
+	
+	if (ChuckData[ChuckWriteAction.Key()].IsInitialized() == false)
 	{
-		ChuckWriteAction.Value().TickDelayCount -= 1;
+		InitializeChuck(ChuckWriteAction.Key(), ContainerSetting.InvisibleName, true);
+	
+		MarkChuckForNameUpdate(ChuckWriteAction.Key(), true);
 	}
-	else
+	
+	for (const auto& VoxelName : ChuckWriteAction.Value().NameData)
 	{
-		if (ChuckData[ChuckWriteAction.Key()].IsInitialized() == false)
-		{
-			InitializeChuck(ChuckWriteAction.Key(), ContainerSetting.InvisibleName, true);
+		const FName OldName = ChuckData[ChuckWriteAction.Key()].VoxelNameData[VoxelName.Key];
 	
-			MarkChuckForNameUpdate(ChuckWriteAction.Key(), true);
-		}
+		if (OldName == VoxelName.Value) continue;
 	
-		for (const auto& VoxelName : ChuckWriteAction.Value().NameData)
-		{
-			const FName OldName = ChuckData[ChuckWriteAction.Key()].VoxelNameData[VoxelName.Key];
+		ChuckData[ChuckWriteAction.Key()].SetVoxelName(VoxelName.Key, VoxelName.Value);
 	
-			if (OldName == VoxelName.Value) continue;
+		const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
 	
-			ChuckData[ChuckWriteAction.Key()].SetVoxelName(VoxelName.Key, VoxelName.Value);
-	
-			const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelName.Key, ContainerSetting.VoxelGridSize);
-	
-			MarkChuckForNameUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
-		}
-	
-		for (const auto& VoxelColor : ChuckWriteAction.Value().AttributeData)
-		{
-			ChuckData[ChuckWriteAction.Key()].SetVoxelAttribute(VoxelColor.Key, VoxelColor.Value);
-	
-			const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelColor.Key, ContainerSetting.VoxelGridSize);
-	
-			MarkChuckForAttributeUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
-		}
-	
-		ChuckWriteActionList.Remove(ChuckWriteAction.Key());
+		MarkChuckForNameUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
 	}
+	
+	for (const auto& VoxelColor : ChuckWriteAction.Value().AttributeData)
+	{
+		ChuckData[ChuckWriteAction.Key()].SetVoxelAttribute(VoxelColor.Key, VoxelColor.Value);
+	
+		const FIntVector VoxelLocation = ULFPGridLibrary::ToGridLocation(VoxelColor.Key, ContainerSetting.VoxelGridSize);
+	
+		MarkChuckForAttributeUpdate(ChuckWriteAction.Key(), ULFPGridLibrary::IsOnGridEdge(VoxelLocation, ContainerSetting.VoxelGridSize));
+	}
+	
+	ChuckWriteActionList.Remove(ChuckWriteAction.Key());
+	
 	
 	ChuckWriteActionList.Shrink();
 

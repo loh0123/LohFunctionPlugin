@@ -47,6 +47,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNoiseMixTable>(
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_MixValue_MetaData[];
 #endif
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_MixValue;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 		static const UECodeGen_Private::FStructParams ReturnStructParams;
 	};
@@ -74,9 +79,21 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNoiseMixTable>(
 	};
 #endif
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_MixValue = { "MixValue", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FLFPNoiseMixTable, MixValue), METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_MixValue_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_MixValue_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "Category", "LFPNoiseMixTable" },
+		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
+	};
+#endif
+	void Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((FLFPNoiseMixTable*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(FLFPNoiseMixTable), &Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_Multiply,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_MixValue,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewProp_bRoundSourceNoise,
 	};
 	const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::ReturnStructParams = {
 		(UObject* (*)())Z_Construct_UPackage__Script_LohFunctionPlugin,
@@ -266,9 +283,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		P_GET_STRUCT(FVector,Z_Param_Location);
 		P_GET_UBOOL(Z_Param_IgnoreZ);
 		P_GET_TARRAY_REF(FLFPNearbyVectorData,Z_Param_Out_ReturnData);
+		P_GET_UBOOL(Z_Param_bRoundSourceNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		ULFPNoiseLibrary::GetNearbyVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_IgnoreZ,Z_Param_Out_ReturnData);
+		ULFPNoiseLibrary::GetNearbyVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_IgnoreZ,Z_Param_Out_ReturnData,Z_Param_bRoundSourceNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetNearbySingleVectorNoise)
@@ -276,9 +294,10 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_UBOOL(Z_Param_IgnoreZ);
 		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundSourceNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FLFPNearbyVectorData*)Z_Param__Result=ULFPNoiseLibrary::GetNearbySingleVectorNoise(Z_Param_Out_NoiseTable,Z_Param_IgnoreZ,Z_Param_Location);
+		*(FLFPNearbyVectorData*)Z_Param__Result=ULFPNoiseLibrary::GetNearbySingleVectorNoise(Z_Param_Out_NoiseTable,Z_Param_IgnoreZ,Z_Param_Location,Z_Param_bRoundSourceNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execMixLerpDirection)
@@ -315,54 +334,60 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundSourceNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetLerpDirectionNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetLerpDirectionNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundSourceNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetLerpVectorNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundSourceNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetLerpVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetLerpVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundSourceNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetLerpNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundSourceNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(float*)Z_Param__Result=ULFPNoiseLibrary::GetLerpNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(float*)Z_Param__Result=ULFPNoiseLibrary::GetLerpNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundSourceNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetDirectionNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FIntVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetDirectionNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetDirectionNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetVectorNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FIntVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(FVector*)Z_Param__Result=ULFPNoiseLibrary::GetVectorNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execGetFloatNoise)
 	{
 		P_GET_STRUCT_REF(FLFPNoiseTable,Z_Param_Out_NoiseTable);
 		P_GET_STRUCT(FIntVector,Z_Param_Location);
+		P_GET_UBOOL(Z_Param_bRoundNoise);
 		P_FINISH;
 		P_NATIVE_BEGIN;
-		*(float*)Z_Param__Result=ULFPNoiseLibrary::GetFloatNoise(Z_Param_Out_NoiseTable,Z_Param_Location);
+		*(float*)Z_Param__Result=ULFPNoiseLibrary::GetFloatNoise(Z_Param_Out_NoiseTable,Z_Param_Location,Z_Param_bRoundNoise);
 		P_NATIVE_END;
 	}
 	DEFINE_FUNCTION(ULFPNoiseLibrary::execCreateNoiseTable)
@@ -443,6 +468,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FIntVector Location;
+			bool bRoundNoise;
 			FVector ReturnValue;
 		};
 #if WITH_METADATA
@@ -453,6 +479,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundNoise_MetaData[];
+#endif
+		static void NewProp_bRoundNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundNoise;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -472,15 +503,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetDirectionNoise_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetDirectionNoise_Parms*)Obj)->bRoundNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise = { "bRoundNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetDirectionNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetDirectionNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_bRoundNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -500,6 +543,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FIntVector Location;
+			bool bRoundNoise;
 			float ReturnValue;
 		};
 #if WITH_METADATA
@@ -510,6 +554,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundNoise_MetaData[];
+#endif
+		static void NewProp_bRoundNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundNoise;
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -529,15 +578,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetFloatNoise_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetFloatNoise_Parms*)Obj)->bRoundNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise = { "bRoundNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetFloatNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise_MetaData)) };
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetFloatNoise_Parms, ReturnValue), METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_bRoundNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -557,6 +618,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FVector Location;
+			bool bRoundSourceNoise;
 			FVector ReturnValue;
 		};
 #if WITH_METADATA
@@ -567,6 +629,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -586,15 +653,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpDirectionNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetLerpDirectionNoise_Parms*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetLerpDirectionNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpDirectionNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_bRoundSourceNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundSourceNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -614,6 +693,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FVector Location;
+			bool bRoundSourceNoise;
 			float ReturnValue;
 		};
 #if WITH_METADATA
@@ -624,6 +704,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -643,15 +728,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetLerpNoise_Parms*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetLerpNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpNoise_Parms, ReturnValue), METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_bRoundSourceNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundSourceNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -671,6 +768,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FVector Location;
+			bool bRoundSourceNoise;
 			FVector ReturnValue;
 		};
 #if WITH_METADATA
@@ -681,6 +779,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -700,15 +803,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpVectorNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetLerpVectorNoise_Parms*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetLerpVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetLerpVectorNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_bRoundSourceNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundSourceNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -729,6 +844,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 			FLFPNoiseTable NoiseTable;
 			bool IgnoreZ;
 			FVector Location;
+			bool bRoundSourceNoise;
 			FLFPNearbyVectorData ReturnValue;
 		};
 #if WITH_METADATA
@@ -744,6 +860,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -773,16 +894,28 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbySingleVectorNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FLFPNearbyVectorData, METADATA_PARAMS(nullptr, 0) }; // 2062711185
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_IgnoreZ,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_bRoundSourceNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundSourceNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -804,6 +937,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 			FVector Location;
 			bool IgnoreZ;
 			TArray<FLFPNearbyVectorData> ReturnData;
+			bool bRoundSourceNoise;
 		};
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_NoiseTable_MetaData[];
@@ -820,6 +954,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FBoolPropertyParams NewProp_IgnoreZ;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnData_Inner;
 		static const UECodeGen_Private::FArrayPropertyParams NewProp_ReturnData;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundSourceNoise_MetaData[];
+#endif
+		static void NewProp_bRoundSourceNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundSourceNoise;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
@@ -850,16 +989,28 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ = { "IgnoreZ", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData_Inner = { "ReturnData", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNearbyVectorData, METADATA_PARAMS(nullptr, 0) }; // 2062711185
 	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData = { "ReturnData", nullptr, (EPropertyFlags)0x0010000000000180, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms, ReturnData), EArrayPropertyFlags::None, METADATA_PARAMS(nullptr, 0) }; // 2062711185
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms*)Obj)->bRoundSourceNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise = { "bRoundSourceNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetNearbyVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_Location,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_IgnoreZ,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_ReturnData,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::NewProp_bRoundSourceNoise,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundSourceNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -879,6 +1030,7 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		{
 			FLFPNoiseTable NoiseTable;
 			FIntVector Location;
+			bool bRoundNoise;
 			FVector ReturnValue;
 		};
 #if WITH_METADATA
@@ -889,6 +1041,11 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_Location_MetaData[];
 #endif
 		static const UECodeGen_Private::FStructPropertyParams NewProp_Location;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_bRoundNoise_MetaData[];
+#endif
+		static void NewProp_bRoundNoise_SetBit(void* Obj);
+		static const UECodeGen_Private::FBoolPropertyParams NewProp_bRoundNoise;
 		static const UECodeGen_Private::FStructPropertyParams NewProp_ReturnValue;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 #if WITH_METADATA
@@ -908,15 +1065,27 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetVectorNoise_Parms, Location), Z_Construct_UScriptStruct_FIntVector, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_Location_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_Location_MetaData)) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif
+	void Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise_SetBit(void* Obj)
+	{
+		((LFPNoiseLibrary_eventGetVectorNoise_Parms*)Obj)->bRoundNoise = 1;
+	}
+	const UECodeGen_Private::FBoolPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise = { "bRoundNoise", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(LFPNoiseLibrary_eventGetVectorNoise_Parms), &Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise_SetBit, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise_MetaData)) };
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventGetVectorNoise_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_NoiseTable,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_Location,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_bRoundNoise,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::NewProp_ReturnValue,
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise_Statics::Function_MetaDataParams[] = {
 		{ "Category", "LFPMathLibrary | Noise" },
+		{ "CPP_Default_bRoundNoise", "false" },
 		{ "ModuleRelativePath", "Public/Math/LFPNoiseLibrary.h" },
 	};
 #endif
@@ -963,13 +1132,13 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_NoiseTable = { "NoiseTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpDirection_Parms, NoiseTable), Z_Construct_UScriptStruct_FLFPNoiseTable, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_NoiseTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_NoiseTable_MetaData)) }; // 3087280284
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpDirection_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2418448501
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2183915117
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpDirection_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_MetaData)) }; // 2418448501
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpDirection_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_MixTable_MetaData)) }; // 2183915117
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpDirection_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection_Statics::NewProp_NoiseTable,
@@ -1027,13 +1196,13 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_NoiseTable = { "NoiseTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpNoise_Parms, NoiseTable), Z_Construct_UScriptStruct_FLFPNoiseTable, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_NoiseTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_NoiseTable_MetaData)) }; // 3087280284
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpNoise_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2418448501
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2183915117
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpNoise_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_MetaData)) }; // 2418448501
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpNoise_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_MixTable_MetaData)) }; // 2183915117
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpNoise_Parms, ReturnValue), METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise_Statics::NewProp_NoiseTable,
@@ -1091,13 +1260,13 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 #endif
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_NoiseTable = { "NoiseTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpVector_Parms, NoiseTable), Z_Construct_UScriptStruct_FLFPNoiseTable, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_NoiseTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_NoiseTable_MetaData)) }; // 3087280284
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_Location = { "Location", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpVector_Parms, Location), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
-	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2418448501
+	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_Inner = { "MixTable", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FLFPNoiseMixTable, METADATA_PARAMS(nullptr, 0) }; // 2183915117
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_MetaData[] = {
 		{ "NativeConst", "" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpVector_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_MetaData)) }; // 2418448501
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable = { "MixTable", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpVector_Parms, MixTable), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_MetaData, UE_ARRAY_COUNT(Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_MixTable_MetaData)) }; // 2183915117
 	const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(LFPNoiseLibrary_eventMixLerpVector_Parms, ReturnValue), Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::PropPointers[] = {
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector_Statics::NewProp_NoiseTable,
@@ -1143,17 +1312,17 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_ULFPNoiseLibrary_Statics::FuncInfo[] = {
 		{ &Z_Construct_UFunction_ULFPNoiseLibrary_CreateNoiseTable, "CreateNoiseTable" }, // 2928770446
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise, "GetDirectionNoise" }, // 3307808388
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise, "GetFloatNoise" }, // 137379820
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise, "GetLerpDirectionNoise" }, // 34483258
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise, "GetLerpNoise" }, // 124376650
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise, "GetLerpVectorNoise" }, // 1224132731
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise, "GetNearbySingleVectorNoise" }, // 504493217
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise, "GetNearbyVectorNoise" }, // 515312793
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise, "GetVectorNoise" }, // 3826660639
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection, "MixLerpDirection" }, // 2318356090
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise, "MixLerpNoise" }, // 613230123
-		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector, "MixLerpVector" }, // 2176304266
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetDirectionNoise, "GetDirectionNoise" }, // 1363011077
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetFloatNoise, "GetFloatNoise" }, // 1113242956
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpDirectionNoise, "GetLerpDirectionNoise" }, // 2595028530
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpNoise, "GetLerpNoise" }, // 2783920287
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetLerpVectorNoise, "GetLerpVectorNoise" }, // 2684435156
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbySingleVectorNoise, "GetNearbySingleVectorNoise" }, // 2908393643
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetNearbyVectorNoise, "GetNearbyVectorNoise" }, // 702545697
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_GetVectorNoise, "GetVectorNoise" }, // 3232784889
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpDirection, "MixLerpDirection" }, // 2509872133
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpNoise, "MixLerpNoise" }, // 1925702351
+		{ &Z_Construct_UFunction_ULFPNoiseLibrary_MixLerpVector, "MixLerpVector" }, // 874778766
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_ULFPNoiseLibrary_Statics::Class_MetaDataParams[] = {
@@ -1199,14 +1368,14 @@ template<> LOHFUNCTIONPLUGIN_API UScriptStruct* StaticStruct<FLFPNearbyVectorDat
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FStructRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ScriptStructInfo[] = {
-		{ FLFPNoiseMixTable::StaticStruct, Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewStructOps, TEXT("LFPNoiseMixTable"), &Z_Registration_Info_UScriptStruct_LFPNoiseMixTable, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPNoiseMixTable), 2418448501U) },
+		{ FLFPNoiseMixTable::StaticStruct, Z_Construct_UScriptStruct_FLFPNoiseMixTable_Statics::NewStructOps, TEXT("LFPNoiseMixTable"), &Z_Registration_Info_UScriptStruct_LFPNoiseMixTable, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPNoiseMixTable), 2183915117U) },
 		{ FLFPNoiseTable::StaticStruct, Z_Construct_UScriptStruct_FLFPNoiseTable_Statics::NewStructOps, TEXT("LFPNoiseTable"), &Z_Registration_Info_UScriptStruct_LFPNoiseTable, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPNoiseTable), 3087280284U) },
 		{ FLFPNearbyVectorData::StaticStruct, Z_Construct_UScriptStruct_FLFPNearbyVectorData_Statics::NewStructOps, TEXT("LFPNearbyVectorData"), &Z_Registration_Info_UScriptStruct_LFPNearbyVectorData, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FLFPNearbyVectorData), 2062711185U) },
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_ULFPNoiseLibrary, ULFPNoiseLibrary::StaticClass, TEXT("ULFPNoiseLibrary"), &Z_Registration_Info_UClass_ULFPNoiseLibrary, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPNoiseLibrary), 2596677720U) },
+		{ Z_Construct_UClass_ULFPNoiseLibrary, ULFPNoiseLibrary::StaticClass, TEXT("ULFPNoiseLibrary"), &Z_Registration_Info_UClass_ULFPNoiseLibrary, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ULFPNoiseLibrary), 1402663627U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_3519617760(TEXT("/Script/LohFunctionPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_2296674250(TEXT("/Script/LohFunctionPlugin"),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ClassInfo),
 		Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Math_LFPNoiseLibrary_h_Statics::ScriptStructInfo),
 		nullptr, 0);

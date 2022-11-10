@@ -274,7 +274,7 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		RenderTask->StartBackgroundTask();
 	}
 
-	if (ChuckStatus.bIsLumenDataDirty && (RenderTask == nullptr || RenderTask->IsDone()) && (LumenTask == nullptr || LumenTask->IsDone()))
+	if (ChuckSetting.bGenerateLumenData && ChuckStatus.bIsLumenDataDirty && (RenderTask == nullptr || RenderTask->IsDone()) && (LumenTask == nullptr || LumenTask->IsDone()))
 	{
 		
 		ChuckStatus.bIsLumenDataDirty = false;
@@ -1278,32 +1278,30 @@ FCardRepresentationData* FLFPBaseBoxelLumenTask::GenerateLumenCard()
 
 		switch (DirectionIndex)
 		{
-		case 0:
-		case 5:
+		case 0: case 5:
 			LumenBox = FBox(
 				FVector(Bounds.Min.X, Bounds.Min.Y, (CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.Z * 2) - LumenParam.VoxelSetting.HalfRenderBound.Z - LumenParam.LocalChuckSetting.BoundExpand),
 				FVector(Bounds.Max.X, Bounds.Max.Y, (CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.Z * 2) - LumenParam.VoxelSetting.HalfRenderBound.Z + LumenParam.LocalChuckSetting.BoundExpand)
 			);
-
+		
 			if (DirectionIndex == 0) LumenBox = LumenBox.ShiftBy(FVector(0.0f, 0.0f, LumenParam.VoxelSetting.VoxelHalfSize.Z) * 2.0f);
 			break;
-
-		case 1:
-		case 3:
+		
+		case 1: case 3:
 			LumenBox = FBox(
 				FVector((CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.X * 2) - LumenParam.VoxelSetting.HalfRenderBound.X - LumenParam.LocalChuckSetting.BoundExpand, Bounds.Min.Y, Bounds.Min.Z),
 				FVector((CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.X * 2) - LumenParam.VoxelSetting.HalfRenderBound.X + LumenParam.LocalChuckSetting.BoundExpand, Bounds.Max.Y, Bounds.Max.Z)
 			);
-
+		
 			if (DirectionIndex == 3) LumenBox = LumenBox.ShiftBy(FVector(LumenParam.VoxelSetting.VoxelHalfSize.X, 0.0f, 0.0f) * 2.0f);
 			break;
-
-		case 2:
-		case 4:
+		
+		case 2: case 4:
 			LumenBox = FBox(
 				FVector(Bounds.Min.X, (CoverIndex.X * LumenParam.VoxelSetting.VoxelHalfSize.Y * 2) - LumenParam.VoxelSetting.HalfRenderBound.Y - LumenParam.LocalChuckSetting.BoundExpand, Bounds.Min.Z),
 				FVector(Bounds.Max.X, (CoverIndex.Y * LumenParam.VoxelSetting.VoxelHalfSize.Y * 2) - LumenParam.VoxelSetting.HalfRenderBound.Y + LumenParam.LocalChuckSetting.BoundExpand, Bounds.Max.Z)
 			);
+
 			if (DirectionIndex == 2) LumenBox = LumenBox.ShiftBy(FVector(0.0f, LumenParam.VoxelSetting.VoxelHalfSize.Y, 0.0f) * 2.0f);
 			break;
 		}
