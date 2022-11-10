@@ -55,8 +55,6 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, VoxelName);
 		}
 	}
-
-	VoxelChuckNameUpdateEvent.Broadcast(ChuckIndex);
 }
 
 FLFPVoxelWriteAction* ULFPVoxelContainer::FindOrAddChuckWriteAction(const int32& ChuckIndex)
@@ -152,8 +150,13 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 	{
 		ChuckWriteActionList.Remove(RemoveKey);
 	}
-	
-	ChuckWriteActionList.Shrink();
+
+	if (ChuckWriteActionList.Num() == 0)
+	{
+		ChuckWriteActionList.Shrink();
+
+		VoxelWriteActionListCompleteEvent.Broadcast();
+	}
 
 	return;
 }
@@ -166,14 +169,16 @@ void ULFPVoxelContainer::UpdateChuckName()
 
 	ChuckData[*ChuckNameUpdate].SendNameUpdateEvent();
 
+	VoxelChuckNameUpdateEvent.Broadcast(*ChuckNameUpdate);
+
 	BatchChuckNameUpdateList.Remove(*ChuckNameUpdate);
 
-	//for (const int32 ChuckIndex : BatchChuckNameUpdateList)
-	//{
-	//	ChuckData[ChuckIndex].SendNameUpdateEvent();
-	//}
-	//
-	//BatchChuckNameUpdateList.Empty();
+	if (BatchChuckNameUpdateList.Num() == 0)
+	{
+		BatchChuckNameUpdateList.Shrink();
+
+		VoxelChuckNameListCompleteEvent.Broadcast();
+	}
 
 	return;
 }
@@ -185,15 +190,17 @@ void ULFPVoxelContainer::UpdateChuckAttribute()
 	auto ChuckAttributeUpdate = BatchChuckAttributeUpdateList.CreateIterator();
 	
 	ChuckData[*ChuckAttributeUpdate].SendAttributeUpdateEvent();
+
+	VoxelChuckAttributeUpdateEvent.Broadcast(*ChuckAttributeUpdate);
 	
 	BatchChuckAttributeUpdateList.Remove(*ChuckAttributeUpdate);
 
-	//for (const int32 ChuckIndex : BatchChuckAttributeUpdateList)
-	//{
-	//	ChuckData[ChuckIndex].SendAttributeUpdateEvent();
-	//}
-	//
-	//BatchChuckAttributeUpdateList.Empty();
+	if (BatchChuckAttributeUpdateList.Num() == 0)
+	{
+		BatchChuckAttributeUpdateList.Shrink();
+
+		VoxelChuckAttributeListCompleteEvent.Broadcast();
+	}
 
 	return;
 }

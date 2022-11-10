@@ -272,6 +272,8 @@ public:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChuckInitialize, const int32, ChuckIndex);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListComplete);
+
 /**
  *
  */
@@ -296,6 +298,18 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
 		FOnChuckInitialize VoxelChuckNameUpdateEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnChuckInitialize VoxelChuckAttributeUpdateEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnActionListComplete VoxelWriteActionListCompleteEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnActionListComplete VoxelChuckNameListCompleteEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnActionListComplete VoxelChuckAttributeListCompleteEvent;
 
 protected: // Initialize Data
 
