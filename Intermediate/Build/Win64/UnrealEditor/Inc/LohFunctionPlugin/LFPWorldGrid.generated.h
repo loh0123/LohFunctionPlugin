@@ -17,6 +17,7 @@ struct FIntVector;
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_27_SPARSE_DATA
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_27_RPC_WRAPPERS \
  \
+	DECLARE_FUNCTION(execGetHalfSize); \
 	DECLARE_FUNCTION(execIndexToWorldLocation); \
 	DECLARE_FUNCTION(execGridLocationToWorldLocation); \
 	DECLARE_FUNCTION(execIsWorldLocationValid); \
@@ -26,6 +27,7 @@ struct FIntVector;
 
 #define FID_PluginLab5_Plugins_LohFunctionPlugin_Source_LohFunctionPlugin_Public_Components_LFPWorldGrid_h_27_RPC_WRAPPERS_NO_PURE_DECLS \
  \
+	DECLARE_FUNCTION(execGetHalfSize); \
 	DECLARE_FUNCTION(execIndexToWorldLocation); \
 	DECLARE_FUNCTION(execGridLocationToWorldLocation); \
 	DECLARE_FUNCTION(execIsWorldLocationValid); \

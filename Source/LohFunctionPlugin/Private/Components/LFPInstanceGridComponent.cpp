@@ -20,22 +20,37 @@ void ULFPInstanceGridComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UInstancedStaticMeshComponent* ISM = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
+	ISMList.SetNum(MeshList.Num());
 
-	ISM->SetupAttachment(this);
+	int32 Index = 0;
 
-	ISMList.Add(ISM);
+	for (TObjectPtr<UInstancedStaticMeshComponent>& ISM : ISMList)
+	{
+		ISM = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
 
-	GetOwner()->FinishAddComponent(ISM, true, FTransform());
+		ISM->SetStaticMesh(MeshList[Index].Mesh);
+		ISM->NumCustomDataFloats = MeshList[Index].CustomDataAmount;
 
-	GetOwner()->AddInstanceComponent(ISM);
+		for (int32 MaterialIndex = 0; MaterialIndex < MeshList[Index].Material.Num(); MaterialIndex++)
+		{
+			ISM->SetMaterial(MaterialIndex, MeshList[Index].Material[MaterialIndex]);
+		}
+
+		ISM->SetupAttachment(this);
+
+		GetOwner()->FinishAddComponent(ISM, true, FTransform());
+
+		GetOwner()->AddInstanceComponent(ISM);
+
+		Index++;
+	}
 }
 
 void ULFPInstanceGridComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	for (UInstancedStaticMeshComponent* ISM : ISMList)
+	for (TObjectPtr<UInstancedStaticMeshComponent>& ISM : ISMList)
 	{
 		ISM->DestroyComponent();
 	}

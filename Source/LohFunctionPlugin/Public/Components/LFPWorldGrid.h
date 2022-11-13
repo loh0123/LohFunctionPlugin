@@ -57,7 +57,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE bool IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
 
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FVector GetHalfSize() const;
+
 protected:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
+		bool bCenterOrigin = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
 		FIntVector GridSize = FIntVector(10);

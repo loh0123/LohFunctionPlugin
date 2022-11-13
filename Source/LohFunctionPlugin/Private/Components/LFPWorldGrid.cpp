@@ -43,17 +43,19 @@ FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) c
 
 	FVector LocalLocation;
 
+	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + GetHalfSize() : Location - GetComponentLocation();
+
 	switch (GridType)
 	{
 	case ELFPGridType::Rectangular:
-		LocalLocation = (Location - GetComponentLocation()) / GridGap;
+		LocalLocation = ComponentLocation / GridGap;
 		break;
 	case ELFPGridType::Hexagon:
-		LocalLocation = (Location - GetComponentLocation()) / GridGap;
+		LocalLocation = ComponentLocation / GridGap;
 		if ((FMath::FloorToInt(LocalLocation.X) + 1) % 2 == 0) LocalLocation.Y -= 0.5f;
 		break;
 	case ELFPGridType::Triangle:
-		LocalLocation = (Location - GetComponentLocation()) / (GridGap * FVector(0.5, 1, 1));
+		LocalLocation = ComponentLocation / (GridGap * FVector(0.5, 1, 1));
 		break;
 	}
 
@@ -70,13 +72,16 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 	{
 		case ELFPGridType::Rectangular:
 			ReturnLocation = FVector(Location.X * GridGap.X, Location.Y * GridGap.Y, Location.Z * GridGap.Z);
+			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 		case ELFPGridType::Hexagon:
 			ReturnLocation = FVector(Location.X * GridGap.X, (Location.Y * GridGap.Y) + ((Location.X + 1) % 2 == 1 ? 0.0f : GridGap.Y * 0.5f), Location.Z * GridGap.Z);
+			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 		case ELFPGridType::Triangle:
 			ReturnLocation = FVector(Location.X * (GridGap.X * 0.5), Location.Y * GridGap.Y, Location.Z * GridGap.Z);
 			if ((Location.X + 1) % 2 == 0) { ReturnRotation = FRotator(0, 180, 0); }
+			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 	}
 
@@ -88,4 +93,9 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 bool ULFPWorldGrid::IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const
 {
 	return GridLocationToWorldLocation(ULFPGridLibrary::ToGridLocation(Index, GridSize), AddHalfGap, ReturnLocation, ReturnRotation);
+}
+
+FVector ULFPWorldGrid::GetHalfSize() const
+{
+	return FVector(GridSize) * GridGap;
 }
