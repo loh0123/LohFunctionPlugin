@@ -163,6 +163,7 @@ public:
 		, LumenData(Component->LumenData.GetReference())
 		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
+
 		bCastDynamicShadow = true;
 		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
@@ -170,6 +171,8 @@ public:
 
 		bSupportsDistanceFieldRepresentation = LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
 		bSupportsMeshCardRepresentation = LumenData.GetReference() != nullptr && LumenData->LumenCardData != nullptr;
+
+		if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
 		const TArray<FLFPBaseVoxelMeshSectionData>& BufferDataList = Component->RenderData->Sections;
 

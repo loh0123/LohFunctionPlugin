@@ -904,7 +904,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 
 									const FBox VoxelBox = FBox::BuildAABB((FVector(CheckLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
 									
-									ClosetDistance = FMath::Min(ClosetDistance, VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+									ClosetDistance = FMath::Min(ClosetDistance, VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation));
 								}
 							}
 						}
@@ -932,7 +932,7 @@ FDistanceFieldVolumeData* FLFPBaseBoxelLumenTask::GenerateDistanceField()
 					{
 						const FBox VoxelBox = FBox::BuildAABB((FVector(CheckLocation) * VoxelSize) + LumenParam.VoxelSetting.VoxelHalfSize, LumenParam.VoxelSetting.VoxelHalfSize);
 			
-						ClosetDistance = FMath::Min(ClosetDistance, VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation) * LumenParam.LocalChuckSetting.VoxelDistanceMultiply);
+						ClosetDistance = FMath::Min(ClosetDistance, VoxelBox.ComputeSquaredDistanceToPoint(LocalLocation));
 					}
 				}
 			}

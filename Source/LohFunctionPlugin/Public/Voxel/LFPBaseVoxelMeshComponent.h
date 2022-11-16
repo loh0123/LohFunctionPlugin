@@ -34,10 +34,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "3", ClampMax = "32.0"))
 		uint8 VoxelPerDistanceField = 3;
 
-	/* Decrease Accuracy To Fix Lumen Surface */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "0.5", ClampMax = "2.0"))
-		float VoxelDistanceMultiply = 0.95f;
-
 	/* Decrease Accuracy To Improve Build Time */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseVoxelMeshSetting | DistanceFieldAndLumen", Meta = (ClampMin = "1.0", ClampMax = "8.0"))
 		float VoxelDistanceFieldJump = 1.0f;
@@ -327,6 +323,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "LFPBaseVoxelMeshComponent")
 		FLFPBaseVoxelMeshSetting ChuckSetting;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, AdvancedDisplay, Category = Lighting)
+		uint8 bOverrideDistanceFieldSelfShadowBias : 1;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, AdvancedDisplay, Category = Lighting)
+		float DistanceFieldSelfShadowBias;
 
 private:
 
