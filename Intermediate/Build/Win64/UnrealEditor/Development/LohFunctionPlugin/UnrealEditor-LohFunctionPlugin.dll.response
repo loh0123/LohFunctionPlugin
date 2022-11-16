@@ -11,6 +11,7 @@
 /DELAY:UNLOAD
 /DLL
 /PDBALTPATH:%_PDB%
+/fastfail
 /OPT:NOREF
 /OPT:NOICF
 /INCREMENTAL:NO
@@ -19,7 +20,6 @@
 /DELAYLOAD:"d3d12.dll"
 /DELAYLOAD:"DBGHELP.DLL"
 /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.29.30133\lib\x64"
-/LIBPATH:"C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8.1\lib\um\x64"
 /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.19041.0\ucrt\x64"
 /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.19041.0\um\x64"
 /NODEFAULTLIB:"LIBCMT"
@@ -32,10 +32,9 @@
 /NODEFAULTLIB:"LIBCP"
 /NODEFAULTLIB:"LIBCD"
 /NODEFAULTLIB:"LIBCPD"
-/FUNCTIONPADMIN
+/FUNCTIONPADMIN:6
 "D:\Unreal Engine\Project File\PluginLab5\Intermediate\Build\Win64\PluginLab5Editor\Development\Engine\SharedPCH.Engine.ShadowErrors.h.obj"
 "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UnrealEditor\Development\LohFunctionPlugin\Module.LohFunctionPlugin.cpp.obj"
-"D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UnrealEditor\Development\LohFunctionPlugin\Module.LohFunctionPlugin.gen.cpp.obj"
 "D:\Unreal Engine\Project File\PluginLab5\Plugins\LohFunctionPlugin\Intermediate\Build\Win64\UnrealEditor\Development\LohFunctionPlugin\Default.rc2.res"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\CoreUObject\UnrealEditor-CoreUObject.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\Engine\UnrealEditor-Engine.lib"

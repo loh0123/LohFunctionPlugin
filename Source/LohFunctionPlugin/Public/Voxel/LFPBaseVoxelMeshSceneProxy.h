@@ -17,7 +17,7 @@
 #include "RayTracingDefinitions.h"
 #include "RayTracingInstance.h"
 #include "VectorUtil.h"
-
+#include "DynamicMeshBuilder.h"
 #include "Voxel/LFPBaseVoxelMeshComponent.h"
 
 using namespace UE::Geometry;
@@ -382,6 +382,12 @@ public:
 						Collector.AddMesh(ViewIndex, MeshBatch);
 					}
 				}
+
+				// Draw bounds
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+				// Render bounds
+				RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
+#endif
 			}
 		}
 	}
@@ -422,14 +428,12 @@ public:
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
 	{
 		OutDistanceFieldData = LumenData->DistanceFieldMeshData;
-		SelfShadowBias = 1.0f;
+		SelfShadowBias = DistanceFieldSelfShadowBias;
 	}
 
 	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override
 	{
-		FRenderTransform CurrentLocal = (FMatrix44f)GetLocalToWorld();
-
-		ObjectLocalToWorldTransforms.Add(FTransform().ToMatrixWithScale() * (FMatrix44d)GetLocalToWorld());
+		ObjectLocalToWorldTransforms.Add(FRenderTransform::Identity);
 	}
 
 	virtual bool HasDistanceFieldRepresentation() const override

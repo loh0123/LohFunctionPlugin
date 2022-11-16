@@ -351,7 +351,7 @@ struct FLFPBaseBoxelRenderParam
 	ULFPVoxelContainer* LocalVoxelContainer = nullptr;
 	FLFPVoxelChuckInfo	LocalChuckInfo;
 	FLFPBaseVoxelMeshSetting LocalChuckSetting;
-	FBoxSphereBounds LocalBounds;
+	//FBoxSphereBounds LocalBounds;
 	int32 SectionSize = 0;
 	int32 MaterialNum = 0;
 
