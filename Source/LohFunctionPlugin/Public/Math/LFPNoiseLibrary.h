@@ -59,7 +59,7 @@ struct FLFPNearbyVectorData
 /**
  *
  */
-UCLASS()
+UCLASS(meta = (BlueprintThreadSafe))
 class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()

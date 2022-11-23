@@ -132,6 +132,7 @@ public:
 	// Update Event For Notify Chuck On Change Of Color
 	FOnVoxelChuckAttributeUpdate VoxelChuckAttributeUpdateEvent;
 
+
 public:
 
 	FORCEINLINE bool IsInitialized() const
@@ -270,6 +271,8 @@ public:
 	}
 };
 
+DECLARE_DYNAMIC_DELEGATE_FourParams(FOnInitializeVoxelData, const FIntVector&, VoxelLocation, const ULFPVoxelContainer*, VoxelContainer, FName&, VoxelName, FLFPVoxelDynamicAttributeData&, VoxelAttribute);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChuckInitialize, const int32, ChuckIndex);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListComplete);
@@ -310,6 +313,11 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
 		FOnActionListComplete VoxelChuckAttributeListCompleteEvent;
+
+	
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelData | Event")
+		FOnInitializeVoxelData InitializeVoxelDataEvent;
 
 protected: // Initialize Data
 

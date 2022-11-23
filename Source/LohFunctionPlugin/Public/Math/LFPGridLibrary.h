@@ -14,7 +14,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(meta = (BlueprintThreadSafe))
 class LOHFUNCTIONPLUGIN_API ULFPGridLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()

@@ -20,30 +20,7 @@ void ULFPInstanceGridComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ISMList.SetNum(MeshList.Num());
-
-	int32 Index = 0;
-
-	for (TObjectPtr<UInstancedStaticMeshComponent>& ISM : ISMList)
-	{
-		ISM = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
-
-		ISM->SetStaticMesh(MeshList[Index].Mesh);
-		ISM->NumCustomDataFloats = MeshList[Index].CustomDataAmount;
-
-		for (int32 MaterialIndex = 0; MaterialIndex < MeshList[Index].Material.Num(); MaterialIndex++)
-		{
-			ISM->SetMaterial(MaterialIndex, MeshList[Index].Material[MaterialIndex]);
-		}
-
-		ISM->SetupAttachment(this);
-
-		GetOwner()->FinishAddComponent(ISM, true, FTransform());
-
-		GetOwner()->AddInstanceComponent(ISM);
-
-		Index++;
-	}
+	SetupGrid(GridSize, GridGap, GridType);
 }
 
 void ULFPInstanceGridComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -63,5 +40,42 @@ void ULFPInstanceGridComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType)
+{
+	GridSize = NewGridSize;
+	GridGap = NewGridGap;
+	GridType = NewGridType;
+
+	GridInstanceIndexList.Init(0, GridSize.X * GridSize.Y * GridSize.Z);
+
+	for (TObjectPtr<class UInstancedStaticMeshComponent>& ISM : ISMList)
+	{
+		ISM->DestroyComponent(true);
+	}
+
+	ISMList.Empty(MeshList.Num());
+
+	for (int32 Index = 0; Index < MeshList.Num(); Index++)
+	{
+		UInstancedStaticMeshComponent* ISM = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
+
+		ISM->SetStaticMesh(MeshList[Index].Mesh);
+		ISM->NumCustomDataFloats = MeshList[Index].CustomDataAmount;
+
+		for (int32 MaterialIndex = 0; MaterialIndex < MeshList[Index].Material.Num(); MaterialIndex++)
+		{
+			ISM->SetMaterial(MaterialIndex, MeshList[Index].Material[MaterialIndex]);
+		}
+
+		ISM->SetupAttachment(this);
+
+		GetOwner()->FinishAddComponent(ISM, true, FTransform());
+
+		GetOwner()->AddInstanceComponent(ISM);
+
+		ISMList.Add(ISM);
+	}
 }
 

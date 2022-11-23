@@ -43,7 +43,7 @@ FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) c
 
 	FVector LocalLocation;
 
-	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + GetHalfSize() : Location - GetComponentLocation();
+	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + (GetHalfSize() - (GridGap * 0.5)) : Location - GetComponentLocation();
 
 	switch (GridType)
 	{
@@ -72,18 +72,17 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 	{
 		case ELFPGridType::Rectangular:
 			ReturnLocation = FVector(Location.X * GridGap.X, Location.Y * GridGap.Y, Location.Z * GridGap.Z);
-			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 		case ELFPGridType::Hexagon:
 			ReturnLocation = FVector(Location.X * GridGap.X, (Location.Y * GridGap.Y) + ((Location.X + 1) % 2 == 1 ? 0.0f : GridGap.Y * 0.5f), Location.Z * GridGap.Z);
-			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 		case ELFPGridType::Triangle:
 			ReturnLocation = FVector(Location.X * (GridGap.X * 0.5), Location.Y * GridGap.Y, Location.Z * GridGap.Z);
 			if ((Location.X + 1) % 2 == 0) { ReturnRotation = FRotator(0, 180, 0); }
-			if (bCenterOrigin) ReturnLocation -= GetHalfSize();
 			break;
 	}
+
+	if (bCenterOrigin) ReturnLocation -= GetHalfSize() - (GridGap * 0.5);
 
 	ReturnLocation += AddHalfGap ? GetComponentLocation() + (GridGap * 0.5) : GetComponentLocation();
 
@@ -97,5 +96,5 @@ bool ULFPWorldGrid::IndexToWorldLocation(const int32 Index, const bool AddHalfGa
 
 FVector ULFPWorldGrid::GetHalfSize() const
 {
-	return FVector(GridSize) * GridGap;
+	return FVector(GridSize) * (GridGap * 0.5);
 }

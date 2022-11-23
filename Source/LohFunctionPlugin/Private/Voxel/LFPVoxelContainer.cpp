@@ -8,7 +8,6 @@
 #include "Voxel/LFPVoxelContainer.h"
 #include "./Math/LFPGridLibrary.h"
 #include "Net/UnrealNetwork.h"
-#include "Voxel/LFPVoxelContainerInterface.h"
 
 ULFPVoxelContainer::ULFPVoxelContainer()
 {
@@ -32,7 +31,7 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 
 	if (ChuckData[ChuckIndex].IsInitialized() == false)
 	{
-		if (GetOwner()->Implements<ULFPVoxelContainerInterface>())
+		if (InitializeVoxelDataEvent.IsBound())
 		{
 			const FIntVector ChuckGridLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
@@ -45,7 +44,7 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 			AttributeDataList.AddZeroed(ContainerSetting.VoxelLength);
 
 			ParallelFor(ContainerSetting.VoxelLength, [&](const int32 VoxelIndex) {
-				ILFPVoxelContainerInterface::Execute_InitializeVoxelData(GetOwner(), VoxelStartLocation + ULFPGridLibrary::ToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), NameDataList[VoxelIndex], AttributeDataList[VoxelIndex]);
+				InitializeVoxelDataEvent.Execute(VoxelStartLocation + ULFPGridLibrary::ToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), this, NameDataList[VoxelIndex], AttributeDataList[VoxelIndex]);
 				});
 
 			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, NameDataList, AttributeDataList);

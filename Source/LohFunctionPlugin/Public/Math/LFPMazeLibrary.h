@@ -80,7 +80,7 @@ struct FLFPMazeTable
 /**
  * 
  */
-UCLASS()
+UCLASS(meta = (BlueprintThreadSafe))
 class LOHFUNCTIONPLUGIN_API ULFPMazeLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()

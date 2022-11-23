@@ -37,7 +37,7 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public ULFPWorldGrid
 public:
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
-		TArray<int32> GridInstanceIndexList;
+		TArray<uint8> GridInstanceIndexList;
 
 private:
 
@@ -63,9 +63,9 @@ public:
 	
 public: /* Function For External Blueprint Or C++ To Use */
 
-	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-	//	FORCEINLINE void SetupGrid(const FIntVector GridSize, const FVector GridGap, const ELFPGridType GridType = ELFPGridType::Rectangular);
-	//
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE void SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType = ELFPGridType::Rectangular);
+	
 	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 	//	FORCEINLINE bool AddInstance(const FIntVector GridLocation, const int32 InstanceIndex);
 	//
