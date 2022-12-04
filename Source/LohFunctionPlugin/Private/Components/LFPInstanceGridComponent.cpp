@@ -3,6 +3,7 @@
 
 #include "Components/LFPInstanceGridComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Math/LFPGridLibrary.h"
 
 // Sets default values for this component's properties
 ULFPInstanceGridComponent::ULFPInstanceGridComponent()
@@ -27,9 +28,9 @@ void ULFPInstanceGridComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 {
 	Super::EndPlay(EndPlayReason);
 
-	for (TObjectPtr<UInstancedStaticMeshComponent>& ISM : ISMList)
+	for (FLFPInstanceGridMeshData& ISMData : MeshList)
 	{
-		ISM->DestroyComponent();
+		ISMData.ISMComponent->DestroyComponent();
 	}
 }
 
@@ -50,32 +51,93 @@ void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FV
 
 	GridInstanceIndexList.Init(0, GridSize.X * GridSize.Y * GridSize.Z);
 
-	for (TObjectPtr<class UInstancedStaticMeshComponent>& ISM : ISMList)
+	for (FLFPInstanceGridMeshData& ISMData : MeshList)
 	{
-		ISM->DestroyComponent(true);
-	}
-
-	ISMList.Empty(MeshList.Num());
-
-	for (int32 Index = 0; Index < MeshList.Num(); Index++)
-	{
-		UInstancedStaticMeshComponent* ISM = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
-
-		ISM->SetStaticMesh(MeshList[Index].Mesh);
-		ISM->NumCustomDataFloats = MeshList[Index].CustomDataAmount;
-
-		for (int32 MaterialIndex = 0; MaterialIndex < MeshList[Index].Material.Num(); MaterialIndex++)
+		if (IsValid(ISMData.ISMComponent))
 		{
-			ISM->SetMaterial(MaterialIndex, MeshList[Index].Material[MaterialIndex]);
+			ISMData.ISMComponent->DestroyComponent(false);
 		}
 
-		ISM->SetupAttachment(this);
+		ISMData.ISMComponent = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
 
-		GetOwner()->FinishAddComponent(ISM, true, FTransform());
+		ISMData.ISMComponent->SetStaticMesh(ISMData.Mesh);
+		ISMData.ISMComponent->NumCustomDataFloats = ISMData.CustomDataAmount;
 
-		GetOwner()->AddInstanceComponent(ISM);
+		for (int32 MaterialIndex = 0; MaterialIndex < ISMData.Material.Num(); MaterialIndex++)
+		{
+			ISMData.ISMComponent->SetMaterial(MaterialIndex, ISMData.Material[MaterialIndex]);
+		}
 
-		ISMList.Add(ISM);
+		ISMData.ISMComponent->SetupAttachment(this);
+
+		GetOwner()->FinishAddComponent(ISMData.ISMComponent, true, FTransform());
+
+		GetOwner()->AddInstanceComponent(ISMData.ISMComponent);
 	}
+}
+
+bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
+{
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, GridSize);
+
+	if (MeshList.IsValidIndex(InstanceInfo.InstanceIndex - 1) && GridInstanceIndexList.IsValidIndex(GridIndex))
+	{
+		if (GridInstanceIndexList[GridIndex] == InstanceInfo.InstanceIndex)
+		{
+			return true;
+		}
+		/* Remove Operation */
+		else if (GridInstanceIndexList[GridIndex] != 0)
+		{
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex] - 1];
+
+			const int32 RemoveIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
+
+			check(RemoveIndex != INDEX_NONE);
+
+			ISMData.InstanceGridIndexList.RemoveAt(RemoveIndex);
+			ISMData.ISMComponent->RemoveInstance(RemoveIndex);
+		}
+
+		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
+
+		/* Add Operation */
+		if (GridInstanceIndexList[GridIndex] != 0)
+		{
+			FVector InstanceWorldLocation;
+			FRotator InstanceWorldRotation;
+
+			GridLocationToWorldLocation(InstanceInfo.Location, false, InstanceWorldLocation, InstanceWorldRotation);
+
+			InstanceWorldRotation += InstanceInfo.Rotation;
+
+			FTransform InstanceTransform(InstanceWorldRotation, InstanceWorldLocation);
+
+			FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex - 1];
+
+			ISMData.ISMComponent->AddInstance(InstanceTransform, true);
+
+			ISMData.InstanceGridIndexList.Add(GridIndex);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool ULFPInstanceGridComponent::SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList)
+{
+	bool bResult = true;
+
+	for (const FLFPInstanceGridInstanceInfo& Info : InstanceInfoList)
+	{
+		if (SetInstance(Info) == false)
+		{
+			bResult = false;
+		}
+	}
+
+	return bResult;
 }
 

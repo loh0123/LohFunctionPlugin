@@ -6,6 +6,23 @@
 #include "Components/LFPWorldGrid.h"
 #include "LFPInstanceGridComponent.generated.h"
 
+USTRUCT(BlueprintType)
+struct FLFPInstanceGridInstanceInfo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		FIntVector Location = FIntVector(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		FRotator Rotation = FRotator(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		int32 InstanceIndex = 0;
+};
+
 
 USTRUCT(BlueprintType)
 struct FLFPInstanceGridMeshData
@@ -23,6 +40,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridMeshData")
 		int32 CustomDataAmount = 0;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPInstanceGridMeshData")
+		TObjectPtr<class UInstancedStaticMeshComponent> ISMComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
 		TArray<int32> InstanceGridIndexList;
 };
@@ -32,7 +52,7 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public ULFPWorldGrid
 {
 	GENERATED_BODY()
 
-	UPROPERTY() TArray<TObjectPtr<class UInstancedStaticMeshComponent>> ISMList;
+	//UPROPERTY() TArray<TObjectPtr<class UInstancedStaticMeshComponent>> ISMList;
 
 public:
 
@@ -66,12 +86,12 @@ public: /* Function For External Blueprint Or C++ To Use */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE void SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType = ELFPGridType::Rectangular);
 	
-	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-	//	FORCEINLINE bool AddInstance(const FIntVector GridLocation, const int32 InstanceIndex);
-	//
-	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-	//	FORCEINLINE bool AddInstances(const TArray<FIntVector> GridLocationList, const int32 InstanceIndex);
-	//
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE bool SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo);
+	
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE bool SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList);
+	
 	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 	//	FORCEINLINE bool RemoveInstance(const FIntVector GridLocation);
 	//

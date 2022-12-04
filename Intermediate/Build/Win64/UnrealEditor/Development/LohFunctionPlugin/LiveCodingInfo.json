@@ -1,14 +1,16 @@
 {
 	"RemapUnityFiles": 
 	{
-		"Module.LohFunctionPlugin.cpp.obj": [
+		"Module.LohFunctionPlugin.1_of_2.cpp.obj": [
 			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPGridTickManager.gen.cpp.obj",
 			"LFPInstanceGridComponent.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
-			"LFPRenderLibrary.gen.cpp.obj",
+			"LFPRenderLibrary.gen.cpp.obj"
+		],
+		"Module.LohFunctionPlugin.2_of_2.cpp.obj": [
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTickManager.gen.cpp.obj",
 			"LFPVoxelContainer.gen.cpp.obj",
