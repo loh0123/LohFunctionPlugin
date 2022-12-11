@@ -49,7 +49,7 @@ void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FV
 	GridGap = NewGridGap;
 	GridType = NewGridType;
 
-	GridInstanceIndexList.Init(0, GridSize.X * GridSize.Y * GridSize.Z);
+	GridInstanceIndexList.Init(INDEX_NONE, GridSize.X * GridSize.Y * GridSize.Z);
 
 	for (FLFPInstanceGridMeshData& ISMData : MeshList)
 	{
@@ -80,16 +80,17 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 {
 	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, GridSize);
 
-	if (MeshList.IsValidIndex(InstanceInfo.InstanceIndex - 1) && GridInstanceIndexList.IsValidIndex(GridIndex))
+	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{
 		if (GridInstanceIndexList[GridIndex] == InstanceInfo.InstanceIndex)
 		{
 			return true;
 		}
+
 		/* Remove Operation */
-		else if (GridInstanceIndexList[GridIndex] != 0)
+		else if (MeshList.IsValidIndex(GridInstanceIndexList[GridIndex]))
 		{
-			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex] - 1];
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
 
 			const int32 RemoveIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
 
@@ -102,7 +103,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
 
 		/* Add Operation */
-		if (GridInstanceIndexList[GridIndex] != 0)
+		if (MeshList.IsValidIndex(GridInstanceIndexList[GridIndex]))
 		{
 			FVector InstanceWorldLocation;
 			FRotator InstanceWorldRotation;
@@ -113,7 +114,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 
 			FTransform InstanceTransform(InstanceWorldRotation, InstanceWorldLocation);
 
-			FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex - 1];
+			FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
 
 			ISMData.ISMComponent->AddInstance(InstanceTransform, true);
 
