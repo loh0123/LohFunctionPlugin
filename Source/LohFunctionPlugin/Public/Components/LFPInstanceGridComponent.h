@@ -27,21 +27,16 @@ public:
 USTRUCT(BlueprintType)
 struct FLFPInstanceGridMeshData
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
+
+	FLFPInstanceGridMeshData() {}
+
+	FLFPInstanceGridMeshData(UInstancedStaticMeshComponent* ISM) : ISMComponent(ISM) {}
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridMeshData")
-		TObjectPtr<UStaticMesh> Mesh = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridMeshData")
-		TArray<TObjectPtr<UMaterialInterface>> Material;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridMeshData")
-		int32 CustomDataAmount = 0;
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPInstanceGridMeshData")
-		TObjectPtr<class UInstancedStaticMeshComponent> ISMComponent;
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
+		TObjectPtr<UInstancedStaticMeshComponent> ISMComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
 		TArray<int32> InstanceGridIndexList;
@@ -83,8 +78,14 @@ public:
 	
 public: /* Function For External Blueprint Or C++ To Use */
 
+	UFUNCTION(BlueprintPure, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE bool IsMeshIndexValid(const int32 Index) const;
+
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE void SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType = ELFPGridType::Rectangular);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE int32 RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM);
 	
 	/** Set Instance Type On This Grid Location (Use -1 To Remove) */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
@@ -93,9 +94,9 @@ public: /* Function For External Blueprint Or C++ To Use */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE bool SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList);
 	
-	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-	//	FORCEINLINE bool RemoveInstance(const FIntVector GridLocation);
-	//
-	//UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-	//	FORCEINLINE bool RemoveInstances(const TArray<FIntVector> GridLocationList);
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE bool SetCustomData(const FIntVector Location, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty = false);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE bool SetCustomDatas(const FIntVector Location, const TArray<float>& DataList, const bool bMarkRenderStateDirty = false);
 };

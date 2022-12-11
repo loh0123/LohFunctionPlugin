@@ -43,6 +43,11 @@ void ULFPInstanceGridComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
+bool ULFPInstanceGridComponent::IsMeshIndexValid(const int32 Index) const
+{
+	return MeshList.IsValidIndex(Index) && IsValid(MeshList[Index].ISMComponent);
+}
+
 void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType)
 {
 	GridSize = NewGridSize;
@@ -50,30 +55,16 @@ void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FV
 	GridType = NewGridType;
 
 	GridInstanceIndexList.Init(INDEX_NONE, GridSize.X * GridSize.Y * GridSize.Z);
+}
 
-	for (FLFPInstanceGridMeshData& ISMData : MeshList)
+int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM)
+{
+	if (IsValid(ISM) == false)
 	{
-		if (IsValid(ISMData.ISMComponent))
-		{
-			ISMData.ISMComponent->DestroyComponent(false);
-		}
-
-		ISMData.ISMComponent = Cast<UInstancedStaticMeshComponent>(GetOwner()->AddComponentByClass(UInstancedStaticMeshComponent::StaticClass(), true, FTransform(), true));
-
-		ISMData.ISMComponent->SetStaticMesh(ISMData.Mesh);
-		ISMData.ISMComponent->NumCustomDataFloats = ISMData.CustomDataAmount;
-
-		for (int32 MaterialIndex = 0; MaterialIndex < ISMData.Material.Num(); MaterialIndex++)
-		{
-			ISMData.ISMComponent->SetMaterial(MaterialIndex, ISMData.Material[MaterialIndex]);
-		}
-
-		ISMData.ISMComponent->SetupAttachment(this);
-
-		GetOwner()->FinishAddComponent(ISMData.ISMComponent, true, FTransform());
-
-		GetOwner()->AddInstanceComponent(ISMData.ISMComponent);
+		return INDEX_NONE;
 	}
+
+	return MeshList.Add(FLFPInstanceGridMeshData(ISM));
 }
 
 bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
@@ -88,7 +79,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 		}
 
 		/* Remove Operation */
-		else if (MeshList.IsValidIndex(GridInstanceIndexList[GridIndex]))
+		else if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
 		{
 			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
 
@@ -103,7 +94,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
 
 		/* Add Operation */
-		if (MeshList.IsValidIndex(GridInstanceIndexList[GridIndex]))
+		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
 		{
 			FVector InstanceWorldLocation;
 			FRotator InstanceWorldRotation;
@@ -140,5 +131,43 @@ bool ULFPInstanceGridComponent::SetInstances(const TArray<FLFPInstanceGridInstan
 	}
 
 	return bResult;
+}
+
+bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty)
+{
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, GridSize);
+
+	if (GridInstanceIndexList.IsValidIndex(GridIndex))
+	{
+		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+		{
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+
+			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
+
+			return ISMData.ISMComponent->SetCustomDataValue(TargetIndex, DataIndex, DataValue, bMarkRenderStateDirty);
+		}
+	}
+
+	return false;
+}
+
+bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const TArray<float>& DataList, const bool bMarkRenderStateDirty)
+{
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, GridSize);
+
+	if (GridInstanceIndexList.IsValidIndex(GridIndex))
+	{
+		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+		{
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+
+			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
+
+			return ISMData.ISMComponent->SetCustomData(TargetIndex, DataList, bMarkRenderStateDirty);
+		}
+	}
+
+	return false;
 }
 
