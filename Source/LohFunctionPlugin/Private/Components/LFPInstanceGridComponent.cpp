@@ -71,51 +71,56 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 {
 	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, GridSize);
 
-	if (GridInstanceIndexList.IsValidIndex(GridIndex))
+	if (GridInstanceIndexList.IsValidIndex(GridIndex) == false) return false;
+	
+	/* Calculate Instance Transform With Offset */
+	FVector InstanceWorldLocation;
+	FRotator InstanceWorldRotation;
+
+	GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bIsWorld, InstanceWorldLocation, InstanceWorldRotation);
+
+	FTransform TargetTransform(InstanceWorldRotation + InstanceInfo.RotationOffset, InstanceWorldLocation + InstanceInfo.LocationOffset, InstanceInfo.Scale);
+
+	///////////////////////////////////////////////
+
+	/* Find The Prev Data Is Valid And Remove Or Update It */
+	if (GridInstanceIndexList[GridIndex] != INDEX_NONE && IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
 	{
+		FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+
+		const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
+
+		check(TargetIndex != INDEX_NONE);
+
+		/* Same Instance So Just Update Transform */
 		if (GridInstanceIndexList[GridIndex] == InstanceInfo.InstanceIndex)
 		{
+			ISMData.ISMComponent->UpdateInstanceTransform(TargetIndex, TargetTransform, InstanceInfo.bIsWorld, true);
+
 			return true;
 		}
 
 		/* Remove Operation */
-		else if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+		else
 		{
-			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
-
-			const int32 RemoveIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
-
-			check(RemoveIndex != INDEX_NONE);
-
-			ISMData.InstanceGridIndexList.RemoveAt(RemoveIndex);
-			ISMData.ISMComponent->RemoveInstance(RemoveIndex);
+			ISMData.InstanceGridIndexList.RemoveAt(TargetIndex);
+			ISMData.ISMComponent->RemoveInstance(TargetIndex);
 		}
-
-		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
-
-		/* Add Operation */
-		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
-		{
-			FVector InstanceWorldLocation;
-			FRotator InstanceWorldRotation;
-
-			GridLocationToWorldLocation(InstanceInfo.Location, false, InstanceWorldLocation, InstanceWorldRotation);
-
-			InstanceWorldRotation += InstanceInfo.Rotation;
-
-			FTransform InstanceTransform(InstanceWorldRotation, InstanceWorldLocation);
-
-			FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
-
-			ISMData.ISMComponent->AddInstance(InstanceTransform, true);
-
-			ISMData.InstanceGridIndexList.Add(GridIndex);
-		}
-
-		return true;
 	}
 
-	return false;
+	GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
+
+	/* Add Operation */
+	if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+	{
+		FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
+
+		ISMData.ISMComponent->AddInstance(TargetTransform, InstanceInfo.bIsWorld);
+
+		ISMData.InstanceGridIndexList.Add(GridIndex);
+	}
+
+	return true;
 }
 
 bool ULFPInstanceGridComponent::SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList)

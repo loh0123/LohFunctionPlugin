@@ -17,7 +17,16 @@ public:
 		FIntVector Location = FIntVector(0);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
-		FRotator Rotation = FRotator(0);
+		FVector LocationOffset = FVector(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		FRotator RotationOffset = FRotator(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		FVector Scale = FVector(1);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
+		bool bIsWorld = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInstanceGridInstanceInfo")
 		int32 InstanceIndex = 0;
