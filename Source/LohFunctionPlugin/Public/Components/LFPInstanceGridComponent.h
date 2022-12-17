@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/LFPWorldGrid.h"
+#include "Components/SceneComponent.h"
 #include "LFPInstanceGridComponent.generated.h"
+
+class UInstancedStaticMeshComponent;
+class ULFPWorldGrid;
 
 USTRUCT(BlueprintType)
 struct FLFPInstanceGridInstanceInfo
@@ -52,21 +55,22 @@ public:
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public ULFPWorldGrid
+class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 	//UPROPERTY() TArray<TObjectPtr<class UInstancedStaticMeshComponent>> ISMList;
 
-public:
-
-	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
-		TArray<uint8> GridInstanceIndexList;
-
 private:
 
-	UPROPERTY(EditAnywhere, Category = "LFPInstanceGridComponent")
-		TArray<FLFPInstanceGridMeshData> MeshList;
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+		TArray<uint8> GridInstanceIndexList = TArray<uint8>();
+
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+		TArray<FLFPInstanceGridMeshData> MeshList = TArray<FLFPInstanceGridMeshData>();
+
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+		TObjectPtr<ULFPWorldGrid> WorldGrid = nullptr;
 
 
 public:	
@@ -74,6 +78,7 @@ public:
 	ULFPInstanceGridComponent();
 
 protected:
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
@@ -91,10 +96,13 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE bool IsMeshIndexValid(const int32 Index) const;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-		FORCEINLINE void SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType = ELFPGridType::Rectangular);
+		FORCEINLINE void SetupGrid(ULFPWorldGrid* NewWorldGrid);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE int32 RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
+		FORCEINLINE int32 RegisterInstanceStaticMeshComponentList(TArray<UInstancedStaticMeshComponent*> ISMList);
 	
 	/** Set Instance Type On This Grid Location (Use -1 To Remove) */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")

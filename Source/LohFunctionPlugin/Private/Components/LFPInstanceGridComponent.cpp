@@ -2,6 +2,7 @@
 
 
 #include "Components/LFPInstanceGridComponent.h"
+#include "Components/LFPWorldGrid.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Math/LFPGridLibrary.h"
 
@@ -11,8 +12,6 @@ ULFPInstanceGridComponent::ULFPInstanceGridComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
 }
 
 
@@ -21,17 +20,17 @@ void ULFPInstanceGridComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupGrid(GridSize, GridGap, GridType);
+	SetupGrid(Cast<ULFPWorldGrid>(GetAttachParent()));
+
+	for (int32 Index = 0; Index < GetNumChildrenComponents(); Index++)
+	{
+		RegisterInstanceStaticMeshComponent(Cast<UInstancedStaticMeshComponent>(GetChildComponent(Index)));
+	}
 }
 
 void ULFPInstanceGridComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-
-	for (FLFPInstanceGridMeshData& ISMData : MeshList)
-	{
-		ISMData.ISMComponent->DestroyComponent();
-	}
 }
 
 
@@ -48,13 +47,20 @@ bool ULFPInstanceGridComponent::IsMeshIndexValid(const int32 Index) const
 	return MeshList.IsValidIndex(Index) && IsValid(MeshList[Index].ISMComponent);
 }
 
-void ULFPInstanceGridComponent::SetupGrid(const FIntVector NewGridSize, const FVector NewGridGap, const ELFPGridType NewGridType)
+void ULFPInstanceGridComponent::SetupGrid(ULFPWorldGrid* NewWorldGrid)
 {
-	GridSize = NewGridSize;
-	GridGap = NewGridGap;
-	GridType = NewGridType;
+	WorldGrid = NewWorldGrid;
 
-	GridInstanceIndexList.Init(INDEX_NONE, GridSize.X * GridSize.Y * GridSize.Z);
+	if (IsValid(WorldGrid))
+	{
+		GridInstanceIndexList.Init(INDEX_NONE, WorldGrid->GetGridSize().X * WorldGrid->GetGridSize().Y * WorldGrid->GetGridSize().Z);
+	}
+	else
+	{
+		GridInstanceIndexList.Empty();
+	}
+
+	return;
 }
 
 int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM)
@@ -67,9 +73,28 @@ int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponent(UInstancedS
 	return MeshList.Add(FLFPInstanceGridMeshData(ISM));
 }
 
+int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponentList(TArray<UInstancedStaticMeshComponent*> ISMList)
+{
+	int32 Count = 0;
+
+	for (UInstancedStaticMeshComponent* ISM : ISMList)
+	{
+		if (IsValid(ISM))
+		{
+			MeshList.Add(FLFPInstanceGridMeshData(ISM));
+
+			Count++;
+		}
+	}
+
+	return Count;
+}
+
 bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
 {
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, GridSize);
+	if (IsValid(WorldGrid) == false) return false;
+
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex) == false) return false;
 	
@@ -77,7 +102,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 	FVector InstanceWorldLocation;
 	FRotator InstanceWorldRotation;
 
-	GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bIsWorld, InstanceWorldLocation, InstanceWorldRotation);
+	WorldGrid->GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bIsWorld, InstanceWorldLocation, InstanceWorldRotation);
 
 	FTransform TargetTransform(InstanceWorldRotation + InstanceInfo.RotationOffset, InstanceWorldLocation + InstanceInfo.LocationOffset, InstanceInfo.Scale);
 
@@ -142,7 +167,9 @@ bool ULFPInstanceGridComponent::SetInstances(const TArray<FLFPInstanceGridInstan
 
 bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty)
 {
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, GridSize);
+	if (IsValid(WorldGrid) == false) return false;
+
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{
@@ -161,7 +188,9 @@ bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const i
 
 bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const TArray<float>& DataList, const bool bMarkRenderStateDirty)
 {
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, GridSize);
+	if (IsValid(WorldGrid) == false) return false;
+
+	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{

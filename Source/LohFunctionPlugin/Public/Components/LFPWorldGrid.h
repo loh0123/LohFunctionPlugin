@@ -61,6 +61,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE FVector GetHalfSize() const;
 
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE bool GetCenterOrigin() const { return bCenterOrigin; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FIntVector GetGridSize() const { return GridSize; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FVector GetGridGap() const { return GridGap; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE ELFPGridType GetGridType() const { return GridType; }
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
