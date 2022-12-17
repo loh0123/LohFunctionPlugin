@@ -47,10 +47,10 @@ struct FLFPInstanceGridMeshData
 
 public:
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridMeshData")
 		TObjectPtr<UInstancedStaticMeshComponent> ISMComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridMeshData")
 		TArray<int32> InstanceGridIndexList;
 };
 
@@ -63,10 +63,10 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 
 private:
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
 		TArray<uint8> GridInstanceIndexList = TArray<uint8>();
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
 		TArray<FLFPInstanceGridMeshData> MeshList = TArray<FLFPInstanceGridMeshData>();
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")

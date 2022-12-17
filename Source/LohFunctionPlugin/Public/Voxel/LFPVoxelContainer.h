@@ -68,13 +68,13 @@ struct FLFPVoxelDynamicAttributeData
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
 		FColor VoxelColor = FColor(255);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
 		uint8 VoxelStatus = uint8(0);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
 		uint8 VoxelType = uint8(0);
 };
 
@@ -120,9 +120,9 @@ struct FLFPVoxelChuckDataV2
 
 public:
 
-	UPROPERTY() TArray<FName> VoxelNameData = {};
+	UPROPERTY(SaveGame) TArray<FName> VoxelNameData = {};
 
-	UPROPERTY() TArray<FLFPVoxelDynamicAttributeData> VoxelAttributeData = {};
+	UPROPERTY(SaveGame) TArray<FLFPVoxelDynamicAttributeData> VoxelAttributeData = {};
 
 public:
 
@@ -330,7 +330,7 @@ protected: // Initialize Data
 
 protected:  // Runtime Data
 
-	UPROPERTY(replicated) TArray<FLFPVoxelChuckDataV2> ChuckData;
+	UPROPERTY(replicated, SaveGame) TArray<FLFPVoxelChuckDataV2> ChuckData;
 
 	UPROPERTY() TSet<int32> BatchChuckNameUpdateList;
 
