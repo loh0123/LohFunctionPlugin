@@ -105,14 +105,16 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 		{
 			ISMData.InstanceGridIndexList.RemoveAt(TargetIndex);
 			ISMData.ISMComponent->RemoveInstance(TargetIndex);
+
+			GridInstanceIndexList[GridIndex] = INDEX_NONE;
 		}
 	}
 
-	GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
-
 	/* Add Operation */
-	if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+	if (IsMeshIndexValid(InstanceInfo.InstanceIndex))
 	{
+		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
+
 		FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
 
 		ISMData.ISMComponent->AddInstance(TargetTransform, InstanceInfo.bIsWorld);
