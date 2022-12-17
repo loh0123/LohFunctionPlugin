@@ -43,7 +43,7 @@ FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) c
 
 	FVector LocalLocation;
 
-	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + (GetHalfSize() - (GridGap * 0.5)) : Location - GetComponentLocation();
+	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + (GetVolumeSize(true) - (GridGap * 0.5)) : Location - GetComponentLocation();
 
 	switch (GridType)
 	{
@@ -82,7 +82,7 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 			break;
 	}
 
-	if (bCenterOrigin) ReturnLocation -= GetHalfSize() - (GridGap * 0.5);
+	if (bCenterOrigin) ReturnLocation -= GetVolumeSize(true) - (GridGap * 0.5);
 
 	ReturnLocation += AddHalfGap ? GetComponentLocation() + (GridGap * 0.5) : GetComponentLocation();
 
@@ -92,9 +92,4 @@ bool ULFPWorldGrid::GridLocationToWorldLocation(const FIntVector Location, const
 bool ULFPWorldGrid::IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const
 {
 	return GridLocationToWorldLocation(ULFPGridLibrary::ToGridLocation(Index, GridSize), AddHalfGap, ReturnLocation, ReturnRotation);
-}
-
-FVector ULFPWorldGrid::GetHalfSize() const
-{
-	return FVector(GridSize) * (GridGap * 0.5);
 }

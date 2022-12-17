@@ -59,7 +59,10 @@ public:
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FVector GetHalfSize() const;
+		FORCEINLINE int32 GetGridLength() const { return GridSize.X * GridSize.Y * GridSize.Z; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FORCEINLINE FVector GetVolumeSize(const bool bHalfVolume) const { return FVector(GridSize) * (GridGap * (bHalfVolume ? 0.5 : 1.0)); }
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		FORCEINLINE bool GetCenterOrigin() const { return bCenterOrigin; }
