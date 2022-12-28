@@ -59,8 +59,6 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
-	//UPROPERTY() TArray<TObjectPtr<class UInstancedStaticMeshComponent>> ISMList;
-
 private:
 
 	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
@@ -94,6 +92,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 
 	UFUNCTION(BlueprintPure, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE bool IsMeshIndexValid(const int32 Index) const;
+
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE void SetupGrid(ULFPWorldGrid* NewWorldGrid);

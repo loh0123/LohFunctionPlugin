@@ -304,7 +304,7 @@ public: // Collision Handler
 
 	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
 
-protected:
+public:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPBaseVoxelMeshComponent | Cache")
 		TObjectPtr<UTexture2D> VoxelDataTexture = nullptr;

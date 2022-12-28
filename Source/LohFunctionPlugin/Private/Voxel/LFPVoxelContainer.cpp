@@ -338,6 +338,8 @@ bool ULFPVoxelContainer::GetVoxelGridName(const FLFPVoxelGridIndex VoxelGridInde
 
 void ULFPVoxelContainer::SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGridIndex, const FLFPVoxelDynamicAttributeData VoxelAttribute, const bool bInitializeChuck)
 {
+	if (IsVoxelIndexValid(VoxelGridIndex) == false) return;
+
 	FLFPVoxelWriteAction* Action = FindOrAddChuckWriteAction(VoxelGridIndex.ChuckIndex);
 
 	if (Action == nullptr) return;
@@ -351,6 +353,8 @@ void ULFPVoxelContainer::SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGri
 
 void ULFPVoxelContainer::SetVoxelGridName(const FLFPVoxelGridIndex VoxelGridIndex, const FName VoxelName, const bool bInitializeChuck)
 {
+	if (IsVoxelIndexValid(VoxelGridIndex) == false) return;
+
 	FLFPVoxelWriteAction* Action = FindOrAddChuckWriteAction(VoxelGridIndex.ChuckIndex);
 
 	if (Action == nullptr) return;

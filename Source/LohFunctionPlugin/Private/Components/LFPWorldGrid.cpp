@@ -39,11 +39,11 @@ int32 ULFPWorldGrid::WordlLocationToIndex(const FVector& Location) const
 
 FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) const
 {
-	if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
+	// if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
 
 	FVector LocalLocation;
 
-	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + (GetVolumeSize(true) - (GridGap * 0.5)) : Location - GetComponentLocation();
+	const FVector ComponentLocation = bCenterOrigin ? Location - GetComponentLocation() + GetVolumeSize(true) : Location - GetComponentLocation();
 
 	switch (GridType)
 	{
