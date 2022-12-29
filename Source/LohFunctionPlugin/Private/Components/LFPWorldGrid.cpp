@@ -32,12 +32,12 @@ void ULFPWorldGrid::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-int32 ULFPWorldGrid::WordlLocationToIndex(const FVector& Location) const
+int32 ULFPWorldGrid::WorldLocationToIndex(const FVector& Location) const
 {
-	return ULFPGridLibrary::ToIndex(WordlLocationToGridLocation(Location), GridSize);
+	return ULFPGridLibrary::ToIndex(WorldLocationToGridLocation(Location), GridSize);
 }
 
-FIntVector ULFPWorldGrid::WordlLocationToGridLocation(const FVector& Location) const
+FIntVector ULFPWorldGrid::WorldLocationToGridLocation(const FVector& Location) const
 {
 	// if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
 

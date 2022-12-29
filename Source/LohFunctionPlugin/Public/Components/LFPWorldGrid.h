@@ -41,14 +41,14 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE int32 WordlLocationToIndex(const FVector& Location) const;
+		FORCEINLINE int32 WorldLocationToIndex(const FVector& Location) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FIntVector WordlLocationToGridLocation(const FVector& Location) const;
+		FORCEINLINE FIntVector WorldLocationToGridLocation(const FVector& Location) const;
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsLocationValid(WordlLocationToGridLocation(Location), GridSize); }
+		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsLocationValid(WorldLocationToGridLocation(Location), GridSize); }
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
