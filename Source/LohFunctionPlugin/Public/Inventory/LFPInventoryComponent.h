@@ -17,7 +17,7 @@ struct FLFPInventoryItemData
 		FString AdditionalData = FString("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
-		int32 ItemID = INDEX_NONE;
+		FName ItemID = NAME_None;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPInventorySlotData | Cache")
 		int32 SyncSlotIndex = INDEX_NONE;
@@ -29,7 +29,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnSwapItemEvent, const FLFPInvent
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemSortEvent);
 
 
-UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
+UCLASS( Blueprintable, ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -82,7 +82,7 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
-		bool UnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo = FString("None"));
+		bool UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
@@ -167,10 +167,10 @@ public: // Getter
 		bool GetEmptyInventorySlot(int32& SlotIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetItemListWithID(TArray<int32>& ItemIndexList, const int32 ID, const bool bEquipment = false) const;
+		bool GetItemListWithID(TArray<int32>& ItemIndexList, const FName ID, const bool bEquipment = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) ? EquipmentSlotList[Index] : FLFPInventoryItemData(); };
+		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) ? (EquipmentSlotList[Index].SyncSlotIndex == INDEX_NONE ? EquipmentSlotList[Index] : InventorySlotList[EquipmentSlotList[Index].SyncSlotIndex]) : FLFPInventoryItemData(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const FLFPInventoryItemData GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData(); };
