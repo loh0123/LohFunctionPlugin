@@ -7,7 +7,7 @@
 #include "LFPGridTickManager.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPGridTickManager : public UActorComponent
 {
 	GENERATED_BODY()

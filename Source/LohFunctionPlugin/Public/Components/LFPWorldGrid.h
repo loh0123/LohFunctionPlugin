@@ -21,7 +21,7 @@ enum class ELFPGridType : uint8
 };
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPWorldGrid : public USceneComponent
 {
 	GENERATED_BODY()

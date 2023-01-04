@@ -280,7 +280,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListComplete);
 /**
  *
  */
-UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Voxel)
+UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGIN_API ULFPVoxelContainer : public UActorComponent
 {
 	GENERATED_BODY()

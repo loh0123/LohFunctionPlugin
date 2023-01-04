@@ -223,7 +223,7 @@ class FLFPBaseBoxelLumenTask;
 // * 
 // * Secondary Function Is To Generate Out Ths Voxel Mesh Data From Voxel Coordination Data
 // */
-UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
+UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGIN_API ULFPBaseVoxelMeshComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	friend class FLFPBaseVoxelMeshSceneProxy;

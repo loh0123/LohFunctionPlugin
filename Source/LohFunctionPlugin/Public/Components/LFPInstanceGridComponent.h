@@ -54,7 +54,7 @@ public:
 		TArray<int32> InstanceGridIndexList;
 };
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 {
 	GENERATED_BODY()

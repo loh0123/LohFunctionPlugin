@@ -26,18 +26,10 @@ public class LohFunctionPlugin : ModuleRules
 			new string[]
 			{
 				"Core",
-				"GeometryCore",
-				"GeometryFramework",
-				"DynamicMesh",
-				"GeometryScriptingCore",
 				"InteractiveToolsFramework",
 
 				"PhysicsCore",
-				"MeshDescription",
 				"StaticMeshDescription",
-				"GeometryAlgorithms",
-				"DynamicMesh",
-				"MeshConversion",
 				"DeveloperSettings",
 
 				"CoreUObject",

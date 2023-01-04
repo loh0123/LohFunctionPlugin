@@ -13,7 +13,7 @@
 #include "LFPTickManager.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPTickManager : public UActorComponent
 {
 	GENERATED_BODY()
