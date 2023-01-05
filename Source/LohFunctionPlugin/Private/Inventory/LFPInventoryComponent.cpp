@@ -36,7 +36,7 @@ void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 bool ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)
 {
-	if (SlotIndex == INDEX_NONE && GetEmptyInventorySlot(SlotIndex) == false) return false;
+	if (SlotIndex == INDEX_NONE && GetAvailableInventorySlot(SlotIndex) == false) return false;
 
 	if (SlotIndex >= MaxInventorySlotAmount || ItemData.ItemID == NAME_None || GetInventorySlot(SlotIndex).ItemID != NAME_None || CanAddItem(ItemData, SlotIndex, EventInfo) == false) return false;
 
@@ -220,12 +220,12 @@ void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
 	InventorySlotList.Shrink();
 }
 
-bool ULFPInventoryComponent::GetEmptyInventorySlot(int32& SlotIndex) const
+bool ULFPInventoryComponent::GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem) const
 {
 	if (InventorySlotList.Num() > 0) 
 		for (SlotIndex = 0; SlotIndex < InventorySlotList.Num(); SlotIndex++)
 		{
-			if (InventorySlotList[SlotIndex].ItemID == NAME_None)
+			if (IsInventorySlotAvailable(SlotIndex, ForItem))
 			{
 				return true;
 			}

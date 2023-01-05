@@ -133,6 +133,10 @@ public: // Event
 		bool InventorySortFunction(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const;
 		virtual bool InventorySortFunction_Implementation(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const { return false; }
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& ItemData) const;
+		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& ItemData) const { return InventorySlotList[SlotIndex].ItemID == NAME_None; }
+
 public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
@@ -164,7 +168,7 @@ public: // Valid Checker
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetEmptyInventorySlot(int32& SlotIndex) const;
+		bool GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		bool GetItemListWithID(TArray<int32>& ItemIndexList, const FName ID, const bool bEquipment = false) const;
