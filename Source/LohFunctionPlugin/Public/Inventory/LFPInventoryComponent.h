@@ -17,7 +17,7 @@ struct FLFPInventoryItemData
 		FString AdditionalData = FString("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
-		FName ItemID = NAME_None;
+		FName ItemName = NAME_None;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPInventorySlotData | Cache")
 		int32 SyncSlotIndex = INDEX_NONE;
@@ -129,13 +129,13 @@ public: // Event
 
 
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		bool InventorySortFunction(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const;
-		virtual bool InventorySortFunction_Implementation(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const { return false; }
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
+		bool IsItemSortPriorityHigher(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const;
+		virtual bool IsItemSortPriorityHigher_Implementation(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const { return false; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& ItemData) const;
-		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& ItemData) const { return InventorySlotList[SlotIndex].ItemID == NAME_None; }
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
+		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
+		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return InventorySlotList[SlotIndex].ItemName == NAME_None; }
 
 public: // Delegate
 
@@ -171,7 +171,7 @@ public: // Getter
 		bool GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetItemListWithID(TArray<int32>& ItemIndexList, const FName ID, const bool bEquipment = false) const;
+		bool GetItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, const bool bEquipment = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) ? (EquipmentSlotList[Index].SyncSlotIndex == INDEX_NONE ? EquipmentSlotList[Index] : InventorySlotList[EquipmentSlotList[Index].SyncSlotIndex]) : FLFPInventoryItemData(); };
