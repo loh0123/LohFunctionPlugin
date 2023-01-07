@@ -92,6 +92,15 @@ public: // Function
 		bool SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
 
 	/**
+	* Swap Item From Other Inventory
+	* @param FromSlot From other inventory slot
+	* @param ToSlot To this inventory slot
+	* @param EventInfo Info to pass to trigger event
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+		bool SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
+
+	/**
 	* Sort inventory using sort function
 	* @param EventInfo Info to pass to trigger event
 	*/
@@ -109,11 +118,11 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool CanAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual bool CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return true; }
+		virtual bool CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return GetInventorySlot(SlotIndex).ItemName != NAME_None; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
-		bool CanRemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual bool CanRemoveItem_Implementation(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const FString& EventInfo) const { return true; }
+		bool CanRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bIsEquipment, const FString& EventInfo) const;
+		virtual bool CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bIsEquipment, const FString& EventInfo) const { return true; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool CanEquipItem(const FLFPInventoryItemData& ItemData, const int32 InventorySlotIndex, const int32 EquipmentSlotIndex, const bool bSyncSlot, const FString& EventInfo) const;
