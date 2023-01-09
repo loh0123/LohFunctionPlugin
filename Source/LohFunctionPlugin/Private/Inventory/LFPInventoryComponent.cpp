@@ -2,6 +2,7 @@
 
 
 #include "Inventory/LFPInventoryComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 ULFPInventoryComponent::ULFPInventoryComponent()
@@ -11,6 +12,14 @@ ULFPInventoryComponent::ULFPInventoryComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
+}
+
+void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ULFPInventoryComponent, EquipmentSlotList);
+	DOREPLIFETIME(ULFPInventoryComponent, InventorySlotList);
 }
 
 
@@ -34,11 +43,11 @@ void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-bool ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)
+int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)
 {
-	if (SlotIndex == INDEX_NONE && GetAvailableInventorySlot(SlotIndex, ItemData) == false) return false;
+	if (SlotIndex == INDEX_NONE && GetAvailableInventorySlot(SlotIndex, ItemData) == false) return INDEX_NONE;
 
-	if (SlotIndex >= MaxInventorySlotAmount || ItemData.ItemName == NAME_None || CanAddItem(ItemData, SlotIndex, EventInfo) == false) return false;
+	if (SlotIndex >= MaxInventorySlotAmount || ItemData.ItemName == NAME_None || CanAddItem(ItemData, SlotIndex, EventInfo) == false) return INDEX_NONE;
 
 	if (InventorySlotList.Num() <= SlotIndex) InventorySlotList.SetNum(SlotIndex + 1);
 
@@ -46,54 +55,30 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int3
 
 	OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
 
-	return true;
+	return SlotIndex;
 }
 
-bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const bool bIsEquipItem, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, int32 SlotIndex, const bool bIsEquipItem, const FString EventInfo)
 {
+	/* Check is SlotIndex valid */
 	if (bIsEquipItem ? IsEquipmentSlotIndexValid(SlotIndex) == false : IsInventorySlotIndexValid(SlotIndex) == false) return false;
 
-	if (bIsEquipItem)
-	{
-		RemovedItemData = EquipmentSlotList[SlotIndex];
+	/* Check is Slot not empty */
+	if (bIsEquipItem ? GetEquipmentSlot(SlotIndex).ItemName == NAME_None : GetInventorySlot(SlotIndex).ItemName == NAME_None) return false;
 
-		/* Check if this equipment is sync with inventory item */
-		if (RemovedItemData.SyncSlotIndex != INDEX_NONE)
-		{
-			check(InventorySlotList.IsValidIndex(RemovedItemData.SyncSlotIndex));
+	/* Check Item can be remove */
+	if (CanRemoveItem(bIsEquipItem ? EquipmentSlotList[SlotIndex] : InventorySlotList[SlotIndex], SlotIndex, bIsEquipItem, EventInfo) == false) return false;
 
-			RemovedItemData = InventorySlotList[RemovedItemData.SyncSlotIndex];
+	/* Check is Item equip and Unequip it */
+	if (bIsEquipItem || InventorySlotList[SlotIndex].SyncSlotIndex != INDEX_NONE) SlotIndex = UnequipItem(bIsEquipItem ? SlotIndex : InventorySlotList[SlotIndex].SyncSlotIndex, INDEX_NONE, EventInfo);
 
-			check(RemovedItemData.ItemName != NAME_None);
-		}
-	}
-	else
-	{
-		RemovedItemData = InventorySlotList[SlotIndex];
-	}
+	if (SlotIndex == INDEX_NONE) return false;
 
-	if (GetInventorySlot(SlotIndex).ItemName == NAME_None || CanRemoveItem(bIsEquipItem ? EquipmentSlotList[SlotIndex] : InventorySlotList[SlotIndex], SlotIndex, bIsEquipItem, EventInfo) == false) return false;
+	RemovedItemData = InventorySlotList[SlotIndex];
 
-	if (bIsEquipItem)
-	{
-		/* Check if this equipment is sync with inventory item */
-		if (EquipmentSlotList[SlotIndex].SyncSlotIndex != INDEX_NONE) 
-		{ 
-			InventorySlotList[EquipmentSlotList[SlotIndex].SyncSlotIndex] = FLFPInventoryItemData(); 
+	InventorySlotList[SlotIndex] = FLFPInventoryItemData();
 
-			TrimInventorySlotList(EquipmentSlotList[SlotIndex].SyncSlotIndex);
-		}
-
-		EquipmentSlotList[SlotIndex] = FLFPInventoryItemData();
-	}
-	else
-	{
-		if (InventorySlotList[SlotIndex].SyncSlotIndex != INDEX_NONE) EquipmentSlotList[InventorySlotList[SlotIndex].SyncSlotIndex] = FLFPInventoryItemData();
-
-		InventorySlotList[SlotIndex] = FLFPInventoryItemData();
-
-		TrimInventorySlotList(SlotIndex);
-	}
+	TrimInventorySlotList(SlotIndex);
 
 	OnRemoveItem.Broadcast(RemovedItemData, SlotIndex, EventInfo);
 
@@ -139,8 +124,10 @@ bool ULFPInventoryComponent::EquipItem(const int32 InventorySlotIndex, const int
 	return true;
 }
 
-bool ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
+int32 ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, int32 ToInventorySlotIndex, const FString EventInfo)
 {
+	int32 OutItemIndex = INDEX_NONE;
+
 	if (IsEquipmentSlotIndexValid(EquipmentSlotIndex) == false ||
 		(EquipmentSlotList[EquipmentSlotIndex].ItemName != NAME_None || EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE) == false ||
 		CanUnequipItem(
@@ -149,12 +136,14 @@ bool ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 			EventInfo
 		) == false
 		)
-		return false;
+		return OutItemIndex;
 
 	FLFPInventoryItemData EquipmentData;
 
 	if (EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE)
 	{
+		OutItemIndex = EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex;
+
 		EquipmentData = InventorySlotList[EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex];
 
 		InventorySlotList[EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex].SyncSlotIndex = INDEX_NONE;
@@ -163,7 +152,9 @@ bool ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 	}
 	else
 	{
-		if (AddItem(EquipmentSlotList[EquipmentSlotIndex], ToInventorySlotIndex, EventInfo) == false) return false;
+		OutItemIndex = AddItem(EquipmentSlotList[EquipmentSlotIndex], ToInventorySlotIndex, EventInfo);
+
+		if (OutItemIndex == INDEX_NONE) return OutItemIndex;
 
 		EquipmentData = EquipmentSlotList[EquipmentSlotIndex];
 
@@ -172,7 +163,7 @@ bool ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 
 	OnUnequipItem.Broadcast(EquipmentData, EquipmentSlotIndex, EventInfo);
 
-	return true;
+	return OutItemIndex;
 }
 
 bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
@@ -255,6 +246,8 @@ bool ULFPInventoryComponent::GetAvailableInventorySlot(int32& SlotIndex, const F
 				return true;
 			}
 		}
+	else
+		SlotIndex = INDEX_NONE;
 
 	SlotIndex = SlotIndex + 1 < MaxInventorySlotAmount ? SlotIndex + 1 : INDEX_NONE;
 
