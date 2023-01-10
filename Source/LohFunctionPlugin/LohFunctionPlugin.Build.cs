@@ -25,6 +25,7 @@ public class LohFunctionPlugin : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"GameplayTags",
 				"Core",
 				"InteractiveToolsFramework",
 
@@ -44,7 +45,8 @@ public class LohFunctionPlugin : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject",
+                "GameplayTags",
+                "CoreUObject",
 				"Engine",
 				"Slate",
 				"SlateCore",

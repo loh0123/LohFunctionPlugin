@@ -47,7 +47,7 @@ int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int
 {
 	if (SlotIndex == INDEX_NONE && GetAvailableInventorySlot(SlotIndex, ItemData) == false) return INDEX_NONE;
 
-	if (SlotIndex >= MaxInventorySlotAmount || ItemData.ItemName == NAME_None || CanAddItem(ItemData, SlotIndex, EventInfo) == false) return INDEX_NONE;
+	if (SlotIndex >= MaxInventorySlotAmount || ItemData.ItemTag == FGameplayTag::EmptyTag || CanAddItem(ItemData, SlotIndex, EventInfo) == false) return INDEX_NONE;
 
 	if (InventorySlotList.Num() <= SlotIndex) InventorySlotList.SetNum(SlotIndex + 1);
 
@@ -64,7 +64,7 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 	if (bIsEquipItem ? IsEquipmentSlotIndexValid(SlotIndex) == false : IsInventorySlotIndexValid(SlotIndex) == false) return false;
 
 	/* Check is Slot not empty */
-	if (bIsEquipItem ? GetEquipmentSlot(SlotIndex).ItemName == NAME_None : GetInventorySlot(SlotIndex).ItemName == NAME_None) return false;
+	if (bIsEquipItem ? GetEquipmentSlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag : GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag) return false;
 
 	/* Check Item can be remove */
 	if (CanRemoveItem(bIsEquipItem ? EquipmentSlotList[SlotIndex] : InventorySlotList[SlotIndex], SlotIndex, bIsEquipItem, EventInfo) == false) return false;
@@ -89,7 +89,7 @@ bool ULFPInventoryComponent::EquipItem(const int32 InventorySlotIndex, const int
 {
 	if (IsInventorySlotIndexValid(InventorySlotIndex) == false || 
 		IsEquipmentSlotIndexValid(EquipmentSlotIndex) == false ||
-		InventorySlotList[InventorySlotIndex].ItemName == NAME_None ||
+		InventorySlotList[InventorySlotIndex].ItemTag == FGameplayTag::EmptyTag ||
 		CanEquipItem(InventorySlotList[InventorySlotIndex], InventorySlotIndex, EquipmentSlotIndex, bSyncSlot, EventInfo) == false
 		) 
 		return false;
@@ -99,7 +99,7 @@ bool ULFPInventoryComponent::EquipItem(const int32 InventorySlotIndex, const int
 		if (UnequipItem(InventorySlotList[InventorySlotIndex].SyncSlotIndex, INDEX_NONE, EventInfo) == false) return false;
 	}
 
-	if (EquipmentSlotList[EquipmentSlotIndex].ItemName != NAME_None || EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE)
+	if (EquipmentSlotList[EquipmentSlotIndex].ItemTag != FGameplayTag::EmptyTag || EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE)
 	{
 		if (UnequipItem(EquipmentSlotIndex, INDEX_NONE, EventInfo) == false) return false;
 	}
@@ -129,7 +129,7 @@ int32 ULFPInventoryComponent::UnequipItem(const int32 EquipmentSlotIndex, int32 
 	int32 OutItemIndex = INDEX_NONE;
 
 	if (IsEquipmentSlotIndexValid(EquipmentSlotIndex) == false ||
-		(EquipmentSlotList[EquipmentSlotIndex].ItemName != NAME_None || EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE) == false ||
+		(EquipmentSlotList[EquipmentSlotIndex].ItemTag != FGameplayTag::EmptyTag || EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE) == false ||
 		CanUnequipItem(
 			EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex != INDEX_NONE ? InventorySlotList[EquipmentSlotList[EquipmentSlotIndex].SyncSlotIndex] : EquipmentSlotList[EquipmentSlotIndex], 
 			EquipmentSlotIndex,
@@ -228,7 +228,7 @@ void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
 		return;
 	}
 
-	while (InventorySlotList.Num() > 0 && InventorySlotList[InventorySlotList.Num() - 1].ItemName == NAME_None)
+	while (InventorySlotList.Num() > 0 && InventorySlotList[InventorySlotList.Num() - 1].ItemTag == FGameplayTag::EmptyTag)
 	{
 		InventorySlotList.RemoveAt(InventorySlotList.Num() - 1, 1, false);
 	}
@@ -254,13 +254,13 @@ bool ULFPInventoryComponent::GetAvailableInventorySlot(int32& SlotIndex, const F
 	return SlotIndex != INDEX_NONE;
 }
 
-bool ULFPInventoryComponent::GetItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, const bool bEquipment) const
+bool ULFPInventoryComponent::GetItemListWithItemName(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment) const
 {
 	const TArray<FLFPInventoryItemData>& CurrentList = bEquipment ? EquipmentSlotList : InventorySlotList;
 
 	for (int32 Index = 0; Index < CurrentList.Num(); Index++)
 	{
-		if (CurrentList[Index].ItemName == ItemName)
+		if (CurrentList[Index].ItemTag == ItemTag)
 		{
 			ItemIndexList.Add(Index);
 		}
