@@ -254,13 +254,13 @@ bool ULFPInventoryComponent::GetAvailableInventorySlot(int32& SlotIndex, const F
 	return SlotIndex != INDEX_NONE;
 }
 
-bool ULFPInventoryComponent::GetItemListWithItemName(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment) const
+bool ULFPInventoryComponent::GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment) const
 {
 	const TArray<FLFPInventoryItemData>& CurrentList = bEquipment ? EquipmentSlotList : InventorySlotList;
 
 	for (int32 Index = 0; Index < CurrentList.Num(); Index++)
 	{
-		if (CurrentList[Index].ItemTag == ItemTag)
+		if (CurrentList[Index].ItemTag.MatchesTag(ItemTag))
 		{
 			ItemIndexList.Add(Index);
 		}

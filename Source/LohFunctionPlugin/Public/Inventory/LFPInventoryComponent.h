@@ -183,7 +183,7 @@ public: // Getter
 		bool GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetItemListWithItemName(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment = false) const;
+		bool GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) ? (EquipmentSlotList[Index].SyncSlotIndex == INDEX_NONE ? EquipmentSlotList[Index] : InventorySlotList[EquipmentSlotList[Index].SyncSlotIndex]) : FLFPInventoryItemData(); };
