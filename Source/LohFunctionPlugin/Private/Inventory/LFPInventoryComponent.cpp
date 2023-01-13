@@ -18,8 +18,8 @@ void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ULFPInventoryComponent, EquipmentSlotList);
-	DOREPLIFETIME(ULFPInventoryComponent, InventorySlotList);
+	DOREPLIFETIME_CONDITION_NOTIFY(ULFPInventoryComponent, EquipmentSlotList, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ULFPInventoryComponent, InventorySlotList, COND_None, REPNOTIFY_Always);
 }
 
 
@@ -41,6 +41,38 @@ void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void ULFPInventoryComponent::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+
+	if (Ar.IsLoading())
+	{
+		int32 Index = 0;
+
+		for (const FLFPInventoryItemData& Item : InventorySlotList)
+		{
+			if (Item.ItemTag != FGameplayTag::EmptyTag)
+			{
+				OnAddItem.Broadcast(Item, Index, FString("Serialize"));
+			}
+
+			Index++;
+		}
+
+		Index = 0;
+
+		for (const FLFPInventoryItemData& Equipment : EquipmentSlotList)
+		{
+			if (Equipment.ItemTag != FGameplayTag::EmptyTag || Equipment.SyncSlotIndex != INDEX_NONE)
+			{
+				OnEquipItem.Broadcast(Equipment.SyncSlotIndex != INDEX_NONE ? InventorySlotList[Equipment.SyncSlotIndex] : Equipment, Index, FString("Serialize"));
+			}
+
+			Index++;
+		}
+	}
 }
 
 int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)

@@ -27,7 +27,7 @@ struct FLFPInventoryItemData
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEvent, const FLFPInventoryItemData&, ItemData, const int32, SlotIndex, const FString&, EventInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnSwapItemEvent, const FLFPInventoryItemData&, FromItemData, const int32, FromSlot, const FLFPInventoryItemData&, ToItemData, const int32, ToSlot, const FString&, EventInfo);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemSortEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemFunctionEvent);
 
 
 UCLASS( Blueprintable, ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
@@ -47,6 +47,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void Serialize(FArchive& Ar) override;
+
 public: // Function
 
 	/** 
@@ -56,7 +58,7 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	* @return Index of the item in the Inventory
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		int32 AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex = -1, const FString EventInfo = FString("None"));
 
 	/** 
@@ -66,7 +68,7 @@ public: // Function
 	* @param bEquipItem Remove from equipment slot
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool RemoveItem(FLFPInventoryItemData& RemovedItemData, int32 SlotIndex, const bool bIsEquipItem = false, const FString EventInfo = FString("None"));
 
 	/**
@@ -75,7 +77,7 @@ public: // Function
 	* @param bSyncSlot Do not remove the item from inventory slot list
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool EquipItem(const int32 InventorySlotIndex, const int32 EquipmentSlotIndex, const bool bSyncSlot = false, const FString EventInfo = FString("None"));
 
 	/**
@@ -84,14 +86,14 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	* @return Index of the item in the Inventory
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		int32 UnequipItem(const int32 EquipmentSlotIndex, int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
 
 	/**
@@ -100,21 +102,21 @@ public: // Function
 	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
 
 	/**
 	* Sort inventory using sort function
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void SortInventory(const FString EventInfo = FString("None"));
 
 	/**
 	* Trim inventory to make it more compact
 	* @param FromSlot Trim from this index to lower index
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void TrimInventorySlotList(const int32 FromSlot);
 
 public: // Event
@@ -149,25 +151,34 @@ public: // Event
 		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
 		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return InventorySlotList[SlotIndex].ItemTag == FGameplayTag::EmptyTag; }
 
+
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void OnEquipmentSlotRep(const TArray<FLFPInventoryItemData>& OldValue);
+		virtual void OnEquipmentSlotRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue) { }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void OnInventorySlotRep(const TArray<FLFPInventoryItemData>& OldValue);
+		virtual void OnInventorySlotRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue) { }
+
 public: // Delegate
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemEvent OnAddItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemEvent OnRemoveItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemEvent OnEquipItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemEvent OnUnequipItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnSwapItemEvent OnSwapItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnItemSortEvent OnItemSortEvent;
+	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+		FOnItemFunctionEvent OnItemSortEvent;
 
 public: // Valid Checker
 
@@ -207,9 +218,9 @@ public:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "LFPInventoryComponent | Cache")
+	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnEquipmentSlotRep, Category = "LFPInventoryComponent | Cache")
 		TArray<FLFPInventoryItemData> EquipmentSlotList;
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "LFPInventoryComponent | Cache")
+	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnInventorySlotRep, Category = "LFPInventoryComponent | Cache")
 		TArray<FLFPInventoryItemData> InventorySlotList;
 };
