@@ -52,7 +52,7 @@ public:
 public: // Function
 
 	/** 
-	* Add item to inventory 
+	* Add / Set item to inventory 
 	* @param ItemData Item Data to add to inventory or equipment
 	* @param SlotIndex inventory or equipment slot index within max value
 	* @param EventInfo Info to pass to trigger event
@@ -191,10 +191,10 @@ public: // Valid Checker
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem) const;
+		bool GetAvailableInventorySlot(int32& SlotIndex, const FLFPInventoryItemData& ForItem, const int32 StartIndex = 0, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment = false) const;
+		bool GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const bool bEquipment = false, const int32 StartIndex = 0, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) ? (EquipmentSlotList[Index].SyncSlotIndex == INDEX_NONE ? EquipmentSlotList[Index] : InventorySlotList[EquipmentSlotList[Index].SyncSlotIndex]) : FLFPInventoryItemData(); };
