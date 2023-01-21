@@ -3,6 +3,7 @@
 	{
 		"Module.LohFunctionPlugin.1_of_3.cpp.obj": [
 			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
+			"LFPEquipmentComponent.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
 			"LFPGridTickManager.gen.cpp.obj",
 			"LFPInstanceGridComponent.gen.cpp.obj",
@@ -25,6 +26,7 @@
 			"LFPInstanceGridComponent.cpp.obj",
 			"LFPTickManager.cpp.obj",
 			"LFPWorldGrid.cpp.obj",
+			"LFPEquipmentComponent.cpp.obj",
 			"LFPInventoryComponent.cpp.obj",
 			"LFPItemMutatorComponent.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
