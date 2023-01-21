@@ -169,7 +169,7 @@ bool ULFPItemMutatorComponent::ResumeItemCountdown(const int32 QueueIndex)
 {
 	if (IsQueueIndexValid(QueueIndex) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : PauseItemCountdown index not valid"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : ResumeItemCountdown index not valid"));
 
 		return false;
 	}
