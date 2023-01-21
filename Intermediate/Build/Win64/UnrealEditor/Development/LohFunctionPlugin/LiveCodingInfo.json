@@ -14,10 +14,10 @@
 			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFPRenderLibrary.gen.cpp.obj",
 			"LFProceduralRoomLibrary.gen.cpp.obj",
-			"LFPTickManager.gen.cpp.obj",
-			"LFPVoxelContainer.gen.cpp.obj"
+			"LFPTickManager.gen.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.3_of_3.cpp.obj": [
+			"LFPVoxelContainer.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginLibrary.gen.cpp.obj",

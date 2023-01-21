@@ -37,7 +37,17 @@ void ULFPItemMutatorComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	if (MutatorQueue.IsEmpty() == false)
+	{
+		FLFPItemMutatorQueueData& MutatorData = MutatorQueue.Last();
+
+		MutatorData.Delay -= DeltaTime;
+
+		if (MutatorData.Delay <= 0.0f)
+		{
+			ProcessItem(MutatorData, false, MutatorQueue.Num() - 1);
+		}
+	}
 }
 
 bool ULFPItemMutatorComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
@@ -86,12 +96,14 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 		return false;
 	}
 
-	if (NewQueueData.MaxDelay < 0.0f)
+	if (bInstanceProcess && NewQueueData.MaxDelay < 0.0f)
 	{
 		ProcessItem(NewQueueData);
 	}
 	else
 	{
+		NewQueueData.Delay = NewQueueData.MaxDelay;
+
 		MutatorQueue.Insert(NewQueueData, 0);
 
 		OnAddItemToQueue.Broadcast(RecipeTag);
