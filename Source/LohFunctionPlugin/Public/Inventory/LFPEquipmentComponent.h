@@ -94,7 +94,7 @@ public: // Getter
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting", meta = (ClampMin = "0"))
-		int32 MaxEquipmentSlotAmount = 4;
+		int32 MaxEquipmentSlotAmount = 5;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
 		bool bUnequipOnEndPlay = false;

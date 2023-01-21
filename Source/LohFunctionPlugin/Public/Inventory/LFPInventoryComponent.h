@@ -180,7 +180,7 @@ public:
 		int32 MaxInventorySlotAmount = 16;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPInventoryComponent | Setting", meta = (ClampMin = "0"))
-		int32 StartInventorySlotIndex = 4;
+		int32 StartInventorySlotIndex = 0;
 
 protected:
 

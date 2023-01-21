@@ -186,7 +186,7 @@ void ULFPInventoryComponent::SortInventory(const FString EventInfo)
 
 	Sort(InventorySlotList.GetData() + StartInventorySlotIndex, InventorySlotList.Num() - StartInventorySlotIndex, [&](const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB)
 		{
-			return IsItemSortPriorityHigher(ItemDataA, ItemDataB, EventInfo);
+			return ItemDataA.LockList.IsEmpty() && ItemDataB.LockList.IsEmpty() && IsItemSortPriorityHigher(ItemDataA, ItemDataB, EventInfo);
 		});
 
 	TrimInventorySlotList(InventorySlotList.Num() - 1);
