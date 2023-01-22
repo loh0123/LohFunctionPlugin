@@ -27,8 +27,15 @@ void ULFPEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	if (IsValid(GetOwner()))
+	{
+		ULFPInventoryComponent* InvComp = Cast<ULFPInventoryComponent>(GetOwner()->GetComponentByClass(ULFPInventoryComponent::StaticClass()));
+
+		if (IsValid(InvComp))
+		{
+			SetInventoryComponent(InvComp);
+		}
+	}
 }
 
 void ULFPEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -38,7 +45,7 @@ void ULFPEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (bUnequipOnEndPlay)
 		for (int32 Index = 0; Index < EquipmentSlotList.Num(); Index++)
 		{
-			if (EquipmentSlotList[Index] != INDEX_NONE) UnequipItem(Index, "EndPlay");
+			if (EquipmentSlotList[Index] != INDEX_NONE) UnequipItem(Index, -1, "EndPlay");
 		}
 }
 
@@ -71,7 +78,7 @@ bool ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 	return IsValid(InventoryComponent);
 }
 
-bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString EventInfo)
+bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
 {
 	if (IsValid(InventoryComponent) == false)
 	{
@@ -108,25 +115,34 @@ bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int
 		return false;
 	}
 
-	if (IsEquipmentSlotIndexValid(EquipmentSlotIndex) && UnequipItem(EquipmentSlotIndex, EventInfo) == false)
+	if (GetEquipmentSlot(EquipmentSlotIndex).ItemTag != FGameplayTag::EmptyTag)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipmentSlotIndex is currently occupied"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem EquipmentSlotIndex is currently occupied"));
+
+		return false;
+	}
+
+	if (ToInventorySlotIndex >= 0 && InventoryComponent->SwapItem(InventorySlotIndex, ToInventorySlotIndex, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem SwapItem return false"));
 
 		return false;
 	}
 
 	if (EquipmentSlotList.Num() < EquipmentSlotIndex + 1) EquipmentSlotList.SetNum(EquipmentSlotIndex + 1);
 
-	EquipmentSlotList[EquipmentSlotIndex] = InventorySlotIndex;
+	const int32 UseInvSlot = ToInventorySlotIndex >= 0 ? ToInventorySlotIndex : InventorySlotIndex;
 
-	InventoryComponent->AddItemLock(InventorySlotIndex, FName("Equipment"));
+	EquipmentSlotList[EquipmentSlotIndex] = UseInvSlot;
 
-	OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentSlotIndex, InventorySlotIndex, EventInfo);
+	InventoryComponent->AddItemLock(UseInvSlot, FName("Equipment"));
+
+	OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(UseInvSlot), EquipmentSlotIndex, UseInvSlot, EventInfo);
 
 	return true;
 }
 
-bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo)
+bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
 {
 	if (IsValid(InventoryComponent) == false)
 	{
@@ -156,14 +172,22 @@ bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const F
 		return false;
 	}
 
-	const int32 InvIndex = EquipmentSlotList[EquipmentSlotIndex];
+	InventoryComponent->RemoveItemLock(EquipmentSlotList[EquipmentSlotIndex], FName("Equipment"));
+
+	if (ToInventorySlotIndex >= 0 && InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], ToInventorySlotIndex, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem SwapItem return false"));
+
+		InventoryComponent->AddItemLock(EquipmentSlotList[EquipmentSlotIndex], FName("Equipment"));
+
+		return false;
+	}
+
+	const int32 InvIndex = ToInventorySlotIndex >= 0 ? ToInventorySlotIndex : EquipmentSlotList[EquipmentSlotIndex];
 
 	EquipmentSlotList[EquipmentSlotIndex] = -1;
-
-	InventoryComponent->RemoveItemLock(InvIndex, FName("Equipment"));
 
 	OnUnequipItem.Broadcast(InventoryComponent->GetInventorySlot(InvIndex), EquipmentSlotIndex, InvIndex, EventInfo);
 
 	return true;
 }
-
