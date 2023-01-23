@@ -27,8 +27,15 @@ void ULFPItemMutatorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	if (IsValid(GetOwner()))
+	{
+		ULFPInventoryComponent* InvComp = Cast<ULFPInventoryComponent>(GetOwner()->FindComponentByClass(ULFPInventoryComponent::StaticClass()));
+
+		if (IsValid(InvComp))
+		{
+			SetInventoryComponent(InvComp);
+		}
+	}
 }
 
 
@@ -82,6 +89,8 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 		return false;
 	}
 
+	NewQueueData.RecipeTag = RecipeTag;
+
 	if (CanAddItemToQueue(NewQueueData.ItemConsumeList) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : AddItemToQueue CanAddItemToQueue return false"));
@@ -104,9 +113,9 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 	{
 		NewQueueData.Delay = NewQueueData.MaxDelay;
 
-		MutatorQueue.Insert(NewQueueData, 0);
+		const int32 QueueIndex = MutatorQueue.Insert(NewQueueData, 0);
 
-		OnAddItemToQueue.Broadcast(RecipeTag);
+		OnAddItemToQueue.Broadcast(QueueIndex, NewQueueData);
 	}
 
 	return true;
@@ -135,9 +144,11 @@ bool ULFPItemMutatorComponent::RemoveItemFromQueue(const int32 QueueIndex)
 		return false;
 	}
 
-	ProcessItem(MutatorQueue[QueueIndex], true, QueueIndex);
+	const FLFPItemMutatorQueueData RemoveQueueData = MutatorQueue[QueueIndex];
 
-	OnRemoveItemFromQueue.Broadcast(QueueIndex);
+	ProcessItem(RemoveQueueData, true, QueueIndex);
+
+	OnRemoveItemFromQueue.Broadcast(QueueIndex, RemoveQueueData);
 
 	return true;
 }
@@ -160,7 +171,7 @@ bool ULFPItemMutatorComponent::PauseItemCountdown(const int32 QueueIndex)
 
 	MutatorQueue[QueueIndex].bIsPause = true;
 
-	OnPauseItemCountdown.Broadcast(QueueIndex);
+	OnPauseItemCountdown.Broadcast(QueueIndex, MutatorQueue[QueueIndex]);
 
 	return true;
 }
@@ -183,7 +194,7 @@ bool ULFPItemMutatorComponent::ResumeItemCountdown(const int32 QueueIndex)
 
 	MutatorQueue[QueueIndex].bIsPause = false;
 
-	OnResumeItemCountdown.Broadcast(QueueIndex);
+	OnResumeItemCountdown.Broadcast(QueueIndex, MutatorQueue[QueueIndex]);
 
 	return true;
 }
@@ -204,9 +215,11 @@ bool ULFPItemMutatorComponent::DeleteItemFromQueue(const int32 QueueIndex)
 		return false;
 	}
 
+	const FLFPItemMutatorQueueData RemoveQueueData = MutatorQueue[QueueIndex];
+
 	MutatorQueue.RemoveAt(QueueIndex);
 
-	OnDeleteItemFromQueue.Broadcast(QueueIndex);
+	OnDeleteItemFromQueue.Broadcast(QueueIndex, RemoveQueueData);
 
 	return false;
 }

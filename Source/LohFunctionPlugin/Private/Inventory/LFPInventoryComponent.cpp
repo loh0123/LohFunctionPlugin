@@ -64,9 +64,9 @@ void ULFPInventoryComponent::Serialize(FArchive& Ar)
 
 int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)
 {
-	if ((SlotIndex = GetAvailableInventorySlot(SlotIndex, ItemData)) == INDEX_NONE)
+	if ((SlotIndex = FindAvailableInventorySlot(SlotIndex, ItemData)) == INDEX_NONE)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItem GetAvailableInventorySlot return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem GetAvailableInventorySlot return false"));
 
 		return INDEX_NONE;
 	}
@@ -80,7 +80,7 @@ int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int
 
 	if (CanAddItem(ItemData, SlotIndex, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItem CanAddItem return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem CanAddItem return false"));
 
 		return INDEX_NONE;
 	}
@@ -112,14 +112,14 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 
 	if (IsInventorySlotIndexLock(SlotIndex))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : RemoveItem Item is lock"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Item is lock"));
 
 		return false;
 	}
 
 	if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : RemoveItem CanRemoveItem return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem CanRemoveItem return false"));
 
 		return false;
 	}
@@ -140,10 +140,33 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 	int32 MinIndex = FMath::Min(FromSlot, ToSlot);
 	int32 MaxIndex = FMath::Max(FromSlot, ToSlot);
 
-	/* Check Slot is lock */
-	if (IsInventorySlotIndexLock(FromSlot) || IsInventorySlotIndexLock(ToSlot)) return false;
+	if (FromSlot == ToSlot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItem Can't swap to same slot"));
 
-	if (FromSlot == ToSlot || MinIndex < 0 || MaxIndex >= MaxInventorySlotAmount || CanSwapItem(FromSlot, ToSlot, EventInfo) == false) return false;
+		return false;
+	}
+
+	if (MinIndex < 0 || MaxIndex >= MaxInventorySlotAmount)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItem Slot index is greater or smaller"));
+
+		return false;
+	}
+
+	if (IsInventorySlotIndexLock(FromSlot) || IsInventorySlotIndexLock(ToSlot))
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem Item is lock"));
+
+		return false;
+	}
+
+	if (CanSwapItem(FromSlot, ToSlot, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem CanSwapItem return false"));
+
+		return false;
+	}
 
 	if (InventorySlotList.Num() <= MaxIndex) InventorySlotList.SetNum(MaxIndex + 1);
 
@@ -158,15 +181,47 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 
 bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
 {
-	if (
-		Other->IsInventorySlotIndexLock(FromSlot) ||
-		Other->CanRemoveItem(Other->GetInventorySlot(FromSlot), FromSlot, EventInfo) == false ||
-		Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false ||
-		IsInventorySlotIndexLock(ToSlot) ||
-		CanRemoveItem(GetInventorySlot(ToSlot), ToSlot, EventInfo) == false ||
-		CanAddItem(Other->GetInventorySlot(FromSlot), ToSlot, EventInfo) == false
-		)
+	if (Other->IsInventorySlotIndexLock(FromSlot))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other InventorySlotIndex is Lock"));
+
 		return false;
+	}
+
+	if (Other->CanRemoveItem(Other->GetInventorySlot(FromSlot), FromSlot, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanRemoveItem return false"));
+
+		return false;
+	}
+
+	if (Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanAddItem return false"));
+
+		return false;
+	}
+
+	if (IsInventorySlotIndexLock(ToSlot))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther InventorySlotIndex is Lock"));
+
+		return false;
+	}
+
+	if (CanRemoveItem(GetInventorySlot(ToSlot), ToSlot, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther CanRemoveItem return false"));
+
+		return false;
+	}
+
+	if (CanAddItem(Other->GetInventorySlot(FromSlot), ToSlot, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther CanAddItem return false"));
+
+		return false;
+	}
 
 	FLFPInventoryItemData FromData = FLFPInventoryItemData();
 	FLFPInventoryItemData ToData = FLFPInventoryItemData();
@@ -182,7 +237,12 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 
 void ULFPInventoryComponent::SortInventory(const FString EventInfo)
 {
-	if (InventorySlotList.IsValidIndex(StartInventorySlotIndex) == false) return;
+	if (InventorySlotList.IsValidIndex(StartInventorySlotIndex) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SortInventory InventorySlotList is empty or smaller than StartInventorySlotIndex"));
+
+		return;
+	}
 
 	Sort(InventorySlotList.GetData() + StartInventorySlotIndex, InventorySlotList.Num() - StartInventorySlotIndex, [&](const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB)
 		{
@@ -237,7 +297,28 @@ bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName L
 	return true;
 }
 
-int32 ULFPInventoryComponent::GetAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex) const
+bool ULFPInventoryComponent::SetAdditionalData(const int32 Index, const FString NewAdditionalData)
+{
+	if (IsInventorySlotIndexValid(Index) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData Slot index is invalid"));
+
+		return false;
+	}
+
+	if (GetInventorySlot(Index).ItemTag == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData ItemData Tag is empty"));
+
+		return false;
+	}
+
+	InventorySlotList[Index].AdditionalData = NewAdditionalData;
+
+	return true;
+}
+
+int32 ULFPInventoryComponent::FindAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex) const
 {
 	if (EndIndex == INDEX_NONE) EndIndex = MaxInventorySlotAmount - 1;
 
@@ -255,7 +336,7 @@ int32 ULFPInventoryComponent::GetAvailableInventorySlot(int32 SlotIndex, const F
 	return INDEX_NONE;
 }
 
-bool ULFPInventoryComponent::GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex, int32 EndIndex) const
+bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex, int32 EndIndex) const
 {
 	if (EndIndex == INDEX_NONE) EndIndex = InventorySlotList.Num() - 1;
 

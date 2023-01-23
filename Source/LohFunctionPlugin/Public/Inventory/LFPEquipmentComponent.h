@@ -104,6 +104,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnEquipmentSlotRep, Category = "LFPEquipmentComponent | Cache")
 		TArray<int32> EquipmentSlotList;
 
-	UPROPERTY(VisibleAnywhere, Savegame, Category = "LFPEquipmentComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPEquipmentComponent | Cache")
 		TObjectPtr<ULFPInventoryComponent> InventoryComponent = nullptr;
 };

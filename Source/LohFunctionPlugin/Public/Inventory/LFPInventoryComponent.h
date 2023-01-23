@@ -163,16 +163,21 @@ public: // Valid Checker
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		int32 GetAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex = -1) const;
+		int32 FindAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool GetItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex = 0, int32 EndIndex = -1) const;
+		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex = 0, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		FLFPInventoryItemData GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotList; };
+
+public: // Setter
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Setter")
+		bool SetAdditionalData(const int32 Index, const FString NewAdditionalData);
 
 public:
 

@@ -14,7 +14,7 @@ struct FLFPItemMutatorQueueData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPItemMutatorQueueData")
+	UPROPERTY(BlueprintReadOnly, Category = "LFPItemMutatorQueueData")
 		FGameplayTag RecipeTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
@@ -26,15 +26,14 @@ struct FLFPItemMutatorQueueData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		float MaxDelay = -1.0f;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPItemMutatorQueueData")
+	UPROPERTY(BlueprintReadOnly, Category = "LFPItemMutatorQueueData")
 		float Delay = -1.0f;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPItemMutatorQueueData")
+	UPROPERTY(BlueprintReadOnly, Category = "LFPItemMutatorQueueData")
 		bool bIsPause = false;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddMutatorItemEvent, const FGameplayTag, RecipeTag);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMutatorItemEvent, const int32, QueueIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMutatorItemEvent, const int32, QueueIndex, const FLFPItemMutatorQueueData, QueueData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMutatorFunctionEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnProcessMutatorItemEvent, const FLFPItemMutatorQueueData&, ItemData, const bool, bReturnConsume);
 
@@ -139,7 +138,7 @@ public: // Getter
 public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPItemMutatorComponent | Delegate")
-		FOnAddMutatorItemEvent OnAddItemToQueue;
+		FOnMutatorItemEvent OnAddItemToQueue;
 
 	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPItemMutatorComponent | Delegate")
 		FOnMutatorItemEvent OnRemoveItemFromQueue;
@@ -173,7 +172,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnMutatorQueueRep, Category = "LFPItemMutatorComponent | Cache")
 		TArray<FLFPItemMutatorQueueData> MutatorQueue;
 
-	UPROPERTY(VisibleAnywhere, Savegame, Category = "LFPItemMutatorComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPItemMutatorComponent | Cache")
 		TObjectPtr<ULFPInventoryComponent> InventoryComponent = nullptr;
 
 };

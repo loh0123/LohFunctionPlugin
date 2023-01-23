@@ -29,7 +29,7 @@ void ULFPEquipmentComponent::BeginPlay()
 
 	if (IsValid(GetOwner()))
 	{
-		ULFPInventoryComponent* InvComp = Cast<ULFPInventoryComponent>(GetOwner()->GetComponentByClass(ULFPInventoryComponent::StaticClass()));
+		ULFPInventoryComponent* InvComp = Cast<ULFPInventoryComponent>(GetOwner()->FindComponentByClass(ULFPInventoryComponent::StaticClass()));
 
 		if (IsValid(InvComp))
 		{
