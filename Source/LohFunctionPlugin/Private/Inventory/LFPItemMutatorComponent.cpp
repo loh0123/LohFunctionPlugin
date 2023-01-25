@@ -2,6 +2,7 @@
 
 
 #include "Inventory/LFPItemMutatorComponent.h"
+#include "Inventory/LFPInventoryRelatedInterface.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
@@ -29,7 +30,7 @@ void ULFPItemMutatorComponent::BeginPlay()
 
 	if (IsValid(GetOwner()))
 	{
-		ULFPInventoryComponent* InvComp = Cast<ULFPInventoryComponent>(GetOwner()->FindComponentByClass(ULFPInventoryComponent::StaticClass()));
+		ULFPInventoryComponent* InvComp = ILFPInventoryRelatedInterface::Execute_GetInventoryComponent(GetOwner());
 
 		if (IsValid(InvComp))
 		{

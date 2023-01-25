@@ -63,9 +63,8 @@ public: // Function
 
 	/** 
 	* Remove item to inventory
-	* @param ItemData Item Data that got removed from inventory or equipment
+	* @param RemovedItemData Item Data that got removed from inventory or equipment
 	* @param SlotIndex inventory or equipment slot index within max value
-	* @param bEquipItem Remove from equipment slot
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
@@ -73,6 +72,8 @@ public: // Function
 
 	/**
 	* Swap Item In Inventory
+	* @param FromSlot From other inventory slot
+	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
@@ -80,6 +81,7 @@ public: // Function
 
 	/**
 	* Swap Item From Other Inventory
+	* @param Other Take item on this inventory
 	* @param FromSlot From other inventory slot
 	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
@@ -101,10 +103,17 @@ public: // Function
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void TrimInventorySlotList(const int32 FromSlot);
 
-
+	/**
+	* Prevent item operation like remove, swap and sort
+	* @param SlotIndex Item index to lock
+	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool AddItemLock(const int32 SlotIndex, const FName LockName);
 
+	/**
+	* Recover item operation like remove, swap and sort
+	* @param SlotIndex Item index to lock
+	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool RemoveItemLock(const int32 SlotIndex, const FName LockName);
 

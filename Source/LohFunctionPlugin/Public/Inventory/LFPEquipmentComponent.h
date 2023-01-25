@@ -39,7 +39,9 @@ public:
 
 	/**
 	* Equip Item In Inventory
+	* @param EquipmentSlotIndex Equipment slot index to use
 	* @param InventorySlotIndex Inventory slot index to equip
+	* @param ToInventorySlotIndex Swap item to this slot
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
@@ -47,9 +49,9 @@ public:
 
 	/**
 	* Unequip Item In Inventory
-	* @param EquipmentSlotIndex Equipment slot index to remove
+	* @param EquipmentSlotIndex Equipment slot index to use
+	* @param ToInventorySlotIndex Swap item to this slot
 	* @param EventInfo Info to pass to trigger event
-	* @return Index of the item in the Inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));

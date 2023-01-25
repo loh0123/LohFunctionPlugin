@@ -10,15 +10,16 @@
 			"LFPInventoryComponent.gen.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.2_of_3.cpp.obj": [
+			"LFPInventoryRelatedInterface.gen.cpp.obj",
 			"LFPItemMutatorComponent.gen.cpp.obj",
 			"LFPMazeLibrary.gen.cpp.obj",
 			"LFPNoiseLibrary.gen.cpp.obj",
 			"LFPRenderLibrary.gen.cpp.obj",
 			"LFProceduralRoomLibrary.gen.cpp.obj",
-			"LFPTickManager.gen.cpp.obj",
-			"LFPVoxelContainer.gen.cpp.obj"
+			"LFPTickManager.gen.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.3_of_3.cpp.obj": [
+			"LFPVoxelContainer.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginLibrary.gen.cpp.obj",
@@ -28,6 +29,7 @@
 			"LFPWorldGrid.cpp.obj",
 			"LFPEquipmentComponent.cpp.obj",
 			"LFPInventoryComponent.cpp.obj",
+			"LFPInventoryRelatedInterface.cpp.obj",
 			"LFPItemMutatorComponent.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginLibrary.cpp.obj",
