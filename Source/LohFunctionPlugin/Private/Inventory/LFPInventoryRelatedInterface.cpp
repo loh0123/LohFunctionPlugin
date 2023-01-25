@@ -15,7 +15,7 @@ ULFPEquipmentComponent* ILFPInventoryRelatedInterface::GetEquipmentComponent_Imp
 	return nullptr;
 }
 
-ULFPItemMutatorComponent* ILFPInventoryRelatedInterface::GetItemMutatorComponent_Implementation()
+TArray<ULFPItemMutatorComponent*> ILFPInventoryRelatedInterface::GetItemMutatorComponent_Implementation()
 {
-	return nullptr;
+	return TArray<ULFPItemMutatorComponent*>();
 }

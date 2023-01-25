@@ -36,6 +36,6 @@ public:
 		virtual ULFPEquipmentComponent* GetEquipmentComponent_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPInventoryRelatedInterface")
-		ULFPItemMutatorComponent* GetItemMutatorComponent();
-		virtual ULFPItemMutatorComponent* GetItemMutatorComponent_Implementation();
+		TArray<ULFPItemMutatorComponent*> GetItemMutatorComponent();
+		virtual TArray<ULFPItemMutatorComponent*> GetItemMutatorComponent_Implementation();
 };
