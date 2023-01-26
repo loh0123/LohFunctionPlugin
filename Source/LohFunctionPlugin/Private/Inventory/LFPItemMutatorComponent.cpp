@@ -45,16 +45,9 @@ void ULFPItemMutatorComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (MutatorQueue.IsEmpty() == false)
+	if (bProcessQueueOnTick && MutatorQueue.IsEmpty() == false)
 	{
-		FLFPItemMutatorQueueData& MutatorData = MutatorQueue.Last();
-
-		MutatorData.Delay -= DeltaTime;
-
-		if (MutatorData.Delay <= 0.0f)
-		{
-			ProcessItem(MutatorData, false, MutatorQueue.Num() - 1);
-		}
+		ProcessItemQueue(DeltaTime);
 	}
 }
 
@@ -114,7 +107,7 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 	{
 		NewQueueData.Delay = NewQueueData.MaxDelay;
 
-		const int32 QueueIndex = MutatorQueue.Insert(NewQueueData, 0);
+		const int32 QueueIndex = MutatorQueue.Add(NewQueueData);
 
 		OnAddItemToQueue.Broadcast(QueueIndex, NewQueueData);
 	}
@@ -240,6 +233,21 @@ void ULFPItemMutatorComponent::ClearItemQueue(const bool bDeleteItem)
 	}
 
 	OnClearItemQueue.Broadcast();
+}
+
+void ULFPItemMutatorComponent::ProcessItemQueue(const float ConsumeDelayAmount)
+{
+	for (int32 Index = QueueProcessAmount; Index >= 0 && MutatorQueue.IsValidIndex(Index); Index--)
+	{
+		FLFPItemMutatorQueueData& MutatorData = MutatorQueue[Index];
+
+		MutatorData.Delay -= ConsumeDelayAmount;
+
+		if (MutatorData.Delay <= 0.0f)
+		{
+			ProcessItem(MutatorData, false, Index);
+		}
+	}
 }
 
 void ULFPItemMutatorComponent::ProcessItem(const FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume, const int32 QueueIndex)

@@ -85,6 +85,9 @@ public: // Function
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPItemMutatorComponent | Function")
 		void ClearItemQueue(const bool bDeleteItem = false);
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPItemMutatorComponent | Function")
+		void ProcessItemQueue(const float ConsumeDelayAmount);
+
 
 	UFUNCTION()
 		void ProcessItem(const FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume = false, const int32 QueueIndex = -1);
@@ -163,9 +166,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting", meta = (ClampMin = "0"))
 		int32 MaxQueueAmount = 5;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting", meta = (ClampMin = "0"))
+		int32 QueueProcessAmount = 1;
+
 	/* Process non delay item without adding to queue */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting")
 		bool bInstanceProcess = false;
+
+	/* Process queue item on tick automatic */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting")
+		bool bProcessQueueOnTick = true;
 
 protected:
 
