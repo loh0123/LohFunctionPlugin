@@ -6,6 +6,9 @@
 
 
 #include "Render/LFPRenderLibrary.h"
+#include "./Math/LFPGridLibrary.h"
+#include "MeshCardRepresentation.h"
+#include "DistanceFieldAtlas.h"
 
 UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const TextureFilter Filter)
 {
@@ -40,7 +43,7 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor
 	{
 		const FColor& Color = Data[Index];
 
-		const int32 PixelPos = Index * 4;
+		const int32 PixelPos = Index * BufferSize;
 
 		*(CPUColorData + PixelPos) = Color.B;
 		*(CPUColorData + PixelPos + 1) = Color.G;
@@ -53,7 +56,7 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor
 	Texture->UpdateTextureRegions(0, 1, Region, Texture->GetSizeX() * BufferSize, BufferSize, CPUColorData,
 		[Region](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
 		{
-			delete [] SrcData;
+			delete[] SrcData;
 			delete Region;
 		}
 	);

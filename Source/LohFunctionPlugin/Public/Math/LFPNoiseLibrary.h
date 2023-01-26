@@ -50,7 +50,7 @@ struct FLFPNearbyVectorData
 		FIntVector NearbyVector = FIntVector(-1);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
-		FVector NearbyPoint;
+		FVector NearbyPoint = FVector(0);
 
 	FORCEINLINE bool operator<(const FLFPNearbyVectorData& Other) const { return NearbyDistance < Other.NearbyDistance; }
 	FORCEINLINE bool operator<(const float& Other) const { return NearbyDistance < Other; }

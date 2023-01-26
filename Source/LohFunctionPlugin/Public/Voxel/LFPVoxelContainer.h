@@ -51,13 +51,13 @@ struct FLFPVoxelStaticAttributeData : public FTableRowBase
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
 		FColor VertexColor = FColor(255);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
 		int32 MaterialID = 0;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
 		uint8 TextureOffset = uint8(0);
 };
 
@@ -68,13 +68,13 @@ struct FLFPVoxelDynamicAttributeData
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelDynamicAttributeData")
 		FColor VoxelColor = FColor(255);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelDynamicAttributeData")
 		uint8 VoxelStatus = uint8(0);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelAttribute")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelDynamicAttributeData")
 		uint8 VoxelType = uint8(0);
 };
 
@@ -271,7 +271,7 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_DELEGATE_FourParams(FOnInitializeVoxelData, const FIntVector&, VoxelLocation, const ULFPVoxelContainer*, VoxelContainer, FName&, VoxelName, FLFPVoxelDynamicAttributeData&, VoxelAttribute);
+//DECLARE_DYNAMIC_DELEGATE_FourParams(FOnInitializeVoxelData, const FIntVector&, VoxelLocation, const ULFPVoxelContainer*, VoxelContainer, FName&, VoxelName, FLFPVoxelDynamicAttributeData&, VoxelAttribute);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChuckInitialize, const int32, ChuckIndex);
 
@@ -280,7 +280,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListComplete);
 /**
  *
  */
-UCLASS(meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGIN_API ULFPVoxelContainer : public UActorComponent
 {
 	GENERATED_BODY()
@@ -316,8 +316,8 @@ public:
 
 	
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelData | Event")
-		FOnInitializeVoxelData InitializeVoxelDataEvent;
+	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelData | Event")
+	//	FOnInitializeVoxelData InitializeVoxelDataEvent;
 
 protected: // Initialize Data
 
@@ -528,6 +528,11 @@ public:
 
 
 public: /* Function For External Blueprint Or C++ To Use */
+
+	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "VoxelData | Function")
+		FORCEINLINE void GetInitializeVoxelData(const FName& DefaultVoxelName, const FIntVector& VoxelLocation, const ULFPVoxelContainer* VoxelContainer, FName& VoxelName, FLFPVoxelDynamicAttributeData& VoxelAttribute) const;
+	virtual void GetInitializeVoxelData_Implementation(const FName& DefaultVoxelName, const FIntVector& VoxelLocation, const ULFPVoxelContainer* VoxelContainer, FName& VoxelName, FLFPVoxelDynamicAttributeData& VoxelAttribute) const { VoxelName = DefaultVoxelName; }
+
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE int32 GetContainerSize();

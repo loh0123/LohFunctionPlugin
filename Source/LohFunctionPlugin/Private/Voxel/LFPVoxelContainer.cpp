@@ -31,28 +31,21 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 
 	if (ChuckData[ChuckIndex].IsInitialized() == false)
 	{
-		if (InitializeVoxelDataEvent.IsBound())
-		{
-			const FIntVector ChuckGridLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
+		const FIntVector ChuckGridLocation = ULFPGridLibrary::ToGridLocation(ChuckIndex, ContainerSetting.ChuckGridSize);
 
-			const FIntVector VoxelStartLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
+		const FIntVector VoxelStartLocation = FIntVector(ChuckGridLocation.X * ContainerSetting.VoxelGridSize.X, ChuckGridLocation.Y * ContainerSetting.VoxelGridSize.Y, ChuckGridLocation.Z * ContainerSetting.VoxelGridSize.Z);
 
-			TArray<FName> NameDataList;
-			TArray<FLFPVoxelDynamicAttributeData> AttributeDataList;
+		TArray<FName> NameDataList;
+		TArray<FLFPVoxelDynamicAttributeData> AttributeDataList;
 
-			NameDataList.AddZeroed(ContainerSetting.VoxelLength);
-			AttributeDataList.AddZeroed(ContainerSetting.VoxelLength);
+		NameDataList.AddZeroed(ContainerSetting.VoxelLength);
+		AttributeDataList.AddZeroed(ContainerSetting.VoxelLength);
 
-			ParallelFor(ContainerSetting.VoxelLength, [&](const int32 VoxelIndex) {
-				InitializeVoxelDataEvent.Execute(VoxelStartLocation + ULFPGridLibrary::ToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), this, NameDataList[VoxelIndex], AttributeDataList[VoxelIndex]);
-				});
+		ParallelFor(ContainerSetting.VoxelLength, [&](const int32 VoxelIndex) {
+			GetInitializeVoxelData(VoxelName, VoxelStartLocation + ULFPGridLibrary::ToGridLocation(VoxelIndex, ContainerSetting.VoxelGridSize), this, NameDataList[VoxelIndex], AttributeDataList[VoxelIndex]);
+			});
 
-			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, NameDataList, AttributeDataList);
-		}
-		else
-		{
-			ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, VoxelName);
-		}
+		ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, NameDataList, AttributeDataList);
 	}
 }
 

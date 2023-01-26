@@ -73,6 +73,8 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 		/* This Clean Up Color Map If Valid */
 		if (IsValid(VoxelColorTexture))
 		{
+			VoxelColorTexture->ReleaseResource();
+
 			VoxelColorTexture->MarkAsGarbage();
 
 			VoxelColorTexture = nullptr;
@@ -81,6 +83,8 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 		/* This Clean Up Data Map If Valid */
 		if (IsValid(VoxelDataTexture))
 		{
+			VoxelDataTexture->ReleaseResource();
+
 			VoxelDataTexture->MarkAsGarbage();
 
 			VoxelDataTexture = nullptr;
@@ -89,12 +93,12 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 		/* This Setup Texture */
 		{
 			const FIntVector VoxelGridSize = NewVoxelContainer->GetContainerSetting().VoxelGridSize;
-
+		
 			const FIntPoint VoxelTextureSize(VoxelGridSize.X + 2, (VoxelGridSize.Y + 2) * (VoxelGridSize.Z + 2));
-
+		
 			VoxelColorTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
 			VoxelDataTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
-
+		
 			OutVoxelColorTexture = VoxelColorTexture;
 			OutVoxelDataTexture = VoxelDataTexture;
 		}
@@ -187,6 +191,8 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 
 	if (IsValid(VoxelColorTexture))
 	{
+		VoxelColorTexture->ReleaseResource();
+
 		VoxelColorTexture->MarkAsGarbage();
 
 		VoxelColorTexture = nullptr;
@@ -194,6 +200,8 @@ void ULFPBaseVoxelMeshComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 
 	if (IsValid(VoxelDataTexture))
 	{
+		VoxelDataTexture->ReleaseResource();
+
 		VoxelDataTexture->MarkAsGarbage();
 
 		VoxelDataTexture = nullptr;
@@ -242,8 +250,8 @@ void ULFPBaseVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			}
 		);
 
-		ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, ColorList);
-		ULFPRenderLibrary::UpdateTexture2D(VoxelDataTexture, AttributeList);
+		if (IsValid(VoxelColorTexture)) ULFPRenderLibrary::UpdateTexture2D(VoxelColorTexture, ColorList);
+		if (IsValid(VoxelDataTexture)) ULFPRenderLibrary::UpdateTexture2D(VoxelDataTexture, AttributeList);
 	}
 
 	if (ChuckStatus.bIsVoxelMeshDirty && (RenderTask == nullptr || RenderTask->IsDone()))
@@ -743,17 +751,16 @@ void ULFPBaseVoxelMeshComponent::RebuildPhysicsData()
 
 void ULFPBaseVoxelMeshComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup)
 {
+	if (bSuccess)
+	{
+		RecreatePhysicsState();
+	}
+
 	if (ChuckStatus.bIsBodyInvalid)
 	{
 		ChuckStatus.bIsBodyInvalid = false;
 
-		RecreatePhysicsState();
-
 		RebuildPhysicsData();
-	}
-	else if (bSuccess)
-	{
-		RecreatePhysicsState();
 	}
 }
 
@@ -1439,13 +1446,8 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 	const FVector VoxelHalfSize = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
 	const FVector VoxelRenderOffset = -RenderParam.LocalVoxelContainer->GetContainerSetting().HalfRenderBound + RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelHalfSize;
-	const FIntPoint VoxelUVRound = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
+	//const FIntPoint VoxelUVRound = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelUVRound;
 
-	FIntVector LumenBatch = RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelGridSize / 4;
-
-	if (LumenBatch.X == 0) LumenBatch.X = 1;
-	if (LumenBatch.Y == 0) LumenBatch.Y = 1;
-	if (LumenBatch.Z == 0) LumenBatch.Z = 1;
 
 	NewRenderData->VoxelMaterialList.Init(0, RenderParam.LocalVoxelContainer->GetContainerSetting().VoxelLength);
 
@@ -1500,6 +1502,12 @@ void FLFPBaseBoxelRenderTask::DoWork()
 					OwnerPtr->RenderData = NewRenderData;
 
 					OwnerPtr->ChuckStatus.bIsLumenDataDirty = true;
+
+					OwnerPtr->ChuckStatus.bIsGeneratingMesh = false;
+
+					OwnerPtr->UpdateBounds();
+					OwnerPtr->MarkRenderStateDirty();
+					OwnerPtr->RebuildPhysicsData();
 				}
 				else
 				{
@@ -1507,12 +1515,6 @@ void FLFPBaseBoxelRenderTask::DoWork()
 
 					delete NewRenderData;
 				}
-
-				OwnerPtr->ChuckStatus.bIsGeneratingMesh = false;
-
-				OwnerPtr->UpdateBounds();
-				OwnerPtr->MarkRenderStateDirty();
-				OwnerPtr->RebuildPhysicsData();
 			}
 		});
 	else

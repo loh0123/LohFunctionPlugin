@@ -200,6 +200,16 @@ struct FLFPBaseVoxelMeshStatus
 
 public:
 
+	FLFPBaseVoxelMeshStatus()
+	{
+		bIsVoxelAttributeDirty = false;
+		bIsVoxelMeshDirty = false;
+		bIsGeneratingMesh = false;
+		bIsLumenDataDirty = false;
+		bIsGeneratingLumen = false;
+		bIsBodyInvalid = false;
+	}
+
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelAttributeDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "BaseVoxelMeshStatus") uint8 bIsVoxelMeshDirty : 1;
