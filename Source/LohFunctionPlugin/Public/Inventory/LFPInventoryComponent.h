@@ -18,7 +18,7 @@ struct FLFPInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
-		FString AdditionalData = FString("");
+		FString MetaData = FString("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
@@ -181,7 +181,7 @@ public: // Getter
 		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex = 0, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		FLFPInventoryItemData GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData(); };
+		const FLFPInventoryItemData GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotList; };
@@ -189,7 +189,7 @@ public: // Getter
 public: // Setter
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Setter")
-		bool SetAdditionalData(const int32 Index, const FString NewAdditionalData);
+		bool SetMetaData(const int32 Index, const FString NewMetaData);
 
 public:
 

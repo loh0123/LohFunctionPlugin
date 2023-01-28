@@ -300,7 +300,7 @@ bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName L
 	return true;
 }
 
-bool ULFPInventoryComponent::SetAdditionalData(const int32 Index, const FString NewAdditionalData)
+bool ULFPInventoryComponent::SetMetaData(const int32 Index, const FString NewMetaData)
 {
 	if (IsInventorySlotIndexValid(Index) == false)
 	{
@@ -316,7 +316,7 @@ bool ULFPInventoryComponent::SetAdditionalData(const int32 Index, const FString 
 		return false;
 	}
 
-	InventorySlotList[Index].AdditionalData = NewAdditionalData;
+	InventorySlotList[Index].MetaData = NewMetaData;
 
 	return true;
 }
