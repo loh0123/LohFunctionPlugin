@@ -240,7 +240,7 @@ void ULFPItemMutatorComponent::ClearItemQueue(const bool bDeleteItem)
 
 void ULFPItemMutatorComponent::ProcessItemQueue(const float ConsumeDelayAmount)
 {
-	for (int32 Index = QueueProcessAmount; Index >= 0 && MutatorQueue.IsValidIndex(Index); Index--)
+	for (int32 Index = QueueProcessAmount - 1; Index >= 0 && MutatorQueue.IsValidIndex(Index); Index--)
 	{
 		FLFPItemMutatorQueueData& MutatorData = MutatorQueue[Index];
 
