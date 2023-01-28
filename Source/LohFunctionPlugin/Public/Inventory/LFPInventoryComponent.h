@@ -18,13 +18,16 @@ struct FLFPInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
-		FString MetaData = FString("");
+		FJsonObjectWrapper MetaData = FJsonObjectWrapper();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY()
 		TArray<FName> LockList;
+
+
+	static const FLFPInventoryItemData EmptyInventoryItemData;
 };
 
 
@@ -181,15 +184,10 @@ public: // Getter
 		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex = 0, int32 EndIndex = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		const FLFPInventoryItemData GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData(); };
+		const FLFPInventoryItemData& GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData::EmptyInventoryItemData; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotList; };
-
-public: // Setter
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Setter")
-		bool SetMetaData(const int32 Index, const FString NewMetaData);
 
 public:
 

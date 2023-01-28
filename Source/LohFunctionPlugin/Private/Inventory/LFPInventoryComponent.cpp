@@ -7,6 +7,10 @@
 #include "Inventory/LFPInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 
+
+const FLFPInventoryItemData FLFPInventoryItemData::EmptyInventoryItemData = FLFPInventoryItemData();
+
+
 // Sets default values for this component's properties
 ULFPInventoryComponent::ULFPInventoryComponent()
 {
@@ -300,26 +304,26 @@ bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName L
 	return true;
 }
 
-bool ULFPInventoryComponent::SetMetaData(const int32 Index, const FString NewMetaData)
-{
-	if (IsInventorySlotIndexValid(Index) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData Slot index is invalid"));
-
-		return false;
-	}
-
-	if (GetInventorySlot(Index).ItemTag == FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData ItemData Tag is empty"));
-
-		return false;
-	}
-
-	InventorySlotList[Index].MetaData = NewMetaData;
-
-	return true;
-}
+//bool ULFPInventoryComponent::SetMetaData(const int32 Index, const FString NewMetaData)
+//{
+//	if (IsInventorySlotIndexValid(Index) == false)
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData Slot index is invalid"));
+//
+//		return false;
+//	}
+//
+//	if (GetInventorySlot(Index).ItemTag == FGameplayTag::EmptyTag)
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SetAdditionalData ItemData Tag is empty"));
+//
+//		return false;
+//	}
+//
+//	InventorySlotList[Index].MetaData = NewMetaData;
+//
+//	return true;
+//}
 
 int32 ULFPInventoryComponent::FindAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex) const
 {

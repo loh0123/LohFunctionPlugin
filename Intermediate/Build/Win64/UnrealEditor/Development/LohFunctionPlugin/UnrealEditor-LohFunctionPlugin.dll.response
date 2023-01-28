@@ -47,7 +47,7 @@
 "..\Intermediate\Build\Win64\UnrealEditor\Development\RHI\UnrealEditor-RHI.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\ImageWriteQueue\UnrealEditor-ImageWriteQueue.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\Core\UnrealEditor-Core.lib"
-"..\Intermediate\Build\Win64\UnrealEditor\Development\InteractiveToolsFramework\UnrealEditor-InteractiveToolsFramework.lib"
+"..\Intermediate\Build\Win64\UnrealEditor\Development\JsonUtilities\UnrealEditor-JsonUtilities.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\PhysicsCore\UnrealEditor-PhysicsCore.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\StaticMeshDescription\UnrealEditor-StaticMeshDescription.lib"
 "..\Intermediate\Build\Win64\UnrealEditor\Development\DeveloperSettings\UnrealEditor-DeveloperSettings.lib"
