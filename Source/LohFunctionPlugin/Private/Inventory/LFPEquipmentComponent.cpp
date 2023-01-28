@@ -51,6 +51,8 @@ void ULFPEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			if (EquipmentSlotList[Index] != INDEX_NONE) UnequipItem(Index, -1, "EndPlay");
 		}
+
+	SetInventoryComponent(nullptr);
 }
 
 
@@ -75,11 +77,21 @@ void ULFPEquipmentComponent::Serialize(FArchive& Ar)
 	}
 }
 
-bool ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
+void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
 {
+	if (IsValid(InventoryComponent))
+	{
+		InventoryComponent->OnSwapItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+	}
+
 	InventoryComponent = Component;
 
-	return IsValid(InventoryComponent);
+	if (IsValid(Component))
+	{
+		InventoryComponent->OnSwapItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+	}
+
+	return;
 }
 
 bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
@@ -91,9 +103,9 @@ bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int
 		return false;
 	}
 
-	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
+	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem InventorySlotIndex is not valid"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem IsInventorySlotItemValid is not valid"));
 
 		return false;
 	}
@@ -101,13 +113,6 @@ bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int
 	if (EquipmentSlotIndex >= MaxEquipmentSlotAmount)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem EquipmentSlotIndex is not valid"));
-
-		return false;
-	}
-
-	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemTag == FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem InventorySlot ItemData Tag is empty"));
 
 		return false;
 	}
@@ -155,16 +160,9 @@ bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 		return false;
 	}
 
-	if (IsEquipmentSlotIndexValid(EquipmentSlotIndex) == false)
+	if (IsEquipmentSlotItemValid(EquipmentSlotIndex) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem EquipmentSlotIndex is not valid"));
-
-		return false;
-	}
-
-	if (GetEquipmentSlot(EquipmentSlotIndex).ItemTag == FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem EquipmentSlot is empty"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem IsEquipmentSlotItemValid return false"));
 
 		return false;
 	}
@@ -194,4 +192,45 @@ bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 	OnUnequipItem.Broadcast(InventoryComponent->GetInventorySlot(InvIndex), EquipmentSlotIndex, InvIndex, EventInfo);
 
 	return true;
+}
+
+void ULFPEquipmentComponent::OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo)
+{
+	const int32 ItemAIndex = FindEquipmentSlotIndex(FromSlot);
+	const int32 ItemBIndex = FindEquipmentSlotIndex(ToSlot);
+
+	if (ItemAIndex != INDEX_NONE)
+	{
+		EquipmentSlotList[ItemAIndex] = ToSlot;
+	}
+
+	if (ItemBIndex != INDEX_NONE)
+	{
+		EquipmentSlotList[ItemBIndex] = FromSlot;
+	}
+}
+
+int32 ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex) const
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : FindEquipmentSlotIndex InventoryComponent is not valid"));
+
+		return INDEX_NONE;
+	}
+
+	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
+	{
+		return INDEX_NONE;
+	}
+
+	for (int32 EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
+	{
+		if (InventorySlotIndex == EquipmentSlotList[EquipmentSlotIndex])
+		{
+			return EquipmentSlotIndex;
+		}
+	}
+
+	return INDEX_NONE;
 }

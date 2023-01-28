@@ -38,7 +38,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool SetInventoryComponent(ULFPInventoryComponent* Component);
+		void SetInventoryComponent(ULFPInventoryComponent* Component);
 
 	/**
 	* Equip Item In Inventory
@@ -59,6 +59,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));
 
+
+public: // Inventory Event
+
+	UFUNCTION()
+		void OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo);
 
 public: // Event
 
@@ -88,13 +93,19 @@ public: // Valid Checker
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index); };
 
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
+		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).ItemTag != FGameplayTag::EmptyTag; };
+
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		const TArray<int32>& GetEquipmentSlotList() const { return EquipmentSlotList; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		const FLFPInventoryItemData GetEquipmentSlot(const int32 Index) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(Index) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[Index]) : FLFPInventoryItemData(); };
+		const FLFPInventoryItemData& GetEquipmentSlot(const int32 Index) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(Index) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[Index]) : FLFPInventoryItemData::EmptyInventoryItemData; };
+
+	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
+		int32 FindEquipmentSlotIndex(const int32 InventorySlotIndex) const;
 
 public:
 
