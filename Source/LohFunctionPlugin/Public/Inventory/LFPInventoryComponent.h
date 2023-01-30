@@ -24,7 +24,7 @@ struct FLFPInventoryItemData
 		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY()
-		TArray<FName> LockList;
+		TArray<FName> LockList = TArray<FName>();
 
 
 	static const FLFPInventoryItemData EmptyInventoryItemData;

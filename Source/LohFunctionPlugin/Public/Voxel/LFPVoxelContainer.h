@@ -59,6 +59,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
 		uint8 TextureOffset = uint8(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
+		bool bConstanctUpdateOnTick = false;
 };
 
 USTRUCT(BlueprintType)
@@ -76,6 +79,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, Category = "LFPVoxelDynamicAttributeData")
 		uint8 VoxelType = uint8(0);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelStaticAttributeData")
+		bool bUpdateOnTick = false;
 };
 
 USTRUCT()
@@ -290,6 +296,8 @@ public:
 	ULFPVoxelContainer();
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+	virtual void Serialize(FArchive& Ar) override;
 
 protected:
 
@@ -538,7 +546,7 @@ public: /* Function For External Blueprint Or C++ To Use */
 		FORCEINLINE int32 GetContainerSize();
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
-		FORCEINLINE void UpdateChuckWriteAction();
+		FORCEINLINE void UpdateChuckWriteAction(const bool bForce = false);
 
 	UFUNCTION(BlueprintCallable, Category = "VoxelData | Function")
 		FORCEINLINE void UpdateChuckName();

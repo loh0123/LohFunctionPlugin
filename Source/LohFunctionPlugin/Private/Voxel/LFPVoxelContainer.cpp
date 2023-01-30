@@ -23,6 +23,16 @@ void ULFPVoxelContainer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
 	DOREPLIFETIME(ULFPVoxelContainer, ChuckData);
 }
 
+void ULFPVoxelContainer::Serialize(FArchive& Ar)
+{
+	if (Ar.IsLoading() == false)
+	{
+		UpdateChuckWriteAction(true);
+	}
+
+	Super::Serialize(Ar);
+}
+
 void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& VoxelName, const bool bSkipLock)
 {
 	check(IsChuckIndexValid(ChuckIndex));
@@ -90,7 +100,7 @@ int32 ULFPVoxelContainer::GetContainerSize()
 	return GetResourceSizeBytes(EResourceSizeMode::EstimatedTotal);
 }
 
-void ULFPVoxelContainer::UpdateChuckWriteAction()
+void ULFPVoxelContainer::UpdateChuckWriteAction(const bool bForce)
 {
 	if (ChuckWriteActionList.IsEmpty()) return;
 
@@ -102,7 +112,7 @@ void ULFPVoxelContainer::UpdateChuckWriteAction()
 
 	int32 Index = 0;
 
-	for (auto ChuckWriteAction = ChuckWriteActionList.CreateIterator(); ChuckWriteAction && Index < ContainerSetting.WriteActionBatchAmount; ++ChuckWriteAction)
+	for (auto ChuckWriteAction = ChuckWriteActionList.CreateIterator(); ChuckWriteAction && (bForce || Index < ContainerSetting.WriteActionBatchAmount); ++ChuckWriteAction)
 	{
 		Index++;
 

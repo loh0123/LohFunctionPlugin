@@ -103,16 +103,6 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 			OutVoxelDataTexture = VoxelDataTexture;
 		}
 
-		if (bAutoCreateMaterialInstance)
-		{
-			MaterialInstanceDynamicList.Init(nullptr, Material.Num());
-
-			for (int32 MaterialIndex = 0; MaterialIndex < Material.Num(); MaterialIndex++)
-			{
-				if (IsValid(GetMaterial(MaterialIndex))) MaterialInstanceDynamicList[MaterialIndex] = CreateDynamicMaterialInstance(MaterialIndex, nullptr, "");
-			}
-		}
-
 		/* This Setup Voxel */
 		{
 			VoxelContainer = NewVoxelContainer;
@@ -122,6 +112,16 @@ void ULFPBaseVoxelMeshComponent::SetVoxelContainer(const TArray<UMaterialInterfa
 			VoxelContainer->ConnectVoxelUpdateEvent(NewChuckIndex, this, &ULFPBaseVoxelMeshComponent::UpdateVoxelMesh, &ULFPBaseVoxelMeshComponent::UpdateVoxelAttribute);
 
 			VoxelContainer->FindOrAddChuckWriteAction(NewChuckIndex);
+		}
+
+		if (bAutoCreateMaterialInstance)
+		{
+			MaterialInstanceDynamicList.Init(nullptr, Material.Num());
+
+			for (int32 MaterialIndex = 0; MaterialIndex < Material.Num(); MaterialIndex++)
+			{
+				if (IsValid(GetMaterial(MaterialIndex))) MaterialInstanceDynamicList[MaterialIndex] = CreateDynamicMaterialInstance(MaterialIndex, nullptr, "");
+			}
 		}
 	}
 	else
@@ -654,6 +654,8 @@ UMaterialInstanceDynamic* ULFPBaseVoxelMeshComponent::CreateDynamicMaterialInsta
 	{
 		MID->SetTextureParameterValue("VoxelDataTexture", VoxelDataTexture);
 		MID->SetTextureParameterValue("VoxelColorTexture", VoxelColorTexture);
+
+		if (IsValid(VoxelContainer)) MID->SetVectorParameterValue("VoxelChuckSize", FVector(VoxelContainer->GetContainerSetting().VoxelGridSize));
 	}
 
 	return MID;
