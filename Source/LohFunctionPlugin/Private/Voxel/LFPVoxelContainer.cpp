@@ -56,6 +56,8 @@ void ULFPVoxelContainer::InitializeChuck(const int32 ChuckIndex, const FName& Vo
 			});
 
 		ChuckData[ChuckIndex].InitChuckData(ContainerSetting.VoxelLength, NameDataList, AttributeDataList);
+
+		OnChuckInitialize.Broadcast(ChuckIndex);
 	}
 }
 
@@ -157,7 +159,7 @@ void ULFPVoxelContainer::UpdateChuckWriteAction(const bool bForce)
 	{
 		ChuckWriteActionList.Shrink();
 
-		VoxelWriteActionListCompleteEvent.Broadcast();
+		OnChuckWriteActionListComplete.Broadcast();
 	}
 
 	return;
@@ -171,7 +173,7 @@ void ULFPVoxelContainer::UpdateChuckName()
 
 	ChuckData[*ChuckNameUpdate].SendNameUpdateEvent();
 
-	VoxelChuckNameUpdateEvent.Broadcast(*ChuckNameUpdate);
+	OnVoxelChuckNameUpdate.Broadcast(*ChuckNameUpdate);
 
 	BatchChuckNameUpdateList.Remove(*ChuckNameUpdate);
 
@@ -179,7 +181,7 @@ void ULFPVoxelContainer::UpdateChuckName()
 	{
 		BatchChuckNameUpdateList.Shrink();
 
-		VoxelChuckNameListCompleteEvent.Broadcast();
+		OnVoxelChuckNameListComplete.Broadcast();
 	}
 
 	return;
@@ -193,7 +195,7 @@ void ULFPVoxelContainer::UpdateChuckAttribute()
 	
 	ChuckData[*ChuckAttributeUpdate].SendAttributeUpdateEvent();
 
-	VoxelChuckAttributeUpdateEvent.Broadcast(*ChuckAttributeUpdate);
+	OnVoxelChuckAttributeUpdate.Broadcast(*ChuckAttributeUpdate);
 	
 	BatchChuckAttributeUpdateList.Remove(*ChuckAttributeUpdate);
 
@@ -201,7 +203,7 @@ void ULFPVoxelContainer::UpdateChuckAttribute()
 	{
 		BatchChuckAttributeUpdateList.Shrink();
 
-		VoxelChuckAttributeListCompleteEvent.Broadcast();
+		OnVoxelChuckAttributeListComplete.Broadcast();
 	}
 
 	return;
@@ -351,6 +353,8 @@ void ULFPVoxelContainer::SetVoxelGridAttribute(const FLFPVoxelGridIndex VoxelGri
 
 	Action->AttributeData.Add(VoxelGridIndex.VoxelIndex, VoxelAttribute);
 
+	OnVoxelAttributeUpdate.Broadcast(VoxelGridIndex, VoxelAttribute);
+
 	return;
 }
 
@@ -365,6 +369,8 @@ void ULFPVoxelContainer::SetVoxelGridName(const FLFPVoxelGridIndex VoxelGridInde
 	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
 
 	Action->NameData.Add(VoxelGridIndex.VoxelIndex, VoxelName);
+
+	OnVoxelNameUpdate.Broadcast(VoxelGridIndex, VoxelName);
 
 	return;
 }
@@ -390,6 +396,8 @@ void ULFPVoxelContainer::SetChuckGridName(const int32 ChuckIndex, const FName Vo
 	for (int32 VoxelIndex = 0; VoxelIndex < ContainerSetting.VoxelLength; VoxelIndex++)
 	{
 		Action->NameData.Add(VoxelIndex, VoxelName);
+
+		OnVoxelNameUpdate.Broadcast(FLFPVoxelGridIndex(ChuckIndex, VoxelIndex), VoxelName);
 	}
 
 	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;
@@ -410,6 +418,8 @@ void ULFPVoxelContainer::SetChuckGridNameWithHeight(const int32 ChuckIndex, cons
 		const int32 VoxelIndex = ULFPGridLibrary::ToIndex(FIntVector(VoxelGridPosition.X, VoxelGridPosition.Y, VoxelHeightIndex), ContainerSetting.VoxelGridSize);
 
 		Action->NameData.Add(VoxelIndex, VoxelName);
+
+		OnVoxelNameUpdate.Broadcast(FLFPVoxelGridIndex(ChuckIndex, VoxelIndex), VoxelName);
 	}
 
 	Action->bWantUpdateName = Action->bWantUpdateName || bInitializeChuck;

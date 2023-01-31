@@ -279,6 +279,10 @@ public:
 
 //DECLARE_DYNAMIC_DELEGATE_FourParams(FOnInitializeVoxelData, const FIntVector&, VoxelLocation, const ULFPVoxelContainer*, VoxelContainer, FName&, VoxelName, FLFPVoxelDynamicAttributeData&, VoxelAttribute);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnVoxelNameAction, const FLFPVoxelGridIndex, VoxelGridIndex, const FName, VoxelName);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnVoxelAttributeAction, const FLFPVoxelGridIndex, VoxelGridIndex, const FLFPVoxelDynamicAttributeData, VoxelAttribute);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChuckInitialize, const int32, ChuckIndex);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionListComplete);
@@ -308,24 +312,32 @@ protected:
 public:
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnChuckInitialize VoxelChuckNameUpdateEvent;
+		FOnVoxelNameAction OnVoxelNameUpdate;
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnChuckInitialize VoxelChuckAttributeUpdateEvent;
+		FOnVoxelAttributeAction OnVoxelAttributeUpdate;
+
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnActionListComplete VoxelWriteActionListCompleteEvent;
+		FOnChuckInitialize OnVoxelChuckNameUpdate;
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnActionListComplete VoxelChuckNameListCompleteEvent;
+		FOnChuckInitialize OnVoxelChuckAttributeUpdate;
+
 
 	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
-		FOnActionListComplete VoxelChuckAttributeListCompleteEvent;
+		FOnActionListComplete OnVoxelChuckNameListComplete;
 
-	
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnActionListComplete OnVoxelChuckAttributeListComplete;
 
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelData | Event")
-	//	FOnInitializeVoxelData InitializeVoxelDataEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnActionListComplete OnChuckWriteActionListComplete;
+
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelData | Event")
+		FOnChuckInitialize OnChuckInitialize;
 
 protected: // Initialize Data
 
