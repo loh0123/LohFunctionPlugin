@@ -226,6 +226,8 @@ public:
 class FLFPBaseBoxelRenderTask;
 class FLFPBaseBoxelLumenTask;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRenderActionComplete);
+
 //**
 // * This Class Main Function Is To Render Out The Voxel
 // *  - Render Voxel Mesh
@@ -247,6 +249,14 @@ public:
 	ULFPBaseVoxelMeshComponent();
 
 	virtual void BeginDestroy() override;
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelMesh | Event")
+		FOnRenderActionComplete OnRenderUpdated;
+
+	UPROPERTY(BlueprintAssignable, Category = "VoxelMesh | Event")
+		FOnRenderActionComplete OnLumenUpdated;
 
 public: /* Functions For Setting Up Component */
 

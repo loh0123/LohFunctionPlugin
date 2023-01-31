@@ -780,7 +780,7 @@ void FLFPBaseBoxelLumenTask::DoWork()
 		AsyncTask(ENamedThreads::GameThread, [NewLumenData, SharePtr = TWeakObjectPtr<ULFPBaseVoxelMeshComponent>(LumenParam.SharePtr)]() {
 			ULFPBaseVoxelMeshComponent* OwnerPtr = SharePtr.Get();
 
-			if (SharePtr.IsValid() == false || IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false)
+			if (SharePtr.IsValid() == false || IsValid(OwnerPtr) == false || OwnerPtr->HasBegunPlay() == false || NewLumenData->DistanceFieldMeshData == nullptr || NewLumenData->LumenCardData == nullptr)
 			{
 				delete NewLumenData;
 			}
@@ -788,13 +788,10 @@ void FLFPBaseBoxelLumenTask::DoWork()
 			{
 				OwnerPtr->LumenData = NewLumenData;
 
-				if (OwnerPtr->LumenData->DistanceFieldMeshData == nullptr || OwnerPtr->LumenData->LumenCardData == nullptr)
-				{
-					OwnerPtr->LumenData = nullptr;
-				}
-
 				OwnerPtr->ChuckStatus.bIsGeneratingLumen = false;
 				OwnerPtr->MarkRenderStateDirty();
+
+				OwnerPtr->OnLumenUpdated.Broadcast();
 			}
 		});
 	else
@@ -1510,6 +1507,8 @@ void FLFPBaseBoxelRenderTask::DoWork()
 					OwnerPtr->UpdateBounds();
 					OwnerPtr->MarkRenderStateDirty();
 					OwnerPtr->RebuildPhysicsData();
+
+					OwnerPtr->OnRenderUpdated.Broadcast();
 				}
 				else
 				{
