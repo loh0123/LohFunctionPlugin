@@ -7,7 +7,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Inventory/LFPInventoryComponent.h"
+#include "Item/LFPInventoryComponent.h"
 #include "LFPEquipmentComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnEquipmentEvent, const FLFPInventoryItemData&, ItemData, const int32, EquipmentSlotIndex, const int32, InventorySlotIndex, const FString&, EventInfo);
@@ -63,6 +63,12 @@ public:
 public: // Inventory Event
 
 	UFUNCTION()
+		void OnInventoryAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
+	
+	UFUNCTION()
+		void OnInventoryRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
+
+	UFUNCTION()
 		void OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo);
 
 public: // Event
@@ -109,7 +115,7 @@ public: // Getter
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting", meta = (ClampMin = "0"))
+	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
 		int32 MaxEquipmentSlotAmount = 5;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")

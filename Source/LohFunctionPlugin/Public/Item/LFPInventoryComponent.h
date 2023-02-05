@@ -23,7 +23,7 @@ struct FLFPInventoryItemData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category = "LFPInventorySlotData")
 		TArray<FName> LockList = TArray<FName>();
 
 
@@ -71,16 +71,24 @@ public: // Function
 		TArray<int32> AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, int32 SlotIndex = -1, const FString EventInfo = FString("None"));
 
 	/** 
-	* Remove item to inventory
+	* Remove item From inventory
 	* @param RemovedItemData Item Data that got removed from inventory or equipment
 	* @param SlotIndex inventory or equipment slot index within max value
+	* @param bForce Ignore lock item rule and can remove item
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const FString EventInfo = FString("None"));
+		bool RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const FString EventInfo = FString("None"));
+		bool RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const bool bForce = false, const FString EventInfo = FString("None"));
+
+	/** 
+	* Remove All item From inventory
+	* @param bForce Ignore lock item rule and can remove item
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		void ClearInventory(const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
@@ -133,15 +141,15 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool CanAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual bool CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag; }
+		virtual bool CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool CanRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual bool CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return true; }
+		virtual bool CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool CanSwapItem(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const;
-		virtual bool CanSwapItem_Implementation(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const { return true; }
+		virtual bool CanSwapItem_Implementation(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const;
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")

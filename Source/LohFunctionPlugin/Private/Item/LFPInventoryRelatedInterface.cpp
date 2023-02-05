@@ -4,7 +4,7 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Inventory/LFPInventoryRelatedInterface.h"
+#include "Item/LFPInventoryRelatedInterface.h"
 
 // Add default functionality here for any ILFPInventoryRelatedInterface functions that are not pure virtual.
 

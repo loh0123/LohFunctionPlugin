@@ -27,6 +27,7 @@ public class LohFunctionPlugin : ModuleRules
 			{
 				"GameplayTags",
 				"Core",
+                //"GameplayAbilities",
                 "JsonUtilities",
 
 				"PhysicsCore",

@@ -4,8 +4,8 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Inventory/LFPItemMutatorComponent.h"
-#include "Inventory/LFPInventoryRelatedInterface.h"
+#include "Item/LFPItemMutatorComponent.h"
+#include "Item/LFPInventoryRelatedInterface.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties

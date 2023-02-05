@@ -4,8 +4,8 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Inventory/LFPEquipmentComponent.h"
-#include "Inventory/LFPInventoryRelatedInterface.h"
+#include "Item/LFPEquipmentComponent.h"
+#include "Item/LFPInventoryRelatedInterface.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
@@ -81,6 +81,8 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 {
 	if (IsValid(InventoryComponent))
 	{
+		InventoryComponent->OnAddItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
+		InventoryComponent->OnRemoveItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
 		InventoryComponent->OnSwapItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
 	}
 
@@ -88,6 +90,8 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 
 	if (IsValid(Component))
 	{
+		InventoryComponent->OnAddItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
+		InventoryComponent->OnRemoveItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
 		InventoryComponent->OnSwapItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
 	}
 
@@ -174,6 +178,13 @@ bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 		return false;
 	}
 
+	if (InventoryComponent->GetInventorySlot(ToInventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem ToInventorySlotIndex is currently occupied"));
+
+		return false;
+	}
+
 	InventoryComponent->RemoveItemLock(EquipmentSlotList[EquipmentSlotIndex], FName("Equipment"));
 
 	if (ToInventorySlotIndex >= 0 && InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], ToInventorySlotIndex, EventInfo) == false)
@@ -192,6 +203,14 @@ bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const i
 	OnUnequipItem.Broadcast(InventoryComponent->GetInventorySlot(InvIndex), EquipmentSlotIndex, InvIndex, EventInfo);
 
 	return true;
+}
+
+void ULFPEquipmentComponent::OnInventoryAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
+{
+}
+
+void ULFPEquipmentComponent::OnInventoryRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
+{
 }
 
 void ULFPEquipmentComponent::OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo)

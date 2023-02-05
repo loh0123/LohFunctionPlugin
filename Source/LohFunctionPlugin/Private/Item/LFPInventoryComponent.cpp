@@ -4,7 +4,7 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Inventory/LFPInventoryComponent.h"
+#include "Item/LFPInventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -143,7 +143,7 @@ TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItem
 	return ReturnList;
 }
 
-bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const bool bForce, const FString EventInfo)
 {
 	if (IsInventorySlotItemValid(SlotIndex) == false)
 	{
@@ -152,18 +152,21 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 		return false;
 	}
 
-	if (IsInventorySlotIndexLock(SlotIndex))
+	if (bForce == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Item is lock"));
+		if (IsInventorySlotIndexLock(SlotIndex))
+		{
+			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Item is lock"));
 
-		return false;
-	}
+			return false;
+		}
 
-	if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem CanRemoveItem return false"));
+		if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
+		{
+			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem CanRemoveItem return false"));
 
-		return false;
+			return false;
+		}
 	}
 
 	RemovedItemData = InventorySlotList[SlotIndex];
@@ -177,7 +180,7 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 	return true;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const bool bForce, const FString EventInfo)
 {
 	for (const int32 SlotIndex : SlotIndexList)
 	{
@@ -188,18 +191,21 @@ bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& Remov
 			return false;
 		}
 
-		if (IsInventorySlotIndexLock(SlotIndex))
+		if (bForce == false)
 		{
-			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList Item is lock"));
+			if (IsInventorySlotIndexLock(SlotIndex))
+			{
+				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList Item is lock"));
 
-			return false;
-		}
+				return false;
+			}
 
-		if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
-		{
-			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
+			if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
+			{
+				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
 
-			return false;
+				return false;
+			}
 		}
 	}
 
@@ -221,6 +227,50 @@ bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& Remov
 	TrimInventorySlotList(MaxSlotIndex);
 
 	return true;
+}
+
+void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString EventInfo)
+{
+	TArray<int32> SlotIndexList;
+
+	for (int32 SlotIndex = 0; SlotIndex < InventorySlotList.Num(); SlotIndex++)
+	{
+		if (bForce == false)
+		{
+			if (IsInventorySlotIndexLock(SlotIndex))
+			{
+				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList Item is lock"));
+
+				continue;
+			}
+
+			if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
+			{
+				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
+
+				continue;
+			}
+		}
+
+		SlotIndexList.Add(SlotIndex);
+	}
+
+	int32 MaxSlotIndex = INDEX_NONE;
+
+	for (const int32 SlotIndex : SlotIndexList)
+	{
+		FLFPInventoryItemData OldItemData = InventorySlotList[SlotIndex];
+
+		InventorySlotList[SlotIndex] = ProcessRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
+
+		OnRemoveItem.Broadcast(OldItemData, SlotIndex, EventInfo);
+
+		if (SlotIndex > MaxSlotIndex) MaxSlotIndex = SlotIndex;
+	}
+
+	TrimInventorySlotList(MaxSlotIndex);
+
+	return;
 }
 
 bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
@@ -304,11 +354,11 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 		return false;
 	}
 
-	FLFPInventoryItemData FromData = FLFPInventoryItemData();
-	FLFPInventoryItemData ToData = FLFPInventoryItemData();
+	FLFPInventoryItemData FromData;
+	FLFPInventoryItemData ToData;
 
-	Other->RemoveItem(FromData, FromSlot, EventInfo);
-	RemoveItem(ToData, ToSlot, EventInfo);
+	Other->RemoveItem(FromData, FromSlot, false, EventInfo);
+	RemoveItem(ToData, ToSlot, false, EventInfo);
 
 	Other->AddItem(ToData, FromSlot, EventInfo);
 	AddItem(FromData, ToSlot, EventInfo);
@@ -375,6 +425,21 @@ bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName L
 
 	InventorySlotList[SlotIndex].LockList.RemoveSingleSwap(LockName);
 
+	return true;
+}
+
+bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+{
+	return GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag;
+}
+
+bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+{
+	return true;
+}
+
+bool ULFPInventoryComponent::CanSwapItem_Implementation(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const
+{
 	return true;
 }
 

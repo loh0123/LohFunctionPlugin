@@ -8,7 +8,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
-#include "Inventory/LFPInventoryComponent.h"
+#include "Item/LFPInventoryComponent.h"
 #include "LFPItemMutatorComponent.generated.h"
 
 
