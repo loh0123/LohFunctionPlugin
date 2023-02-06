@@ -148,8 +148,8 @@ public: // Event
 		virtual bool CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
-		bool CanSwapItem(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const;
-		virtual bool CanSwapItem_Implementation(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const;
+		bool CanSwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const;
+		virtual bool CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const;
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
@@ -189,6 +189,10 @@ public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemFunctionEvent OnItemSortEvent;
+
+public: // Checker Function
+
+	UPROPERTY() TArray<TObjectPtr<UActorComponent>> CheckComponentList;
 
 public: // Valid Checker
 

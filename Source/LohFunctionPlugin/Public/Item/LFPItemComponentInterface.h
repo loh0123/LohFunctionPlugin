@@ -7,11 +7,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "LFPInventoryRelatedInterface.generated.h"
+#include "LFPItemComponentInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(Blueprintable)
-class LOHFUNCTIONPLUGIN_API ULFPInventoryRelatedInterface : public UInterface
+class LOHFUNCTIONPLUGIN_API ULFPItemComponentInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -23,22 +23,22 @@ class ULFPItemMutatorComponent;
 /**
  * 
  */
-class LOHFUNCTIONPLUGIN_API ILFPInventoryRelatedInterface
+class LOHFUNCTIONPLUGIN_API ILFPItemComponentInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPInventoryRelatedInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPItemComponentInterface")
 		ULFPInventoryComponent* GetInventoryComponent();
 		virtual ULFPInventoryComponent* GetInventoryComponent_Implementation();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPInventoryRelatedInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPItemComponentInterface")
 		ULFPEquipmentComponent* GetEquipmentComponent();
 		virtual ULFPEquipmentComponent* GetEquipmentComponent_Implementation();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPInventoryRelatedInterface")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "LFPItemComponentInterface")
 		TArray<ULFPItemMutatorComponent*> GetItemMutatorComponent();
 		virtual TArray<ULFPItemMutatorComponent*> GetItemMutatorComponent_Implementation();
 };

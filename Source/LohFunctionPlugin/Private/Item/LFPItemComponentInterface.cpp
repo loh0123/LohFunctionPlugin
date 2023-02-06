@@ -4,21 +4,21 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 
-#include "Item/LFPInventoryRelatedInterface.h"
+#include "Item/LFPItemComponentInterface.h"
 
 // Add default functionality here for any ILFPInventoryRelatedInterface functions that are not pure virtual.
 
-ULFPInventoryComponent* ILFPInventoryRelatedInterface::GetInventoryComponent_Implementation()
+ULFPInventoryComponent* ILFPItemComponentInterface::GetInventoryComponent_Implementation()
 {
 	return nullptr;
 }
 
-ULFPEquipmentComponent* ILFPInventoryRelatedInterface::GetEquipmentComponent_Implementation()
+ULFPEquipmentComponent* ILFPItemComponentInterface::GetEquipmentComponent_Implementation()
 {
 	return nullptr;
 }
 
-TArray<ULFPItemMutatorComponent*> ILFPInventoryRelatedInterface::GetItemMutatorComponent_Implementation()
+TArray<ULFPItemMutatorComponent*> ILFPItemComponentInterface::GetItemMutatorComponent_Implementation()
 {
 	return TArray<ULFPItemMutatorComponent*>();
 }

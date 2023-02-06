@@ -5,8 +5,8 @@
 
 
 #include "Item/LFPEquipmentComponent.h"
-#include "Item/LFPInventoryRelatedInterface.h"
-#include "Net/UnrealNetwork.h"
+#include "Item/LFPItemComponentInterface.h"
+//#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 ULFPEquipmentComponent::ULFPEquipmentComponent()
@@ -18,12 +18,12 @@ ULFPEquipmentComponent::ULFPEquipmentComponent()
 	// ...
 }
 
-void ULFPEquipmentComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, EquipmentSlotList, COND_None, REPNOTIFY_Always);
-}
+//void ULFPEquipmentComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+//{
+//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+//
+//	//DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, EquipmentSlotList, COND_None, REPNOTIFY_Always);
+//}
 
 
 // Called when the game starts
@@ -33,7 +33,7 @@ void ULFPEquipmentComponent::BeginPlay()
 
 	if (IsValid(GetOwner()))
 	{
-		ULFPInventoryComponent* InvComp = ILFPInventoryRelatedInterface::Execute_GetInventoryComponent(GetOwner());
+		ULFPInventoryComponent* InvComp = GetOwner()->Implements<ULFPItemComponentInterface>() ? ILFPItemComponentInterface::Execute_GetInventoryComponent(GetOwner()) : nullptr;
 
 		if (IsValid(InvComp))
 		{
@@ -45,12 +45,6 @@ void ULFPEquipmentComponent::BeginPlay()
 void ULFPEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-
-	if (bUnequipOnEndPlay)
-		for (int32 Index = 0; Index < EquipmentSlotList.Num(); Index++)
-		{
-			if (EquipmentSlotList[Index] != INDEX_NONE) UnequipItem(Index, -1, "EndPlay");
-		}
 
 	SetInventoryComponent(nullptr);
 }
@@ -70,10 +64,7 @@ void ULFPEquipmentComponent::Serialize(FArchive& Ar)
 
 	if (Ar.IsLoading())
 	{
-		for (int32 Index = 0; Index < EquipmentSlotList.Num(); Index++)
-		{
-			if (EquipmentSlotList[Index] != INDEX_NONE) OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlotList[Index]), Index, EquipmentSlotList[Index], "Serialize");
-		}
+		RunEquipOnAllSlot();
 	}
 }
 
@@ -84,6 +75,8 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 		InventoryComponent->OnAddItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
 		InventoryComponent->OnRemoveItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
 		InventoryComponent->OnSwapItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+
+		InventoryComponent->CheckComponentList.Remove(this);
 	}
 
 	InventoryComponent = Component;
@@ -93,140 +86,105 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 		InventoryComponent->OnAddItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
 		InventoryComponent->OnRemoveItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
 		InventoryComponent->OnSwapItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+
+		InventoryComponent->CheckComponentList.Add(this);
+		
+		RunEquipOnAllSlot();
 	}
 
 	return;
 }
 
-bool ULFPEquipmentComponent::EquipItem(const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
+void ULFPEquipmentComponent::RunEquipOnAllSlot() const
 {
-	if (IsValid(InventoryComponent) == false)
+	if (IsValid(InventoryComponent) == false) return;
+
+	int32 Index = 0;
+
+	for (auto& EquipmentSlot : EquipmentSlotList)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem InventoryComponent is not valid"));
+		if (InventoryComponent->GetInventorySlot(EquipmentSlot).ItemTag == FGameplayTag::EmptyTag) continue;
 
-		return false;
+		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlot), Index++, EquipmentSlot, "RunEquipOnAllSlot");
 	}
-
-	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem IsInventorySlotItemValid is not valid"));
-
-		return false;
-	}
-
-	if (EquipmentSlotIndex >= MaxEquipmentSlotAmount)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem EquipmentSlotIndex is not valid"));
-
-		return false;
-	}
-
-	if (CanEquipItem(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentSlotIndex, InventorySlotIndex, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem CanEquipItem return false"));
-
-		return false;
-	}
-
-	if (GetEquipmentSlot(EquipmentSlotIndex).ItemTag != FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem EquipmentSlotIndex is currently occupied"));
-
-		return false;
-	}
-
-	if (ToInventorySlotIndex >= 0 && InventoryComponent->SwapItem(InventorySlotIndex, ToInventorySlotIndex, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem SwapItem return false"));
-
-		return false;
-	}
-
-	if (EquipmentSlotList.Num() < EquipmentSlotIndex + 1) EquipmentSlotList.SetNum(EquipmentSlotIndex + 1);
-
-	const int32 UseInvSlot = ToInventorySlotIndex >= 0 ? ToInventorySlotIndex : InventorySlotIndex;
-
-	EquipmentSlotList[EquipmentSlotIndex] = UseInvSlot;
-
-	InventoryComponent->AddItemLock(UseInvSlot, FName("Equipment"));
-
-	OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(UseInvSlot), EquipmentSlotIndex, UseInvSlot, EventInfo);
-
-	return true;
-}
-
-bool ULFPEquipmentComponent::UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex, const FString EventInfo)
-{
-	if (IsValid(InventoryComponent) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem InventoryComponent is not valid"));
-
-		return false;
-	}
-
-	if (IsEquipmentSlotItemValid(EquipmentSlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem IsEquipmentSlotItemValid return false"));
-
-		return false;
-	}
-
-	if (CanUnequipItem(GetEquipmentSlot(EquipmentSlotIndex), EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex], EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem CanUnequipItem return false"));
-
-		return false;
-	}
-
-	if (InventoryComponent->GetInventorySlot(ToInventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : UnequipItem ToInventorySlotIndex is currently occupied"));
-
-		return false;
-	}
-
-	InventoryComponent->RemoveItemLock(EquipmentSlotList[EquipmentSlotIndex], FName("Equipment"));
-
-	if (ToInventorySlotIndex >= 0 && InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], ToInventorySlotIndex, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : EquipItem SwapItem return false"));
-
-		InventoryComponent->AddItemLock(EquipmentSlotList[EquipmentSlotIndex], FName("Equipment"));
-
-		return false;
-	}
-
-	const int32 InvIndex = ToInventorySlotIndex >= 0 ? ToInventorySlotIndex : EquipmentSlotList[EquipmentSlotIndex];
-
-	EquipmentSlotList[EquipmentSlotIndex] = -1;
-
-	OnUnequipItem.Broadcast(InventoryComponent->GetInventorySlot(InvIndex), EquipmentSlotIndex, InvIndex, EventInfo);
-
-	return true;
 }
 
 void ULFPEquipmentComponent::OnInventoryAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
 {
+	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+
+	if (EquipmentSlotIndex == INDEX_NONE) return;
+
+	OnEquipItem.Broadcast(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 }
 
 void ULFPEquipmentComponent::OnInventoryRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
 {
+	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+
+	if (EquipmentSlotIndex == INDEX_NONE) return;
+
+	OnUnequipItem.Broadcast(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 }
 
 void ULFPEquipmentComponent::OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo)
 {
-	const int32 ItemAIndex = FindEquipmentSlotIndex(FromSlot);
-	const int32 ItemBIndex = FindEquipmentSlotIndex(ToSlot);
+	int32 EquipmentSlotIndexA = FindEquipmentSlotIndex(FromSlot);
+	int32 EquipmentSlotIndexB = FindEquipmentSlotIndex(ToSlot);
 
-	if (ItemAIndex != INDEX_NONE)
+	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		EquipmentSlotList[ItemAIndex] = ToSlot;
+		OnUnequipItem.Broadcast(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo);
+		OnEquipItem.Broadcast(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo);
 	}
 
-	if (ItemBIndex != INDEX_NONE)
+	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		EquipmentSlotList[ItemBIndex] = FromSlot;
+		OnUnequipItem.Broadcast(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo);
+		OnEquipItem.Broadcast(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo);
 	}
+
+	return;
+}
+
+bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+{
+	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+
+	/* Slot is not an equipment slot */
+	if (EquipmentSlotIndex == INDEX_NONE) return true;
+
+	return CanEquipItem(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+}
+
+bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+{
+	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+
+	/* Slot is not an equipment slot */
+	if (EquipmentSlotIndex == INDEX_NONE) return true;
+
+	return CanUnequipItem(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+}
+
+bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
+{
+	int32 EquipmentSlotIndexA = FindEquipmentSlotIndex(FromSlot);
+	int32 EquipmentSlotIndexB = FindEquipmentSlotIndex(ToSlot);
+
+	if (EquipmentSlotIndexA != INDEX_NONE)
+	{
+		if (CanUnequipItem(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo) == false) return false;
+		if (CanEquipItem(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo) == false) return false;
+	}
+
+	if (EquipmentSlotIndexB != INDEX_NONE)
+	{
+		if (CanUnequipItem(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo) == false) return false;
+		if (CanEquipItem(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo) == false) return false;
+	}
+
+	return true;
 }
 
 int32 ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex) const
@@ -238,7 +196,7 @@ int32 ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIn
 		return INDEX_NONE;
 	}
 
-	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
+	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
 	{
 		return INDEX_NONE;
 	}

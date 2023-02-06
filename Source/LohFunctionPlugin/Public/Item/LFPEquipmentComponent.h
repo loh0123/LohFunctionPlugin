@@ -8,13 +8,14 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Item/LFPInventoryComponent.h"
+#include "Item/LFPInventoryInterface.h"
 #include "LFPEquipmentComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnEquipmentEvent, const FLFPInventoryItemData&, ItemData, const int32, EquipmentSlotIndex, const int32, InventorySlotIndex, const FString&, EventInfo);
 
 
 UCLASS( Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPEquipmentComponent : public UActorComponent
+class LOHFUNCTIONPLUGIN_API ULFPEquipmentComponent : public UActorComponent, public ILFPInventoryInterface
 {
 	GENERATED_BODY()
 
@@ -40,36 +41,26 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		void SetInventoryComponent(ULFPInventoryComponent* Component);
 
-	/**
-	* Equip Item In Inventory
-	* @param EquipmentSlotIndex Equipment slot index to use
-	* @param InventorySlotIndex Inventory slot index to equip
-	* @param ToInventorySlotIndex Swap item to this slot
-	* @param EventInfo Info to pass to trigger event
-	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool EquipItem(const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));
+protected:
 
-	/**
-	* Unequip Item In Inventory
-	* @param EquipmentSlotIndex Equipment slot index to use
-	* @param ToInventorySlotIndex Swap item to this slot
-	* @param EventInfo Info to pass to trigger event
-	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool UnequipItem(const int32 EquipmentSlotIndex, const int32 ToInventorySlotIndex = -1, const FString EventInfo = FString("None"));
+	UFUNCTION() FORCEINLINE void RunEquipOnAllSlot() const;
 
 
 public: // Inventory Event
 
-	UFUNCTION()
-		void OnInventoryAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
+	UFUNCTION() void OnInventoryAddItem		(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
 	
-	UFUNCTION()
-		void OnInventoryRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
+	UFUNCTION() void OnInventoryRemoveItem	(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
 
-	UFUNCTION()
-		void OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo);
+	UFUNCTION() void OnInventorySwapItem	(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo);
+
+public: // Inventory Interface
+
+	virtual bool CanInventoryAddItem_Implementation		(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const override;
+
+	virtual bool CanInventoryRemoveItem_Implementation	(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const override;
+
+	virtual bool CanInventorySwapItem_Implementation	(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const override;
 
 public: // Event
 
@@ -81,10 +72,6 @@ public: // Event
 		bool CanUnequipItem(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const;
 		virtual bool CanUnequipItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const { return true; }
 
-
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPEquipmentComponent | Event")
-		void OnEquipmentSlotRep(const TArray<int32>& OldValue);
-		virtual void OnEquipmentSlotRep_Implementation(const TArray<int32>& OldValue) { }
 
 public: // Delegate
 
@@ -113,18 +100,11 @@ public: // Getter
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		int32 FindEquipmentSlotIndex(const int32 InventorySlotIndex) const;
 
-public:
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
-		int32 MaxEquipmentSlotAmount = 5;
-
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
-		bool bUnequipOnEndPlay = false;
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnEquipmentSlotRep, Category = "LFPEquipmentComponent | Cache")
-		TArray<int32> EquipmentSlotList;
+	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
+		TArray<int32> EquipmentSlotList = TArray<int32>();
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPEquipmentComponent | Cache")
 		TObjectPtr<ULFPInventoryComponent> InventoryComponent = nullptr;

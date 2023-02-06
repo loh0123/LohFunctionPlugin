@@ -5,6 +5,7 @@
 
 
 #include "Item/LFPInventoryComponent.h"
+#include "Item/LFPInventoryInterface.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -292,9 +293,13 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 		return false;
 	}
 
-	if (CanSwapItem(FromSlot, ToSlot, EventInfo) == false)
+	if (InventorySlotList.Num() <= MaxIndex) InventorySlotList.SetNum(MaxIndex + 1);
+
+	if (CanSwapItem(InventorySlotList[FromSlot], FromSlot, InventorySlotList[ToSlot], ToSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem CanSwapItem return false"));
+
+		TrimInventorySlotList(InventorySlotList.Num() - 1);
 
 		return false;
 	}
@@ -305,7 +310,7 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 
 	OnSwapItem.Broadcast(InventorySlotList[ToSlot], FromSlot, InventorySlotList[FromSlot], ToSlot, EventInfo);
 
-	TrimInventorySlotList(FMath::Max(FromSlot, ToSlot));
+	TrimInventorySlotList(MaxIndex);
 
 	return true;
 }
@@ -430,16 +435,33 @@ bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName L
 
 bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	return GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag;
+	if (GetInventorySlot(SlotIndex).ItemTag != FGameplayTag::EmptyTag) return false;
+
+	for (auto& CheckFunc : CheckComponentList)
+	{
+		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventoryAddItem(CheckFunc, ItemData, SlotIndex, EventInfo) == false) return false;
+	}
+
+	return true;
 }
 
 bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
+	for (auto& CheckFunc : CheckComponentList)
+	{
+		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventoryRemoveItem(CheckFunc, ItemData, SlotIndex, EventInfo) == false) return false;
+	}
+
 	return true;
 }
 
-bool ULFPInventoryComponent::CanSwapItem_Implementation(const int32 FromSlot, const int32 ToSlot, const FString& EventInfo) const
+bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
 {
+	for (auto& CheckFunc : CheckComponentList)
+	{
+		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventorySwapItem(CheckFunc, FromItemData, FromSlot, ToItemData, ToSlot, EventInfo) == false) return false;
+	}
+
 	return true;
 }
 
