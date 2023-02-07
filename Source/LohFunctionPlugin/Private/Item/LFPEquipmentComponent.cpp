@@ -95,6 +95,74 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 	return;
 }
 
+bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex is not valid"));
+
+		return false;
+	}
+
+	if (EquipmentSlotList.Contains(InventorySlotIndex))
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex is already exist"));
+
+		return false;
+	}
+
+	EquipmentSlotList.Add(InventorySlotIndex);
+
+	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
+	{
+		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentSlotList.Num() - 1, InventorySlotIndex, EventInfo);
+	}
+
+	return true;
+}
+
+bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventorySlotIndex is not valid"));
+
+		return false;
+	}
+
+	const int32 EquipmentIndex = EquipmentSlotList.Find(InventorySlotIndex);
+
+	if (EquipmentIndex == INDEX_NONE)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventorySlotIndex is not exist"));
+
+		return false;
+	}
+
+	EquipmentSlotList.RemoveAt(EquipmentIndex);
+
+	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
+	{
+		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
+	}
+
+	return true;
+}
+
 void ULFPEquipmentComponent::RunEquipOnAllSlot() const
 {
 	if (IsValid(InventoryComponent) == false) return;
