@@ -264,11 +264,6 @@ int32 ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIn
 		return INDEX_NONE;
 	}
 
-	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
-	{
-		return INDEX_NONE;
-	}
-
 	for (int32 EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
 	{
 		if (InventorySlotIndex == EquipmentSlotList[EquipmentSlotIndex])

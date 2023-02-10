@@ -70,36 +70,45 @@ void ULFPInventoryComponent::Serialize(FArchive& Ar)
 	}
 }
 
-int32 ULFPInventoryComponent::AddItem(const FLFPInventoryItemData& ItemData, int32 SlotIndex, const FString EventInfo)
+int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, int32 SlotIndex, const FString EventInfo)
 {
-	if ((SlotIndex = FindAvailableInventorySlot(SlotIndex, ItemData)) == INDEX_NONE)
+	do
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem GetAvailableInventorySlot return false"));
+		if (ItemData.ItemTag == FGameplayTag::EmptyTag)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItem ItemData Tag is empty"));
 
-		return INDEX_NONE;
+			return INDEX_NONE;
+		}
+
+		if ((SlotIndex = FindAddableInventorySlot(SlotIndex, ItemData)) == INDEX_NONE)
+		{
+			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem GetAvailableInventorySlot return false"));
+
+			return INDEX_NONE;
+		}
+
+		if (InventorySlotList.Num() <= SlotIndex) InventorySlotList.SetNum(SlotIndex + 1);
+
+		if (GetInventorySlot(SlotIndex).ItemTag.IsValid())
+		{
+			InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
+
+			OnUpdateItem.Broadcast(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
+		}
+
+	} while (GetInventorySlot(SlotIndex).ItemTag.IsValid() && ItemData.ItemTag.IsValid());
+
+	if (ItemData.ItemTag.IsValid())
+	{
+		InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
+
+		OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
+
+		return SlotIndex;
 	}
 
-	if (ItemData.ItemTag == FGameplayTag::EmptyTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItem ItemData Tag is empty"));
-
-		return INDEX_NONE;
-	}
-
-	if (CanAddItem(ItemData, SlotIndex, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem CanAddItem return false"));
-
-		return INDEX_NONE;
-	}
-
-	if (InventorySlotList.Num() <= SlotIndex) InventorySlotList.SetNum(SlotIndex + 1);
-
-	InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
-
-	OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
-
-	return SlotIndex;
+	return INDEX_NONE;
 }
 
 TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, int32 SlotIndex, const FString EventInfo)
@@ -108,40 +117,7 @@ TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItem
 
 	for (const auto& ItemData : ItemDataList)
 	{
-		if (ItemData.ItemTag == FGameplayTag::EmptyTag)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItemList ItemData Tag is empty"));
-
-			continue;
-		}
-
-		int32 TargetSlotIndex = 0;
-
-		for (int32 Offset = 0; SlotIndex + Offset < MaxInventorySlotAmount; Offset = (TargetSlotIndex - SlotIndex) + 1)
-		{
-			if ((TargetSlotIndex = FindAvailableInventorySlot(SlotIndex + Offset, ItemData)) == INDEX_NONE)
-			{
-				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItemList GetAvailableInventorySlot return false"));
-
-				break;
-			}
-
-			if (CanAddItem(ItemData, SlotIndex, EventInfo))
-			{
-				ReturnList.Add(SlotIndex++);
-
-				break;
-			}
-		}
-	}
-
-	if (ReturnList.IsValidIndex(0) && InventorySlotList.Num() <= ReturnList.Last()) InventorySlotList.SetNum(ReturnList.Last() + 1);
-
-	for (int32 ArrayIndex = 0; ArrayIndex < ItemDataList.Num(); ArrayIndex++)
-	{
-		InventorySlotList[ReturnList[ArrayIndex]] = ProcessAddItem(ItemDataList[ArrayIndex], SlotIndex, EventInfo);
-
-		OnAddItem.Broadcast(ItemDataList[ArrayIndex], ReturnList[ArrayIndex], EventInfo);
+		ReturnList.Add(AddItem(ItemData, SlotIndex, EventInfo));
 	}
 
 	return ReturnList;
@@ -184,53 +160,18 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 	return true;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const bool bForce, const FString EventInfo)
+void ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const bool bForce, const FString EventInfo)
 {
 	for (const int32 SlotIndex : SlotIndexList)
 	{
-		if (IsInventorySlotItemValid(SlotIndex) == false)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : RemoveItemList IsInventorySlotItemValid return false"));
+		FLFPInventoryItemData RemoveItemData = FLFPInventoryItemData();
 
-			return false;
-		}
+		RemoveItem(RemoveItemData, SlotIndex, bForce, EventInfo);
 
-		if (bForce == false)
-		{
-			if (IsInventorySlotIndexLock(SlotIndex))
-			{
-				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList Item is lock"));
-
-				return false;
-			}
-
-			if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
-			{
-				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
-
-				return false;
-			}
-		}
+		RemovedItemDataList.Add(RemoveItemData);
 	}
 
-	RemovedItemDataList.Empty(SlotIndexList.Num());
-
-	int32 MaxSlotIndex = INDEX_NONE;
-
-	for (const int32 SlotIndex : SlotIndexList)
-	{
-		RemovedItemDataList.Add(InventorySlotList[SlotIndex]);
-
-		InventorySlotList[SlotIndex] = ProcessRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
-
-		OnRemoveItem.Broadcast(RemovedItemDataList.Last(), SlotIndex, EventInfo);
-
-		if (SlotIndex > MaxSlotIndex) MaxSlotIndex = SlotIndex;
-	}
-
-	TrimInventorySlotList(MaxSlotIndex);
-
-	return true;
+	return;
 }
 
 void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString EventInfo)
@@ -468,7 +409,7 @@ bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryItemD
 	return true;
 }
 
-int32 ULFPInventoryComponent::FindAvailableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex) const
+int32 ULFPInventoryComponent::FindAddableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex, const FString EventInfo) const
 {
 	if (EndIndex == INDEX_NONE) EndIndex = MaxInventorySlotAmount - 1;
 
@@ -478,9 +419,13 @@ int32 ULFPInventoryComponent::FindAvailableInventorySlot(int32 SlotIndex, const 
 
 	for (SlotIndex; SlotIndex <= EndIndex; SlotIndex++)
 	{
-		if (InventorySlotList.Num() <= SlotIndex) return SlotIndex;
+		if (IsInventorySlotIndexLock(SlotIndex)) continue;
 
-		if (IsInventorySlotIndexLock(SlotIndex) == false && IsInventorySlotAvailable(SlotIndex, InventorySlotList[SlotIndex], ForItem)) return SlotIndex;
+		if (IsInventorySlotAvailable(SlotIndex, GetInventorySlot(SlotIndex), ForItem) == false) continue;
+
+		if (CanAddItem(ForItem, SlotIndex, EventInfo) == false) continue;
+
+		return SlotIndex;
 	}
 
 	return INDEX_NONE;
