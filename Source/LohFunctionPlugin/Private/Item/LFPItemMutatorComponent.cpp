@@ -31,7 +31,7 @@ void ULFPItemMutatorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(GetOwner()))
+	if (IsValid(GetOwner()) && GetOwner()->Implements<ULFPItemComponentInterface>())
 	{
 		ULFPInventoryComponent* InvComp = ILFPItemComponentInterface::Execute_GetInventoryComponent(GetOwner());
 

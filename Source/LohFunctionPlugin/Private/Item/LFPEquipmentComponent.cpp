@@ -31,9 +31,9 @@ void ULFPEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(GetOwner()))
+	if (IsValid(GetOwner()) && GetOwner()->Implements<ULFPItemComponentInterface>())
 	{
-		ULFPInventoryComponent* InvComp = GetOwner()->Implements<ULFPItemComponentInterface>() ? ILFPItemComponentInterface::Execute_GetInventoryComponent(GetOwner()) : nullptr;
+		ULFPInventoryComponent* InvComp = ILFPItemComponentInterface::Execute_GetInventoryComponent(GetOwner());
 
 		if (IsValid(InvComp))
 		{
@@ -242,14 +242,14 @@ bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInven
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		if (CanUnequipItem(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo) == false) return false;
-		if (CanEquipItem(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo) == false) return false;
+		if (FromItemData.ItemTag.IsValid() && CanUnequipItem(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo) == false) return false;
+		if (ToItemData.ItemTag.IsValid() && CanEquipItem(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo) == false) return false;
 	}
 
 	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		if (CanUnequipItem(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo) == false) return false;
-		if (CanEquipItem(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo) == false) return false;
+		if (ToItemData.ItemTag.IsValid() && CanUnequipItem(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo) == false) return false;
+		if (FromItemData.ItemTag.IsValid() && CanEquipItem(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo) == false) return false;
 	}
 
 	return true;

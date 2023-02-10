@@ -108,31 +108,34 @@ TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItem
 
 	for (const auto& ItemData : ItemDataList)
 	{
-		if ((SlotIndex = FindAvailableInventorySlot(SlotIndex, ItemData)) == INDEX_NONE)
-		{
-			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItemList GetAvailableInventorySlot return false"));
-
-			return TArray<int32>();
-		}
-
 		if (ItemData.ItemTag == FGameplayTag::EmptyTag)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItemList ItemData Tag is empty"));
 
-			return TArray<int32>();
+			continue;
 		}
 
-		if (CanAddItem(ItemData, SlotIndex, EventInfo) == false)
+		int32 TargetSlotIndex = 0;
+
+		for (int32 Offset = 0; SlotIndex + Offset < MaxInventorySlotAmount; Offset = (TargetSlotIndex - SlotIndex) + 1)
 		{
-			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItemList CanAddItem return false"));
+			if ((TargetSlotIndex = FindAvailableInventorySlot(SlotIndex + Offset, ItemData)) == INDEX_NONE)
+			{
+				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItemList GetAvailableInventorySlot return false"));
 
-			return TArray<int32>();
+				break;
+			}
+
+			if (CanAddItem(ItemData, SlotIndex, EventInfo))
+			{
+				ReturnList.Add(SlotIndex++);
+
+				break;
+			}
 		}
-
-		ReturnList.Add(SlotIndex++);
 	}
 
-	if (InventorySlotList.Num() <= ReturnList.Last()) InventorySlotList.SetNum(ReturnList.Last() + 1);
+	if (ReturnList.IsValidIndex(0) && InventorySlotList.Num() <= ReturnList.Last()) InventorySlotList.SetNum(ReturnList.Last() + 1);
 
 	for (int32 ArrayIndex = 0; ArrayIndex < ItemDataList.Num(); ArrayIndex++)
 	{
