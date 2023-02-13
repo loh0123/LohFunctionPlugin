@@ -47,6 +47,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool RemoveEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo);
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
+		bool TryEquipItem(const int32 InventorySlotIndex, const FString EventInfo);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
+		bool TryUnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo);
+
 protected:
 
 	UFUNCTION() FORCEINLINE void RunEquipOnAllSlot() const;

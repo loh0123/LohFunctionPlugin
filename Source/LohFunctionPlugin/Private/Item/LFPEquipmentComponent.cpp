@@ -163,6 +163,58 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 	return true;
 }
 
+bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const FString EventInfo)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryEquipItem InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	for (const int32 EquipmentSlot : EquipmentSlotList)
+	{
+		if (InventoryComponent->SwapItem(InventorySlotIndex, EquipmentSlot, EventInfo))	return true;
+	}
+
+	return false;
+}
+
+bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryUnequipItem InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	if (IsEquipmentSlotIndexValid(EquipmentSlotIndex) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryUnequipItem EquipmentSlotIndex is not valid"));
+
+		return false;
+	}
+
+	if (InventoryComponent->IsInventorySlotItemValid(EquipmentSlotList[EquipmentSlotIndex]) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryUnequipItem EquipmentSlotIndex is Empty"));
+
+		return false;
+	}
+
+	int32 SwapIndex = INDEX_NONE;
+
+	if ((SwapIndex = InventoryComponent->FindAddableInventorySlot(SwapIndex, InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex]), INDEX_NONE, EventInfo)) == INDEX_NONE)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryUnequipItem FindAddableInventorySlot return false"));
+
+		return false;
+	}
+
+	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], SwapIndex, EventInfo);
+}
+
 void ULFPEquipmentComponent::RunEquipOnAllSlot() const
 {
 	if (IsValid(InventoryComponent) == false) return;
