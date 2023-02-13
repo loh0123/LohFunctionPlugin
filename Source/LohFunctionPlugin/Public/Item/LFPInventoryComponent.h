@@ -23,9 +23,6 @@ struct FLFPInventoryItemData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPInventorySlotData")
-		TArray<FName> LockList = TArray<FName>();
-
 
 	static const FLFPInventoryItemData EmptyInventoryItemData;
 };
@@ -123,19 +120,6 @@ public: // Function
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void TrimInventorySlotList(const int32 FromSlot);
 
-	/**
-	* Prevent item remove operation
-	* @param SlotIndex Item index to lock
-	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItemLock(const int32 SlotIndex, const FName LockName);
-
-	/**
-	* Recover item remove operation
-	* @param SlotIndex Item index to lock
-	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemLock(const int32 SlotIndex, const FName LockName);
 
 public: // Event
 
@@ -153,12 +137,12 @@ public: // Event
 
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		FLFPInventoryItemData ProcessAddItem(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual FLFPInventoryItemData ProcessAddItem_Implementation(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return ItemData; }
+		FLFPInventoryItemData ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual FLFPInventoryItemData ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { FLFPInventoryItemData TempData = ItemData; ItemData.ItemTag = FGameplayTag::EmptyTag; return TempData; }
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		FLFPInventoryItemData ProcessRemoveItem(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual FLFPInventoryItemData ProcessRemoveItem_Implementation(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return FLFPInventoryItemData(); }
+		FLFPInventoryItemData ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual FLFPInventoryItemData ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return FLFPInventoryItemData(); }
 
 
 
@@ -168,7 +152,7 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
-		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return InventorySlotList[SlotIndex].ItemTag == FGameplayTag::EmptyTag; }
+		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag; }
 
 
 
@@ -203,9 +187,6 @@ public: // Valid Checker
 		FORCEINLINE bool IsInventorySlotIndexValid(const int32 Index) const { return InventorySlotList.IsValidIndex(Index); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool IsInventorySlotIndexLock(const int32 Index) const { return GetInventorySlot(Index).LockList.Num() > 0; };
-
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
 		FORCEINLINE bool IsInventorySlotItemValid(const int32 Index) const { return GetInventorySlot(Index).ItemTag.IsValid(); };
 
 public: // Getter
@@ -229,6 +210,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPInventoryComponent | Setting", meta = (ClampMin = "0"))
 		int32 StartInventorySlotIndex = 0;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
+		TArray<FIntPoint> IgnoreInventorySlotList = TArray<FIntPoint>();
 
 protected:
 

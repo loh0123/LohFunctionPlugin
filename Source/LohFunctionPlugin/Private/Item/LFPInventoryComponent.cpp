@@ -96,17 +96,21 @@ int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, int32 Slot
 
 			OnUpdateItem.Broadcast(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 		}
+		else
+		{
+			InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
 
-	} while (GetInventorySlot(SlotIndex).ItemTag.IsValid() && ItemData.ItemTag.IsValid());
+			OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
+		}
 
-	if (ItemData.ItemTag.IsValid())
-	{
-		InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
+		if (ItemData.ItemTag.IsValid() == false)
+		{
+			return SlotIndex;
+		}
 
-		OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
+		SlotIndex++;
 
-		return SlotIndex;
-	}
+	} while (SlotIndex < MaxInventorySlotAmount && ItemData.ItemTag.IsValid());
 
 	return INDEX_NONE;
 }
@@ -134,13 +138,6 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 
 	if (bForce == false)
 	{
-		if (IsInventorySlotIndexLock(SlotIndex))
-		{
-			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Item is lock"));
-
-			return false;
-		}
-
 		if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
 		{
 			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem CanRemoveItem return false"));
@@ -182,13 +179,6 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 	{
 		if (bForce == false)
 		{
-			if (IsInventorySlotIndexLock(SlotIndex))
-			{
-				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList Item is lock"));
-
-				continue;
-			}
-
 			if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
 			{
 				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
@@ -261,13 +251,6 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 
 bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
 {
-	if (Other->IsInventorySlotIndexLock(FromSlot))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other InventorySlotIndex is Lock"));
-
-		return false;
-	}
-
 	if (Other->CanRemoveItem(Other->GetInventorySlot(FromSlot), FromSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanRemoveItem return false"));
@@ -278,13 +261,6 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 	if (Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanAddItem return false"));
-
-		return false;
-	}
-
-	if (IsInventorySlotIndexLock(ToSlot))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther InventorySlotIndex is Lock"));
 
 		return false;
 	}
@@ -349,37 +325,13 @@ void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
 	InventorySlotList.Shrink();
 }
 
-bool ULFPInventoryComponent::AddItemLock(const int32 SlotIndex, const FName LockName)
-{
-	if (IsInventorySlotItemValid(SlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItemLock IsInventorySlotItemValid return false"));
-
-		return false;
-	}
-
-	InventorySlotList[SlotIndex].LockList.AddUnique(LockName);
-
-	return true;
-}
-
-bool ULFPInventoryComponent::RemoveItemLock(const int32 SlotIndex, const FName LockName)
-{
-	if (IsInventorySlotItemValid(SlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : RemoveItemLock IsInventorySlotItemValid return false"));
-
-		return false;
-	}
-
-	InventorySlotList[SlotIndex].LockList.RemoveSingleSwap(LockName);
-
-	return true;
-}
-
 bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	if (GetInventorySlot(SlotIndex).ItemTag != FGameplayTag::EmptyTag) return false;
+	for (const auto& IgnoreRange : IgnoreInventorySlotList)
+		if (SlotIndex >= IgnoreRange.X && SlotIndex <= IgnoreRange.Y)
+		{
+			return false;
+		}
 
 	for (auto& CheckFunc : CheckComponentList)
 	{
@@ -391,6 +343,14 @@ bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemDa
 
 bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
+	for (const auto& IgnoreRange : IgnoreInventorySlotList)
+		if (SlotIndex >= IgnoreRange.X && SlotIndex <= IgnoreRange.Y)
+		{
+			return false;
+		}
+
+	if (GetInventorySlot(SlotIndex).ItemTag != FGameplayTag::EmptyTag) return false;
+
 	for (auto& CheckFunc : CheckComponentList)
 	{
 		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventoryRemoveItem(CheckFunc, ItemData, SlotIndex, EventInfo) == false) return false;
@@ -401,6 +361,12 @@ bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryIte
 
 bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
 {
+	for (const auto& IgnoreRange : IgnoreInventorySlotList)
+		if ((FromSlot >= IgnoreRange.X && FromSlot <= IgnoreRange.Y) || (ToSlot >= IgnoreRange.X && ToSlot <= IgnoreRange.Y))
+		{
+			return false;
+		}
+
 	for (auto& CheckFunc : CheckComponentList)
 	{
 		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventorySwapItem(CheckFunc, FromItemData, FromSlot, ToItemData, ToSlot, EventInfo) == false) return false;
@@ -419,8 +385,6 @@ int32 ULFPInventoryComponent::FindAddableInventorySlot(int32 SlotIndex, const FL
 
 	for (SlotIndex; SlotIndex <= EndIndex; SlotIndex++)
 	{
-		if (IsInventorySlotIndexLock(SlotIndex)) continue;
-
 		if (IsInventorySlotAvailable(SlotIndex, GetInventorySlot(SlotIndex), ForItem) == false) continue;
 
 		if (CanAddItem(ForItem, SlotIndex, EventInfo) == false) continue;

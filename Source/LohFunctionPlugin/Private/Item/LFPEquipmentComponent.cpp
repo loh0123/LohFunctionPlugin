@@ -137,9 +137,9 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 		return false;
 	}
 
-	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
+	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventorySlotIndex is not valid"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot IsInventorySlotItemValid return false"));
 
 		return false;
 	}
@@ -202,14 +202,14 @@ void ULFPEquipmentComponent::OnInventorySwapItem(const FLFPInventoryItemData& Fr
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		OnUnequipItem.Broadcast(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo);
-		OnEquipItem.Broadcast(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo);
+		if (FromItemData.ItemTag.IsValid()) OnUnequipItem.Broadcast(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo);
+		if (ToItemData.ItemTag.IsValid()) OnEquipItem.Broadcast(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo);
 	}
 
 	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		OnUnequipItem.Broadcast(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo);
-		OnEquipItem.Broadcast(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo);
+		if (ToItemData.ItemTag.IsValid())OnUnequipItem.Broadcast(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo);
+		if (FromItemData.ItemTag.IsValid())OnEquipItem.Broadcast(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo);
 	}
 
 	return;
