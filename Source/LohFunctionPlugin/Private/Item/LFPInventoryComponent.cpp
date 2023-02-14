@@ -90,23 +90,19 @@ int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, int32 Slot
 
 		if (InventorySlotList.Num() <= SlotIndex) InventorySlotList.SetNum(SlotIndex + 1);
 
-		if (GetInventorySlot(SlotIndex).ItemTag.IsValid())
-		{
-			InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
+		const bool bIsItemValid = GetInventorySlot(SlotIndex).ItemTag.IsValid();
 
+		// Change the item data
+		ProcessAddItem(InventorySlotList[SlotIndex], ItemData, SlotIndex, EventInfo);
+
+		// Check is the original data is valid
+		if (bIsItemValid)
 			OnUpdateItem.Broadcast(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
-		}
 		else
-		{
-			InventorySlotList[SlotIndex] = ProcessAddItem(ItemData, SlotIndex, EventInfo);
-
 			OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
-		}
 
-		if (ItemData.ItemTag.IsValid() == false)
-		{
-			return SlotIndex;
-		}
+		// Check is the new item data is still valid
+		if (ItemData.ItemTag.IsValid() == false) return SlotIndex;
 
 		SlotIndex++;
 
@@ -148,7 +144,7 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 
 	RemovedItemData = InventorySlotList[SlotIndex];
 
-	InventorySlotList[SlotIndex] = ProcessRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
+	ProcessRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
 	TrimInventorySlotList(SlotIndex);
 
@@ -171,39 +167,16 @@ void ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& Remov
 	return;
 }
 
-void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString EventInfo)
+void ULFPInventoryComponent::ClearInventory(const int32 StartSlotIndex, const bool bForce, const FString EventInfo)
 {
-	TArray<int32> SlotIndexList;
-
 	for (int32 SlotIndex = 0; SlotIndex < InventorySlotList.Num(); SlotIndex++)
 	{
-		if (bForce == false)
-		{
-			if (CanRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo) == false)
-			{
-				UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList CanRemoveItem return false"));
+		FLFPInventoryItemData RemoveData = FLFPInventoryItemData();
 
-				continue;
-			}
-		}
-
-		SlotIndexList.Add(SlotIndex);
+		RemoveItem(RemoveData, SlotIndex, bForce, EventInfo);
 	}
 
-	int32 MaxSlotIndex = INDEX_NONE;
-
-	for (const int32 SlotIndex : SlotIndexList)
-	{
-		FLFPInventoryItemData OldItemData = InventorySlotList[SlotIndex];
-
-		InventorySlotList[SlotIndex] = ProcessRemoveItem(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
-
-		OnRemoveItem.Broadcast(OldItemData, SlotIndex, EventInfo);
-
-		if (SlotIndex > MaxSlotIndex) MaxSlotIndex = SlotIndex;
-	}
-
-	TrimInventorySlotList(MaxSlotIndex);
+	TrimInventorySlotList(InventorySlotList.Num() - 1);
 
 	return;
 }
@@ -238,11 +211,12 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 		return false;
 	}
 
-	if (InventorySlotList.Num() <= MaxIndex) InventorySlotList.SetNum(MaxIndex + 1);
+	const FLFPInventoryItemData ItemA = InventorySlotList[FromSlot];
+	const FLFPInventoryItemData ItemB = InventorySlotList[ToSlot];
 
-	InventorySlotList.Swap(MinIndex, MaxIndex);
+	ProcessSwapItem(InventorySlotList[FromSlot], FromSlot, InventorySlotList[ToSlot], ToSlot, EventInfo);
 
-	OnSwapItem.Broadcast(InventorySlotList[ToSlot], FromSlot, InventorySlotList[FromSlot], ToSlot, EventInfo);
+	OnSwapItem.Broadcast(ItemA, FromSlot, ItemB, ToSlot, EventInfo);
 
 	TrimInventorySlotList(MaxIndex);
 

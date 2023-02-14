@@ -85,7 +85,7 @@ public: // Function
 	* @param bForce Ignore lock item rule and can remove item
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void ClearInventory(const bool bForce = false, const FString EventInfo = FString("None"));
+		void ClearInventory(const int32 StartSlotIndex = -1, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
@@ -136,13 +136,17 @@ public: // Event
 		virtual bool CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const;
 
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		FLFPInventoryItemData ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual FLFPInventoryItemData ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { FLFPInventoryItemData TempData = ItemData; ItemData.ItemTag = FGameplayTag::EmptyTag; return TempData; }
+		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+			void ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual void ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = NewItemData; NewItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		FLFPInventoryItemData ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual FLFPInventoryItemData ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const { return FLFPInventoryItemData(); }
+		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+			void ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual void ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
+
+		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+			void ProcessSwapItem(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const;
+		virtual void ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const { FLFPInventoryItemData AData = ItemDataA; FLFPInventoryItemData BData = ItemDataB; ItemDataA = BData; ItemDataB = AData; }
 
 
 
@@ -188,6 +192,9 @@ public: // Valid Checker
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
 		FORCEINLINE bool IsInventorySlotItemValid(const int32 Index) const { return GetInventorySlot(Index).ItemTag.IsValid(); };
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
+		FORCEINLINE bool IsInventorySlotItemSame(const int32 IndexA, const int32 IndexB) const { return GetInventorySlot(IndexA).ItemTag == GetInventorySlot(IndexB).ItemTag; };
 
 public: // Getter
 
