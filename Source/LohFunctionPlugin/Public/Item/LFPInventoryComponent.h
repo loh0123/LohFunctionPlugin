@@ -25,10 +25,21 @@ struct FLFPInventoryItemData
 
 
 	static const FLFPInventoryItemData EmptyInventoryItemData;
+
+	FORCEINLINE	bool operator==(const FLFPInventoryItemData& NewData)
+	{
+		return ItemTag == NewData.ItemTag && MetaData.JsonString == NewData.MetaData.JsonString;
+	}
+
+	FORCEINLINE	bool operator!=(const FLFPInventoryItemData& NewData) const
+	{
+		return ItemTag != NewData.ItemTag || MetaData.JsonString != NewData.MetaData.JsonString;
+	}
 };
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEvent, const FLFPInventoryItemData&, ItemData, const int32, SlotIndex, const FString&, EventInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnUpdateItemEvent, const FLFPInventoryItemData&, OldItemData, const FLFPInventoryItemData&, NewItemData, const int32, SlotIndex, const FString&, EventInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnSwapItemEvent, const FLFPInventoryItemData&, FromItemData, const int32, FromSlot, const FLFPInventoryItemData&, ToItemData, const int32, ToSlot, const FString&, EventInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemFunctionEvent);
 
@@ -162,12 +173,12 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
 		void OnInventorySlotRep(const TArray<FLFPInventoryItemData>& OldValue);
-		virtual void OnInventorySlotRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue) { }
+		virtual void OnInventorySlotRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue);
 
 public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnItemEvent OnUpdateItem;
+		FOnUpdateItemEvent OnUpdateItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnItemEvent OnAddItem;

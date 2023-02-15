@@ -92,14 +92,15 @@ int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, int32 Slot
 
 		const bool bIsItemValid = GetInventorySlot(SlotIndex).ItemTag.IsValid();
 
+		const FLFPInventoryItemData OldItemData = InventorySlotList[SlotIndex];
+
 		// Change the item data
 		ProcessAddItem(InventorySlotList[SlotIndex], ItemData, SlotIndex, EventInfo);
 
 		// Check is the original data is valid
-		if (bIsItemValid)
-			OnUpdateItem.Broadcast(InventorySlotList[SlotIndex], SlotIndex, EventInfo);
-		else
-			OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
+		if (bIsItemValid == false) OnAddItem.Broadcast(ItemData, SlotIndex, EventInfo);
+
+		OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
 		// Check is the new item data is still valid
 		if (ItemData.ItemTag.IsValid() == false) return SlotIndex;
@@ -149,6 +150,8 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData& RemovedItemData, 
 	TrimInventorySlotList(SlotIndex);
 
 	OnRemoveItem.Broadcast(RemovedItemData, SlotIndex, EventInfo);
+
+	OnUpdateItem.Broadcast(RemovedItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
 	return true;
 }
@@ -217,6 +220,9 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 	ProcessSwapItem(InventorySlotList[FromSlot], FromSlot, InventorySlotList[ToSlot], ToSlot, EventInfo);
 
 	OnSwapItem.Broadcast(ItemA, FromSlot, ItemB, ToSlot, EventInfo);
+
+	OnUpdateItem.Broadcast(ItemA, InventorySlotList[FromSlot], FromSlot, EventInfo);
+	OnUpdateItem.Broadcast(ItemB, InventorySlotList[ToSlot], ToSlot, EventInfo);
 
 	TrimInventorySlotList(MaxIndex);
 
@@ -384,4 +390,19 @@ bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexLis
 	}
 
 	return ItemIndexList.IsEmpty() == false;
+}
+
+void ULFPInventoryComponent::OnInventorySlotRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue)
+{
+	const int32 MaxSize = FMath::Max(OldValue.Num(), InventorySlotList.Num());
+
+	for (int32 Index = 0; Index < MaxSize; Index++)
+	{
+		const FLFPInventoryItemData& OldData = OldValue.IsValidIndex(Index) ? OldValue[Index] : FLFPInventoryItemData::EmptyInventoryItemData;
+
+		if (GetInventorySlot(Index) != OldData)
+		{
+			OnUpdateItem.Broadcast(OldData, GetInventorySlot(Index), Index, "");
+		}
+	}
 }

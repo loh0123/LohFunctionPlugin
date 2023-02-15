@@ -72,9 +72,7 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 {
 	if (IsValid(InventoryComponent))
 	{
-		InventoryComponent->OnAddItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
-		InventoryComponent->OnRemoveItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
-		InventoryComponent->OnSwapItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+		InventoryComponent->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
 
 		InventoryComponent->CheckComponentList.Remove(this);
 	}
@@ -83,9 +81,7 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 
 	if (IsValid(Component))
 	{
-		InventoryComponent->OnAddItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryAddItem);
-		InventoryComponent->OnRemoveItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryRemoveItem);
-		InventoryComponent->OnSwapItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventorySwapItem);
+		InventoryComponent->OnUpdateItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
 
 		InventoryComponent->CheckComponentList.Add(this);
 		
@@ -229,42 +225,24 @@ void ULFPEquipmentComponent::RunEquipOnAllSlot() const
 	}
 }
 
-void ULFPEquipmentComponent::OnInventoryAddItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
+void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo)
 {
 	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 
-	OnEquipItem.Broadcast(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
-}
-
-void ULFPEquipmentComponent::OnInventoryRemoveItem(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo)
-{
-	int32 EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
-
-	if (EquipmentSlotIndex == INDEX_NONE) return;
-
-	OnUnequipItem.Broadcast(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
-}
-
-void ULFPEquipmentComponent::OnInventorySwapItem(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo)
-{
-	int32 EquipmentSlotIndexA = FindEquipmentSlotIndex(FromSlot);
-	int32 EquipmentSlotIndexB = FindEquipmentSlotIndex(ToSlot);
-
-	if (EquipmentSlotIndexA != INDEX_NONE)
+	if (OldItemData.ItemTag != NewItemData.ItemTag)
 	{
-		if (FromItemData.ItemTag.IsValid()) OnUnequipItem.Broadcast(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo);
-		if (ToItemData.ItemTag.IsValid()) OnEquipItem.Broadcast(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo);
-	}
+		if (OldItemData.ItemTag.IsValid())
+		{
+			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+		}
 
-	if (EquipmentSlotIndexB != INDEX_NONE)
-	{
-		if (ToItemData.ItemTag.IsValid())OnUnequipItem.Broadcast(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo);
-		if (FromItemData.ItemTag.IsValid())OnEquipItem.Broadcast(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo);
+		if (NewItemData.ItemTag.IsValid())
+		{
+			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+		}
 	}
-
-	return;
 }
 
 bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const

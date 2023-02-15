@@ -60,11 +60,7 @@ protected:
 
 public: // Inventory Event
 
-	UFUNCTION() void OnInventoryAddItem		(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
-	
-	UFUNCTION() void OnInventoryRemoveItem	(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo);
-
-	UFUNCTION() void OnInventorySwapItem	(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo);
+	UFUNCTION() void OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo);
 
 public: // Inventory Interface
 
@@ -87,10 +83,10 @@ public: // Event
 
 public: // Delegate
 
-	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
 		FOnEquipmentEvent OnEquipItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintAuthorityOnly, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
 		FOnEquipmentEvent OnUnequipItem;
 
 public: // Valid Checker
