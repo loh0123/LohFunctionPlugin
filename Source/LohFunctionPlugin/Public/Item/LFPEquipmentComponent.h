@@ -108,6 +108,10 @@ public: // Getter
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		int32 FindEquipmentSlotIndex(const int32 InventorySlotIndex) const;
 
+public:
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
+		bool bAutoSetup = true;
 
 protected:
 

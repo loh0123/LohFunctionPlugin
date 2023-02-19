@@ -5,7 +5,6 @@
 
 
 #include "Item/LFPEquipmentComponent.h"
-#include "Item/LFPItemComponentInterface.h"
 //#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
@@ -31,9 +30,9 @@ void ULFPEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(GetOwner()) && GetOwner()->Implements<ULFPItemComponentInterface>())
+	if (IsValid(GetOwner()) && bAutoSetup)
 	{
-		ULFPInventoryComponent* InvComp = ILFPItemComponentInterface::Execute_GetInventoryComponent(GetOwner());
+		ULFPInventoryComponent* InvComp = GetOwner()->FindComponentByClass<ULFPInventoryComponent>();
 
 		if (IsValid(InvComp))
 		{

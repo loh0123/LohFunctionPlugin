@@ -166,6 +166,9 @@ public: // Delegate
 
 public:
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting")
+		bool bAutoSetup = true;
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPItemMutatorComponent | Setting", meta = (ClampMin = "0"))
 		int32 MaxQueueAmount = 5;
 
