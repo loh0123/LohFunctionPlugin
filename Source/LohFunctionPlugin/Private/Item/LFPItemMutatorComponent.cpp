@@ -87,14 +87,14 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 
 	NewQueueData.RecipeTag = RecipeTag;
 
-	if (CanAddItemToQueue(NewQueueData.ItemConsumeList) == false)
+	if (CanAddItemToQueue(NewQueueData) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : AddItemToQueue CanAddItemToQueue return false"));
 
 		return false;
 	}
 
-	if (ConsumeItemFromInventory(NewQueueData.ItemConsumeList) == false)
+	if (ConsumeItemFromInventory(NewQueueData) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : AddItemToQueue ConsumeItemFromInventory return false"));
 
@@ -281,3 +281,16 @@ void ULFPItemMutatorComponent::ProcessItem(const FLFPItemMutatorQueueData& ItemD
 	if (IsQueueIndexValid(QueueIndex)) MutatorQueue.RemoveAt(QueueIndex);
 }
 
+bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPItemMutatorComponent : ProcessItem InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemMutatorQueueData.ItemSearchRangeList, false);
+
+	return true;
+}

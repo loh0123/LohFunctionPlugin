@@ -24,6 +24,9 @@ struct FLFPItemMutatorQueueData
 		TArray<FLFPInventoryItemData> ItemConsumeList;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
+		TArray<FIntPoint> ItemSearchRangeList;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		TArray<FLFPInventoryItemData> ItemProduceList;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
@@ -98,29 +101,29 @@ public: // Function
 public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool CanAddItemToQueue(const TArray<FLFPInventoryItemData>& ItemConsumeList) const;
-		virtual bool CanAddItemToQueue_Implementation(const TArray<FLFPInventoryItemData>& ItemConsumeList) const { return true; }
-	 
+		bool CanAddItemToQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
+		virtual bool CanAddItemToQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool CanRemoveItemFromQueue(const FLFPItemMutatorQueueData& ItemData) const;
-		virtual bool CanRemoveItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemData) const { return true; }
-	
+		bool CanRemoveItemFromQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
+		virtual bool CanRemoveItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool CanPauseItemCountdown(const FLFPItemMutatorQueueData& ItemData) const;
-		virtual bool CanPauseItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemData) const { return true; }
-	
+		bool CanPauseItemCountdown(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
+		virtual bool CanPauseItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool CanResumeItemCountdown(const FLFPItemMutatorQueueData& ItemData) const;
-		virtual bool CanResumeItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemData) const { return true; }
-	
+		bool CanResumeItemCountdown(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
+		virtual bool CanResumeItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool CanDeleteItemFromQueue(const FLFPItemMutatorQueueData& ItemData) const;
-		virtual bool CanDeleteItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemData) const { return true; }
+		bool CanDeleteItemFromQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
+		virtual bool CanDeleteItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
-		bool ConsumeItemFromInventory(const TArray<FLFPInventoryItemData>& ItemConsumeList) const;
-		virtual bool ConsumeItemFromInventory_Implementation(const TArray<FLFPInventoryItemData>& ItemConsumeList) const { return false; };
+		bool ConsumeItemFromInventory(const FLFPItemMutatorQueueData& ItemMutatorQueueData);
+		virtual bool ConsumeItemFromInventory_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData);
 
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemMutatorComponent | Event")

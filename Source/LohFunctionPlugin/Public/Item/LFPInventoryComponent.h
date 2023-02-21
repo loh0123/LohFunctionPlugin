@@ -73,10 +73,10 @@ public: // Function
 	* @return Index of the item in the Inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		int32 AddItem(FLFPInventoryItemData ItemData, int32 SlotIndex = -1, const FString EventInfo = FString("None"));
+		int32 AddItem(FLFPInventoryItemData ItemData, const FIntPoint SearchSlotRange, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		TArray<int32> AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, int32 SlotIndex = -1, const FString EventInfo = FString("None"));
+		TArray<int32> AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, const TArray<FIntPoint>& SearchSlotRangeList, const FString EventInfo = FString("None"));
 
 	/** 
 	* Remove item From inventory
@@ -86,17 +86,17 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(FLFPInventoryItemData& RemovedItemData, const int32 SlotIndex, const bool bForce = false, const FString EventInfo = FString("None"));
+		int32 RemoveItem(FLFPInventoryItemData ItemData, const FIntPoint SearchSlotRange, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const TArray<int32> SlotIndexList, const bool bForce = false, const FString EventInfo = FString("None"));
+		TArray<int32> RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/** 
 	* Remove All item From inventory
 	* @param bForce Ignore lock item rule and can remove item
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void ClearInventory(const int32 StartSlotIndex = -1, const bool bForce = false, const FString EventInfo = FString("None"));
+		void ClearInventory(const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
@@ -147,16 +147,16 @@ public: // Event
 		virtual bool CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const;
 
 
-		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-			void ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual void ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = NewItemData; NewItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& AddItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual void ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& AddItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = AddItemData; AddItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
 
-		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-			void ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, const int32 SlotIndex, const FString& EventInfo) const;
-		virtual void ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
-
-		UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-			void ProcessSwapItem(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const;
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& RemoveItemData, const int32 SlotIndex, const FString& EventInfo) const;
+		virtual void ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& RemoveItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = FLFPInventoryItemData::EmptyInventoryItemData; RemoveItemData = FLFPInventoryItemData::EmptyInventoryItemData; }
+		
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void ProcessSwapItem(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const;
 		virtual void ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const { FLFPInventoryItemData AData = ItemDataA; FLFPInventoryItemData BData = ItemDataB; ItemDataA = BData; ItemDataB = AData; }
 
 
@@ -210,10 +210,10 @@ public: // Valid Checker
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		int32 FindAddableInventorySlot(int32 SlotIndex, const FLFPInventoryItemData& ForItem, int32 EndIndex = -1, const FString EventInfo = FString("None")) const;
+		bool FindAvailableInventorySlot(TArray<int32>& AvailableSlotList, FIntPoint SearchSlotRange, const FLFPInventoryItemData& ForItem, const FString EventInfo = FString("None")) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const int32 StartIndex = 0, int32 EndIndex = -1) const;
+		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, FIntPoint SearchSlotRange) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const FLFPInventoryItemData& GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotList[Index] : FLFPInventoryItemData::EmptyInventoryItemData; };

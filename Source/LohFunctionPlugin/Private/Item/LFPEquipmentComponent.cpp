@@ -198,16 +198,16 @@ bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, cons
 		return false;
 	}
 
-	int32 SwapIndex = INDEX_NONE;
+	TArray<int32> SwapIndexList;
 
-	if ((SwapIndex = InventoryComponent->FindAddableInventorySlot(SwapIndex, InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex]), INDEX_NONE, EventInfo)) == INDEX_NONE)
+	if (InventoryComponent->FindAvailableInventorySlot(SwapIndexList, FIntPoint(InventoryComponent->StartInventorySlotIndex, -1), InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex]), EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryUnequipItem FindAddableInventorySlot return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryUnequipItem FindAvailableInventorySlot return false"));
 
 		return false;
 	}
 
-	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], SwapIndex, EventInfo);
+	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex], SwapIndexList[0], EventInfo);
 }
 
 void ULFPEquipmentComponent::RunEquipOnAllSlot() const
