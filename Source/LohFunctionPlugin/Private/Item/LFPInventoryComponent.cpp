@@ -70,7 +70,7 @@ void ULFPInventoryComponent::Serialize(FArchive& Ar)
 	}
 }
 
-int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, const FIntPoint SearchSlotRange, const FString EventInfo)
+int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, const int32 StartSlot, const int32 EndSlot, const FString EventInfo)
 {
 	if (ItemData.ItemTag == FGameplayTag::EmptyTag)
 	{
@@ -81,7 +81,7 @@ int32 ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, const FInt
 
 	TArray<int32> ItemIndexList;
 
-	if (FindAvailableInventorySlot(ItemIndexList, SearchSlotRange, ItemData) == false)
+	if (FindAvailableInventorySlot(ItemIndexList, ItemData, StartSlot, EndSlot) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem FindAvailableInventorySlot return false"));
 
@@ -127,7 +127,7 @@ TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItem
 	{
 		const FIntPoint SearchSlotRange = SearchSlotRangeList.IsValidIndex(Index) ? SearchSlotRangeList[Index] : FIntPoint(-1);
 
-		ReturnList.Add(AddItem(ItemData, SearchSlotRange, EventInfo));
+		ReturnList.Add(AddItem(ItemData, SearchSlotRange.X, SearchSlotRange.Y, EventInfo));
 
 		Index++;
 	}
@@ -135,7 +135,7 @@ TArray<int32> ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItem
 	return ReturnList;
 }
 
-int32 ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData RemovedItemData, const FIntPoint SearchSlotRange, const bool bForce, const FString EventInfo)
+int32 ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData RemovedItemData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const FString EventInfo)
 {
 	if (RemovedItemData.ItemTag == FGameplayTag::EmptyTag)
 	{
@@ -146,7 +146,7 @@ int32 ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData RemovedItemData, 
 
 	TArray<int32> ItemIndexList;
 
-	if (FindItemListWithItemTag(ItemIndexList, RemovedItemData.ItemTag, SearchSlotRange) == false)
+	if (FindItemListWithItemTag(ItemIndexList, RemovedItemData.ItemTag, StartSlot, EndSlot) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem FindItemListWithItemTag return false"));
 
@@ -193,7 +193,7 @@ TArray<int32> ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryI
 	{
 		const FIntPoint SearchSlotRange = SearchSlotRangeList.IsValidIndex(Index) ? SearchSlotRangeList[Index] : FIntPoint(-1);
 
-		ReturnList.Add(RemoveItem(RemovedItemData, SearchSlotRange, bForce, EventInfo));
+		ReturnList.Add(RemoveItem(RemovedItemData, SearchSlotRange.X, SearchSlotRange.Y, bForce, EventInfo));
 
 		Index++;
 	}
@@ -207,7 +207,7 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 	{
 		FLFPInventoryItemData RemoveData = FLFPInventoryItemData();
 
-		RemoveItem(RemoveData, SlotIndex, bForce, EventInfo);
+		RemoveItem(RemoveData, SlotIndex, SlotIndex, bForce, EventInfo);
 	}
 
 	TrimInventorySlotList(InventorySlotList.Num() - 1);
@@ -293,11 +293,11 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 	FLFPInventoryItemData FromData;
 	FLFPInventoryItemData ToData;
 
-	Other->RemoveItem(FromData, FromSlot, false, EventInfo);
-	RemoveItem(ToData, ToSlot, false, EventInfo);
+	Other->RemoveItem(FromData, FromSlot, FromSlot, false, EventInfo);
+	RemoveItem(ToData, ToSlot, ToSlot, false, EventInfo);
 
-	Other->AddItem(ToData, FromSlot, EventInfo);
-	AddItem(FromData, ToSlot, EventInfo);
+	Other->AddItem(ToData, FromSlot, FromSlot, EventInfo);
+	AddItem(FromData, ToSlot, ToSlot, EventInfo);
 
 	return true;
 }
@@ -386,37 +386,37 @@ bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryItemD
 	return true;
 }
 
-bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& AvailableSlotList, FIntPoint SearchSlotRange, const FLFPInventoryItemData& ForItem, const FString EventInfo) const
+bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& AvailableSlotList, const FLFPInventoryItemData& ForItem, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
 {
-	if (SearchSlotRange.Y == INDEX_NONE) SearchSlotRange.Y = MaxInventorySlotAmount - 1;
+	if (EndSlot == INDEX_NONE) EndSlot = MaxInventorySlotAmount - 1;
 
-	if (SearchSlotRange.Y >= MaxInventorySlotAmount || SearchSlotRange.X >= MaxInventorySlotAmount) return false;
+	if (EndSlot >= MaxInventorySlotAmount || StartSlot >= MaxInventorySlotAmount) return false;
 
-	if (SearchSlotRange.X < 0) SearchSlotRange.X = 0;
+	if (StartSlot < 0) StartSlot = 0;
 
-	for (SearchSlotRange.X; SearchSlotRange.X <= SearchSlotRange.Y; SearchSlotRange.X++)
+	for (StartSlot; StartSlot <= EndSlot; StartSlot++)
 	{
-		if (IsInventorySlotAvailable(SearchSlotRange.X, GetInventorySlot(SearchSlotRange.X), ForItem) == false) continue;
+		if (IsInventorySlotAvailable(StartSlot, GetInventorySlot(StartSlot), ForItem) == false) continue;
 
-		AvailableSlotList.Add(SearchSlotRange.X);
+		AvailableSlotList.Add(StartSlot);
 	}
 
 	return AvailableSlotList.Num() > 0;
 }
 
-bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, FIntPoint SearchSlotRange) const
+bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, int32 StartSlot, int32 EndSlot) const
 {
-	if (SearchSlotRange.Y == INDEX_NONE) SearchSlotRange.Y = InventorySlotList.Num() - 1;
+	if (EndSlot == INDEX_NONE) EndSlot = InventorySlotList.Num() - 1;
 
-	if (SearchSlotRange.X == INDEX_NONE) SearchSlotRange.X = 0;
+	if (StartSlot == INDEX_NONE) StartSlot = 0;
 
-	if (SearchSlotRange.X < 0 || SearchSlotRange.Y >= InventorySlotList.Num()) return false;
+	if (StartSlot < 0 || EndSlot >= InventorySlotList.Num()) return false;
 
-	for (SearchSlotRange.X; SearchSlotRange.X <= SearchSlotRange.Y; SearchSlotRange.X++)
+	for (StartSlot; StartSlot <= EndSlot; StartSlot++)
 	{
-		if (InventorySlotList[SearchSlotRange.X].ItemTag.MatchesTag(ItemTag))
+		if (InventorySlotList[StartSlot].ItemTag.MatchesTag(ItemTag))
 		{
-			ItemIndexList.Add(SearchSlotRange.X);
+			ItemIndexList.Add(StartSlot);
 		}
 	}
 
