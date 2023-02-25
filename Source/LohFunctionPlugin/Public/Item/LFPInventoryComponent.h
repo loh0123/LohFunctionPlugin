@@ -37,6 +37,24 @@ struct FLFPInventoryItemData
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FLFPInventoryItemIndexData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventoryItemIndexList")
+		FGameplayTag ItemTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventoryItemIndexList")
+		int32 ItemIndex = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventoryItemIndexList")
+		TArray<int32> InventoryIndexList = TArray<int32>();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventoryItemIndexList")
+		FLFPInventoryItemData LeaveItemData = FLFPInventoryItemData();
+};
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEvent, const FLFPInventoryItemData&, ItemData, const int32, SlotIndex, const FString&, EventInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnUpdateItemEvent, const FLFPInventoryItemData&, OldItemData, const FLFPInventoryItemData&, NewItemData, const int32, SlotIndex, const FString&, EventInfo);
@@ -65,31 +83,36 @@ public:
 
 public: // Function
 
-	/** 
-	* Add / Set item to inventory 
+	/**
+	* Add / Set item to inventory
 	* @param ItemData Item Data to add to inventory or equipment
-	* @param SlotIndex inventory or equipment slot index within max value
+	* @param ItemIndexData Index on where the item has been added or update and what is leave of the item added
+	* @param StartSlot Start location to place item (Use -1 to auto)
+	* @param EndSlot End location to place item (Use -1 to auto)
 	* @param EventInfo Info to pass to trigger event
-	* @return Index of the item in the Inventory
+	* @return Some item has been added to inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		int32 AddItem(FLFPInventoryItemData ItemData, const int32 StartSlot = -1, const int32 EndSlot = -1, const FString EventInfo = FString("None"));
+		bool AddItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		TArray<int32> AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, const TArray<FIntPoint>& SearchSlotRangeList, const FString EventInfo = FString("None"));
+		bool AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const FString EventInfo = FString("None"));
 
-	/** 
+	/**
 	* Remove item From inventory
-	* @param RemovedItemData Item Data that got removed from inventory or equipment
-	* @param SlotIndex inventory or equipment slot index within max value
+	* @param ItemData Item Data that got removed from inventory or equipment
+	* @param ItemIndexData Index on where the item has been added or update and what is leave of the item removed
+	* @param StartSlot Start location to place item (Use -1 to auto)
+	* @param EndSlot End location to place item (Use -1 to auto)
 	* @param bForce Ignore lock item rule and can remove item
 	* @param EventInfo Info to pass to trigger event
+	* @return Some item has been Removed from inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		int32 RemoveItem(FLFPInventoryItemData ItemData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		TArray<int32> RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/** 
 	* Remove All item From inventory

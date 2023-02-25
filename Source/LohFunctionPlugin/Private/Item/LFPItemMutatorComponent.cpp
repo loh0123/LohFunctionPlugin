@@ -261,18 +261,20 @@ void ULFPItemMutatorComponent::ProcessItem(const FLFPItemMutatorQueueData& ItemD
 		return;
 	}
 
+	FLFPInventoryItemIndexData ItemIndexData;
+
 	if (bReturnConsume)
 	{
 		for (const auto& ConsumeItem : ItemData.ItemConsumeList)
 		{
-			InventoryComponent->AddItem(ConsumeItem, -1, -1, FString("ReturnConsume"));
+			InventoryComponent->AddItem(ConsumeItem, ItemIndexData, -1, -1, FString("ReturnConsume"));
 		}
 	}
 	else
 	{
 		for (const auto& ProduceItem : ItemData.ItemProduceList)
 		{
-			InventoryComponent->AddItem(ProduceItem, -1, -1, FString("ReturnProduce"));
+			InventoryComponent->AddItem(ProduceItem, ItemIndexData, -1, -1, FString("ReturnProduce"));
 		}
 	}
 
@@ -290,7 +292,9 @@ bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLF
 		return false;
 	}
 
-	InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemMutatorQueueData.ItemSearchRangeList, false);
+	TArray<FLFPInventoryItemIndexData> ItemIndexList;
+
+	InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchRangeList, false);
 
 	return true;
 }
