@@ -190,7 +190,7 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
-		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag; }
+		virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { for (const auto& IgnoreRange : UnavailableInventorySlotList) { if (SlotIndex >= IgnoreRange.X && SlotIndex <= IgnoreRange.Y) return false; } return true; }
 
 
 
@@ -253,7 +253,7 @@ public:
 		int32 StartInventorySlotIndex = 0;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
-		TArray<FIntPoint> IgnoreInventorySlotList = TArray<FIntPoint>();
+		TArray<FIntPoint> UnavailableInventorySlotList = TArray<FIntPoint>();
 
 protected:
 

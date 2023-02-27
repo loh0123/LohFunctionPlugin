@@ -371,12 +371,6 @@ void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
 
 bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	for (const auto& IgnoreRange : IgnoreInventorySlotList)
-		if (SlotIndex >= IgnoreRange.X && SlotIndex <= IgnoreRange.Y)
-		{
-			return false;
-		}
-
 	for (auto& CheckFunc : CheckComponentList)
 	{
 		if (IsValid(CheckFunc) && CheckFunc->Implements<ULFPInventoryInterface>() && ILFPInventoryInterface::Execute_CanInventoryAddItem(CheckFunc, ItemData, SlotIndex, EventInfo) == false) return false;
@@ -387,12 +381,6 @@ bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemDa
 
 bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	for (const auto& IgnoreRange : IgnoreInventorySlotList)
-		if (SlotIndex >= IgnoreRange.X && SlotIndex <= IgnoreRange.Y)
-		{
-			return false;
-		}
-
 	if (GetInventorySlot(SlotIndex).ItemTag == FGameplayTag::EmptyTag) return false;
 
 	for (auto& CheckFunc : CheckComponentList)
@@ -405,11 +393,10 @@ bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryIte
 
 bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
 {
-	for (const auto& IgnoreRange : IgnoreInventorySlotList)
-		if ((FromSlot >= IgnoreRange.X && FromSlot <= IgnoreRange.Y) || (ToSlot >= IgnoreRange.X && ToSlot <= IgnoreRange.Y))
-		{
-			return false;
-		}
+	if (IsInventorySlotAvailable(FromSlot, FLFPInventoryItemData::EmptyInventoryItemData, ToItemData) == false || IsInventorySlotAvailable(ToSlot, FLFPInventoryItemData::EmptyInventoryItemData, FromItemData) == false)
+	{
+		return false;
+	}
 
 	for (auto& CheckFunc : CheckComponentList)
 	{
