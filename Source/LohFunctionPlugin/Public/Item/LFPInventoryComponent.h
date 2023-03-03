@@ -105,14 +105,15 @@ public: // Function
 	* @param StartSlot Start location to place item (Use -1 to auto)
 	* @param EndSlot End location to place item (Use -1 to auto)
 	* @param bForce Ignore lock item rule and can remove item
+	* @param bCheckAllRemove return true only if all item is remove
 	* @param EventInfo Info to pass to trigger event
 	* @return Some item has been Removed from inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const bool bCheckAllRemove = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const bool bCheckAllRemove = false, const FString EventInfo = FString("None"));
 
 	/** 
 	* Remove All item From inventory

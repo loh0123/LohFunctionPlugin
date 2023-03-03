@@ -151,7 +151,7 @@ bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& It
 	return ReturnList;
 }
 
-bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
 	if (ItemData.ItemTag == FGameplayTag::EmptyTag)
 	{
@@ -202,10 +202,10 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 
 	ItemIndexData.LeaveItemData = ItemData;
 
-	return true;
+	return bCheckAllRemove == false;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
 	int32 Index = 0;
 
@@ -219,7 +219,7 @@ bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>&
 
 		ItemIndexList[Index].ItemIndex = Index;
 
-		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, EventInfo) == false)
+		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, EventInfo) == false)
 		{
 			ReturnList = false;
 		}
@@ -238,7 +238,7 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 
 		FLFPInventoryItemIndexData ItemIndexData;
 
-		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, EventInfo);
+		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, false, EventInfo);
 	}
 
 	TrimInventorySlotList(InventorySlotList.Num() - 1);
@@ -326,8 +326,8 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 
 	FLFPInventoryItemIndexData ItemIndexData;
 
-	Other->RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, EventInfo);
-	RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, EventInfo);
+	Other->RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
+	RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
 
 	Other->AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);
 	AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
