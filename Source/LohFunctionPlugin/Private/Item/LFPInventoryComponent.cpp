@@ -234,7 +234,7 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 {
 	for (int32 SlotIndex = 0; SlotIndex < InventorySlotList.Num(); SlotIndex++)
 	{
-		FLFPInventoryItemData RemoveData = FLFPInventoryItemData();
+		FLFPInventoryItemData RemoveData = GetInventorySlot(SlotIndex);
 
 		FLFPInventoryItemIndexData ItemIndexData;
 
