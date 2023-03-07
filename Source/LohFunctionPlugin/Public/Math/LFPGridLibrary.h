@@ -26,6 +26,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		static bool IsOnGridEdge(const FIntVector& Location, const FIntVector& GridSize);
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		static TArray<FIntVector> GetGridEdgeDirection(const FIntVector& Location, const FIntVector& GridSize);
 	
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
 		static int32 ToIndex(const FIntVector& Location, const FIntVector& GridSize);

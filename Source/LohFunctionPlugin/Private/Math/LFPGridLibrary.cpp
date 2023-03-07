@@ -17,6 +17,43 @@ bool ULFPGridLibrary::IsOnGridEdge(const FIntVector& Location, const FIntVector&
 	return Location.GetMin() == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
 }
 
+TArray<FIntVector> ULFPGridLibrary::GetGridEdgeDirection(const FIntVector& Location, const FIntVector& GridSize)
+{
+	TArray<FIntVector> ReturnList;
+
+	if (Location.X == GridSize.X - 1)
+	{
+		ReturnList.Add(FIntVector(1, 0, 0));
+	}
+
+	if (Location.Y == GridSize.Y - 1)
+	{
+		ReturnList.Add(FIntVector(0, 1, 0));
+	}
+
+	if (Location.Z == GridSize.Z - 1)
+	{
+		ReturnList.Add(FIntVector(0, 0, 1));
+	}
+
+	if (Location.X == 0)
+	{
+		ReturnList.Add(FIntVector(-1, 0, 0));
+	}
+
+	if (Location.Y == 0)
+	{
+		ReturnList.Add(FIntVector(0, -1, 0));
+	}
+
+	if (Location.Z == 0)
+	{
+		ReturnList.Add(FIntVector(0, 0, -1));
+	}
+
+	return ReturnList;
+}
+
 int32 ULFPGridLibrary::ToIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
 	if (IsLocationValid(Location, GridSize) == false) return INDEX_NONE;
