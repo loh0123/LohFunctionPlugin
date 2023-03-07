@@ -114,7 +114,7 @@ public:
 
 	FORCEINLINE const FColor& GetChuckColor(const int32 VoxelIndex) const
 	{
-		check(VoxelData.IsValidIndex(VoxelIndex));
+		check(VoxelColor.IsValidIndex(VoxelIndex));
 
 		return VoxelColor[VoxelIndex];
 	}
@@ -123,9 +123,9 @@ public:
 
 UENUM( BlueprintType )
 enum class ELFPVoxelChuckUpdateState : uint8 {
-	LFP_BlockState      UMETA(DisplayName = "BlockState"),
-	LFP_BlockSwap       UMETA(DisplayName = "BlockSwap"),
-	LFP_Full			UMETA(DisplayName = "Full"),
+	LFP_Color		UMETA(DisplayName = "Color"),
+	LFP_Material	UMETA(DisplayName = "Material"),
+	LFP_Full		UMETA(DisplayName = "Full"),
 };
 
 
@@ -157,11 +157,14 @@ public:
 		TMap<int32, uint8> ChangeMaterial = TMap<int32, uint8>();
 
 	UPROPERTY()
-		ELFPVoxelChuckUpdateState UpdateState = ELFPVoxelChuckUpdateState::LFP_BlockState;
+		ELFPVoxelChuckUpdateState UpdateState = ELFPVoxelChuckUpdateState::LFP_Color;
 
 public:
 
-	FORCEINLINE void SetUpdateState(ELFPVoxelChuckUpdateState Other) { if (UpdateState < Other) UpdateState = Other; }
+	FORCEINLINE void SetUpdateState(ELFPVoxelChuckUpdateState Other) 
+	{ 
+		if (UpdateState != Other) UpdateState = ELFPVoxelChuckUpdateState::LFP_Full;
+	}
 
 public: // Operator
 
@@ -197,19 +200,31 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
+		FORCEINLINE bool IsChuckInitialized(const FIntVector& ChuckVector) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
 		FORCEINLINE bool IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
-		FORCEINLINE FString MemorySize();
+		FORCEINLINE FString MemorySize() const;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
-		FORCEINLINE bool SetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName, const uint8 VoxelStateB, const uint8 VoxelStateA, const bool bInitializeChuck = true);
+		FORCEINLINE bool SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
-		FORCEINLINE bool SetVoxelState(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelStateB, const uint8 VoxelStateA);
+		FORCEINLINE bool SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial);
 
-	//UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
-	//	FORCEINLINE FLFPVoxelIdentifyData GetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE FColor GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE uint8 GetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "LFPVoxelContainerComponent | Chuck")
+		FORCEINLINE void InitializeChuck(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor);
+		virtual void InitializeChuck_Implementation(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor);
 
 protected:
 

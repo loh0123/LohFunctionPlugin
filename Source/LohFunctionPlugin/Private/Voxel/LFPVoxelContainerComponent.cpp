@@ -34,24 +34,72 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
+bool ULFPVoxelContainerComponent::IsChuckInitialized(const FIntVector& ChuckVector) const
+{
+	return ChuckDataList.Contains(ChuckVector);
+}
+
 bool ULFPVoxelContainerComponent::IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const
 {
 	return ChuckDataList.Contains(VoxelGridPosition.ChuckVector) && Setting.GetVoxelLength() < VoxelGridPosition.VoxelIndex;
 }
 
-FString ULFPVoxelContainerComponent::MemorySize()
+FString ULFPVoxelContainerComponent::MemorySize() const
 {
 	return FString::Printf(TEXT("%llu : ChuckDataList Size : %llu : Struct Size"), ChuckDataList.GetAllocatedSize(), sizeof(FColor));
 }
 
-bool ULFPVoxelContainerComponent::SetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName, const uint8 VoxelStateB, const uint8 VoxelStateA, const bool bInitializeChuck)
+void ULFPVoxelContainerComponent::InitializeChuck_Implementation(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor)
 {
+	FLFPVoxelChuckData& ChuckData = ChuckDataList.FindOrAdd(ChuckVector);
+
+	ChuckData.InitChuckData(Setting.GetVoxelLength(), VoxelMaterial, VoxelColor);
+
+	return;
+}
+
+bool ULFPVoxelContainerComponent::SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor)
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+
+	FLFPVoxelUpdateAction UpdateAction;
+
+	UpdateAction.ChangeColor.Add(VoxelGridPosition.VoxelIndex, VoxelColor);
+
+	UpdateAction.UpdateState = ELFPVoxelChuckUpdateState::LFP_Color;
+
+	MarkChuckForUpdate(VoxelGridPosition.ChuckVector, UpdateAction);
+
 	return true;
 }
 
-bool ULFPVoxelContainerComponent::SetVoxelState(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelStateB, const uint8 VoxelStateA)
+bool ULFPVoxelContainerComponent::SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial)
 {
-	return false;
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+
+	FLFPVoxelUpdateAction UpdateAction;
+
+	UpdateAction.ChangeMaterial.Add(VoxelGridPosition.VoxelIndex, VoxelMaterial);
+
+	UpdateAction.UpdateState = ELFPVoxelChuckUpdateState::LFP_Material;
+
+	MarkChuckForUpdate(VoxelGridPosition.ChuckVector, UpdateAction);
+
+	return true;
+}
+
+FColor ULFPVoxelContainerComponent::GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return FColor(0);
+
+	return ChuckDataList.FindRef(VoxelGridPosition.ChuckVector).GetChuckColor(VoxelGridPosition.VoxelIndex);
+}
+
+uint8 ULFPVoxelContainerComponent::GetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return uint8(255);
+
+	return ChuckDataList.FindRef(VoxelGridPosition.ChuckVector).GetChuckMaterial(VoxelGridPosition.VoxelIndex);
 }
 
 void ULFPVoxelContainerComponent::UpdateChuckState()
@@ -123,11 +171,6 @@ void ULFPVoxelContainerComponent::MarkChuckForUpdate(const FIntVector ChuckVecto
 	}
 
 	UpdateAction += UpdateData;
-
-	if (true)
-	{
-
-	}
 
 	if (UpdateData.UpdateState == ELFPVoxelChuckUpdateState::LFP_Full)
 	{
