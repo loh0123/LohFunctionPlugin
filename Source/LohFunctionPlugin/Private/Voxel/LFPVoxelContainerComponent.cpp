@@ -2,6 +2,7 @@
 
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "./Math/LFPGridLibrary.h"
+#include "UObject/ReflectedTypeAccessors.h"
 
 // Sets default values for this component's properties
 ULFPVoxelContainerComponent::ULFPVoxelContainerComponent()
@@ -19,10 +20,6 @@ void ULFPVoxelContainerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (VoxelIDTable.IsNull() == false)
-	{
-		VoxelIDNameList = VoxelIDTable->GetRowNames();
-	}
 }
 
 
@@ -37,9 +34,24 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
+bool ULFPVoxelContainerComponent::IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	return ChuckDataList.Contains(VoxelGridPosition.ChuckVector) && Setting.GetVoxelLength() < VoxelGridPosition.VoxelIndex;
+}
+
 FString ULFPVoxelContainerComponent::MemorySize()
 {
-	return FString::Printf(TEXT("%llu : ChuckDataList Size : %llu : Struct Size"), ChuckDataList.GetAllocatedSize(), sizeof(FLFPVoxelIdentifyData));
+	return FString::Printf(TEXT("%llu : ChuckDataList Size : %llu : Struct Size"), ChuckDataList.GetAllocatedSize(), sizeof(FColor));
+}
+
+bool ULFPVoxelContainerComponent::SetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName, const uint8 VoxelStateB, const uint8 VoxelStateA, const bool bInitializeChuck)
+{
+	return true;
+}
+
+bool ULFPVoxelContainerComponent::SetVoxelState(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelStateB, const uint8 VoxelStateA)
+{
+	return false;
 }
 
 void ULFPVoxelContainerComponent::UpdateChuckState()
@@ -72,10 +84,16 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 
 		if (ChuckData == nullptr) continue;
 
-		/** This change the outdate voxel */
-		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeData)
+		/** This change the outdate voxel material */
+		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeMaterial)
 		{
-			ChuckData->SetChuckData(ChangeVoxel.Key, ChangeVoxel.Value);
+			ChuckData->SetChuckMaterial(ChangeVoxel.Key, ChangeVoxel.Value);
+		}
+
+		/** This change the outdate voxel color */
+		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeColor)
+		{
+			ChuckData->SetChuckColor(ChangeVoxel.Key, ChangeVoxel.Value);
 		}
 
 		/** This add update state to list */
@@ -99,12 +117,17 @@ void ULFPVoxelContainerComponent::MarkChuckForUpdate(const FIntVector ChuckVecto
 
 	TSet<FIntVector> EdgeList;
 
-	for (const auto& ChangeVoxel : UpdateData.ChangeData)
+	for (const auto& ChangeVoxel : UpdateData.ChangeMaterial)
 	{
 		EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.VoxelGridSize), Setting.VoxelGridSize));
 	}
 
 	UpdateAction += UpdateData;
+
+	if (true)
+	{
+
+	}
 
 	if (UpdateData.UpdateState == ELFPVoxelChuckUpdateState::LFP_Full)
 	{

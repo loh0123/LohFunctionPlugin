@@ -45,58 +45,23 @@ public:
 };
 
 USTRUCT( BlueprintType )
-struct FLFPVoxelGridIndex
+struct FLFPVoxelGridPosition
 {
 	GENERATED_BODY()
 
-	FLFPVoxelGridIndex() {}
+	FLFPVoxelGridPosition() {}
 
-	FLFPVoxelGridIndex(const int32 ChuckIndex, const int32 VoxelIndex) : ChuckIndex(ChuckIndex), VoxelIndex(VoxelIndex) {}
+	FLFPVoxelGridPosition(const FIntVector NewChuckVector, const int32 NewVoxelIndex) : ChuckVector(ChuckVector), VoxelIndex(NewVoxelIndex) {}
 
 public:
 
 	/** Chuck Index In Array */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridIndex")
-		int32 ChuckIndex = INDEX_NONE;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridPosition")
+		FIntVector ChuckVector = FIntVector::NoneValue;
 
 	/** Voxel Index In Array */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridIndex")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridPosition")
 		int32 VoxelIndex = INDEX_NONE;
-};
-
-USTRUCT( BlueprintType )
-struct FLFPVoxelTypeData : public FTableRowBase
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTypeData")
-		int32 MaterialID = 0;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTypeData")
-		uint8 VoxelR = uint8(0);
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelTypeData")
-		uint8 VoxelG = uint8(0);
-};
-
-/** This Struct Consume 4 Bytes and is use to save block type and state */
-USTRUCT()
-struct FLFPVoxelIdentifyData
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(SaveGame)
-		uint16 VoxelID = 0;
-
-	UPROPERTY(SaveGame)
-		uint8 VoxelB = uint8(0);
-
-	UPROPERTY(SaveGame)
-		uint8 VoxelA = uint8(0);
 };
 
 
@@ -107,33 +72,51 @@ struct FLFPVoxelChuckData
 
 private:
 
+	UPROPERTY(SaveGame)
+		TArray<uint8> VoxelMaterial = {};
+
 	UPROPERTY(SaveGame) 
-		TArray<FLFPVoxelIdentifyData> VoxelData = {};
+		TArray<FColor> VoxelColor = {};
 
 public:
 
 	FORCEINLINE bool IsInitialized() const
 	{
-		return VoxelData.IsEmpty() == false;
+		return VoxelMaterial.IsEmpty() == false;
 	}
 
-	FORCEINLINE void InitChuckData(const int32 VoxelLength, const FLFPVoxelIdentifyData& VoxelIdentifyData)
+	FORCEINLINE void InitChuckData(const int32 VoxelLength, const uint8 NewVoxelMaterial, const FColor& NewVoxelColor)
 	{
-		VoxelData.Init(VoxelIdentifyData, VoxelLength);
+		VoxelMaterial.Init(NewVoxelMaterial, VoxelLength);
+		VoxelColor.Init(NewVoxelColor, VoxelLength);
 	}
 
-	FORCEINLINE void SetChuckData(const int32 VoxelIndex, const FLFPVoxelIdentifyData& VoxelIdentifyData)
+	FORCEINLINE void SetChuckMaterial(const int32 VoxelIndex, const uint8 NewVoxelMaterial)
+	{
+		check(VoxelMaterial.IsValidIndex(VoxelIndex));
+
+		VoxelMaterial[VoxelIndex] = NewVoxelMaterial;
+	}
+
+	FORCEINLINE void SetChuckColor(const int32 VoxelIndex, const FColor& NewVoxelColor)
+	{
+		check(VoxelColor.IsValidIndex(VoxelIndex));
+
+		VoxelColor[VoxelIndex] = NewVoxelColor;
+	}
+
+	FORCEINLINE const uint8 GetChuckMaterial(const int32 VoxelIndex) const
+	{
+		check(VoxelMaterial.IsValidIndex(VoxelIndex));
+
+		return VoxelMaterial[VoxelIndex];
+	}
+
+	FORCEINLINE const FColor& GetChuckColor(const int32 VoxelIndex) const
 	{
 		check(VoxelData.IsValidIndex(VoxelIndex));
 
-		VoxelData[VoxelIndex] = VoxelIdentifyData;
-	}
-
-	FORCEINLINE const FLFPVoxelIdentifyData& GetChuckData(const int32 VoxelIndex) const
-	{
-		check(VoxelData.IsValidIndex(VoxelIndex));
-
-		return VoxelData[VoxelIndex];
+		return VoxelColor[VoxelIndex];
 	}
 
 };
@@ -168,18 +151,26 @@ struct FLFPVoxelUpdateAction
 public:
 
 	UPROPERTY()
-		TMap<int32, FLFPVoxelIdentifyData> ChangeData = TMap<int32, FLFPVoxelIdentifyData>();
+		TMap<int32, FColor> ChangeColor = TMap<int32, FColor>();
+
+	UPROPERTY()
+		TMap<int32, uint8> ChangeMaterial = TMap<int32, uint8>();
 
 	UPROPERTY()
 		ELFPVoxelChuckUpdateState UpdateState = ELFPVoxelChuckUpdateState::LFP_BlockState;
+
+public:
+
+	FORCEINLINE void SetUpdateState(ELFPVoxelChuckUpdateState Other) { if (UpdateState < Other) UpdateState = Other; }
 
 public: // Operator
 
 	FLFPVoxelUpdateAction& operator+=(const FLFPVoxelUpdateAction& Other)
 	{
-		ChangeData.Append(Other.ChangeData);
+		ChangeColor.Append(Other.ChangeColor);
+		ChangeMaterial.Append(Other.ChangeMaterial);
 
-		if (UpdateState < Other.UpdateState) UpdateState = Other.UpdateState;
+		SetUpdateState(Other.UpdateState);
 
 		return *this;
 	}
@@ -205,8 +196,20 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
+		FORCEINLINE bool IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
 		FORCEINLINE FString MemorySize();
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool SetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName, const uint8 VoxelStateB, const uint8 VoxelStateA, const bool bInitializeChuck = true);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool SetVoxelState(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelStateB, const uint8 VoxelStateA);
+
+	//UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+	//	FORCEINLINE FLFPVoxelIdentifyData GetVoxelData(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
 protected:
 
@@ -216,29 +219,18 @@ protected:
 	UFUNCTION()
 		FORCEINLINE bool UpdateChuckData();
 
-	UFUNCTION()
+	UFUNCTION() // Need Rework
 		FORCEINLINE void MarkChuckForUpdate(const FIntVector ChuckVector, const FLFPVoxelUpdateAction& UpdateData);
 
 protected:
 
 	FRWLock ContainerThreadLock;
 
-	TAtomic<bool> bIsThreadReading = false;
-
 protected: // Initialize Data
 
 	/** What setting this component use when saving the voxel */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelContainerComponent | Setting")
 		FLFPVoxelContainerSetting Setting;
-
-	/** Only support 65,535 item in table
-	* This is use to determine what material to use and addition data to pass to material texture
-	*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelContainerComponent | Setting")
-		TObjectPtr<UDataTable> VoxelIDTable;
-
-	UPROPERTY()
-		TArray<FName> VoxelIDNameList;
 
 protected:  // Runtime Data
 
