@@ -414,11 +414,11 @@ bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& Available
 
 	if (StartSlot < 0) StartSlot = 0;
 
-	for (StartSlot; StartSlot <= EndSlot; StartSlot++)
+	for (int32 SlotIndex = StartSlot; SlotIndex <= EndSlot; SlotIndex++)
 	{
-		if (IsInventorySlotAvailable(StartSlot, GetInventorySlot(StartSlot), ForItem) == false) continue;
+		if (IsInventorySlotAvailable(SlotIndex, GetInventorySlot(SlotIndex), ForItem) == false) continue;
 
-		AvailableSlotList.Add(StartSlot);
+		AvailableSlotList.Add(SlotIndex);
 	}
 
 	return AvailableSlotList.Num() > 0;
@@ -432,11 +432,11 @@ bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexLis
 
 	if (StartSlot < 0 || EndSlot >= InventorySlotList.Num()) return false;
 
-	for (StartSlot; StartSlot <= EndSlot; StartSlot++)
+	for (int32 SlotIndex = StartSlot; SlotIndex <= EndSlot; SlotIndex++)
 	{
-		if (InventorySlotList[StartSlot].ItemTag.MatchesTag(ItemTag))
+		if (InventorySlotList[SlotIndex].ItemTag.MatchesTag(ItemTag))
 		{
-			ItemIndexList.Add(StartSlot);
+			ItemIndexList.Add(SlotIndex);
 		}
 	}
 

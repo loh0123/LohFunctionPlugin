@@ -4,6 +4,7 @@
 #include "./Math/LFPGridLibrary.h"
 #include "UObject/ReflectedTypeAccessors.h"
 
+
 // Sets default values for this component's properties
 ULFPVoxelContainerComponent::ULFPVoxelContainerComponent()
 {
@@ -34,6 +35,13 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
+FString ULFPVoxelContainerComponent::MemorySize() const
+{
+	return FString::Printf(TEXT("%llu : ChuckDataList Size : %llu : Struct Size"), ChuckDataList.GetAllocatedSize(), sizeof(FColor));
+}
+
+/** Checker */
+
 bool ULFPVoxelContainerComponent::IsChuckInitialized(const FIntVector& ChuckVector) const
 {
 	return ChuckDataList.Contains(ChuckVector);
@@ -41,12 +49,48 @@ bool ULFPVoxelContainerComponent::IsChuckInitialized(const FIntVector& ChuckVect
 
 bool ULFPVoxelContainerComponent::IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const
 {
-	return ChuckDataList.Contains(VoxelGridPosition.ChuckVector) && Setting.GetVoxelLength() < VoxelGridPosition.VoxelIndex;
+	return IsChuckInitialized(VoxelGridPosition.ChuckVector) && Setting.GetVoxelLength() < VoxelGridPosition.VoxelIndex;
 }
 
-FString ULFPVoxelContainerComponent::MemorySize() const
+bool ULFPVoxelContainerComponent::IsVoxelVisible(const FLFPVoxelGridPosition& VoxelGridPosition) const
 {
-	return FString::Printf(TEXT("%llu : ChuckDataList Size : %llu : Struct Size"), ChuckDataList.GetAllocatedSize(), sizeof(FColor));
+	return IsVoxelGridPositionValid(VoxelGridPosition) && ChuckDataList.FindRef(VoxelGridPosition.ChuckVector).GetChuckMaterial(VoxelGridPosition.VoxelIndex) != 255;
+}
+
+/** Setter */
+
+bool ULFPVoxelContainerComponent::SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor)
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+
+	ChuckUpdateDataList.FindOrAdd(VoxelGridPosition.ChuckVector).ChangeColor.Add(VoxelGridPosition.VoxelIndex, VoxelColor);
+
+	return true;
+}
+
+bool ULFPVoxelContainerComponent::SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial)
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+
+	ChuckUpdateDataList.FindOrAdd(VoxelGridPosition.ChuckVector).ChangeMaterial.Add(VoxelGridPosition.VoxelIndex, VoxelMaterial);
+
+	return true;
+}
+
+/** Getter */
+
+FColor ULFPVoxelContainerComponent::GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return FColor(0);
+
+	return ChuckDataList.FindChecked(VoxelGridPosition.ChuckVector).GetChuckColor(VoxelGridPosition.VoxelIndex);
+}
+
+uint8 ULFPVoxelContainerComponent::GetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return uint8(255);
+
+	return ChuckDataList.FindChecked(VoxelGridPosition.ChuckVector).GetChuckMaterial(VoxelGridPosition.VoxelIndex);
 }
 
 void ULFPVoxelContainerComponent::InitializeChuck_Implementation(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor)
@@ -58,48 +102,51 @@ void ULFPVoxelContainerComponent::InitializeChuck_Implementation(const FIntVecto
 	return;
 }
 
-bool ULFPVoxelContainerComponent::SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor)
+/** Chuck Request */
+
+void ULFPVoxelContainerComponent::RequestRenderChuck(const FIntVector ChuckVector, FLFPVoxelChuckDelegate& ChuckDelegate)
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+	if (ChuckDelegateList.Contains(ChuckVector)) return;
 
-	FLFPVoxelUpdateAction UpdateAction;
-
-	UpdateAction.ChangeColor.Add(VoxelGridPosition.VoxelIndex, VoxelColor);
-
-	UpdateAction.UpdateState = ELFPVoxelChuckUpdateState::LFP_Color;
-
-	MarkChuckForUpdate(VoxelGridPosition.ChuckVector, UpdateAction);
-
-	return true;
+	ChuckDelegate = ChuckDelegateList.Add(ChuckVector);
 }
 
-bool ULFPVoxelContainerComponent::SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial)
+void ULFPVoxelContainerComponent::ReleaseRenderChuck(const FIntVector ChuckVector)
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+	if (ChuckDelegateList.Contains(ChuckVector) == false) return;
 
-	FLFPVoxelUpdateAction UpdateAction;
+	ChuckDelegateList.FindChecked(ChuckVector).VoxelChuckUpdateEvent.Unbind();
 
-	UpdateAction.ChangeMaterial.Add(VoxelGridPosition.VoxelIndex, VoxelMaterial);
-
-	UpdateAction.UpdateState = ELFPVoxelChuckUpdateState::LFP_Material;
-
-	MarkChuckForUpdate(VoxelGridPosition.ChuckVector, UpdateAction);
-
-	return true;
+	ChuckDelegateList.Remove(ChuckVector);
 }
 
-FColor ULFPVoxelContainerComponent::GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const
+void ULFPVoxelContainerComponent::RequestRenderData(const FIntVector ChuckVector, FLFPVoxelContainerSetting& ChuckSetting, TArray<FLFPVoxelChuckData*>& RenderData)
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return FColor(0);
+	checkf(ChuckDelegateList.Contains(ChuckVector) == false, TEXT("Chuck is not connect"));
 
-	return ChuckDataList.FindRef(VoxelGridPosition.ChuckVector).GetChuckColor(VoxelGridPosition.VoxelIndex);
+	ContainerThreadLock.ReadLock();
+
+	ChuckSetting = Setting;
+
+	RenderData.Empty(27);
+
+	for (int32 Z = -1; Z <= 1; Z++)
+	{
+		for (int32 Y = -1; Y <= 1; Y++)
+		{
+			for (int32 X = -1; X <= 1; X++)
+			{
+				RenderData.Add(ChuckDataList.Find(ChuckVector + FIntVector(X, Y, Z)));
+			}
+		}
+	}
 }
 
-uint8 ULFPVoxelContainerComponent::GetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition) const
+void ULFPVoxelContainerComponent::ReleaseRenderData(const FIntVector ChuckVector)
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return uint8(255);
+	checkf(ChuckDelegateList.Contains(ChuckVector) == false, TEXT("Chuck is not connect"));
 
-	return ChuckDataList.FindRef(VoxelGridPosition.ChuckVector).GetChuckMaterial(VoxelGridPosition.VoxelIndex);
+	ContainerThreadLock.ReadUnlock();
 }
 
 void ULFPVoxelContainerComponent::UpdateChuckState()
@@ -108,7 +155,7 @@ void ULFPVoxelContainerComponent::UpdateChuckState()
 
 	auto ChuckUpdateState = ChuckUpdateStateList.CreateIterator();
 
-	auto ChuckDelegate = ChuckDelegateList.Find(ChuckUpdateState.Key());
+	const FLFPVoxelChuckDelegate* ChuckDelegate = ChuckDelegateList.Find(ChuckUpdateState.Key());
 
 	if (ChuckDelegate != nullptr) ChuckDelegate->VoxelChuckUpdateEvent.ExecuteIfBound(ChuckUpdateState.Value());
 
@@ -124,6 +171,8 @@ void ULFPVoxelContainerComponent::UpdateChuckState()
 
 bool ULFPVoxelContainerComponent::UpdateChuckData()
 {
+	if (ChuckUpdateDataList.IsEmpty()) return true;
+
 	if (ContainerThreadLock.TryWriteLock() == false) return false;
 
 	for (const auto& ChuckUpdate : ChuckUpdateDataList)
@@ -132,53 +181,35 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 
 		if (ChuckData == nullptr) continue;
 
+		TSet<FIntVector> EdgeList = { FIntVector(0) };
+
 		/** This change the outdate voxel material */
 		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeMaterial)
 		{
 			ChuckData->SetChuckMaterial(ChangeVoxel.Key, ChangeVoxel.Value);
+
+			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.VoxelGridSize), Setting.VoxelGridSize));
 		}
 
 		/** This change the outdate voxel color */
 		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeColor)
 		{
 			ChuckData->SetChuckColor(ChangeVoxel.Key, ChangeVoxel.Value);
+
+			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.VoxelGridSize), Setting.VoxelGridSize));
 		}
 
 		/** This add update state to list */
+		for (const FIntVector& Edge : EdgeList)
 		{
-			ELFPVoxelChuckUpdateState& ChuckUpdateState = ChuckUpdateStateList.FindOrAdd(ChuckUpdate.Key);
+			FLFPVoxelChuckUpdateState& ChuckUpdateState = ChuckUpdateStateList.FindOrAdd(ChuckUpdate.Key + Edge);
 
-			if (ChuckUpdateState < ChuckUpdate.Value.UpdateState) ChuckUpdateState = ChuckUpdate.Value.UpdateState;
+			if (ChuckUpdate.Value.ChangeColor.IsEmpty() == false) ChuckUpdateState.Color = true;
+			if (ChuckUpdate.Value.ChangeMaterial.IsEmpty() == false) ChuckUpdateState.Material = true;
 		}
 	}
 
 	ContainerThreadLock.WriteUnlock();
 
 	return true;
-}
-
-void ULFPVoxelContainerComponent::MarkChuckForUpdate(const FIntVector ChuckVector, const FLFPVoxelUpdateAction& UpdateData)
-{
-	if (ChuckDataList.Contains(ChuckVector) == false) return;
-
-	FLFPVoxelUpdateAction& UpdateAction = ChuckUpdateDataList.FindOrAdd(ChuckVector);
-
-	TSet<FIntVector> EdgeList;
-
-	for (const auto& ChangeVoxel : UpdateData.ChangeMaterial)
-	{
-		EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.VoxelGridSize), Setting.VoxelGridSize));
-	}
-
-	UpdateAction += UpdateData;
-
-	if (UpdateData.UpdateState == ELFPVoxelChuckUpdateState::LFP_Full)
-	{
-		for (const FIntVector& Edge : EdgeList)
-		{
-			if (ChuckDataList.Contains(ChuckVector + Edge) == false) continue;
-
-			ChuckUpdateDataList.FindOrAdd(ChuckVector + Edge).UpdateState = ELFPVoxelChuckUpdateState::LFP_Full;
-		}
-	}
 }

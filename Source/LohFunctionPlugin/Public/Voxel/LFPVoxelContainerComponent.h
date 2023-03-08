@@ -121,15 +121,32 @@ public:
 
 };
 
-UENUM( BlueprintType )
-enum class ELFPVoxelChuckUpdateState : uint8 {
-	LFP_Color		UMETA(DisplayName = "Color"),
-	LFP_Material	UMETA(DisplayName = "Material"),
-	LFP_Full		UMETA(DisplayName = "Full"),
+USTRUCT()
+struct FLFPVoxelChuckUpdateState
+{
+	GENERATED_BODY()
+
+	FLFPVoxelChuckUpdateState() : Color(false), Material(false) {}
+
+	UPROPERTY() 
+		uint8 Color : 1;
+
+	UPROPERTY() 
+		uint8 Material : 1;
+
+public: // Operator
+
+	FLFPVoxelChuckUpdateState& operator+=(const FLFPVoxelChuckUpdateState& Other)
+	{
+		if (Other.Color) Color = true;
+		if (Other.Material) Material = true;
+
+		return *this;
+	}
 };
 
 
-DECLARE_DELEGATE_OneParam(FOnVoxelChuckUpdate, const ELFPVoxelChuckUpdateState);
+DECLARE_DELEGATE_OneParam(FOnVoxelChuckUpdate, const FLFPVoxelChuckUpdateState);
 
 USTRUCT()
 struct FLFPVoxelChuckDelegate
@@ -156,24 +173,12 @@ public:
 	UPROPERTY()
 		TMap<int32, uint8> ChangeMaterial = TMap<int32, uint8>();
 
-	UPROPERTY()
-		ELFPVoxelChuckUpdateState UpdateState = ELFPVoxelChuckUpdateState::LFP_Color;
-
-public:
-
-	FORCEINLINE void SetUpdateState(ELFPVoxelChuckUpdateState Other) 
-	{ 
-		if (UpdateState != Other) UpdateState = ELFPVoxelChuckUpdateState::LFP_Full;
-	}
-
 public: // Operator
 
 	FLFPVoxelUpdateAction& operator+=(const FLFPVoxelUpdateAction& Other)
 	{
 		ChangeColor.Append(Other.ChangeColor);
 		ChangeMaterial.Append(Other.ChangeMaterial);
-
-		SetUpdateState(Other.UpdateState);
 
 		return *this;
 	}
@@ -197,7 +202,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public:
+public: /** Debugging */
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
+		FORCEINLINE FString MemorySize() const;
+
+public: /** Checker */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
 		FORCEINLINE bool IsChuckInitialized(const FIntVector& ChuckVector) const;
@@ -205,14 +215,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
 		FORCEINLINE bool IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
-		FORCEINLINE FString MemorySize() const;
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Function")
+		FORCEINLINE bool IsVoxelVisible(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+
+public: /** Setter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
 		FORCEINLINE bool SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
 		FORCEINLINE bool SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial);
+
+public: /** Getter */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE FColor GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const;
@@ -226,18 +240,27 @@ public:
 		FORCEINLINE void InitializeChuck(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor);
 		virtual void InitializeChuck_Implementation(const FIntVector& ChuckVector, const uint8 VoxelMaterial, const FColor VoxelColor);
 
-protected:
+public: /** Chuck Request */
 
-	UFUNCTION()
-		FORCEINLINE void UpdateChuckState();
+	/** Request chuck info on chuck spawn */
+	FORCEINLINE void RequestRenderChuck(const FIntVector ChuckVector, FLFPVoxelChuckDelegate& ChuckDelegate);
 
-	UFUNCTION()
-		FORCEINLINE bool UpdateChuckData();
+	/** Release chuck info on chuck destroy */
+	FORCEINLINE void ReleaseRenderChuck(const FIntVector ChuckVector);
 
-	UFUNCTION() // Need Rework
-		FORCEINLINE void MarkChuckForUpdate(const FIntVector ChuckVector, const FLFPVoxelUpdateAction& UpdateData);
+	/** Request Render Data and lock write access */
+	FORCEINLINE void RequestRenderData(const FIntVector ChuckVector, FLFPVoxelContainerSetting& ChuckSetting, TArray<FLFPVoxelChuckData*>& RenderData);
 
-protected:
+	/** Release write access */
+	FORCEINLINE void ReleaseRenderData(const FIntVector ChuckVector);
+
+protected: /** Function for updating chuck and data */
+
+	FORCEINLINE void UpdateChuckState();
+
+	FORCEINLINE bool UpdateChuckData();
+
+public: /** Read and write lock */
 
 	FRWLock ContainerThreadLock;
 
@@ -261,7 +284,7 @@ protected:  // Runtime Data
 	UPROPERTY() 
 		TMap<FIntVector, FLFPVoxelUpdateAction> ChuckUpdateDataList;
 
-	/** This store future chuck update data to apply */
+	/** This store future chuck event data to send */
 	UPROPERTY()
-		TMap<FIntVector, ELFPVoxelChuckUpdateState> ChuckUpdateStateList;
+		TMap<FIntVector, FLFPVoxelChuckUpdateState> ChuckUpdateStateList;
 };
