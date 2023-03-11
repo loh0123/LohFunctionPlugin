@@ -21,7 +21,7 @@ class LOHFUNCTIONPLUGIN_API ULFPRenderLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRenderLibrary")
-		static UTexture2D* CreateTexture2D(const FIntPoint Size, const TextureFilter Filter);
+		static UTexture2D* CreateTexture2D(const FIntPoint Size, const TextureFilter Filter, const bool bSRGB = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRenderLibrary")
 		static bool UpdateTexture2D(UTexture2D* Texture, const TArray<FColor>& Data);

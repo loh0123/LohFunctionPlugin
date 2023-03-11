@@ -114,59 +114,124 @@ struct FLFPVoxelChuckData
 private:
 
 	UPROPERTY(SaveGame)
-		TArray<uint8> VoxelBtyeList = {};
+		TArray<uint8> VoxelPaletteList = {};
+
+	UPROPERTY(SaveGame)
+		TArray<uint16> VoxelIndexList = {};
 
 public:
 
 	FORCEINLINE bool IsInitialized() const
 	{
-		return VoxelBtyeList.IsEmpty() == false;
+		return VoxelPaletteList.IsEmpty() == false;
 	}
 
-	FORCEINLINE void InitChuckData(const int32 VoxelLength)
+	FORCEINLINE void InitChuckData(const int32 VoxelLength, const FColor& VoxelColor, const uint8 VoxelMaterial)
 	{
-		const int32 BtyeLength = 5;
+		if (VoxelMaterial == UINT16_MAX)
+		{
+			VoxelIndexList.Init(UINT16_MAX, VoxelLength);
 
-		VoxelBtyeList.Init(uint8(0), VoxelLength * BtyeLength);
+			return;
+		}
+
+		VoxelPaletteList.Empty(1);
+
+		VoxelPaletteList.Append({ VoxelColor.R, VoxelColor.G, VoxelColor.B, VoxelColor.A, VoxelMaterial});
+
+		VoxelIndexList.SetNum(VoxelLength);
+
+		return;
 	}
 
-	FORCEINLINE void SetChuckMaterial(const int32 VoxelIndex, const uint8 NewVoxelMaterial)
+	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FColor& NewVoxelColor, const uint8 NewVoxelMaterial)
 	{
-		const int32 BtyeLength = 5;
+		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		check(VoxelBtyeList.IsValidIndex(VoxelIndex * BtyeLength));
+		/** Is Air */
+		if (NewVoxelMaterial == UINT8_MAX)
+		{
+			VoxelIndexList[VoxelIndex] = UINT16_MAX;
 
-		VoxelBtyeList[VoxelIndex * BtyeLength] = NewVoxelMaterial;
+			return;
+		}
+
+		int32 PaletteIndex = INDEX_NONE;
+
+		TArray<uint8> CheckData = { NewVoxelColor.R, NewVoxelColor.G, NewVoxelColor.B, NewVoxelColor.A, NewVoxelMaterial };
+
+		/** Find Palette Index */
+		for (int32 Index = 0; Index < VoxelPaletteList.Num(); Index += 5)
+		{
+			bool bSuccess = true;
+
+			for (int32 CheckIndex = 0; CheckIndex < 5; CheckIndex++)
+			{
+				if (VoxelPaletteList[Index + CheckIndex] != CheckData[CheckIndex])
+				{
+					bSuccess = false;
+
+					break;
+				}
+			}
+
+			if (bSuccess)
+			{
+				PaletteIndex = Index / 5;
+
+				break;
+			}
+		}
+
+		/** Palette Not Found */
+		if (PaletteIndex == INDEX_NONE)
+		{
+			PaletteIndex = VoxelPaletteList.Num() / 5;
+
+			VoxelPaletteList.Append(CheckData);
+		}
+
+		VoxelIndexList[VoxelIndex] = PaletteIndex;
+
+		return;
 	}
 
-	FORCEINLINE void SetChuckColor(const int32 VoxelIndex, const FColor& NewVoxelColor)
+	FORCEINLINE bool IsVoxelVisible(const int32 VoxelIndex) const
 	{
-		const int32 BtyeLength = 5;
+		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		check(VoxelBtyeList.IsValidIndex(VoxelIndex * BtyeLength));
-
-		VoxelBtyeList[VoxelIndex * BtyeLength + 1] = NewVoxelColor.B;
-		VoxelBtyeList[VoxelIndex * BtyeLength + 2] = NewVoxelColor.G;
-		VoxelBtyeList[VoxelIndex * BtyeLength + 3] = NewVoxelColor.R;
-		VoxelBtyeList[VoxelIndex * BtyeLength + 4] = NewVoxelColor.A;
+		return VoxelIndexList[VoxelIndex] != UINT16_MAX;
 	}
 
-	FORCEINLINE const uint8 GetChuckMaterial(const int32 VoxelIndex) const
+	FORCEINLINE uint16 GetVoxelIndex(const int32 VoxelIndex) const
 	{
-		const int32 BtyeLength = 5;
+		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		check(VoxelBtyeList.IsValidIndex(VoxelIndex * BtyeLength));
-
-		return VoxelBtyeList[VoxelIndex * BtyeLength];
+		return VoxelIndexList[VoxelIndex];
 	}
 
-	FORCEINLINE FColor GetChuckColor(const int32 VoxelIndex) const
+	FORCEINLINE uint8 GetVoxelMaterial(const int32 VoxelIndex) const
 	{
-		const int32 BtyeLength = 5;
+		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		check(VoxelBtyeList.IsValidIndex(VoxelIndex * BtyeLength));
+		/** Is Air */
+		if (VoxelIndexList[VoxelIndex] == UINT16_MAX) return UINT8_MAX;
 
-		return FColor(VoxelBtyeList[VoxelIndex * BtyeLength + 3], VoxelBtyeList[VoxelIndex * BtyeLength + 2], VoxelBtyeList[VoxelIndex * BtyeLength + 1], VoxelBtyeList[VoxelIndex * BtyeLength + 4]);
+		const int32 PaletteIndex = VoxelIndexList[VoxelIndex] * 5;
+
+		return VoxelPaletteList[PaletteIndex + 4];
+	}
+
+	FORCEINLINE FColor GetVoxelColor(const int32 VoxelIndex) const
+	{
+		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+
+		/** Is Air */
+		if (VoxelIndexList[VoxelIndex] == UINT16_MAX) return FColor(0);
+
+		const int32 PaletteIndex = VoxelIndexList[VoxelIndex] * 5;
+
+		return FColor(VoxelPaletteList[PaletteIndex], VoxelPaletteList[PaletteIndex + 1], VoxelPaletteList[PaletteIndex + 2], VoxelPaletteList[PaletteIndex + 3]);
 	}
 
 };
@@ -313,8 +378,8 @@ public:
 		virtual void InitializeSave_Implementation(const int32 SaveIndex);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "LFPVoxelContainerComponent | Chuck")
-		FORCEINLINE void InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex, const uint8 VoxelMaterial, const FColor VoxelColor);
-		virtual void InitializeChuck_Implementation(const int32 SaveIndex, const int32 ChuckIndex, const uint8 VoxelMaterial, const FColor VoxelColor);
+		FORCEINLINE void InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex);
+		virtual void InitializeChuck_Implementation(const int32 SaveIndex, const int32 ChuckIndex);
 
 //public: /** Chuck Request */
 //
@@ -329,12 +394,12 @@ public:
 //
 //	/** Release write access */
 //	FORCEINLINE void ReleaseRenderData(const int32 SaveIndex, const int32 ChuckIndex);
-//
-//protected: /** Function for updating chuck and data */
-//
-//	FORCEINLINE void UpdateChuckState();
-//
-//	FORCEINLINE bool UpdateChuckData();
+
+protected: /** Function for updating chuck and data */
+
+	FORCEINLINE void UpdateChuckState();
+
+	FORCEINLINE bool UpdateChuckData();
 
 public: /** Read and write lock */
 

@@ -10,7 +10,7 @@
 #include "MeshCardRepresentation.h"
 #include "DistanceFieldAtlas.h"
 
-UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const TextureFilter Filter)
+UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const TextureFilter Filter, const bool bSRGB)
 {
 	UTexture2D* VoxelColorMap = UTexture2D::CreateTransient(Size.X, Size.Y);
 
@@ -18,7 +18,7 @@ UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const Textu
 	VoxelColorMap->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
 #endif
 	VoxelColorMap->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
-	VoxelColorMap->SRGB = 1;
+	VoxelColorMap->SRGB = bSRGB;
 	VoxelColorMap->Filter = Filter;
 	VoxelColorMap->UpdateResource();
 
