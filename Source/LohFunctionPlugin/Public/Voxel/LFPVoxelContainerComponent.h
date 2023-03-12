@@ -114,7 +114,7 @@ struct FLFPVoxelChuckData
 private:
 
 	UPROPERTY(SaveGame)
-		TArray<uint8> VoxelPaletteList = {};
+		TArray<FName> VoxelPaletteList = {};
 
 	UPROPERTY(SaveGame)
 		TArray<uint16> VoxelIndexList = {};
@@ -126,70 +126,25 @@ public:
 		return VoxelPaletteList.IsEmpty() == false;
 	}
 
-	FORCEINLINE void InitChuckData(const int32 VoxelLength, const FColor& VoxelColor, const uint8 VoxelMaterial)
+	FORCEINLINE void InitChuckData(const int32 NewVoxelLength, const FName& NewVoxelName)
 	{
-		if (VoxelMaterial == UINT16_MAX)
-		{
-			VoxelIndexList.Init(UINT16_MAX, VoxelLength);
+		check(NewVoxelLength > 0);
 
-			return;
-		}
+		VoxelIndexList.Init(0, NewVoxelLength);
 
-		VoxelPaletteList.Empty(1);
-
-		VoxelPaletteList.Append({ VoxelColor.R, VoxelColor.G, VoxelColor.B, VoxelColor.A, VoxelMaterial});
-
-		VoxelIndexList.SetNum(VoxelLength);
+		VoxelPaletteList.Init(NewVoxelName, 1);
 
 		return;
 	}
 
-	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FColor& NewVoxelColor, const uint8 NewVoxelMaterial)
+	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FName& NewVoxelName)
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		/** Is Air */
-		if (NewVoxelMaterial == UINT8_MAX)
-		{
-			VoxelIndexList[VoxelIndex] = UINT16_MAX;
-
-			return;
-		}
-
-		int32 PaletteIndex = INDEX_NONE;
-
-		TArray<uint8> CheckData = { NewVoxelColor.R, NewVoxelColor.G, NewVoxelColor.B, NewVoxelColor.A, NewVoxelMaterial };
-
-		/** Find Palette Index */
-		for (int32 Index = 0; Index < VoxelPaletteList.Num(); Index += 5)
-		{
-			bool bSuccess = true;
-
-			for (int32 CheckIndex = 0; CheckIndex < 5; CheckIndex++)
-			{
-				if (VoxelPaletteList[Index + CheckIndex] != CheckData[CheckIndex])
-				{
-					bSuccess = false;
-
-					break;
-				}
-			}
-
-			if (bSuccess)
-			{
-				PaletteIndex = Index / 5;
-
-				break;
-			}
-		}
+		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelName);
 
 		/** Palette Not Found */
-		if (PaletteIndex == INDEX_NONE)
-		{
-			PaletteIndex = VoxelPaletteList.Num() / 5;
-
-			VoxelPaletteList.Append(CheckData);
-		}
+		if (PaletteIndex == INDEX_NONE) PaletteIndex = VoxelPaletteList.Add(NewVoxelName);
 
 		VoxelIndexList[VoxelIndex] = PaletteIndex;
 
@@ -200,7 +155,7 @@ public:
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		return VoxelIndexList[VoxelIndex] != UINT16_MAX;
+		return VoxelPaletteList[VoxelIndexList[VoxelIndex]].IsNone() == false;
 	}
 
 	FORCEINLINE uint16 GetVoxelIndex(const int32 VoxelIndex) const
@@ -210,28 +165,11 @@ public:
 		return VoxelIndexList[VoxelIndex];
 	}
 
-	FORCEINLINE uint8 GetVoxelMaterial(const int32 VoxelIndex) const
+	FORCEINLINE const FName& GetVoxelPalette(const int32 VoxelIndex) const
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		/** Is Air */
-		if (VoxelIndexList[VoxelIndex] == UINT16_MAX) return UINT8_MAX;
-
-		const int32 PaletteIndex = VoxelIndexList[VoxelIndex] * 5;
-
-		return VoxelPaletteList[PaletteIndex + 4];
-	}
-
-	FORCEINLINE FColor GetVoxelColor(const int32 VoxelIndex) const
-	{
-		check(VoxelIndexList.IsValidIndex(VoxelIndex));
-
-		/** Is Air */
-		if (VoxelIndexList[VoxelIndex] == UINT16_MAX) return FColor(0);
-
-		const int32 PaletteIndex = VoxelIndexList[VoxelIndex] * 5;
-
-		return FColor(VoxelPaletteList[PaletteIndex], VoxelPaletteList[PaletteIndex + 1], VoxelPaletteList[PaletteIndex + 2], VoxelPaletteList[PaletteIndex + 3]);
+		return VoxelPaletteList[VoxelIndexList[VoxelIndex]];
 	}
 
 };
@@ -248,6 +186,11 @@ public:
 
 public:
 
+	FORCEINLINE bool IsInitialized() const
+	{
+		return ChuckData.IsEmpty() == false;
+	}
+
 	FORCEINLINE void InitSaveData(const int32 ChuckLength)
 	{
 		ChuckData.Init(FLFPVoxelChuckData(), ChuckLength);
@@ -256,31 +199,27 @@ public:
 };
 
 USTRUCT()
-struct FLFPVoxelChuckUpdateState
+struct FLFPChuckUpdateAction
 {
 	GENERATED_BODY()
 
-	FLFPVoxelChuckUpdateState() : Color(false), Material(false) {}
+public:
 
-	UPROPERTY() 
-		uint8 Color : 1;
-
-	UPROPERTY() 
-		uint8 Material : 1;
+	UPROPERTY()
+		TMap<FName, FName> ChangeName = TMap<FName, FName>();
 
 public: // Operator
 
-	FORCEINLINE FLFPVoxelChuckUpdateState& operator+=(const FLFPVoxelChuckUpdateState& Other)
+	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
-		if (Other.Color) Color = true;
-		if (Other.Material) Material = true;
+		ChangeName.Append(Other.ChangeName);
 
 		return *this;
 	}
 };
 
 
-DECLARE_DELEGATE_OneParam(FOnVoxelChuckUpdate, const FLFPVoxelChuckUpdateState);
+DECLARE_DELEGATE_OneParam(FOnVoxelChuckUpdate, const FLFPChuckUpdateAction& ChuckUpdateAction);
 
 USTRUCT()
 struct FLFPVoxelChuckDelegate
@@ -302,17 +241,13 @@ struct FLFPVoxelUpdateAction
 public:
 
 	UPROPERTY()
-		TMap<int32, FColor> ChangeColor = TMap<int32, FColor>();
-
-	UPROPERTY()
-		TMap<int32, uint8> ChangeMaterial = TMap<int32, uint8>();
+		TMap<int32, FName> ChangeName = TMap<int32, FName>();
 
 public: // Operator
 
 	FLFPVoxelUpdateAction& operator+=(const FLFPVoxelUpdateAction& Other)
 	{
-		ChangeColor.Append(Other.ChangeColor);
-		ChangeMaterial.Append(Other.ChangeMaterial);
+		ChangeName.Append(Other.ChangeName);
 
 		return *this;
 	}
@@ -358,18 +293,12 @@ public: /** Checker */
 public: /** Setter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
-		FORCEINLINE bool SetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition, const FColor VoxelColor);
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
-		FORCEINLINE bool SetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition, const uint8 VoxelMaterial);
+		FORCEINLINE bool SetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName);
 
 public: /** Getter */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
-		FORCEINLINE FColor GetVoxelColor(const FLFPVoxelGridPosition& VoxelGridPosition) const;
-
-	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
-		FORCEINLINE uint8 GetVoxelMaterial(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+		FORCEINLINE FName GetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
 public:
 
@@ -427,5 +356,5 @@ protected:  // Runtime Data
 
 	/** This store future chuck event data to send */
 	UPROPERTY()
-		TMap<FIntPoint, FLFPVoxelChuckUpdateState> ChuckUpdateStateList;
+		TMap<FIntPoint, FLFPChuckUpdateAction> ChuckUpdateStateList;
 };
