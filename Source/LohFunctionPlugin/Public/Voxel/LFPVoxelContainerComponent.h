@@ -105,6 +105,56 @@ public:
 	}
 };
 
+USTRUCT()
+struct FLFPVoxelPaletteData
+{
+	GENERATED_BODY()
+
+	FLFPVoxelPaletteData() {}
+
+	FLFPVoxelPaletteData(const FName NewVoxelName) : VoxelName(NewVoxelName), RefCounter(1) {}
+
+public:
+
+	UPROPERTY()
+		FName VoxelName = FName();
+
+private:
+
+	UPROPERTY()
+		uint32 RefCounter = 0;
+
+public:
+
+	FORCEINLINE bool IsNone() const
+	{
+		return VoxelName.IsNone();
+	}
+
+	FORCEINLINE bool CanRemove() const
+	{
+		return RefCounter == 0;
+	}
+
+	FORCEINLINE void IncreaseCounter()
+	{
+		RefCounter++;
+	}
+
+	FORCEINLINE bool DecreaseCounter()
+	{
+		if (RefCounter > 0) RefCounter--;
+
+		return RefCounter == 0;
+	}
+
+	FORCEINLINE bool operator==(const FLFPVoxelPaletteData& Other) const
+	{
+		return VoxelName == Other.VoxelName;
+	}
+};
+
+
 
 USTRUCT()
 struct FLFPVoxelChuckData
@@ -114,7 +164,7 @@ struct FLFPVoxelChuckData
 private:
 
 	UPROPERTY(SaveGame)
-		TArray<FName> VoxelPaletteList = {};
+		TArray<FLFPVoxelPaletteData> VoxelPaletteList = {};
 
 	UPROPERTY(SaveGame)
 		TArray<uint16> VoxelIndexList = {};
@@ -137,9 +187,39 @@ public:
 		return;
 	}
 
+	FORCEINLINE void FitPalette()
+	{
+		check(IsInitialized());
+
+		for (int32 Index = VoxelPaletteList.Num() - 1; Index > 0; --Index)
+		{
+			if (VoxelPaletteList[Index].CanRemove())
+			{
+				if (VoxelPaletteList.IsValidIndex(Index - 1) && VoxelPaletteList[Index - 1].CanRemove())
+				{
+					continue;
+				}
+
+				while (VoxelPaletteList.IsValidIndex(Index))
+				{
+					VoxelPaletteList.RemoveAt(VoxelPaletteList.Num() - 1);
+				}
+
+				break;
+			}
+		}
+
+		return;
+	}
+
 	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FName& NewVoxelName)
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+
+		if (VoxelPaletteList[VoxelIndexList[VoxelIndex]].DecreaseCounter() && VoxelPaletteList.Num() - 1 == VoxelIndexList[VoxelIndex])
+		{
+			FitPalette();
+		}
 
 		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelName);
 
@@ -169,7 +249,7 @@ public:
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		return VoxelPaletteList[VoxelIndexList[VoxelIndex]];
+		return VoxelPaletteList[VoxelIndexList[VoxelIndex]].VoxelName;
 	}
 
 };

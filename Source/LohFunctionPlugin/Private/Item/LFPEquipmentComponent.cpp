@@ -92,6 +92,8 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 
 bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventoryComponent is not valid"));
@@ -125,6 +127,8 @@ bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, co
 
 bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventoryComponent is not valid"));
@@ -160,6 +164,8 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 
 bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryEquipItem InventoryComponent is not valid"));
@@ -177,6 +183,8 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 
 bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : TryUnequipItem InventoryComponent is not valid"));

@@ -72,6 +72,8 @@ void ULFPInventoryComponent::Serialize(FArchive& Ar)
 
 bool ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (ItemData.ItemTag == FGameplayTag::EmptyTag)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : AddItem ItemData Tag is empty"));
@@ -128,6 +130,8 @@ bool ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, FLFPInvento
 
 bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	int32 Index = 0;
 
 	bool ReturnList = true;
@@ -153,6 +157,8 @@ bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& It
 
 bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (ItemData.ItemTag == FGameplayTag::EmptyTag)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : RemoveItem RemovedItemData Tag is empty"));
@@ -207,6 +213,8 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 
 bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	int32 Index = 0;
 
 	bool ReturnList = true;
@@ -232,6 +240,8 @@ bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>&
 
 void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	for (int32 SlotIndex = 0; SlotIndex < InventorySlotList.Num(); SlotIndex++)
 	{
 		FLFPInventoryItemData RemoveData = GetInventorySlot(SlotIndex);
@@ -248,6 +258,8 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 
 bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	int32 MinIndex = FMath::Min(FromSlot, ToSlot);
 	int32 MaxIndex = FMath::Max(FromSlot, ToSlot);
 
@@ -293,6 +305,8 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 
 bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (Other->CanRemoveItem(Other->GetInventorySlot(FromSlot), FromSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanRemoveItem return false"));
@@ -337,6 +351,8 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 
 void ULFPInventoryComponent::SortInventory(const FString EventInfo)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	if (IsInventorySlotIndexValid(StartInventorySlotIndex) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SortInventory InventorySlotList is empty or smaller than StartInventorySlotIndex"));
@@ -356,6 +372,8 @@ void ULFPInventoryComponent::SortInventory(const FString EventInfo)
 
 void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	if (IsInventorySlotIndexValid(FromSlot) == false || IsInventorySlotIndexValid(FromSlot + 1))
 	{
 		return;
