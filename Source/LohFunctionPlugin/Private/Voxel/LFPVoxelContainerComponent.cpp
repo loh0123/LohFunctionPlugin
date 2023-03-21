@@ -30,10 +30,10 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	/*if (UpdateChuckData())
+	if (UpdateChuckData())
 	{
 		UpdateChuckState();
-	}*/
+	}
 }
 
 FString ULFPVoxelContainerComponent::MemorySize(const int32 SaveFileAmount, const int32 ChuckAmount, const int32 VoxelAmount) const
@@ -76,27 +76,27 @@ bool ULFPVoxelContainerComponent::IsVoxelVisible(const FLFPVoxelGridPosition& Vo
 
 /** Setter */
 
-bool ULFPVoxelContainerComponent::SetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName)
+bool ULFPVoxelContainerComponent::SetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition, const FLFPVoxelPaletteData& VoxelPalette)
 {
 	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
 
-	ChuckUpdateDataList.FindOrAdd(VoxelGridPosition.GetSaveAndChuck()).ChangeName.Add(VoxelGridPosition.VoxelIndex, VoxelName);
+	ChuckUpdateDataList.FindOrAdd(VoxelGridPosition.GetSaveAndChuck()).ChangePalette.Add(VoxelGridPosition.VoxelIndex, VoxelPalette);
 
 	return true;
 }
 
 /** Getter */
 
-FName ULFPVoxelContainerComponent::GetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition) const
+FLFPVoxelPaletteData ULFPVoxelContainerComponent::GetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition) const
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false || IsChuckInitialized(VoxelGridPosition.SaveIndex, VoxelGridPosition.ChuckIndex)) return FName();
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false || IsChuckInitialized(VoxelGridPosition.SaveIndex, VoxelGridPosition.ChuckIndex) == false) return FLFPVoxelPaletteData();
 
 	return SaveDataList[VoxelGridPosition.SaveIndex].ChuckData[VoxelGridPosition.ChuckIndex].GetVoxelPalette(VoxelGridPosition.VoxelIndex);
 }
 
 void ULFPVoxelContainerComponent::InitializeSave_Implementation(const int32 SaveIndex)
 {
-	if (Setting.GetSaveLength() > SaveIndex || SaveIndex < 0) return;
+	if (Setting.GetSaveLength() <= SaveIndex || SaveIndex < 0) return;
 
 	if (SaveDataList.IsValidIndex(SaveIndex) == false) SaveDataList.SetNum(SaveIndex + 1);
 
@@ -109,13 +109,13 @@ void ULFPVoxelContainerComponent::InitializeSave_Implementation(const int32 Save
 
 void ULFPVoxelContainerComponent::InitializeChuck_Implementation(const int32 SaveIndex, const int32 ChuckIndex)
 {
-	if (SaveDataList.IsValidIndex(SaveIndex) == false || Setting.GetChuckLength() > ChuckIndex || ChuckIndex < 0) return;
+	if (SaveDataList.IsValidIndex(SaveIndex) == false || Setting.GetChuckLength() <= ChuckIndex || ChuckIndex < 0) return;
 
 	if (SaveDataList[SaveIndex].ChuckData.IsValidIndex(ChuckIndex) == false) SaveDataList[SaveIndex].ChuckData.SetNum(SaveIndex + 1);
 
 	auto& ChuckData = SaveDataList[SaveIndex].ChuckData[ChuckIndex];
 
-	ChuckData.InitChuckData(Setting.GetVoxelLength(), FName());
+	ChuckData.InitChuckData(Setting.GetVoxelLength(), FLFPVoxelPaletteData());
 
 	return;
 }
@@ -196,6 +196,7 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 	for (const auto& ChuckUpdate : ChuckUpdateDataList)
 	{
 		if (IsSaveInitialized(ChuckUpdate.Key.X) == false) InitializeSave(ChuckUpdate.Key.X);
+
 		if (IsChuckInitialized(ChuckUpdate.Key.X, ChuckUpdate.Key.Y) == false) InitializeChuck(ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
 
 		FLFPVoxelChuckData& ChuckData = SaveDataList[ChuckUpdate.Key.X].ChuckData[ChuckUpdate.Key.Y];
@@ -204,11 +205,11 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		FLFPChuckUpdateAction ChuckUpdateAction;
 
 		/** This change the outdate voxel name */
-		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangeName)
+		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangePalette)
 		{
 			if (ChuckData.GetVoxelPalette(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
 
-			ChuckUpdateAction.ChangeName.Add(ChuckData.GetVoxelPalette(ChangeVoxel.Key), ChangeVoxel.Value);
+			ChuckUpdateAction.ChangePalette.Add(ChuckData.GetVoxelPalette(ChangeVoxel.Key), ChangeVoxel.Value);
 
 			ChuckData.SetVoxel(ChangeVoxel.Key, ChangeVoxel.Value);
 

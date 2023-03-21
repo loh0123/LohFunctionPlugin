@@ -105,23 +105,26 @@ public:
 	}
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLFPVoxelPaletteData
 {
 	GENERATED_BODY()
 
 	FLFPVoxelPaletteData() {}
 
-	FLFPVoxelPaletteData(const FName NewVoxelName) : VoxelName(NewVoxelName), RefCounter(1) {}
+	FLFPVoxelPaletteData(const FName& NewVoxelName, const TArray<FName>& NewVoxelTag) : VoxelName(NewVoxelName), VoxelTag(NewVoxelTag), RefCounter(1) {}
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelPaletteData")
 		FName VoxelName = FName();
+
+	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelPaletteData")
+		TArray<FName> VoxelTag = TArray<FName>();
 
 private:
 
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 		uint32 RefCounter = 0;
 
 public:
@@ -150,9 +153,14 @@ public:
 
 	FORCEINLINE bool operator==(const FLFPVoxelPaletteData& Other) const
 	{
-		return VoxelName == Other.VoxelName;
+		return VoxelName == Other.VoxelName && VoxelTag == Other.VoxelTag;
 	}
 };
+
+FORCEINLINE uint32 GetTypeHash(const FLFPVoxelPaletteData& Other)
+{
+	return FCrc::MemCrc32(&Other, sizeof(FLFPVoxelPaletteData));
+}
 
 
 
@@ -176,13 +184,13 @@ public:
 		return VoxelPaletteList.IsEmpty() == false;
 	}
 
-	FORCEINLINE void InitChuckData(const int32 NewVoxelLength, const FName& NewVoxelName)
+	FORCEINLINE void InitChuckData(const int32 NewVoxelLength, const FLFPVoxelPaletteData& VoxelPalette)
 	{
 		check(NewVoxelLength > 0);
 
 		VoxelIndexList.Init(0, NewVoxelLength);
 
-		VoxelPaletteList.Init(NewVoxelName, 1);
+		VoxelPaletteList.Init(VoxelPalette, 1);
 
 		return;
 	}
@@ -195,24 +203,18 @@ public:
 		{
 			if (VoxelPaletteList[Index].CanRemove())
 			{
-				if (VoxelPaletteList.IsValidIndex(Index - 1) && VoxelPaletteList[Index - 1].CanRemove())
-				{
-					continue;
-				}
+				VoxelPaletteList.RemoveAt(Index);
 
-				while (VoxelPaletteList.IsValidIndex(Index))
-				{
-					VoxelPaletteList.RemoveAt(VoxelPaletteList.Num() - 1);
-				}
-
-				break;
+				continue;
 			}
+
+			break;
 		}
 
 		return;
 	}
 
-	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FName& NewVoxelName)
+	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FLFPVoxelPaletteData& NewVoxelPalette)
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
@@ -221,12 +223,10 @@ public:
 			FitPalette();
 		}
 
-		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelName);
+		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelPalette);
 
-		/** Palette Not Found */
-		if (PaletteIndex == INDEX_NONE) PaletteIndex = VoxelPaletteList.Add(NewVoxelName);
-
-		VoxelIndexList[VoxelIndex] = PaletteIndex;
+		/** Check Is Palette Exist */
+		VoxelIndexList[VoxelIndex] = PaletteIndex == INDEX_NONE ? VoxelPaletteList.Add(NewVoxelPalette) : PaletteIndex;
 
 		return;
 	}
@@ -245,11 +245,11 @@ public:
 		return VoxelIndexList[VoxelIndex];
 	}
 
-	FORCEINLINE const FName& GetVoxelPalette(const int32 VoxelIndex) const
+	FORCEINLINE const FLFPVoxelPaletteData& GetVoxelPalette(const int32 VoxelIndex) const
 	{
 		check(VoxelIndexList.IsValidIndex(VoxelIndex));
 
-		return VoxelPaletteList[VoxelIndexList[VoxelIndex]].VoxelName;
+		return VoxelPaletteList[VoxelIndexList[VoxelIndex]];
 	}
 
 };
@@ -286,14 +286,14 @@ struct FLFPChuckUpdateAction
 public:
 
 	UPROPERTY()
-		TMap<FName, FName> ChangeName = TMap<FName, FName>();
+		TMap<FLFPVoxelPaletteData, FLFPVoxelPaletteData> ChangePalette = TMap<FLFPVoxelPaletteData, FLFPVoxelPaletteData>();
 
 public: // Operator
 
 	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
-		ChangeName.Append(Other.ChangeName);
-
+		ChangePalette.Append(Other.ChangePalette);
+	
 		return *this;
 	}
 };
@@ -321,13 +321,13 @@ struct FLFPVoxelUpdateAction
 public:
 
 	UPROPERTY()
-		TMap<int32, FName> ChangeName = TMap<int32, FName>();
+		TMap<int32, FLFPVoxelPaletteData> ChangePalette = TMap<int32, FLFPVoxelPaletteData>();
 
 public: // Operator
 
 	FLFPVoxelUpdateAction& operator+=(const FLFPVoxelUpdateAction& Other)
 	{
-		ChangeName.Append(Other.ChangeName);
+		ChangePalette.Append(Other.ChangePalette);
 
 		return *this;
 	}
@@ -373,12 +373,12 @@ public: /** Checker */
 public: /** Setter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
-		FORCEINLINE bool SetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition, const FName VoxelName);
+		FORCEINLINE bool SetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition, const FLFPVoxelPaletteData& VoxelPalette);
 
 public: /** Getter */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
-		FORCEINLINE FName GetVoxelName(const FLFPVoxelGridPosition& VoxelGridPosition) const;
+		FORCEINLINE FLFPVoxelPaletteData GetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
 public:
 
