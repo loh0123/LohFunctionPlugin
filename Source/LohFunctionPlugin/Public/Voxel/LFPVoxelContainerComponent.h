@@ -17,11 +17,11 @@ public:
 	FLFPVoxelContainerSetting() {}
 
 	FLFPVoxelContainerSetting(FIntVector NewVoxelGridSize, FIntVector NewChuckGridSize, FIntVector NewSaveGridSize) :
-		SaveGridSize(NewSaveGridSize), ChuckGridSize(NewChuckGridSize), VoxelGridSize(NewVoxelGridSize) {}
+		RegionGridSize(NewSaveGridSize), ChuckGridSize(NewChuckGridSize), VoxelGridSize(NewVoxelGridSize) {}
 
 private:
 
-	UPROPERTY() int32 SaveLength = 1;
+	UPROPERTY() int32 RegionLength = 1;
 
 	UPROPERTY() int32 ChuckLength = 1;
 
@@ -30,7 +30,7 @@ private:
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
-		FIntVector SaveGridSize = FIntVector(1);
+		FIntVector RegionGridSize = FIntVector(1);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelContainerSetting | Setting")
 		FIntVector ChuckGridSize = FIntVector(1);
@@ -43,18 +43,18 @@ public:
 
 	FORCEINLINE void InitSetting()
 	{
-		if (SaveGridSize.GetMin() <= 0) SaveGridSize = FIntVector(1);
+		if (RegionGridSize.GetMin() <= 0) RegionGridSize = FIntVector(1);
 		if (ChuckGridSize.GetMin() <= 0) ChuckGridSize = FIntVector(1);
 		if (VoxelGridSize.GetMin() <= 0) VoxelGridSize = FIntVector(1);
 
-		SaveLength = SaveGridSize.X * SaveGridSize.Y * SaveGridSize.Z;
+		RegionLength = RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z;
 		ChuckLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
 		VoxelLength = VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z;
 	}
 
-	FORCEINLINE int32 GetSaveLength() const
+	FORCEINLINE int32 GetRegionLength() const
 	{
-		return SaveLength;
+		return RegionLength;
 	}
 
 	FORCEINLINE int32 GetChuckLength() const
@@ -76,13 +76,13 @@ struct FLFPVoxelGridPosition
 
 	FLFPVoxelGridPosition() {}
 
-	FLFPVoxelGridPosition(const int32 NewSaveIndex, const int32 NewChuckIndex, const int32 NewVoxelIndex) : SaveIndex(NewSaveIndex), ChuckIndex(NewChuckIndex), VoxelIndex(NewVoxelIndex) {}
+	FLFPVoxelGridPosition(const int32 NewRegionIndex, const int32 NewChuckIndex, const int32 NewVoxelIndex) : RegionIndex(NewRegionIndex), ChuckIndex(NewChuckIndex), VoxelIndex(NewVoxelIndex) {}
 
 public:
 
 	/** Save Index In Array */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridPosition")
-		int32 SaveIndex = INDEX_NONE;
+		int32 RegionIndex = INDEX_NONE;
 
 	/** Chuck Index In Array */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelGridPosition")
@@ -96,12 +96,12 @@ public:
 
 	FORCEINLINE FIntPoint GetSaveAndChuck() const
 	{
-		return FIntPoint(SaveIndex, ChuckIndex);
+		return FIntPoint(RegionIndex, ChuckIndex);
 	}
 
 	FORCEINLINE bool operator==(const FLFPVoxelGridPosition& Other) const
 	{
-		return SaveIndex == Other.SaveIndex && ChuckIndex == Other.ChuckIndex && VoxelIndex == Other.VoxelIndex;
+		return RegionIndex == Other.RegionIndex && ChuckIndex == Other.ChuckIndex && VoxelIndex == Other.VoxelIndex;
 	}
 };
 
@@ -398,7 +398,7 @@ public:
 };
 
 USTRUCT()
-struct FLFPVoxelSaveData
+struct FLFPVoxelRegionData
 {
 	GENERATED_BODY()
 
@@ -414,7 +414,7 @@ public:
 		return ChuckData.IsEmpty() == false;
 	}
 
-	FORCEINLINE void InitSaveData(const int32 ChuckLength)
+	FORCEINLINE void InitRegionData(const int32 ChuckLength)
 	{
 		ChuckData.Init(FLFPVoxelChuckData(), ChuckLength);
 	}
@@ -505,10 +505,10 @@ public: /** Debugging */
 public: /** Checker */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Checker")
-		FORCEINLINE bool IsSaveInitialized(const int32 SaveIndex) const;
+		FORCEINLINE bool IsRegionInitialized(const int32 RegionIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Checker")
-		FORCEINLINE bool IsChuckInitialized(const int32 SaveIndex, const int32 ChuckIndex) const;
+		FORCEINLINE bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Checker")
 		FORCEINLINE bool IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const;
@@ -532,24 +532,24 @@ public: /** Getter */
 public: /** Can be override to provide custom behavir */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Chuck")
-		virtual void InitializeSave(const int32 SaveIndex);
+		virtual void InitializeRegion(const int32 RegionIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Chuck")
-		virtual void InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex);
+		virtual void InitializeChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 //public: /** Chuck Request */
 //
 //	/** Request chuck info on chuck spawn */
-//	FORCEINLINE void RequestRenderChuck(const int32 SaveIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& ChuckDelegate);
+//	FORCEINLINE void RequestRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& ChuckDelegate);
 //
 //	/** Release chuck info on chuck destroy */
-//	FORCEINLINE void ReleaseRenderChuck(const int32 SaveIndex, const int32 ChuckIndex);
+//	FORCEINLINE void ReleaseRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
 //
 //	/** Request Render Data and lock write access */
-//	FORCEINLINE void RequestRenderData(const int32 SaveIndex, const int32 ChuckIndex, FLFPVoxelContainerSetting& ChuckSetting);
+//	FORCEINLINE void RequestRenderData(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelContainerSetting& ChuckSetting);
 //
 //	/** Release write access */
-//	FORCEINLINE void ReleaseRenderData(const int32 SaveIndex, const int32 ChuckIndex);
+//	FORCEINLINE void ReleaseRenderData(const int32 RegionIndex, const int32 ChuckIndex);
 
 protected: /** Function for updating chuck and data */
 
@@ -571,7 +571,7 @@ protected:  // Runtime Data
 
 	/** This store the chuck */
 	UPROPERTY(SaveGame) 
-		TArray<FLFPVoxelSaveData> SaveDataList;
+		TArray<FLFPVoxelRegionData> RegionDataList;
 
 	/** This store chuck delegate to call */
 	UPROPERTY() 
