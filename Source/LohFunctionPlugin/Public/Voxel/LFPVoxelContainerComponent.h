@@ -139,6 +139,11 @@ public:
 		return RefCounter == 0;
 	}
 
+	FORCEINLINE void SetCounter(const uint32 NewRef)
+	{
+		RefCounter = NewRef;
+	}
+
 	FORCEINLINE void IncreaseCounter()
 	{
 		RefCounter++;
@@ -175,7 +180,154 @@ private:
 		TArray<FLFPVoxelPaletteData> VoxelPaletteList = {};
 
 	UPROPERTY(SaveGame)
-		TArray<uint16> VoxelIndexList = {};
+		TArray<int32> OpenPaletteIndexList = {};
+
+	UPROPERTY(SaveGame)
+		TArray<uint32> VoxelIndexList = TArray<uint32>();
+
+	UPROPERTY(SaveGame)
+		int32 VoxelLength = 0;
+
+	UPROPERTY(SaveGame)
+		int32 VoxelEncodeBtye = 0;
+
+private:
+
+	FORCEINLINE int32 FindOrAddPalette(const FLFPVoxelPaletteData& NewVoxelPalette, const bool bIncreaseCounter)
+	{
+		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelPalette);
+
+		if (PaletteIndex == INDEX_NONE)
+		{
+			if (OpenPaletteIndexList.IsEmpty() == false) 
+			{
+				PaletteIndex = OpenPaletteIndexList.Pop();
+
+				VoxelPaletteList[PaletteIndex] = NewVoxelPalette;
+			}
+			else
+			{
+				PaletteIndex = VoxelPaletteList.Add(NewVoxelPalette);
+			}
+		}
+
+		VoxelPaletteList[PaletteIndex].IncreaseCounter();
+
+		return PaletteIndex;
+	}
+
+	FORCEINLINE void RemovePaletteCounter(const int32 PaletteIndex)
+	{
+		check(VoxelPaletteList[PaletteIndex].CanRemove() == false);
+
+		if (VoxelPaletteList[PaletteIndex].DecreaseCounter())
+		{
+			OpenPaletteIndexList.Add(PaletteIndex);
+		}
+
+		return;
+	}
+
+	FORCEINLINE FBitReference GetIndexRef(TArray<uint32>& VoxelIndexListRef, const int32 Index)
+	{
+		return FBitReference(
+			VoxelIndexListRef.GetData()[Index / NumBitsPerDWORD],
+			1 << (Index & (NumBitsPerDWORD - 1))
+		);
+	}
+
+	FORCEINLINE FConstBitReference GetIndexConstRef(const TArray<uint32>& VoxelIndexListRef, const int32 Index) const
+	{
+		return FConstBitReference(
+			VoxelIndexListRef.GetData()[Index / NumBitsPerDWORD],
+			1 << (Index & (NumBitsPerDWORD - 1))
+		);
+	}
+
+	FORCEINLINE void SetIndex(const int32 VoxelIndex, const uint32 NewData)
+	{
+		check(VoxelIndex >= 0 && VoxelEncodeBtye > 0);
+
+		for (int32 EncodeIndex = 0; EncodeIndex < VoxelEncodeBtye; EncodeIndex++)
+		{
+			const int32 BitIndex = (VoxelIndex * VoxelEncodeBtye) + EncodeIndex;
+
+			GetIndexRef(VoxelIndexList, BitIndex) = FConstBitReference(NewData, 1 << EncodeIndex);
+		}
+	}
+
+	FORCEINLINE uint32 GetIndex(const int32 VoxelIndex) const
+	{
+		check(VoxelIndex >= 0 && VoxelEncodeBtye > 0);
+
+		uint32 OutIndex = 0;
+
+		for (int32 EncodeIndex = 0; EncodeIndex < VoxelEncodeBtye; EncodeIndex++)
+		{
+			const int32 BitIndex = (VoxelIndex * VoxelEncodeBtye) + EncodeIndex;
+
+			FBitReference(OutIndex, 1 << EncodeIndex) = GetIndexConstRef(VoxelIndexList, BitIndex);
+		}
+
+		return OutIndex;
+	}
+
+	FORCEINLINE void SetIndexListPaletteSize(const int32 NewSize)
+	{
+		if (NewSize == VoxelEncodeBtye) return;
+
+		const TArray<uint32> OldVoxelIndexList = VoxelIndexList;
+
+		const int32 OldSize = VoxelEncodeBtye;
+
+		VoxelEncodeBtye = NewSize;
+
+		VoxelIndexList.Init(0, ((NewSize * VoxelLength) / 32) + 1);
+
+		for (int32 VoxelIndex = 0; VoxelIndex < VoxelLength; VoxelIndex++)
+		{
+			for (int32 EncodeIndex = 0; EncodeIndex < OldSize; EncodeIndex++)
+			{
+				const int32 OldBitIndex = (VoxelIndex * OldSize) + EncodeIndex;
+				const int32 NewBitIndex = (VoxelIndex * VoxelEncodeBtye) + EncodeIndex;
+
+				GetIndexRef(VoxelIndexList, NewBitIndex) = GetIndexConstRef(OldVoxelIndexList, OldBitIndex);
+			}
+		}
+	}
+
+	FORCEINLINE void FitPalette()
+	{
+		check(IsInitialized());
+
+		for (int32 Index = VoxelPaletteList.Num() - 1; Index >= 0; --Index)
+		{
+			if (VoxelPaletteList[Index].CanRemove())
+			{
+				VoxelPaletteList.RemoveAt(Index);
+
+				OpenPaletteIndexList.Remove(Index);
+
+				continue;
+			}
+
+			break;
+		}
+
+		const int32 PaletteSize = VoxelPaletteList.Num();
+
+		for (uint8 NewEncodeSize = 0; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
+		{
+			if (PaletteSize < 1 << NewEncodeSize)
+			{
+				SetIndexListPaletteSize(NewEncodeSize);
+
+				break;
+			}
+		}
+
+		return;
+	}
 
 public:
 
@@ -186,70 +338,61 @@ public:
 
 	FORCEINLINE void InitChuckData(const int32 NewVoxelLength, const FLFPVoxelPaletteData& VoxelPalette)
 	{
-		check(NewVoxelLength > 0);
-
-		VoxelIndexList.Init(0, NewVoxelLength);
+		VoxelLength = NewVoxelLength;
 
 		VoxelPaletteList.Init(VoxelPalette, 1);
 
-		return;
-	}
+		VoxelPaletteList[0].SetCounter(NewVoxelLength);
 
-	FORCEINLINE void FitPalette()
-	{
-		check(IsInitialized());
+		VoxelEncodeBtye = 1;
 
-		for (int32 Index = VoxelPaletteList.Num() - 1; Index > 0; --Index)
-		{
-			if (VoxelPaletteList[Index].CanRemove())
-			{
-				VoxelPaletteList.RemoveAt(Index);
-
-				continue;
-			}
-
-			break;
-		}
-
-		return;
+		VoxelIndexList.Init(0, (NewVoxelLength / 32) + 1);
 	}
 
 	FORCEINLINE void SetVoxel(const int32 VoxelIndex, const FLFPVoxelPaletteData& NewVoxelPalette)
 	{
-		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+		check(VoxelIndex < VoxelLength);
 
-		if (VoxelPaletteList[VoxelIndexList[VoxelIndex]].DecreaseCounter() && VoxelPaletteList.Num() - 1 == VoxelIndexList[VoxelIndex])
-		{
-			FitPalette();
-		}
+		RemovePaletteCounter(GetIndex(VoxelIndex));
 
-		int32 PaletteIndex = VoxelPaletteList.Find(NewVoxelPalette);
+		int32 PaletteIndex = FindOrAddPalette(NewVoxelPalette, true);
 
-		/** Check Is Palette Exist */
-		VoxelIndexList[VoxelIndex] = PaletteIndex == INDEX_NONE ? VoxelPaletteList.Add(NewVoxelPalette) : PaletteIndex;
+		FitPalette();
+
+		SetIndex(VoxelIndex, PaletteIndex);
 
 		return;
 	}
 
 	FORCEINLINE bool IsVoxelVisible(const int32 VoxelIndex) const
 	{
-		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+		check(VoxelIndex < VoxelLength);
 
-		return VoxelPaletteList[VoxelIndexList[VoxelIndex]].IsNone() == false;
+		return VoxelPaletteList[GetIndex(VoxelIndex)].IsNone() == false;
 	}
 
-	FORCEINLINE uint16 GetVoxelIndex(const int32 VoxelIndex) const
+	FORCEINLINE int32 GetVoxelIndex(const int32 VoxelIndex) const
 	{
-		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+		check(VoxelIndex < VoxelLength);
 
-		return VoxelIndexList[VoxelIndex];
+		return GetIndex(VoxelIndex);
 	}
 
 	FORCEINLINE const FLFPVoxelPaletteData& GetVoxelPalette(const int32 VoxelIndex) const
 	{
-		check(VoxelIndexList.IsValidIndex(VoxelIndex));
+		check(VoxelIndex < VoxelLength);
 
-		return VoxelPaletteList[VoxelIndexList[VoxelIndex]];
+		return VoxelPaletteList[GetIndex(VoxelIndex)];
+	}
+
+	FORCEINLINE uint8 GetEncodeLength() const
+	{
+		return VoxelEncodeBtye;
+	}
+
+	FORCEINLINE int32 GetPaletteLength() const
+	{
+		return VoxelPaletteList.Num();
 	}
 
 };
@@ -356,6 +499,9 @@ public: /** Debugging */
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
 		FORCEINLINE FString MemorySize(const int32 SaveFileAmount, const int32 ChuckAmount, const int32 VoxelAmount) const;
 
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Function")
+		FORCEINLINE FString Test() const;
+
 public: /** Checker */
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Checker")
@@ -380,15 +526,16 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE FLFPVoxelPaletteData GetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
-public:
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE int32 GetVoxelPaletteIndex(const FLFPVoxelGridPosition& VoxelGridPosition) const;
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "LFPVoxelContainerComponent | Chuck")
-		FORCEINLINE void InitializeSave(const int32 SaveIndex);
-		virtual void InitializeSave_Implementation(const int32 SaveIndex);
+public: /** Can be override to provide custom behavir */
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "LFPVoxelContainerComponent | Chuck")
-		FORCEINLINE void InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex);
-		virtual void InitializeChuck_Implementation(const int32 SaveIndex, const int32 ChuckIndex);
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Chuck")
+		virtual void InitializeSave(const int32 SaveIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Chuck")
+		virtual void InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex);
 
 //public: /** Chuck Request */
 //

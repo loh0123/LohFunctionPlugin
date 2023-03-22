@@ -49,6 +49,41 @@ FString ULFPVoxelContainerComponent::MemorySize(const int32 SaveFileAmount, cons
 		sizeof(FName));
 }
 
+FString ULFPVoxelContainerComponent::Test() const
+{
+	FLFPVoxelChuckData TestChuckData;
+
+	FLFPVoxelPaletteData TestPalette;
+
+	TestChuckData.InitChuckData(16 * 16 * 16, TestPalette);
+
+	TestPalette.VoxelName = FName("Dirt");
+
+	TestChuckData.SetVoxel(0, TestPalette);
+	TestChuckData.SetVoxel(10, TestPalette);
+
+	TestPalette.VoxelName = FName("Stone");
+
+	TestChuckData.SetVoxel(20, TestPalette);
+	TestChuckData.SetVoxel(30, TestPalette);
+
+	TestPalette.VoxelName = FName("Grass");
+	
+	TestChuckData.SetVoxel(20, TestPalette);
+	TestChuckData.SetVoxel(30, TestPalette);
+
+	TestPalette.VoxelName = FName("Hello");
+
+	TestChuckData.SetVoxel(40, TestPalette);
+	TestChuckData.SetVoxel(50, TestPalette);
+
+	return FString::Printf(TEXT("Total : %d, Encode : %d, Palette : %d, Default : %llu"),
+		TestChuckData.GetVoxelIndex(10),
+		TestChuckData.GetEncodeLength(), 
+		TestChuckData.GetPaletteLength(),
+		sizeof(FLFPVoxelChuckData));
+}
+
 /** Checker */
 
 bool ULFPVoxelContainerComponent::IsSaveInitialized(const int32 SaveIndex) const
@@ -94,7 +129,14 @@ FLFPVoxelPaletteData ULFPVoxelContainerComponent::GetVoxelPalette(const FLFPVoxe
 	return SaveDataList[VoxelGridPosition.SaveIndex].ChuckData[VoxelGridPosition.ChuckIndex].GetVoxelPalette(VoxelGridPosition.VoxelIndex);
 }
 
-void ULFPVoxelContainerComponent::InitializeSave_Implementation(const int32 SaveIndex)
+int32 ULFPVoxelContainerComponent::GetVoxelPaletteIndex(const FLFPVoxelGridPosition& VoxelGridPosition) const
+{
+	if (IsVoxelGridPositionValid(VoxelGridPosition) == false || IsChuckInitialized(VoxelGridPosition.SaveIndex, VoxelGridPosition.ChuckIndex) == false) return INDEX_NONE;
+
+	return SaveDataList[VoxelGridPosition.SaveIndex].ChuckData[VoxelGridPosition.ChuckIndex].GetVoxelIndex(VoxelGridPosition.VoxelIndex);
+}
+
+void ULFPVoxelContainerComponent::InitializeSave(const int32 SaveIndex)
 {
 	if (Setting.GetSaveLength() <= SaveIndex || SaveIndex < 0) return;
 
@@ -107,7 +149,7 @@ void ULFPVoxelContainerComponent::InitializeSave_Implementation(const int32 Save
 	return;
 }
 
-void ULFPVoxelContainerComponent::InitializeChuck_Implementation(const int32 SaveIndex, const int32 ChuckIndex)
+void ULFPVoxelContainerComponent::InitializeChuck(const int32 SaveIndex, const int32 ChuckIndex)
 {
 	if (SaveDataList.IsValidIndex(SaveIndex) == false || Setting.GetChuckLength() <= ChuckIndex || ChuckIndex < 0) return;
 
