@@ -55,30 +55,30 @@ FString ULFPVoxelContainerComponent::Test() const
 
 	FLFPVoxelPaletteData TestPalette;
 
-	TestChuckData.InitChuckData(16 * 16 * 16, TestPalette);
+	TestChuckData.InitChuckData(TestPalette);
 
 	TestPalette.VoxelName = FName("Dirt");
 
-	TestChuckData.SetVoxel(0, TestPalette);
-	TestChuckData.SetVoxel(10, TestPalette);
+	TestChuckData.SetIndexData(0, TestPalette);
+	TestChuckData.SetIndexData(10, TestPalette);
 
 	TestPalette.VoxelName = FName("Stone");
 
-	TestChuckData.SetVoxel(20, TestPalette);
-	TestChuckData.SetVoxel(30, TestPalette);
+	TestChuckData.SetIndexData(20, TestPalette);
+	TestChuckData.SetIndexData(30, TestPalette);
 
 	TestPalette.VoxelName = FName("Grass");
 	
-	TestChuckData.SetVoxel(20, TestPalette);
-	TestChuckData.SetVoxel(30, TestPalette);
+	TestChuckData.SetIndexData(20, TestPalette);
+	TestChuckData.SetIndexData(30, TestPalette);
 
 	TestPalette.VoxelName = FName("Hello");
 
-	TestChuckData.SetVoxel(40, TestPalette);
-	TestChuckData.SetVoxel(50, TestPalette);
+	TestChuckData.SetIndexData(40, TestPalette);
+	TestChuckData.SetIndexData(50, TestPalette);
 
 	return FString::Printf(TEXT("Total : %d, Encode : %d, Palette : %d, Default : %llu"),
-		TestChuckData.GetVoxelIndex(10),
+		TestChuckData.GetPaletteIndex(10),
 		TestChuckData.GetEncodeLength(), 
 		TestChuckData.GetPaletteLength(),
 		sizeof(FLFPVoxelChuckData));
@@ -96,44 +96,43 @@ bool ULFPVoxelContainerComponent::IsChuckInitialized(const int32 RegionIndex, co
 	return IsRegionInitialized(RegionIndex) && RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) && RegionDataList[RegionIndex].ChuckData[ChuckIndex].IsInitialized();
 }
 
-bool ULFPVoxelContainerComponent::IsVoxelGridPositionValid(const FLFPVoxelGridPosition& VoxelGridPosition) const
+bool ULFPVoxelContainerComponent::IsVoxelPositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const
 {
-	return Setting.GetVoxelLength() > VoxelGridPosition.VoxelIndex && Setting.GetChuckLength() > VoxelGridPosition.ChuckIndex && Setting.GetRegionLength() > VoxelGridPosition.RegionIndex;
-}
-
-bool ULFPVoxelContainerComponent::IsVoxelVisible(const FLFPVoxelGridPosition& VoxelGridPosition) const
-{
-	return 
-		IsVoxelGridPositionValid(VoxelGridPosition) && 
-		IsChuckInitialized(VoxelGridPosition.RegionIndex, VoxelGridPosition.ChuckIndex) && 
-		RegionDataList[VoxelGridPosition.RegionIndex].ChuckData[VoxelGridPosition.ChuckIndex].IsVoxelVisible(VoxelGridPosition.VoxelIndex);
+	return Setting.GetRegionLength() > RegionIndex && Setting.GetChuckLength() > ChuckIndex && Setting.GetVoxelLength() > VoxelIndex;
 }
 
 /** Setter */
 
-bool ULFPVoxelContainerComponent::SetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition, const FLFPVoxelPaletteData& VoxelPalette)
+bool ULFPVoxelContainerComponent::SetVoxelPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FLFPVoxelPaletteData& VoxelPalette)
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false) return false;
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
 
-	ChuckUpdateDataList.FindOrAdd(VoxelGridPosition.GetSaveAndChuck()).ChangePalette.Add(VoxelGridPosition.VoxelIndex, VoxelPalette);
+	ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.Add(VoxelIndex, VoxelPalette);
 
 	return true;
 }
 
 /** Getter */
 
-FLFPVoxelPaletteData ULFPVoxelContainerComponent::GetVoxelPalette(const FLFPVoxelGridPosition& VoxelGridPosition) const
+FLFPVoxelPaletteData ULFPVoxelContainerComponent::GetVoxelPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false || IsChuckInitialized(VoxelGridPosition.RegionIndex, VoxelGridPosition.ChuckIndex) == false) return FLFPVoxelPaletteData();
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return FLFPVoxelPaletteData();
 
-	return RegionDataList[VoxelGridPosition.RegionIndex].ChuckData[VoxelGridPosition.ChuckIndex].GetVoxelPalette(VoxelGridPosition.VoxelIndex);
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetIndexData(VoxelIndex);
 }
 
-int32 ULFPVoxelContainerComponent::GetVoxelPaletteIndex(const FLFPVoxelGridPosition& VoxelGridPosition) const
+TArray<FLFPVoxelPaletteData> ULFPVoxelContainerComponent::GetVoxelPaletteList(const int32 RegionIndex, const int32 ChuckIndex) const
 {
-	if (IsVoxelGridPositionValid(VoxelGridPosition) == false || IsChuckInitialized(VoxelGridPosition.RegionIndex, VoxelGridPosition.ChuckIndex) == false) return INDEX_NONE;
+	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false) return TArray<FLFPVoxelPaletteData>();
 
-	return RegionDataList[VoxelGridPosition.RegionIndex].ChuckData[VoxelGridPosition.ChuckIndex].GetVoxelIndex(VoxelGridPosition.VoxelIndex);
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetVoxelPaletteList();
+}
+
+int32 ULFPVoxelContainerComponent::GetVoxelPaletteIndex(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return INDEX_NONE;
+
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetPaletteIndex(VoxelIndex);
 }
 
 void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)
@@ -151,13 +150,11 @@ void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)
 
 void ULFPVoxelContainerComponent::InitializeChuck(const int32 RegionIndex, const int32 ChuckIndex)
 {
-	if (RegionDataList.IsValidIndex(RegionIndex) == false || Setting.GetChuckLength() <= ChuckIndex || ChuckIndex < 0) return;
-
-	if (RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) RegionDataList[RegionIndex].ChuckData.SetNum(RegionIndex + 1);
+	if (RegionDataList.IsValidIndex(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return;
 
 	auto& ChuckData = RegionDataList[RegionIndex].ChuckData[ChuckIndex];
 
-	ChuckData.InitChuckData(Setting.GetVoxelLength(), FLFPVoxelPaletteData());
+	ChuckData.InitChuckData(FLFPVoxelPaletteData());
 
 	return;
 }
@@ -249,11 +246,11 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		/** This change the outdate voxel name */
 		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangePalette)
 		{
-			if (ChuckData.GetVoxelPalette(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
+			if (ChuckData.GetIndexData(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
 
-			ChuckUpdateAction.ChangePalette.Add(ChuckData.GetVoxelPalette(ChangeVoxel.Key), ChangeVoxel.Value);
+			ChuckUpdateAction.ChangePalette.Add(ChuckData.GetIndexData(ChangeVoxel.Key), ChangeVoxel.Value);
 
-			ChuckData.SetVoxel(ChangeVoxel.Key, ChangeVoxel.Value);
+			ChuckData.SetIndexData(ChangeVoxel.Key, ChangeVoxel.Value);
 
 			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.VoxelGridSize), Setting.VoxelGridSize));
 		}
