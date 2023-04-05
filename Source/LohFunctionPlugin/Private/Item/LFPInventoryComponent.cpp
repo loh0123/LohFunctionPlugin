@@ -314,14 +314,14 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 		return false;
 	}
 
-	if (Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false)
+	if (Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false && ToSlot != INDEX_NONE)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanAddItem return false"));
 
 		return false;
 	}
 
-	if (CanRemoveItem(GetInventorySlot(ToSlot), ToSlot, EventInfo) == false)
+	if (CanRemoveItem(GetInventorySlot(ToSlot), ToSlot, EventInfo) == false && ToSlot != INDEX_NONE)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther CanRemoveItem return false"));
 
@@ -341,9 +341,9 @@ bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, co
 	FLFPInventoryItemIndexData ItemIndexData;
 
 	Other->RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
-	RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
+	if (ToSlot != INDEX_NONE) RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
 
-	Other->AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);
+	if (ToSlot != INDEX_NONE) Other->AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);
 	AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
 
 	return true;
