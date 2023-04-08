@@ -303,48 +303,48 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 	return true;
 }
 
-bool ULFPInventoryComponent::SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
+bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlot, const int32 ToSlot, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	if (Other->CanRemoveItem(Other->GetInventorySlot(FromSlot), FromSlot, EventInfo) == false)
+	if (ToInventory->IsInventorySlotItemValid(ToSlot) && ToInventory->CanRemoveItem(ToInventory->GetInventorySlot(ToSlot), ToSlot, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanRemoveItem return false"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther ToInventory CanRemoveItem return false"));
 
 		return false;
 	}
 
-	if (Other->CanAddItem(GetInventorySlot(ToSlot), FromSlot, EventInfo) == false && ToSlot != INDEX_NONE)
+	if (IsInventorySlotItemValid(FromSlot) && ToInventory->CanAddItem(GetInventorySlot(FromSlot), ToSlot, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther Other CanAddItem return false"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther ToInventory CanAddItem return false"));
 
 		return false;
 	}
 
-	if (CanRemoveItem(GetInventorySlot(ToSlot), ToSlot, EventInfo) == false && ToSlot != INDEX_NONE)
+	if (IsInventorySlotItemValid(FromSlot) && CanRemoveItem(GetInventorySlot(FromSlot), FromSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther CanRemoveItem return false"));
 
 		return false;
 	}
 
-	if (CanAddItem(Other->GetInventorySlot(FromSlot), ToSlot, EventInfo) == false)
+	if (ToInventory->IsInventorySlotItemValid(ToSlot) && CanAddItem(ToInventory->GetInventorySlot(ToSlot), FromSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther CanAddItem return false"));
 
 		return false;
 	}
 
-	FLFPInventoryItemData FromData;
-	FLFPInventoryItemData ToData;
+	FLFPInventoryItemData FromData = GetInventorySlot(FromSlot);
+	FLFPInventoryItemData ToData = ToInventory->GetInventorySlot(ToSlot);
 
 	FLFPInventoryItemIndexData ItemIndexData;
 
-	Other->RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
-	if (ToSlot != INDEX_NONE) RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
+	if (ToSlot != INDEX_NONE) ToInventory->RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
+	if (FromSlot != INDEX_NONE) RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
 
-	if (ToSlot != INDEX_NONE) Other->AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);
-	AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
+	if (FromSlot != INDEX_NONE) ToInventory->AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
+	if (ToSlot != INDEX_NONE) AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);
 
 	return true;
 }

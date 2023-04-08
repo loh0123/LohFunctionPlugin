@@ -132,14 +132,14 @@ public: // Function
 		bool SwapItem(const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
 
 	/**
-	* Swap Item From Other Inventory
-	* @param Other Take item on this inventory
+	* Transfer Item From To Inventory
+	* @param ToInventory Take item on this inventory
 	* @param FromSlot From other inventory slot
 	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SwapItemFromOther(ULFPInventoryComponent* Other, const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
+		bool TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlot, const int32 ToSlot, const FString EventInfo = FString("None"));
 
 	/**
 	* Sort inventory using sort function
