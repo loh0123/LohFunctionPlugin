@@ -227,7 +227,22 @@ private:
 
 		if (PaletteList[PaletteIndex].DecreaseCounter() == false) return;
 
-		OpenPaletteList.Add(PaletteIndex);
+		/** Sort And Push Into Open Index List */
+		if (OpenPaletteList.Num() > 0)
+		{
+			for (int32 Index = OpenPaletteList.Num() - 1; Index >= 0; Index--)
+			{
+				if (OpenPaletteList[Index] < PaletteIndex) continue;
+
+				OpenPaletteList.EmplaceAt(Index, PaletteIndex);
+
+				break;
+			}
+		}
+		else
+		{
+			OpenPaletteList.Emplace(PaletteIndex);
+		}
 
 		for (int32 Index = PaletteList.Num() - 1; Index >= 0; --Index)
 		{
@@ -310,10 +325,11 @@ public:
 
 	FORCEINLINE void InitChuckData(const FLFPVoxelPaletteData& VoxelPalette, const uint32 NewIndexSize)
 	{
-		PaletteList.Init(VoxelPalette, 1);
+		OpenPaletteList.Empty();
 
 		IndexSize = NewIndexSize;
 
+		PaletteList.Init(VoxelPalette, 1);
 		PaletteList[0].SetCounter(NewIndexSize);
 
 		EncodeBtye = 0;
