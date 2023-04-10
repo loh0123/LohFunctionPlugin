@@ -23,6 +23,16 @@ void ULFPVoxelRendererComponent::BeginPlay()
 
 }
 
+void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (IsValid(VoxelContainer))
+	{
+		VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex);
+	}
+}
+
 
 // Called every frame
 void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -30,5 +40,46 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPVoxelContainerComponent* NewVoxelContainer)
+{
+	if (IsValid(NewVoxelContainer) == false) return false;
+
+	if (IsValid(VoxelContainer))
+	{
+		FLFPVoxelChuckDelegate Delegate;
+
+		Delegate.VoxelChuckUpdateEvent.BindUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
+
+		if (VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex, Delegate))
+		{
+			RegionIndex = NewRegionIndex;
+
+			ChuckIndex = NewChuckIndex;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ULFPVoxelRendererComponent::ReleaseRenderer()
+{
+	if (IsValid(VoxelContainer) == false) return false;
+
+	VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex);
+
+	VoxelContainer = nullptr;
+
+	RegionIndex = INDEX_NONE;
+	ChuckIndex = INDEX_NONE;
+
+	return true;
+}
+
+void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
+{
 }
 

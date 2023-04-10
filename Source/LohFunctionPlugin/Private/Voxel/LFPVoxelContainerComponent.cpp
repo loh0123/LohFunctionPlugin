@@ -197,6 +197,25 @@ void ULFPVoxelContainerComponent::InitializeChuck(const int32 RegionIndex, const
 	return;
 }
 
+bool ULFPVoxelContainerComponent::AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& Delegate)
+{
+	FIntPoint ChuckPos(RegionIndex, ChuckIndex);
+
+	if (ChuckDelegateList.Contains(ChuckPos))
+	{
+		return false;
+	}
+
+	ChuckDelegateList.Add(ChuckPos, Delegate);
+
+	return true;
+}
+
+void ULFPVoxelContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex)
+{
+	ChuckDelegateList.Remove(FIntPoint(RegionIndex, ChuckIndex));
+}
+
 /** Chuck Request */
 
 //void ULFPVoxelContainerComponent::RequestRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& ChuckDelegate)

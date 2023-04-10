@@ -560,19 +560,15 @@ protected: /** Can be override to provide custom behavir */
 	UFUNCTION()
 		virtual void InitializeChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
-//public: /** Chuck Request */
-//
-//	/** Request chuck info on chuck spawn */
-//	FORCEINLINE void RequestRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& ChuckDelegate);
-//
-//	/** Release chuck info on chuck destroy */
-//	FORCEINLINE void ReleaseRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
-//
-//	/** Request Render Data and lock write access */
-//	FORCEINLINE void RequestRenderData(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelContainerSetting& ChuckSetting);
-//
-//	/** Release write access */
-//	FORCEINLINE void ReleaseRenderData(const int32 RegionIndex, const int32 ChuckIndex);
+public: /** Chuck Request */
+
+	/** Request chuck info on chuck spawn */
+	UFUNCTION() 
+		FORCEINLINE bool AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& Delegate);
+
+	/** Release chuck info on chuck destroy */
+	UFUNCTION() 
+		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 protected: /** Function for updating chuck and data */
 
