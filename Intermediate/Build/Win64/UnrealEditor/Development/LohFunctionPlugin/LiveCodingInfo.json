@@ -32,14 +32,14 @@
 			"LFPEquipmentComponent.cpp.obj",
 			"LFPInventoryComponent.cpp.obj",
 			"LFPInventoryInterface.cpp.obj",
-			"LFPItemMutatorComponent.cpp.obj",
+			"LFPItemMutatorComponent.cpp.obj"
+		],
+		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
 			"LFPMazeLibrary.cpp.obj",
-			"LFPNoiseLibrary.cpp.obj"
-		],
-		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
+			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
 			"LFPRenderLibrary.cpp.obj",
 			"LFPVoxelContainerComponent.cpp.obj",

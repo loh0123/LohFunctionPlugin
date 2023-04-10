@@ -38,7 +38,6 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	// ...
 }
 
@@ -57,6 +56,11 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 			RegionIndex = NewRegionIndex;
 
 			ChuckIndex = NewChuckIndex;
+
+			if (VoxelContainer->IsChuckInitialized(NewRegionIndex, NewChuckIndex) == false)
+			{
+				VoxelContainer->InitializeVoxelChuck(NewRegionIndex, NewChuckIndex);
+			}
 
 			return true;
 		}
