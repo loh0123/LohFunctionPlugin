@@ -213,7 +213,13 @@ bool ULFPVoxelContainerComponent::AddRenderChuck(const int32 RegionIndex, const 
 
 void ULFPVoxelContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex)
 {
-	ChuckDelegateList.Remove(FIntPoint(RegionIndex, ChuckIndex));
+	FIntPoint ChuckPos(RegionIndex, ChuckIndex);
+
+	if (ChuckDelegateList.Contains(ChuckPos) == false) return;
+
+	ChuckDelegateList.FindChecked(ChuckPos).VoxelChuckUpdateEvent.Unbind();
+
+	ChuckDelegateList.Remove(ChuckPos);
 }
 
 /** Chuck Request */
@@ -310,8 +316,12 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		{
 			if (ChuckData.GetIndexData(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
 
-			ChuckUpdateAction.ChangeIndex.Add(ChangeVoxel.Key);
-			ChuckUpdateAction.ChangePalette.AddUnique(ChuckData.GetIndexData(ChangeVoxel.Key));
+			if (ChuckData.GetIndexData(ChangeVoxel.Key).IsNone())
+			{
+				ChuckUpdateAction.bIsVoxelMeshDirty = true;
+			}
+
+			ChuckUpdateAction.bIsVoxelAttributeDirty = true;
 
 			ChuckData.SetIndexData(ChangeVoxel.Key, ChangeVoxel.Value);
 

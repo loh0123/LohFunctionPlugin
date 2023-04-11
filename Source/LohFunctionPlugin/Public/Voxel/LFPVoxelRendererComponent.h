@@ -7,6 +7,8 @@
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "LFPVoxelRendererComponent.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
+
 USTRUCT(BlueprintType)
 struct FLFPVoxelRendererSetting
 {
@@ -151,40 +153,40 @@ public:
 
 public:
 
-//	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-//		FORCEINLINE void SetMaterial(const TArray<UMaterialInterface*>& Material);
-//
-//	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-//		FORCEINLINE void UpdateMesh();
-//
-//	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-//		FORCEINLINE void UpdateAttribute();
-//
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE void UpdateMesh();
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE void UpdateAttribute();
+
 public:
 
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
-//protected: // Rendering Handler
-//
-//	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
-//
-//	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
-//
-//public: // Material Handler
-//
-//	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
-//
-//	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
-//
-//	virtual int32 GetNumMaterials() const override;
-//
-//	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
-//
-//	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
-//
-//	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
-//	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
+protected: // Rendering Handler
+
+	//virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
+
+	//virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+
+public: // Material Handler
+
+	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
+
+	/*virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;*/
+
+	virtual int32 GetNumMaterials() const override;
+
+	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
+
+	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
+
+	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
+	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
 //
 //public: // Collision Handler
 //
@@ -201,6 +203,11 @@ public:
 //	FORCEINLINE void RebuildPhysicsData();
 //
 //	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
+
+protected:
+
+	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelRendererComponent")
+		FLFPVoxelRendererStatus Status;
 
 public:
 

@@ -431,18 +431,16 @@ struct FLFPChuckUpdateAction
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = "LFPChuckUpdateAction")
-		TSet<int32> ChangeIndex = TSet<int32>();
+	UPROPERTY(VisibleAnywhere, Category = "LFPChuckUpdateAction") uint8 bIsVoxelAttributeDirty : 1;
 
-	UPROPERTY(BlueprintReadWrite, Category = "LFPChuckUpdateAction")
-		TArray<FLFPVoxelPaletteData> ChangePalette = TArray<FLFPVoxelPaletteData>();
+	UPROPERTY(VisibleAnywhere, Category = "LFPChuckUpdateAction") uint8 bIsVoxelMeshDirty : 1;
 
 public: // Operator
 
 	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
-		ChangeIndex.Append(Other.ChangeIndex);
-		ChangePalette.Append(Other.ChangePalette);
+		if (bIsVoxelAttributeDirty == false) bIsVoxelAttributeDirty = Other.bIsVoxelAttributeDirty;
+		if (bIsVoxelMeshDirty == false) bIsVoxelMeshDirty = Other.bIsVoxelMeshDirty;
 	
 		return *this;
 	}
@@ -550,6 +548,9 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE int32 GetVoxelPaletteIndex(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const;
 
+public: /** C++ Getter */
+
+	FORCEINLINE const FLFPVoxelContainerSetting& GetSetting() const { return Setting; }
 
 
 protected: /** Can be override to provide custom behavir */

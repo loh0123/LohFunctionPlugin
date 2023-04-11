@@ -30,11 +30,11 @@
 			"LFPWorldGrid.cpp.obj",
 			"LFPExperienceComponent.cpp.obj",
 			"LFPEquipmentComponent.cpp.obj",
-			"LFPInventoryComponent.cpp.obj",
-			"LFPInventoryInterface.cpp.obj",
-			"LFPItemMutatorComponent.cpp.obj"
+			"LFPInventoryComponent.cpp.obj"
 		],
 		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
+			"LFPInventoryInterface.cpp.obj",
+			"LFPItemMutatorComponent.cpp.obj",
 			"LohFunctionPlugin.cpp.obj",
 			"LohFunctionPluginLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
