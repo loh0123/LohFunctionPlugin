@@ -9,6 +9,47 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
 
+struct FLFPVoxelRendererMergeFaceData
+{
+	/** Raw Vertex Generated For The Function */
+	TArray<FVector3f> VertexList;
+
+	/** Raw Triangle Index Generated For The Function */
+	TArray<uint32> TriangleIndexList;
+
+	/** Raw UV Generated For The Function */
+	TArray<FVector2f> UVList;
+
+	/** Point UV Generated For Material To Use Point Texture */
+	TArray<FVector2f> PositionUVList;
+
+	/** How Many Triangle Has Been Generated */
+	uint32 TriangleCount = 0;
+};
+
+struct FLFPVoxelRendererDirectionFaceData
+{
+	TArray<FLFPVoxelRendererMergeFaceData> FaceDataList = TArray<FLFPVoxelRendererMergeFaceData>();
+
+	uint32 TriangleCount = 0;
+};
+
+struct FLFPVoxelRendererSectionData
+{
+	TStaticArray<FLFPVoxelRendererDirectionFaceData, 6> DirectionList = TStaticArray<FLFPVoxelRendererDirectionFaceData, 6>();
+
+	uint32 TriangleCount = 0;
+};
+
+struct FLFPVoxelRendererThreadResult
+{
+	TArray<FLFPVoxelRendererSectionData> SectionData = TArray<FLFPVoxelRendererSectionData>();
+
+	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
+
+	class FCardRepresentationData* LumenCardData = nullptr;
+};
+
 USTRUCT(BlueprintType)
 struct FLFPVoxelRendererSetting
 {
@@ -70,24 +111,6 @@ namespace LFPVoxelRendererConstantData
 	const TArray<int32> SurfaceDirectionID = {
 		5,0,3,1,2,4
 	};
-};
-
-struct FLFPVoxelRendererSectionData
-{
-	/** Raw Vertex Generated For The Function */
-	TArray<FVector3f> VertexList;
-
-	/** Raw Triangle Index Generated For The Function */
-	TArray<uint32> TriangleIndexList;
-
-	/** Raw UV Generated For The Function */
-	TArray<FVector2f> UVList;
-
-	/** Point UV Generated For Material To Use Point Texture */
-	TArray<FVector2f> PositionUVList;
-
-	/** How Many Triangle Has Been Generated */
-	uint32 TriangleCount = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -237,4 +260,7 @@ private:
 
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 	
+
+	FLFPVoxelRendererThreadResult ThreadResult;
+	UE::Tasks::FTask WorkThread;
 };

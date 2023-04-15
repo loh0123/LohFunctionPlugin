@@ -2,6 +2,7 @@
 
 
 #include "Voxel/LFPVoxelRendererComponent.h"
+#include "Render/LFPRenderLibrary.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
@@ -29,10 +30,7 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 {
 	Super::EndPlay(EndPlayReason);
 
-	if (IsValid(VoxelContainer))
-	{
-		VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex);
-	}
+	ReleaseRenderer();
 }
 
 
@@ -47,25 +45,30 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 {
 	if (IsValid(NewVoxelContainer) == false) return false;
 
-	if (IsValid(VoxelContainer))
+	ReleaseRenderer();
+
+	VoxelContainer = NewVoxelContainer;
+
+	FLFPVoxelChuckDelegate Delegate;
+
+	Delegate.VoxelChuckUpdateEvent.BindUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
+
+	if (VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex, Delegate))
 	{
-		FLFPVoxelChuckDelegate Delegate;
+		RegionIndex = NewRegionIndex;
 
-		Delegate.VoxelChuckUpdateEvent.BindUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
+		ChuckIndex = NewChuckIndex;
 
-		if (VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex, Delegate))
+		if (VoxelContainer->IsChuckInitialized(NewRegionIndex, NewChuckIndex) == false)
 		{
-			RegionIndex = NewRegionIndex;
-
-			ChuckIndex = NewChuckIndex;
-
-			if (VoxelContainer->IsChuckInitialized(NewRegionIndex, NewChuckIndex) == false)
-			{
-				VoxelContainer->InitializeVoxelChuck(NewRegionIndex, NewChuckIndex);
-			}
-
-			return true;
+			VoxelContainer->InitializeVoxelChuck(NewRegionIndex, NewChuckIndex);
 		}
+
+		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetVoxelGrid().X + 2, (VoxelContainer->GetSetting().GetVoxelGrid().Y + 2) * (VoxelContainer->GetSetting().GetVoxelGrid().Z + 2));
+
+		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+
+		return true;
 	}
 
 	return false;
@@ -81,6 +84,13 @@ bool ULFPVoxelRendererComponent::ReleaseRenderer()
 
 	RegionIndex = INDEX_NONE;
 	ChuckIndex = INDEX_NONE;
+
+	if (IsValid(AttributesTexture))
+	{
+		AttributesTexture->ReleaseResource();
+		AttributesTexture->MarkAsGarbage();
+		AttributesTexture = nullptr;
+	}
 
 	return true;
 }
