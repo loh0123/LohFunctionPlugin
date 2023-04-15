@@ -173,6 +173,26 @@ int32 ULFPVoxelContainerComponent::GetVoxelPaletteIndex(const int32 RegionIndex,
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetPaletteIndex(VoxelIndex);
 }
 
+FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalPosition(const FIntVector VoxelGlobalIndex) const
+{
+	const FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(VoxelGlobalIndex.X, Setting.GetRegionGrid()));
+	const FIntVector ChuckPos(ULFPGridLibrary::ToGridLocation(VoxelGlobalIndex.Y, Setting.GetChuckGrid()));
+	const FIntVector VoxelPos(ULFPGridLibrary::ToGridLocation(VoxelGlobalIndex.Z, Setting.GetVoxelGrid()));
+
+	return (RegionPos * Setting.GetChuckGrid() * Setting.GetVoxelGrid()) + (ChuckPos * Setting.GetVoxelGrid()) + VoxelPos;
+}
+
+FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalIndex(const FIntVector VoxelGlobalPosition) const
+{
+	const FIntVector RegionVoxelSize(Setting.GetChuckGrid() * Setting.GetVoxelGrid());
+
+	const FIntVector RegionPos	(FIntVector::DivideAndRoundUp(VoxelGlobalPosition, RegionVoxelSize));
+	const FIntVector ChuckPos	(FIntVector::DivideAndRoundUp(VoxelGlobalPosition - (RegionPos * RegionVoxelSize), Setting.GetVoxelGrid()));
+	const FIntVector VoxelPos	(VoxelGlobalPosition - (RegionPos * RegionVoxelSize) - (ChuckPos * Setting.GetVoxelGrid()));
+
+	return FIntVector(ULFPGridLibrary::ToIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToIndex(VoxelPos, Setting.GetVoxelGrid()));
+}
+
 void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)
 {
 	check(IsRegionPositionValid(RegionIndex));

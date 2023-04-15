@@ -548,6 +548,13 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE int32 GetVoxelPaletteIndex(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const;
 
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE FIntVector ToVoxelGlobalPosition(const FIntVector VoxelGlobalIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE FIntVector ToVoxelGlobalIndex(const FIntVector VoxelGlobalPosition) const;
+
 public: /** C++ Getter */
 
 	FORCEINLINE const FLFPVoxelContainerSetting& GetSetting() const { return Setting; }

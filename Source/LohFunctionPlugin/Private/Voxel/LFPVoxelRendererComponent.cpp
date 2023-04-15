@@ -3,6 +3,7 @@
 
 #include "Voxel/LFPVoxelRendererComponent.h"
 #include "Render/LFPRenderLibrary.h"
+#include "Math/LFPGridLibrary.h"
 
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
@@ -38,7 +39,32 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	// ...
+	
+	if (Status.bIsVoxelAttributeDirty)
+	{
+		Status.bIsVoxelAttributeDirty = false;
+
+		const FIntVector DataColorGridSize = VoxelContainer->GetSetting().GetVoxelGrid() + FIntVector(2);
+		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
+
+		TArray<FColor> AttributeList;
+
+		AttributeList.SetNum(DataColorSize);
+
+		ParallelFor(DataColorSize,
+			[&](const int32 Index)
+			{
+				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+				const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
+
+				const FLFPVoxelPaletteData VoxelPalette = VoxelContainer->GetVoxelPalette(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
+
+				AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
+			}
+		);
+
+		if (IsValid(AttributesTexture)) ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
+	}
 }
 
 bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPVoxelContainerComponent* NewVoxelContainer)
@@ -148,6 +174,11 @@ void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data
 	{
 		UpdateMesh();
 	}
+}
+
+FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const
+{
+	return FColor(0);
 }
 
 void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const

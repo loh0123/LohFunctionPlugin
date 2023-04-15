@@ -190,6 +190,11 @@ public:
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
+protected: /** Can be override to provide custom behavir */
+
+	UFUNCTION()
+		virtual FColor GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const;
+
 protected: // Rendering Handler
 
 	//virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
