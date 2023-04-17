@@ -63,3 +63,61 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor
 
 	return true;
 }
+
+TArray<FVector3f> ULFPRenderLibrary::CreateVertexPosList(const FVector3f& Center, const FRotator3f& Rotation, const FVector3f& Scale)
+{
+	return {
+		(Scale * Rotation.RotateVector(FVector3f(-1.0f, -1.0f, 1.0f))) + Center,
+		(Scale * Rotation.RotateVector(FVector3f( 1.0f, -1.0f, 1.0f))) + Center,
+		(Scale * Rotation.RotateVector(FVector3f(-1.0f,  1.0f, 1.0f))) + Center,
+		(Scale * Rotation.RotateVector(FVector3f( 1.0f,  1.0f, 1.0f))) + Center
+	};
+}
+
+void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList, FBox& Bounds, uint32& TriangleAmount)
+{
+	check(VertexPosList.Num() == 4);
+
+	/* Handle Index Data */
+	{
+		const uint32 StartIndex = VertexList.Num();
+
+		TriangleIndexList.Append({ StartIndex, 1 + StartIndex, 2 + StartIndex, 3 + StartIndex, 4 + StartIndex, 5 + StartIndex });
+	}
+
+	/* Handle Vertex Data */
+	{
+		VertexList.Append({
+			VertexPosList[1],
+			VertexPosList[0],
+			VertexPosList[3],
+			VertexPosList[2],
+			VertexPosList[3],
+			VertexPosList[0],
+			});
+
+		Bounds.IsValid = true;
+
+		for (const FVector3f& Vertex : VertexList)
+		{
+			Bounds += FVector(Vertex);
+		}
+	}
+
+	/* Handle UV Data */
+	{
+		const FVector2f MinUVOffset = FVector2f(0);
+		const FVector2f MaxUVOffset = FVector2f(1);
+
+		UVList.Append({
+			FVector2f(MinUVOffset.X, MinUVOffset.Y),
+			FVector2f(MinUVOffset.X, MaxUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MinUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MaxUVOffset.Y),
+			FVector2f(MaxUVOffset.X, MinUVOffset.Y),
+			FVector2f(MinUVOffset.X, MaxUVOffset.Y)
+		});
+	}
+
+	TriangleAmount += 2;
+}

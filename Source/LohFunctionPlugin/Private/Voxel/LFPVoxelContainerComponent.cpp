@@ -336,13 +336,6 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		{
 			if (ChuckData.GetIndexData(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
 
-			if (ChuckData.GetIndexData(ChangeVoxel.Key).IsNone())
-			{
-				ChuckUpdateAction.bIsVoxelMeshDirty = true;
-			}
-
-			ChuckUpdateAction.bIsVoxelAttributeDirty = true;
-
 			ChuckData.SetIndexData(ChangeVoxel.Key, ChangeVoxel.Value);
 
 			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.GetVoxelGrid()), Setting.GetVoxelGrid()));
@@ -351,13 +344,15 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		/** This add update state to list */
 		for (const FIntVector& Edge : EdgeList)
 		{
-			auto& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(ChuckUpdate.Key.X + Edge.X, ChuckUpdate.Key.Y + Edge.Y));
+			FLFPChuckUpdateAction& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(ChuckUpdate.Key.X + Edge.X, ChuckUpdate.Key.Y + Edge.Y));
 
 			ChuckUpdateData += ChuckUpdateAction;
 		}
 
 		OnVoxelContainerChuckUpdate.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y, ChuckUpdate.Value);
 	}
+
+	ChuckUpdateDataList.Empty();
 
 	ContainerThreadLock.WriteUnlock();
 

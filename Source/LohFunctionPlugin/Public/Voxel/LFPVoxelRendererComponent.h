@@ -9,59 +9,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
 
-struct FLFPVoxelRendererMergeFaceData
-{
-	/** Raw Vertex Generated For The Function */
-	TArray<FVector3f> VertexList;
-
-	/** Raw Triangle Index Generated For The Function */
-	TArray<uint32> TriangleIndexList;
-
-	/** Raw UV Generated For The Function */
-	TArray<FVector2f> UVList;
-
-	/** Point UV Generated For Material To Use Point Texture */
-	TArray<FVector2f> PositionUVList;
-
-	/** How Many Triangle Has Been Generated */
-	uint32 TriangleCount = 0;
-};
-
-struct FLFPVoxelRendererDirectionFaceData
-{
-	TArray<FLFPVoxelRendererMergeFaceData> FaceDataList = TArray<FLFPVoxelRendererMergeFaceData>();
-
-	uint32 TriangleCount = 0;
-};
-
-struct FLFPVoxelRendererSectionData
-{
-	TStaticArray<FLFPVoxelRendererDirectionFaceData, 6> DirectionList = TStaticArray<FLFPVoxelRendererDirectionFaceData, 6>();
-
-	uint32 TriangleCount = 0;
-};
-
-struct FLFPVoxelRendererThreadResult
-{
-	TArray<FLFPVoxelRendererSectionData> SectionData = TArray<FLFPVoxelRendererSectionData>();
-
-	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
-
-	class FCardRepresentationData* LumenCardData = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FLFPVoxelRendererSetting
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	/* Generate Distance Field And Lumen */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bGenerateLumenData = false;
-};
-
 struct FLFPVoxelRendererFaceDirection
 {
 	FLFPVoxelRendererFaceDirection(FIntVector F, FIntVector R, FIntVector U) : Forward(F), Right(R), Up(U) {}
@@ -99,18 +46,110 @@ namespace LFPVoxelRendererConstantData
 		FLFPVoxelRendererFaceDirection(FIntVector(-1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, 0,-1)),
 	};
 
-	const TArray<FVector2f> FaceUVPositionMapping = {
-		FVector2f(0.0f, 1.0f),
-		FVector2f(0.0f, 0.0f),
-		FVector2f(1.0f, 1.0f),
-		FVector2f(1.0f, 1.0f),
-		FVector2f(0.0f, 0.0f),
-		FVector2f(1.0f, 0.0f),
+	const TArray<FIntVector> FaceLoopDirectionList = {
+		FIntVector(0, 1, 2),
+		FIntVector(2, 1, 0),
+		FIntVector(2, 0, 1),
+		FIntVector(2, 1, 0),
+		FIntVector(2, 0, 1),
+		FIntVector(0, 1, 2),
 	};
 
 	const TArray<int32> SurfaceDirectionID = {
 		5,0,3,1,2,4
 	};
+};
+
+struct FLFPVoxelRendererFaceData
+{
+	/** Raw Vertex Generated For The Function */
+	TArray<FVector3f> VertexList;
+
+	/** Raw Triangle Index Generated For The Function */
+	TArray<uint32> TriangleIndexList;
+
+	/** Raw UV Generated For The Function */
+	TArray<FVector2f> UVList;
+};
+
+struct FLFPVoxelRendererSectionData
+{
+	FLFPVoxelRendererSectionData() {}
+	FLFPVoxelRendererSectionData(const FIntVector NewFaceDirectionAmount)
+	{
+		SetFaceDirectionAmount(NewFaceDirectionAmount);
+	}
+
+	TArray<FLFPVoxelRendererFaceData> FaceDataList = TArray<FLFPVoxelRendererFaceData>();
+
+	FIntVector FaceDirectionAmount = FIntVector(0);
+
+	uint32 TriangleCount = 0;
+
+public:
+
+	FORCEINLINE void SetFaceDirectionAmount(const FIntVector NewFaceDirectionAmount)
+	{
+		FaceDirectionAmount = NewFaceDirectionAmount;
+
+		const int32 FaceAmount = (FaceDirectionAmount.X * 2) + (FaceDirectionAmount.Y * 2) * (FaceDirectionAmount.Z * 2);
+
+		FaceDataList.Init(FLFPVoxelRendererFaceData(), FaceAmount);
+	}
+
+	FORCEINLINE FLFPVoxelRendererFaceData& GetVoxelFaceData(const int32 DirectionIndex, const int32 FaceIndex)
+	{
+		int32 FaceDataIndex = 0;
+
+		for (int32 CurrentLoopIndex = 0; CurrentLoopIndex < DirectionIndex; CurrentLoopIndex++)
+		{
+			FaceDataIndex += FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentLoopIndex].Z];
+		}
+
+		check(FaceDataList.IsValidIndex(FaceDataIndex + FaceIndex));
+
+		return FaceDataList[FaceDataIndex + FaceIndex];
+	}
+};
+
+struct FLFPVoxelRendererThreadResult
+{
+	TArray<FLFPVoxelRendererSectionData> SectionData = TArray<FLFPVoxelRendererSectionData>();
+
+	FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
+
+	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
+
+	class FCardRepresentationData* LumenCardData = nullptr;
+
+public:
+
+	FORCEINLINE void Init(const int32 SectionAmount)
+	{
+		SectionData.Init(FLFPVoxelRendererSectionData(), SectionAmount);
+	}
+
+	FORCEINLINE FLFPVoxelRendererSectionData& AddOrFindSectionData(const int32 SectionIndex)
+	{
+		if (SectionData.Num() <= SectionIndex)
+		{
+			SectionData.SetNum(SectionIndex + 1);
+		}
+
+		return SectionData[SectionIndex];
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPVoxelRendererSetting
+{
+	GENERATED_BODY()
+
+public:
+
+	/* Generate Distance Field And Lumen */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+		bool bGenerateLumenData = false;
 };
 
 USTRUCT(BlueprintType)
@@ -147,7 +186,7 @@ class ULFPVoxelContainerComponent;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGIN_API ULFPVoxelRendererComponent : public UMeshComponent
 {
 	GENERATED_BODY()
@@ -166,6 +205,11 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public: /** Debugging */
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE FString Test();
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
@@ -173,6 +217,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
 		FORCEINLINE bool ReleaseRenderer();
+
+public:
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Checker")
+		FORCEINLINE bool IsFaceVisible(const FIntVector FromVoxelGlobalPosition, const FIntVector ToVoxelGlobalPosition) const;
 
 public:
 
@@ -188,6 +237,14 @@ public:
 public:
 
 	UFUNCTION()
+		FORCEINLINE void CreateFace();
+
+	UFUNCTION()
+		FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult() const;
+
+public:
+
+	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
 protected: /** Can be override to provide custom behavir */
@@ -195,11 +252,14 @@ protected: /** Can be override to provide custom behavir */
 	UFUNCTION()
 		virtual FColor GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const;
 
+	UFUNCTION()
+		virtual int32 GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const;
+
 protected: // Rendering Handler
 
-	//virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
+	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
-	//virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
 public: // Material Handler
 
@@ -266,6 +326,6 @@ private:
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 	
 
-	FLFPVoxelRendererThreadResult ThreadResult;
+	TSharedPtr<FLFPVoxelRendererThreadResult> ThreadResult;
 	UE::Tasks::FTask WorkThread;
 };

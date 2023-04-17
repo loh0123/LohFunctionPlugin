@@ -12,12 +12,11 @@ struct FLFPVoxelContainerSetting
 {
 	GENERATED_BODY()
 
-public:
-
 	FLFPVoxelContainerSetting() {}
 
-	FLFPVoxelContainerSetting(FIntVector NewChuckGridSize, FIntVector NewSaveGridSize) :
-		RegionGridSize(NewSaveGridSize), ChuckGridSize(NewChuckGridSize), VoxelGridSize(16) {}
+	FLFPVoxelContainerSetting(const FIntVector NewRegionGridSize, const FIntVector NewChuckGridSize, const FIntVector NewVoxelGridSize, const FVector NewVoxelHalfSize)
+		: RegionGridSize(NewRegionGridSize), ChuckGridSize(NewChuckGridSize), VoxelGridSize(NewVoxelGridSize), VoxelHalfSize(NewVoxelHalfSize)
+	{ InitSetting(); }
 
 private:
 
@@ -26,6 +25,8 @@ private:
 	UPROPERTY() int32 ChuckLength = 1;
 
 	UPROPERTY() int32 VoxelLength = 1;
+
+	UPROPERTY() FVector VoxelHalfBounds = FVector::ZeroVector;
 
 protected:
 
@@ -39,6 +40,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "VoxelContainerSetting | Setting")
 		FIntVector VoxelGridSize = FIntVector(1);
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "VoxelContainerSetting | Setting")
+		FVector VoxelHalfSize = FVector(50.0f);
+
 public:
 
 	FORCEINLINE void InitSetting()
@@ -46,10 +50,12 @@ public:
 		if (RegionGridSize.GetMin() <= 0) RegionGridSize = FIntVector(1);
 		if (ChuckGridSize.GetMin() <= 0) ChuckGridSize = FIntVector(1);
 		if (VoxelGridSize.GetMin() <= 0) VoxelGridSize = FIntVector(1);
+		if (VoxelHalfSize.GetMin() <= 0) VoxelHalfSize = FVector(50.0f);
 
 		RegionLength = RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z;
 		ChuckLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
 		VoxelLength = VoxelGridSize.X * VoxelGridSize.Y * VoxelGridSize.Z;
+		VoxelHalfBounds = VoxelHalfSize * FVector(VoxelGridSize);
 	}
 
 	FORCEINLINE int32 GetRegionLength() const
@@ -67,6 +73,11 @@ public:
 		return VoxelLength;
 	}
 
+	FORCEINLINE FVector GetVoxelHalfBounds() const
+	{
+		return VoxelHalfBounds;
+	}
+
 	FORCEINLINE FIntVector GetRegionGrid() const
 	{
 		return RegionGridSize;
@@ -80,6 +91,11 @@ public:
 	FORCEINLINE FIntVector GetVoxelGrid() const
 	{
 		return VoxelGridSize;
+	}
+
+	FORCEINLINE FVector GetVoxelHalfSize() const
+	{
+		return VoxelHalfSize;
 	}
 };
 
@@ -431,17 +447,10 @@ struct FLFPChuckUpdateAction
 
 public:
 
-	UPROPERTY(VisibleAnywhere, Category = "LFPChuckUpdateAction") uint8 bIsVoxelAttributeDirty : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "LFPChuckUpdateAction") uint8 bIsVoxelMeshDirty : 1;
-
 public: // Operator
 
 	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
-		if (bIsVoxelAttributeDirty == false) bIsVoxelAttributeDirty = Other.bIsVoxelAttributeDirty;
-		if (bIsVoxelMeshDirty == false) bIsVoxelMeshDirty = Other.bIsVoxelMeshDirty;
-	
 		return *this;
 	}
 };
