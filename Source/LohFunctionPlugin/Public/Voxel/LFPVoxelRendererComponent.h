@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainerComponent.h"
+#include "Rendering/StaticMeshVertexBuffer.h"
+#include "Rendering/PositionVertexBuffer.h"
+#include "DynamicMeshBuilder.h"
 #include "LFPVoxelRendererComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
@@ -109,6 +112,61 @@ public:
 		check(FaceDataList.IsValidIndex(FaceDataIndex + FaceIndex));
 
 		return FaceDataList[FaceDataIndex + FaceIndex];
+	}
+
+	FORCEINLINE void GenerateFaceData(FStaticMeshVertexBuffer& VertexDataBuffer, FPositionVertexBuffer& PositionVertexBuffer, FDynamicMeshIndexBuffer32& IndexBuffer, FColorVertexBuffer& ColorVertexBuffer) const
+	{
+		TArray<FVector3f> VertexPosList;
+
+		const int32 VertexAmount = TriangleCount * 3;
+
+		VertexPosList.Reserve(VertexAmount);
+		IndexBuffer.Indices.Reserve(VertexAmount);
+
+		VertexDataBuffer.Init(VertexAmount, 1);
+
+		ColorVertexBuffer.InitFromSingleColor(FColor(255), VertexAmount);
+
+		int32 CurrentFaceIndex = 0;
+
+		for (const auto& FaceData : FaceDataList)
+		{
+			int32 CurrentRotationIndex = 0;
+			{
+				int32 CheckFaceAmount = FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[0].Z];
+
+				for (CurrentRotationIndex = 0; CurrentRotationIndex < 5; CurrentRotationIndex++)
+				{
+					if (CheckFaceAmount > CurrentFaceIndex)
+					{
+						break;
+					}
+
+					CheckFaceAmount += FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentRotationIndex + 1].Z];
+				}
+			}
+
+			const auto& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
+
+			const uint32 StartIndex = VertexPosList.Num();
+
+			for (const uint32 Index : FaceData.TriangleIndexList)
+			{
+				const uint32 CurrentIndex = Index + StartIndex;
+
+				IndexBuffer.Indices.Emplace(CurrentIndex);
+
+				VertexDataBuffer.SetVertexUV(CurrentIndex, 0, FaceData.UVList[Index]);
+
+				VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
+			}
+
+			VertexPosList.Append(FaceData.VertexList);
+
+			CurrentFaceIndex++;
+		}
+
+		PositionVertexBuffer.Init(VertexPosList, true);
 	}
 };
 
@@ -239,9 +297,6 @@ public:
 	UFUNCTION()
 		FORCEINLINE void CreateFace();
 
-	UFUNCTION()
-		FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult() const;
-
 public:
 
 	UFUNCTION()
@@ -254,6 +309,10 @@ protected: /** Can be override to provide custom behavir */
 
 	UFUNCTION()
 		virtual int32 GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const;
+
+public:
+
+	FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult() const;
 
 protected: // Rendering Handler
 

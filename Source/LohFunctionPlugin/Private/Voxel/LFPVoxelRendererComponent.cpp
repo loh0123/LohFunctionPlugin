@@ -78,8 +78,7 @@ FString ULFPVoxelRendererComponent::Test()
 {
 	if (ThreadResult.IsValid() == false) FString();
 
-	return FString::Printf(TEXT("TotalFace : %d"),
-		ThreadResult->TriangleCount);
+	return FString();
 }
 
 bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPVoxelContainerComponent* NewVoxelContainer)
@@ -263,11 +262,6 @@ void ULFPVoxelRendererComponent::CreateFace()
 	//RebuildPhysicsData();
 }
 
-const TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult() const
-{
-	return ThreadResult;
-}
-
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
 {
 	UpdateAttribute();
@@ -285,9 +279,14 @@ int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteDa
 	return VoxelPalette.VoxelName == FName("Dirt") ? 0 : INDEX_NONE;
 }
 
+const TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult() const
+{
+	return ThreadResult;
+}
+
 FPrimitiveSceneProxy* ULFPVoxelRendererComponent::CreateSceneProxy()
 {
-	return nullptr;
+	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0 ? new FLFPVoxelRendererSceneProxy(this) : nullptr;
 }
 
 FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalToWorld) const
