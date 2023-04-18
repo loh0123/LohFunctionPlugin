@@ -132,14 +132,11 @@ bool ULFPVoxelRendererComponent::ReleaseRenderer()
 	return true;
 }
 
-bool ULFPVoxelRendererComponent::IsFaceVisible(const FIntVector FromVoxelGlobalPosition, const FIntVector ToVoxelGlobalPosition) const
+bool ULFPVoxelRendererComponent::IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const
 {
-	const FLFPVoxelPaletteData FromVoxelPalette = VoxelContainer->GetVoxelPalette(FromVoxelGlobalPosition.X, FromVoxelGlobalPosition.Y, FromVoxelGlobalPosition.Z);
-	const FLFPVoxelPaletteData ToVoxelPalette = VoxelContainer->GetVoxelPalette(ToVoxelGlobalPosition.X, ToVoxelGlobalPosition.Y, ToVoxelGlobalPosition.Z);
+	const int32 CurrentIndex = GetVoxelMaterialIndex(FromPaletteData);
 
-	const int32 CurrentIndex = GetVoxelMaterialIndex(FromVoxelPalette);
-
-	return CurrentIndex != INDEX_NONE && CurrentIndex != GetVoxelMaterialIndex(ToVoxelPalette);
+	return CurrentIndex != INDEX_NONE && CurrentIndex != GetVoxelMaterialIndex(ToPaletteData);
 }
 
 void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface*>& Material)
@@ -204,6 +201,7 @@ void ULFPVoxelRendererComponent::CreateFace()
 	ThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
 
 	const FVector3f VoxelHalfSize = FVector3f(VoxelSetting.GetVoxelHalfSize());
+	const FVector3f VoxelFullSize = VoxelHalfSize * 2;
 	const FVector3f VoxelRenderOffset = FVector3f(-VoxelSetting.GetVoxelHalfBounds() + VoxelSetting.GetVoxelHalfSize());
 
 	const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
@@ -230,17 +228,22 @@ void ULFPVoxelRendererComponent::CreateFace()
 
 					const int32 CurrentIndex = ULFPGridLibrary::ToIndex(CurrentPos, VoxelSetting.GetVoxelGrid());
 					const FIntVector CurrentGlobalPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, CurrentIndex));
+					const FIntVector TargetGlobalPos = CurrentGlobalPos + LFPVoxelRendererConstantData::FaceDirection[DirectionIndex].Up;
 
-					if (IsFaceVisible(CurrentGlobalPos, CurrentGlobalPos + LFPVoxelRendererConstantData::FaceDirection[DirectionIndex].Up))
+					const FIntVector TargetGlobalIndex = VoxelContainer->ToVoxelGlobalIndex(TargetGlobalPos);
+
+					const FLFPVoxelPaletteData SelfVoxelPalette = VoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, CurrentIndex);
+					const FLFPVoxelPaletteData TargetVoxelPalette = VoxelContainer->GetVoxelPalette(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+
+					if (IsFaceVisible(SelfVoxelPalette, TargetVoxelPalette))
 					{
-						const FLFPVoxelPaletteData VoxelPalette = VoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, CurrentIndex);
-						const int32 VoxelMaterialIndex = GetVoxelMaterialIndex(VoxelPalette);
+						const int32 VoxelMaterialIndex = GetVoxelMaterialIndex(SelfVoxelPalette);
 
 						FLFPVoxelRendererFaceData& FaceData = ThreadResult->SectionData[VoxelMaterialIndex].GetVoxelFaceData(DirectionIndex, I);
 
 						ULFPRenderLibrary::CreateFaceData(
 							ULFPRenderLibrary::CreateVertexPosList(
-								(FVector3f(CurrentPos) * VoxelHalfSize) + VoxelRenderOffset,
+								(FVector3f(CurrentPos) * VoxelFullSize) + VoxelRenderOffset,
 								FRotator3f(LFPVoxelRendererConstantData::VertexRotationList[DirectionIndex]),
 								FVector3f(VoxelSetting.GetVoxelHalfSize())
 							),

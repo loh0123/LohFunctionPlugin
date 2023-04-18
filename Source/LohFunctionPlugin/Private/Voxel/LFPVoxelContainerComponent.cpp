@@ -184,11 +184,19 @@ FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalPosition(const FIntVector V
 
 FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalIndex(const FIntVector VoxelGlobalPosition) const
 {
+	auto DivideVector = [&](const FIntVector& A, const FIntVector& B) {
+		return FIntVector(A.X / B.X, A.Y / B.Y, A.Z / B.Z);
+	};
+
+	auto PercentageVector = [&](const FIntVector& A, const FIntVector& B) {
+		return FIntVector(A.X % B.X, A.Y % B.Y, A.Z % B.Z);
+	};
+
 	const FIntVector RegionVoxelSize(Setting.GetChuckGrid() * Setting.GetVoxelGrid());
 
-	const FIntVector RegionPos	(FIntVector::DivideAndRoundUp(VoxelGlobalPosition, RegionVoxelSize));
-	const FIntVector ChuckPos	(FIntVector::DivideAndRoundUp(VoxelGlobalPosition - (RegionPos * RegionVoxelSize), Setting.GetVoxelGrid()));
-	const FIntVector VoxelPos	(VoxelGlobalPosition - (RegionPos * RegionVoxelSize) - (ChuckPos * Setting.GetVoxelGrid()));
+	const FIntVector RegionPos	(DivideVector(VoxelGlobalPosition, RegionVoxelSize));
+	const FIntVector ChuckPos	(PercentageVector(DivideVector(VoxelGlobalPosition, Setting.GetVoxelGrid()), Setting.GetChuckGrid()));
+	const FIntVector VoxelPos	(PercentageVector(VoxelGlobalPosition, Setting.GetVoxelGrid()));
 
 	return FIntVector(ULFPGridLibrary::ToIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToIndex(VoxelPos, Setting.GetVoxelGrid()));
 }

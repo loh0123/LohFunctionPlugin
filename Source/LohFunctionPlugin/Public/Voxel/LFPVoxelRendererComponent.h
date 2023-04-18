@@ -279,7 +279,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Checker")
-		FORCEINLINE bool IsFaceVisible(const FIntVector FromVoxelGlobalPosition, const FIntVector ToVoxelGlobalPosition) const;
+		FORCEINLINE bool IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const;
 
 public:
 
