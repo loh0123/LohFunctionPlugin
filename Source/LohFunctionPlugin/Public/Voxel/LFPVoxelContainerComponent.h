@@ -110,6 +110,10 @@ struct FLFPVoxelPaletteData
 
 public:
 
+	static FLFPVoxelPaletteData EmptyData;
+
+public:
+
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelPaletteData")
 		FName VoxelName = FName();
 
@@ -291,7 +295,7 @@ private:
 
 		EncodeBtye = NewSize;
 
-		const int32 ChuckBitSize = IndexSize / 32;
+		const int32 ChuckBitSize = FMath::DivideAndRoundUp(IndexSize, uint32(32));
 
 		IndexList.Init(0, (NewSize * ChuckBitSize) + 1);
 
@@ -567,6 +571,8 @@ public: /** Getter */
 public: /** C++ Getter */
 
 	FORCEINLINE const FLFPVoxelContainerSetting& GetSetting() const { return Setting; }
+
+	FORCEINLINE const FLFPVoxelPaletteData& GetVoxelPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const;
 
 
 protected: /** Can be override to provide custom behavir */

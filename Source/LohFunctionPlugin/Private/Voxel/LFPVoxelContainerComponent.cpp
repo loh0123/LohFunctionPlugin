@@ -128,7 +128,7 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckData(const int32 RegionIndex, con
 
 	for (int32 VoxelIndex = 0; VoxelIndex < Setting.GetVoxelLength(); VoxelIndex++)
 	{
-		if (ChuckData.GetIndexData(VoxelIndex) != GetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex)) SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, ChuckData.GetIndexData(VoxelIndex));
+		if (ChuckData.GetIndexData(VoxelIndex) != GetVoxelPaletteRef(RegionIndex, ChuckIndex, VoxelIndex)) SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, ChuckData.GetIndexData(VoxelIndex));
 	}
 
 	return true;
@@ -199,6 +199,13 @@ FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalIndex(const FIntVector Voxe
 	const FIntVector VoxelPos	(PercentageVector(VoxelGlobalPosition, Setting.GetVoxelGrid()));
 
 	return FIntVector(ULFPGridLibrary::ToIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToIndex(VoxelPos, Setting.GetVoxelGrid()));
+}
+
+const FLFPVoxelPaletteData& ULFPVoxelContainerComponent::GetVoxelPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return FLFPVoxelPaletteData::EmptyData;
+
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetIndexData(VoxelIndex);
 }
 
 void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)

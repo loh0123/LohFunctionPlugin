@@ -74,7 +74,7 @@ TArray<FVector3f> ULFPRenderLibrary::CreateVertexPosList(const FVector3f& Center
 	};
 }
 
-void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList, FBox& Bounds, uint32& TriangleAmount)
+void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList)
 {
 	check(VertexPosList.Num() == 4);
 
@@ -95,13 +95,6 @@ void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, T
 			VertexPosList[3],
 			VertexPosList[0],
 			});
-
-		Bounds.IsValid = true;
-
-		for (const FVector3f& Vertex : VertexList)
-		{
-			Bounds += FVector(Vertex);
-		}
 	}
 
 	/* Handle UV Data */
@@ -118,6 +111,4 @@ void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, T
 			FVector2f(MinUVOffset.X, MaxUVOffset.Y)
 		});
 	}
-
-	TriangleAmount += 2;
 }

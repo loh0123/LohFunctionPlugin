@@ -8,6 +8,7 @@
 #include "Rendering/StaticMeshVertexBuffer.h"
 #include "Rendering/PositionVertexBuffer.h"
 #include "DynamicMeshBuilder.h"
+#include "Render/LFPRenderLibrary.h"
 #include "LFPVoxelRendererComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
@@ -65,14 +66,16 @@ namespace LFPVoxelRendererConstantData
 
 struct FLFPVoxelRendererFaceData
 {
-	/** Raw Vertex Generated For The Function */
-	TArray<FVector3f> VertexList;
+	///** Raw Vertex Generated For The Function */
+	//TArray<FVector3f> VertexList;
 
-	/** Raw Triangle Index Generated For The Function */
-	TArray<uint32> TriangleIndexList;
+	///** Raw Triangle Index Generated For The Function */
+	//TArray<uint32> TriangleIndexList;
 
-	/** Raw UV Generated For The Function */
-	TArray<FVector2f> UVList;
+	///** Raw UV Generated For The Function */
+	//TArray<FVector2f> UVList;
+
+	TArray<FIntVector4> FaceDataList = TArray<FIntVector4>();
 };
 
 struct FLFPVoxelRendererSectionData
@@ -83,7 +86,7 @@ struct FLFPVoxelRendererSectionData
 		SetFaceDirectionAmount(NewFaceDirectionAmount);
 	}
 
-	TArray<FLFPVoxelRendererFaceData> FaceDataList = TArray<FLFPVoxelRendererFaceData>();
+	TArray<FLFPVoxelRendererFaceData> DataList = TArray<FLFPVoxelRendererFaceData>();
 
 	FIntVector FaceDirectionAmount = FIntVector(0);
 
@@ -95,9 +98,9 @@ public:
 	{
 		FaceDirectionAmount = NewFaceDirectionAmount;
 
-		const int32 FaceAmount = (FaceDirectionAmount.X * 2) + (FaceDirectionAmount.Y * 2) * (FaceDirectionAmount.Z * 2);
+		const int32 FaceAmount = (FaceDirectionAmount.X * 2) + (FaceDirectionAmount.Y * 2) + (FaceDirectionAmount.Z * 2);
 
-		FaceDataList.Init(FLFPVoxelRendererFaceData(), FaceAmount);
+		DataList.Init(FLFPVoxelRendererFaceData(), FaceAmount);
 	}
 
 	FORCEINLINE FLFPVoxelRendererFaceData& GetVoxelFaceData(const int32 DirectionIndex, const int32 FaceIndex)
@@ -109,13 +112,15 @@ public:
 			FaceDataIndex += FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentLoopIndex].Z];
 		}
 
-		check(FaceDataList.IsValidIndex(FaceDataIndex + FaceIndex));
+		check(DataList.IsValidIndex(FaceDataIndex + FaceIndex));
 
-		return FaceDataList[FaceDataIndex + FaceIndex];
+		return DataList[FaceDataIndex + FaceIndex];
 	}
 
-	FORCEINLINE void GenerateFaceData(FStaticMeshVertexBuffer& VertexDataBuffer, FPositionVertexBuffer& PositionVertexBuffer, FDynamicMeshIndexBuffer32& IndexBuffer, FColorVertexBuffer& ColorVertexBuffer) const
+	FORCEINLINE void GenerateFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, FStaticMeshVertexBuffer& VertexDataBuffer, FPositionVertexBuffer& PositionVertexBuffer, FDynamicMeshIndexBuffer32& IndexBuffer, FColorVertexBuffer& ColorVertexBuffer) const
 	{
+		const FVector3f VoxelFullSize = VoxelHalfSize * 2;
+
 		TArray<FVector3f> VertexPosList;
 
 		const int32 VertexAmount = TriangleCount * 3;
@@ -123,14 +128,15 @@ public:
 		VertexPosList.Reserve(VertexAmount);
 		IndexBuffer.Indices.Reserve(VertexAmount);
 
-		VertexDataBuffer.Init(VertexAmount, 1);
+		VertexDataBuffer.Init(VertexAmount, 2);
 
 		ColorVertexBuffer.InitFromSingleColor(FColor(255), VertexAmount);
 
 		int32 CurrentFaceIndex = 0;
 
-		for (const auto& FaceData : FaceDataList)
+		for (const auto& Data : DataList)
 		{
+			int32 CurrentDepthIndex = CurrentFaceIndex;
 			int32 CurrentRotationIndex = 0;
 			{
 				int32 CheckFaceAmount = FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[0].Z];
@@ -142,26 +148,55 @@ public:
 						break;
 					}
 
+					CurrentDepthIndex = CurrentFaceIndex - CheckFaceAmount;
+
 					CheckFaceAmount += FaceDirectionAmount[LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentRotationIndex + 1].Z];
 				}
 			}
 
-			const auto& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
+			const FIntVector FaceLoopDirection = LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentRotationIndex];
 
-			const uint32 StartIndex = VertexPosList.Num();
-
-			for (const uint32 Index : FaceData.TriangleIndexList)
+			for (const auto& FaceData : Data.FaceDataList)
 			{
-				const uint32 CurrentIndex = Index + StartIndex;
+				TArray<FVector2f> UVDataList;
 
-				IndexBuffer.Indices.Emplace(CurrentIndex);
+				FVector2f Scale2D;
+				FVector3f APoint, BPoint, Scale;
 
-				VertexDataBuffer.SetVertexUV(CurrentIndex, 0, FaceData.UVList[Index]);
+				APoint[FaceLoopDirection.X] = FaceData.X;
+				APoint[FaceLoopDirection.Y] = FaceData.Y;
+				APoint[FaceLoopDirection.Z] = CurrentDepthIndex;
 
-				VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
+				BPoint[FaceLoopDirection.X] = FaceData.Z;
+				BPoint[FaceLoopDirection.Y] = FaceData.W;
+				BPoint[FaceLoopDirection.Z] = CurrentDepthIndex;
+
+				Scale[FaceLoopDirection.X] = Scale2D.Y = (FaceData.Z - FaceData.X) + 1;
+				Scale[FaceLoopDirection.Y] = Scale2D.X = (FaceData.W - FaceData.Y) + 1;
+				Scale[FaceLoopDirection.Z] = 1;
+
+				const auto& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
+
+				ULFPRenderLibrary::CreateFaceData(
+					ULFPRenderLibrary::CreateVertexPosList(
+						(FMath::Lerp(APoint, BPoint, 0.5f) * VoxelFullSize) + VoxelRenderOffset,
+						FRotator3f(LFPVoxelRendererConstantData::VertexRotationList[CurrentRotationIndex]),
+						VoxelHalfSize * Scale
+					),
+					VertexPosList,
+					UVDataList,
+					IndexBuffer.Indices
+				);
+
+				for (int32 Index = 0; Index < 6; Index++)
+				{
+					const int32 CurrentIndex = VertexPosList.Num() - 6 + Index;
+
+					VertexDataBuffer.SetVertexUV(CurrentIndex, 1, UVDataList[Index]);
+					VertexDataBuffer.SetVertexUV(CurrentIndex, 0, UVDataList[Index] * Scale2D);
+					VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
+				}
 			}
-
-			VertexPosList.Append(FaceData.VertexList);
 
 			CurrentFaceIndex++;
 		}
@@ -174,7 +209,7 @@ struct FLFPVoxelRendererThreadResult
 {
 	TArray<FLFPVoxelRendererSectionData> SectionData = TArray<FLFPVoxelRendererSectionData>();
 
-	FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
+	//FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
 
 	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
 
@@ -295,7 +330,7 @@ public:
 public:
 
 	UFUNCTION()
-		FORCEINLINE void CreateFace();
+		FORCEINLINE void GenerateBatchFaceData();
 
 public:
 
@@ -334,7 +369,7 @@ public: // Material Handler
 
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
-//
+
 //public: // Collision Handler
 //
 //	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;

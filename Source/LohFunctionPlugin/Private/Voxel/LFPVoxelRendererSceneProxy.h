@@ -163,6 +163,7 @@ public:
 	{
 		RenderData = Component->GetThreadResult();
 
+		bHasDeformableMesh = false;
 		bCastDynamicShadow = true;
 		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
@@ -173,6 +174,9 @@ public:
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
+		const FVector3f VoxelHalfSize = FVector3f(Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
+		const FVector3f VoxelRenderOffset = FVector3f(-Component->VoxelContainer->GetSetting().GetVoxelHalfBounds() + Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
+
 		for (int32 MaterialIndex = 0; MaterialIndex < RenderData->SectionData.Num(); MaterialIndex++)
 		{
 			const auto& BufferData = RenderData->SectionData[MaterialIndex];
@@ -181,7 +185,7 @@ public:
 
 			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(MaterialIndex);
 
-			BufferData.GenerateFaceData(Buffer->StaticMeshVertexBuffer, Buffer->PositionVertexBuffer, Buffer->IndexBuffer, Buffer->ColorVertexBuffer);
+			BufferData.GenerateFaceData(VoxelHalfSize, VoxelRenderOffset, Buffer->StaticMeshVertexBuffer, Buffer->PositionVertexBuffer, Buffer->IndexBuffer, Buffer->ColorVertexBuffer);
 
 			if (Component->GetMaterial(MaterialIndex) != nullptr)
 			{
@@ -199,6 +203,10 @@ public:
 				}
 			);
 		}
+
+		EnableGPUSceneSupportFlags();
+
+		bSupportsSortedTriangles = true;
 
 		return;
 	}
@@ -254,7 +262,7 @@ public:
 
 				MeshBatch.LODIndex = 0;
 
-				PDI->DrawMesh(MeshBatch, 1.f);
+				PDI->DrawMesh(MeshBatch, FLT_MAX);
 			}
 		}
 	}
@@ -342,8 +350,7 @@ public:
 		MeshBatch.DepthPriorityGroup = SDPG_World;
 		MeshBatch.bCanApplyViewModeOverrides = false;
 		MeshBatch.SegmentIndex = RenderBuffers.SectionID;
-
-		//MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
+		MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
 
 		return;
 	}

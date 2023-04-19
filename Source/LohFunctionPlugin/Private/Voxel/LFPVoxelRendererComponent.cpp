@@ -3,8 +3,9 @@
 
 #include "Voxel/LFPVoxelRendererComponent.h"
 #include "Voxel/LFPVoxelRendererSceneProxy.h"
-#include "Render/LFPRenderLibrary.h"
 #include "Math/LFPGridLibrary.h"
+
+FLFPVoxelPaletteData FLFPVoxelPaletteData::EmptyData = FLFPVoxelPaletteData();
 
 //using namespace UE::Tasks;
 
@@ -62,7 +63,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 				const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
 
-				const FLFPVoxelPaletteData VoxelPalette = VoxelContainer->GetVoxelPalette(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
+				const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
 
 				AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
 			}
@@ -71,7 +72,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
 
-	if (Status.bIsVoxelMeshDirty && WorkThread.IsCompleted()) CreateFace();
+	if (Status.bIsVoxelMeshDirty && WorkThread.IsCompleted()) GenerateBatchFaceData();
 }
 
 FString ULFPVoxelRendererComponent::Test()
@@ -181,7 +182,7 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	}
 }
 
-void ULFPVoxelRendererComponent::CreateFace()
+void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 {
 	//Status.bIsGeneratingMesh = true;
 
@@ -200,10 +201,6 @@ void ULFPVoxelRendererComponent::CreateFace()
 
 	ThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
 
-	const FVector3f VoxelHalfSize = FVector3f(VoxelSetting.GetVoxelHalfSize());
-	const FVector3f VoxelFullSize = VoxelHalfSize * 2;
-	const FVector3f VoxelRenderOffset = FVector3f(-VoxelSetting.GetVoxelHalfBounds() + VoxelSetting.GetVoxelHalfSize());
-
 	const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 
 	for (int32 DirectionIndex = 0; DirectionIndex < 6; DirectionIndex++)
@@ -216,46 +213,90 @@ void ULFPVoxelRendererComponent::CreateFace()
 
 		for (int32 I = 0; I < LoopI; I++)
 		{
+			TMap<FIntVector, FIntVector4> BatchDataMap;
+
 			for (int32 U = 0; U < LoopU; U++)
 			{
+				FIntVector4 CurrentBatchFaceData(INDEX_NONE);
+
+				int32 CurrentBatchMaterial = INDEX_NONE;
+
 				for (int32 V = 0; V < LoopV; V++)
 				{
+					/***************** Identify Data *****************/
+					const FIntPoint CurrentFacePos(U, V);
+
 					FIntVector CurrentPos;
 
 					CurrentPos[FaceLoopDirection.X] = U;
 					CurrentPos[FaceLoopDirection.Y] = V;
 					CurrentPos[FaceLoopDirection.Z] = I;
 
+					FIntVector NextPos;
+
+					NextPos[FaceLoopDirection.X] = U;
+					NextPos[FaceLoopDirection.Y] = V + 1;
+					NextPos[FaceLoopDirection.Z] = I;
+
 					const int32 CurrentIndex = ULFPGridLibrary::ToIndex(CurrentPos, VoxelSetting.GetVoxelGrid());
+					const int32 NextIndex = ULFPGridLibrary::ToIndex(NextPos, VoxelSetting.GetVoxelGrid());
+
 					const FIntVector CurrentGlobalPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, CurrentIndex));
 					const FIntVector TargetGlobalPos = CurrentGlobalPos + LFPVoxelRendererConstantData::FaceDirection[DirectionIndex].Up;
 
 					const FIntVector TargetGlobalIndex = VoxelContainer->ToVoxelGlobalIndex(TargetGlobalPos);
 
-					const FLFPVoxelPaletteData SelfVoxelPalette = VoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, CurrentIndex);
-					const FLFPVoxelPaletteData TargetVoxelPalette = VoxelContainer->GetVoxelPalette(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+					const FLFPVoxelPaletteData& SelfVoxelPalette = VoxelContainer->GetVoxelPaletteRef(RegionIndex, ChuckIndex, CurrentIndex);
+					const FLFPVoxelPaletteData& TargetVoxelPalette = VoxelContainer->GetVoxelPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+					const FLFPVoxelPaletteData& NextVoxelPalette = VoxelContainer->GetVoxelPaletteRef(RegionIndex, ChuckIndex, NextIndex);
+					/*************************************************/
 
 					if (IsFaceVisible(SelfVoxelPalette, TargetVoxelPalette))
 					{
-						const int32 VoxelMaterialIndex = GetVoxelMaterialIndex(SelfVoxelPalette);
+						const int32 CurrentMaterialIndex = GetVoxelMaterialIndex(SelfVoxelPalette);
+						const int32 NextMaterialIndex = GetVoxelMaterialIndex(NextVoxelPalette);
 
-						FLFPVoxelRendererFaceData& FaceData = ThreadResult->SectionData[VoxelMaterialIndex].GetVoxelFaceData(DirectionIndex, I);
+						if (CurrentBatchMaterial == INDEX_NONE)
+						{
+							CurrentBatchFaceData = FIntVector4(U, V, U, V);
+							CurrentBatchMaterial = CurrentMaterialIndex;
+						}
+						
+						if (CurrentMaterialIndex == NextMaterialIndex)
+						{
+							CurrentBatchFaceData.W++;
 
-						ULFPRenderLibrary::CreateFaceData(
-							ULFPRenderLibrary::CreateVertexPosList(
-								(FVector3f(CurrentPos) * VoxelFullSize) + VoxelRenderOffset,
-								FRotator3f(LFPVoxelRendererConstantData::VertexRotationList[DirectionIndex]),
-								FVector3f(VoxelSetting.GetVoxelHalfSize())
-							),
-							FaceData.VertexList,
-							FaceData.UVList,
-							FaceData.TriangleIndexList,
-							ThreadResult->RenderBounds,
-							ThreadResult->SectionData[VoxelMaterialIndex].TriangleCount
-						);
+							continue;
+						}
+
+						if (BatchDataMap.Contains(FIntVector(U - 1, V, CurrentBatchMaterial)))
+						{
+							FIntVector4 BatchData = BatchDataMap.FindChecked(FIntVector(U - 1, V, CurrentBatchMaterial));
+
+							if (BatchData.Y == CurrentBatchFaceData.Y && BatchData.W == CurrentBatchFaceData.W)
+							{
+								BatchData.Z++;
+
+								BatchDataMap.Remove(FIntVector(U - 1, V, CurrentBatchMaterial));
+								BatchDataMap.Add(FIntVector(U, V, CurrentBatchMaterial), BatchData);
+
+								CurrentBatchMaterial = INDEX_NONE;
+
+								continue;
+							}
+						}
+
+						BatchDataMap.Add(FIntVector(U, V, CurrentBatchMaterial), CurrentBatchFaceData);
+						CurrentBatchMaterial = INDEX_NONE;
 					}
 
 				}
+			}
+
+			for (const auto& BatchData : BatchDataMap)
+			{
+				ThreadResult->SectionData[BatchData.Key.Z].GetVoxelFaceData(DirectionIndex, I).FaceDataList.Add(BatchData.Value);
+				ThreadResult->SectionData[BatchData.Key.Z].TriangleCount += 4;
 			}
 		}
 	}
@@ -298,7 +339,7 @@ FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalT
 
 	if (IsValid(VoxelContainer) && WorkThread.IsCompleted() && ThreadResult.IsValid())
 	{
-		VoxelBox = ThreadResult->RenderBounds;
+		VoxelBox = FBox(-VoxelContainer->GetSetting().GetVoxelHalfBounds(), VoxelContainer->GetSetting().GetVoxelHalfBounds());
 	}
 	else
 	{

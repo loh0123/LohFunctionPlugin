@@ -30,6 +30,6 @@ public:
 		static TArray<FVector3f> CreateVertexPosList(const FVector3f& Center, const FRotator3f& Rotation, const FVector3f& Scale);
 
 	UFUNCTION()
-		static void CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList, FBox& Bounds, uint32& TriangleAmount);
+		static void CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList);
 };
 
