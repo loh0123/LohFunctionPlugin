@@ -9,6 +9,8 @@
 #include "Rendering/PositionVertexBuffer.h"
 #include "DynamicMeshBuilder.h"
 #include "Render/LFPRenderLibrary.h"
+#include "PhysicsEngine/BodySetup.h"
+#include "PhysicsEngine/PhysicsSettings.h"
 #include "LFPVoxelRendererComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LFPVoxelRendererComponent, Log, All);
@@ -117,20 +119,9 @@ public:
 		return DataList[FaceDataIndex + FaceIndex];
 	}
 
-	FORCEINLINE void GenerateFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, FStaticMeshVertexBuffer& VertexDataBuffer, FPositionVertexBuffer& PositionVertexBuffer, FDynamicMeshIndexBuffer32& IndexBuffer, FColorVertexBuffer& ColorVertexBuffer) const
+	FORCEINLINE void GenerateRawFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, TArray<FVector3f>& VertexPosList, TArray<uint32>& IndexList, TArray<FVector2f>& UVList, const TFunctionRef<void(const FLFPVoxelRendererFaceDirection&, const int32, const FVector2f&)>& LoopFunc) const
 	{
 		const FVector3f VoxelFullSize = VoxelHalfSize * 2;
-
-		TArray<FVector3f> VertexPosList;
-
-		const int32 VertexAmount = TriangleCount * 3;
-
-		VertexPosList.Reserve(VertexAmount);
-		IndexBuffer.Indices.Reserve(VertexAmount);
-
-		VertexDataBuffer.Init(VertexAmount, 2);
-
-		ColorVertexBuffer.InitFromSingleColor(FColor(255), VertexAmount);
 
 		int32 CurrentFaceIndex = 0;
 
@@ -158,8 +149,6 @@ public:
 
 			for (const auto& FaceData : Data.FaceDataList)
 			{
-				TArray<FVector2f> UVDataList;
-
 				FVector2f Scale2D;
 				FVector3f APoint, BPoint, Scale;
 
@@ -175,7 +164,7 @@ public:
 				Scale[FaceLoopDirection.Y] = Scale2D.X = (FaceData.W - FaceData.Y) + 1;
 				Scale[FaceLoopDirection.Z] = 1;
 
-				const auto& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
+				const FLFPVoxelRendererFaceDirection& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
 
 				ULFPRenderLibrary::CreateFaceData(
 					ULFPRenderLibrary::CreateVertexPosList(
@@ -184,24 +173,105 @@ public:
 						VoxelHalfSize * Scale
 					),
 					VertexPosList,
-					UVDataList,
-					IndexBuffer.Indices
+					UVList,
+					IndexList
 				);
 
-				for (int32 Index = 0; Index < 6; Index++)
-				{
-					const int32 CurrentIndex = VertexPosList.Num() - 6 + Index;
+				LoopFunc(FaceDirectionData, VertexPosList.Num() - 6, Scale2D);
 
-					VertexDataBuffer.SetVertexUV(CurrentIndex, 1, UVDataList[Index]);
-					VertexDataBuffer.SetVertexUV(CurrentIndex, 0, UVDataList[Index] * Scale2D);
-					VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
-				}
+				//for (int32 Index = 0; Index < 6; Index++)
+				//{
+				//	const int32 CurrentIndex = VertexPosList.Num() - 6 + Index;
+				//
+				//	VertexDataBuffer.SetVertexUV(CurrentIndex, 1, UVDataList[Index]);
+				//	VertexDataBuffer.SetVertexUV(CurrentIndex, 0, UVDataList[Index] * Scale2D);
+				//	VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
+				//}
 			}
 
 			CurrentFaceIndex++;
 		}
+	}
+
+	FORCEINLINE void GenerateFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, FStaticMeshVertexBuffer& VertexDataBuffer, FPositionVertexBuffer& PositionVertexBuffer, FDynamicMeshIndexBuffer32& IndexBuffer, FColorVertexBuffer& ColorVertexBuffer) const
+	{
+		TArray<FVector3f> VertexPosList;
+		TArray<FVector2f> UVDataList;
+
+		const int32 VertexAmount = TriangleCount * 3;
+
+		VertexPosList.Reserve(VertexAmount);
+		IndexBuffer.Indices.Reserve(VertexAmount);
+
+		VertexDataBuffer.Init(VertexAmount, 2);
+
+		ColorVertexBuffer.InitFromSingleColor(FColor(255), VertexAmount);
+
+		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VertexPosList, IndexBuffer.Indices, UVDataList,
+			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D)
+			{
+				for (int32 Loop = Index; Loop < Index + 6; Loop++)
+				{
+					VertexDataBuffer.SetVertexTangents(Loop, FVector3f(FaceDirection.Forward), FVector3f(FaceDirection.Right), FVector3f(FaceDirection.Up));
+					VertexDataBuffer.SetVertexUV(Loop, 0, UVDataList[Loop] * Scale2D);
+					VertexDataBuffer.SetVertexUV(Loop, 1, UVDataList[Loop]);
+				}
+			}
+		);
 
 		PositionVertexBuffer.Init(VertexPosList, true);
+	}
+
+	FORCEINLINE void GenerateCollisionData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, const int32 SectionIndex, FTriMeshCollisionData* ReturnData) const
+	{
+		const FVector3f VoxelFullSize = VoxelHalfSize * 2;
+
+		const int32 VertexAmount = TriangleCount * 3;
+
+		const int32 VertexStartIndex = ReturnData->Vertices.Num();
+
+		ReturnData->Vertices.Reserve(VertexStartIndex + VertexAmount);
+		ReturnData->Indices.Reserve(VertexStartIndex + TriangleCount);
+
+		// See if we should copy UVs
+		bool bCopyUVs = UPhysicsSettings::Get()->bSupportUVFromHitResults;
+		if (bCopyUVs)
+		{
+			ReturnData->UVs.AddZeroed(1); // only one UV channel
+			ReturnData->UVs[0].Reserve(ReturnData->UVs[0].Num() + VertexAmount);
+		}
+
+		TArray<uint32> IndexList;
+		TArray<FVector2f> UVDataList;
+
+		IndexList.Reserve(VertexAmount);
+		UVDataList.Reserve(VertexAmount);
+
+		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, ReturnData->Vertices, IndexList, UVDataList,
+			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D){}
+		);
+
+		for (int32 Index = 0; Index < IndexList.Num(); Index += 3)
+		{
+			FTriIndices Triangle;
+			Triangle.v0 = IndexList[Index + 0] + VertexStartIndex;
+			Triangle.v1 = IndexList[Index + 1] + VertexStartIndex;
+			Triangle.v2 = IndexList[Index + 2] + VertexStartIndex;
+			ReturnData->Indices.Add(Triangle);
+
+			ReturnData->MaterialIndices.Add(SectionIndex);
+
+			if (bCopyUVs)
+			{
+				ReturnData->UVs[0].Append(
+					{
+						FVector2D(UVDataList[Index + 0]),
+						FVector2D(UVDataList[Index + 1]),
+						FVector2D(UVDataList[Index + 2])
+					}
+				);
+			}
+		}
 	}
 };
 
@@ -280,7 +350,7 @@ class ULFPVoxelContainerComponent;
  * 
  */
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
-class LOHFUNCTIONPLUGIN_API ULFPVoxelRendererComponent : public UMeshComponent
+class LOHFUNCTIONPLUGIN_API ULFPVoxelRendererComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	GENERATED_BODY()
 
@@ -371,20 +441,20 @@ public: // Material Handler
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
 
 //public: // Collision Handler
-//
-//	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;
-//
-//	virtual bool ContainsPhysicsTriMeshData(bool InUseAllTriData) const override;
-//
-//	virtual bool WantsNegXTriMesh() override;
-//
-//	virtual UBodySetup* GetBodySetup() override;
-//
-//	FORCEINLINE UBodySetup* CreateBodySetup();
-//
-//	FORCEINLINE void RebuildPhysicsData();
-//
-//	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
+
+	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;
+
+	virtual bool ContainsPhysicsTriMeshData(bool InUseAllTriData) const override;
+
+	virtual bool WantsNegXTriMesh() override;
+
+	virtual UBodySetup* GetBodySetup() override;
+
+	FORCEINLINE UBodySetup* CreateBodySetup();
+
+	FORCEINLINE void RebuildPhysicsData();
+
+	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
 
 protected:
 
