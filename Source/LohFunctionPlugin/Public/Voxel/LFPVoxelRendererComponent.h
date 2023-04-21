@@ -61,6 +61,15 @@ namespace LFPVoxelRendererConstantData
 		FIntVector(0, 1, 2),
 	};
 
+	const TArray<int32> FacePositiveList = {
+	 1,
+	-1,
+	 1,
+	 1,
+	-1,
+	-1,
+	};
+
 	const TArray<int32> SurfaceDirectionID = {
 		5,0,3,1,2,4
 	};
@@ -77,7 +86,7 @@ struct FLFPVoxelRendererFaceData
 	///** Raw UV Generated For The Function */
 	//TArray<FVector2f> UVList;
 
-	TArray<FIntVector4> FaceDataList = TArray<FIntVector4>();
+	TArray<FInt32Rect> FaceDataList = TArray<FInt32Rect>();
 };
 
 struct FLFPVoxelRendererSectionData
@@ -152,16 +161,16 @@ public:
 				FVector2f Scale2D;
 				FVector3f APoint, BPoint, Scale;
 
-				APoint[FaceLoopDirection.X] = FaceData.X;
-				APoint[FaceLoopDirection.Y] = FaceData.Y;
+				APoint[FaceLoopDirection.X] = FaceData.Min.X;
+				APoint[FaceLoopDirection.Y] = FaceData.Min.Y;
 				APoint[FaceLoopDirection.Z] = CurrentDepthIndex;
 
-				BPoint[FaceLoopDirection.X] = FaceData.Z;
-				BPoint[FaceLoopDirection.Y] = FaceData.W;
+				BPoint[FaceLoopDirection.X] = FaceData.Max.X;
+				BPoint[FaceLoopDirection.Y] = FaceData.Max.Y;
 				BPoint[FaceLoopDirection.Z] = CurrentDepthIndex;
 
-				Scale[FaceLoopDirection.X] = Scale2D.Y = (FaceData.Z - FaceData.X) + 1;
-				Scale[FaceLoopDirection.Y] = Scale2D.X = (FaceData.W - FaceData.Y) + 1;
+				Scale[FaceLoopDirection.X] = Scale2D.Y = (FaceData.Max.X - FaceData.Min.X) + 1;
+				Scale[FaceLoopDirection.Y] = Scale2D.X = (FaceData.Max.Y - FaceData.Min.Y) + 1;
 				Scale[FaceLoopDirection.Z] = 1;
 
 				const FLFPVoxelRendererFaceDirection& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
@@ -178,15 +187,6 @@ public:
 				);
 
 				LoopFunc(FaceDirectionData, VertexPosList.Num() - 6, Scale2D);
-
-				//for (int32 Index = 0; Index < 6; Index++)
-				//{
-				//	const int32 CurrentIndex = VertexPosList.Num() - 6 + Index;
-				//
-				//	VertexDataBuffer.SetVertexUV(CurrentIndex, 1, UVDataList[Index]);
-				//	VertexDataBuffer.SetVertexUV(CurrentIndex, 0, UVDataList[Index] * Scale2D);
-				//	VertexDataBuffer.SetVertexTangents(CurrentIndex, FVector3f(FaceDirectionData.Forward), FVector3f(FaceDirectionData.Right), FVector3f(FaceDirectionData.Up));
-				//}
 			}
 
 			CurrentFaceIndex++;
@@ -271,6 +271,64 @@ public:
 					}
 				);
 			}
+		}
+	}
+
+	FORCEINLINE void GenerateDistanceBoxData(const FIntVector& LocalPosition, const int32 Range, TArray<FBox>& ReturnList) const
+	{
+		const auto& LookUpList = LFPVoxelRendererConstantData::FaceLoopDirectionList;
+		const auto& PositiveList = LFPVoxelRendererConstantData::FacePositiveList;
+
+		TArray<FIntVector4> ScanIndexList;
+
+		ScanIndexList.Reserve(6);
+
+		int32 Offset = 0;
+
+		for (int32 Index = 0; Index < 6; Index++)
+		{
+			int32 ScanIndex = LocalPosition[LookUpList[Index].Z] + (PositiveList[Index] * -1 * Range);
+
+			ScanIndex = ScanIndex >= 0 && ScanIndex < FaceDirectionAmount[LookUpList[Index].Z] ? ScanIndex : INDEX_NONE;
+
+			ScanIndexList.Add(FIntVector4(LocalPosition[LookUpList[Index].X], LocalPosition[LookUpList[Index].Y], ScanIndex + Offset, ScanIndex));
+
+			Offset += FaceDirectionAmount[LookUpList[Index].Z];
+		}
+
+		int32 Index = 0;
+
+		for (const FIntVector4& ScanIndex : ScanIndexList)
+		{
+			if (ScanIndex.W == INDEX_NONE) continue;
+
+			const FInt32Rect IncludeRange =
+				FInt32Rect(
+					ScanIndex.X - Range, 
+					ScanIndex.Y - Range, 
+					ScanIndex.X + Range, 
+					ScanIndex.Y + Range
+				);
+
+			for (const auto& FaceData : DataList[ScanIndex.Z].FaceDataList)
+			{
+				if (FaceData.Intersect(IncludeRange))
+				{
+					FVector Min, Max;
+
+					Min[LookUpList[Index].X] = FaceData.Min.X;
+					Min[LookUpList[Index].Y] = FaceData.Min.Y;
+					Min[LookUpList[Index].Z] = float(ScanIndex.W) + (float(PositiveList[Index]) * 0.5f);
+
+					Max[LookUpList[Index].X] = FaceData.Max.X;
+					Max[LookUpList[Index].Y] = FaceData.Max.Y;
+					Max[LookUpList[Index].Z] = float(ScanIndex.W) + (float(PositiveList[Index]) * 0.5f);
+
+					ReturnList.Add(FBox(Min, Max));
+				}
+			}
+
+			Index++;
 		}
 	}
 };

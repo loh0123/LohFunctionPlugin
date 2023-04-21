@@ -155,8 +155,11 @@ void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface
 			SetMaterial(k, Material[k]);
 		}
 
-		UpdateMesh();
-		UpdateAttribute();
+		if (IsValid(VoxelContainer))
+		{
+			UpdateMesh();
+			UpdateAttribute();
+		}
 	}
 	else
 	{
@@ -209,18 +212,18 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 
 	const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 
-	const auto& PushFaceData = [&](TMap<FIntVector, FIntVector4>& BatchDataMap, FIntVector4& CurrentBatchFaceData, int32& CurrentBatchMaterial) {
-		const FIntVector4* TargetData = BatchDataMap.Find(FIntVector(CurrentBatchFaceData.Z - 1, CurrentBatchFaceData.W, CurrentBatchMaterial));
+	const auto& PushFaceData = [&](TMap<FIntVector, FInt32Rect>& BatchDataMap, FInt32Rect& CurrentBatchFaceData, int32& CurrentBatchMaterial) {
+		const FInt32Rect* TargetData = BatchDataMap.Find(FIntVector(CurrentBatchFaceData.Max.X - 1, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial));
 
-		if (TargetData != nullptr && TargetData->Y == CurrentBatchFaceData.Y)
+		if (TargetData != nullptr && TargetData->Min.Y == CurrentBatchFaceData.Min.Y)
 		{
-			FIntVector4 NewData = BatchDataMap.FindAndRemoveChecked(FIntVector(CurrentBatchFaceData.Z - 1, CurrentBatchFaceData.W, CurrentBatchMaterial));
+			FInt32Rect NewData = BatchDataMap.FindAndRemoveChecked(FIntVector(CurrentBatchFaceData.Max.X - 1, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial));
 
-			CurrentBatchFaceData.X = NewData.X;
-			CurrentBatchFaceData.Y = NewData.Y;
+			CurrentBatchFaceData.Min.X = NewData.Min.X;
+			CurrentBatchFaceData.Min.Y = NewData.Min.Y;
 		}
 
-		BatchDataMap.Add(FIntVector(CurrentBatchFaceData.Z, CurrentBatchFaceData.W, CurrentBatchMaterial), CurrentBatchFaceData);
+		BatchDataMap.Add(FIntVector(CurrentBatchFaceData.Max.X, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial), CurrentBatchFaceData);
 		CurrentBatchMaterial = INDEX_NONE;
 	};
 
@@ -234,9 +237,9 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 
 		for (int32 I = 0; I < LoopI; I++)
 		{
-			TMap<FIntVector, FIntVector4> BatchDataMap;
+			TMap<FIntVector, FInt32Rect> BatchDataMap;
 
-			FIntVector4 CurrentBatchFaceData(INDEX_NONE);
+			FInt32Rect CurrentBatchFaceData(INDEX_NONE, INDEX_NONE);
 
 			int32 CurrentBatchMaterial = INDEX_NONE;
 
@@ -276,18 +279,18 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 					{
 						const int32 CurrentMaterialIndex = GetVoxelMaterialIndex(SelfVoxelPalette);
 
-						if (CurrentBatchFaceData.Z != U && CurrentBatchMaterial != INDEX_NONE)
+						if (CurrentBatchFaceData.Max.X != U && CurrentBatchMaterial != INDEX_NONE)
 						{
 							PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
 						}
 
 						if (CurrentBatchMaterial == CurrentMaterialIndex)
 						{
-							CurrentBatchFaceData.W += 1;
+							CurrentBatchFaceData.Max.Y += 1;
 						}
 						else if (CurrentBatchMaterial == INDEX_NONE)
 						{
-							CurrentBatchFaceData = FIntVector4(U, V, U, V);
+							CurrentBatchFaceData = FInt32Rect(U, V, U, V);
 							CurrentBatchMaterial = CurrentMaterialIndex;
 						}
 					}

@@ -356,10 +356,14 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeVoxel.Key, Setting.GetVoxelGrid()), Setting.GetVoxelGrid()));
 		}
 
+		const FIntVector CurrentGlobalPos = ToVoxelGlobalPosition(FIntVector(ChuckUpdate.Key.X, ChuckUpdate.Key.Y, 0));
+
 		/** This add update state to list */
 		for (const FIntVector& Edge : EdgeList)
 		{
-			FLFPChuckUpdateAction& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(ChuckUpdate.Key.X + Edge.X, ChuckUpdate.Key.Y + Edge.Y));
+			const FIntVector TargetGlobalIndex = ToVoxelGlobalIndex(CurrentGlobalPos + (Edge * Setting.GetVoxelGrid()));
+
+			FLFPChuckUpdateAction& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(TargetGlobalIndex.X, TargetGlobalIndex.Y));
 
 			ChuckUpdateData += ChuckUpdateAction;
 		}
