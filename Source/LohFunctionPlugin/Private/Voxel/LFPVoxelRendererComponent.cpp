@@ -81,11 +81,39 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	if (Status.bIsVoxelMeshDirty && WorkThread.IsCompleted()) GenerateBatchFaceData();
 }
 
-FString ULFPVoxelRendererComponent::Test()
+bool ULFPVoxelRendererComponent::Test(const FIntVector& LocalPosition, const int32 Range, TArray<FBox>& ReturnList, TArray<FTransform>& OriginReturnList)
 {
-	if (ThreadResult.IsValid() == false) FString();
+	if (IsValid(VoxelContainer) == false || ThreadResult.IsValid() == false) return false;
 
-	return FString();
+	UE_LOG(LogTemp, Warning, TEXT("Section value is: %d"), ThreadResult->SectionData.Num());
+
+	const int32 LocalIndex = ULFPGridLibrary::ToIndex(LocalPosition, VoxelContainer->GetSetting().GetVoxelGrid());
+
+	const int32 CurrentMaterialIndex = LocalIndex != INDEX_NONE ? GetVoxelMaterialIndex(VoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, LocalIndex)) : INDEX_NONE;
+
+	int32 LoopIndex = 0;
+
+	for (const auto& Section : ThreadResult->SectionData)
+	{
+		Section.GenerateDistanceBoxData(LocalPosition, CurrentMaterialIndex == LoopIndex, Range, ReturnList);
+
+		LoopIndex++;
+	}
+
+	OriginReturnList.Reserve(ReturnList.Num());
+
+	for (const FBox& Return : ReturnList)
+	{
+		OriginReturnList.Add(
+			FTransform(
+				FRotator(),
+				(Return.GetCenter() * VoxelContainer->GetSetting().GetVoxelHalfSize() * 2) - VoxelContainer->GetSetting().GetVoxelHalfBounds() + VoxelContainer->GetSetting().GetVoxelHalfSize(),
+				Return.GetExtent() * VoxelContainer->GetSetting().GetVoxelHalfSize() * 2
+			)
+		);
+	}
+
+	return true;
 }
 
 bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPVoxelContainerComponent* NewVoxelContainer)
@@ -337,7 +365,7 @@ int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteDa
 	return VoxelPalette.VoxelName == FName("Dirt") ? 0 : INDEX_NONE;
 }
 
-const TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult() const
+TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult()
 {
 	return ThreadResult;
 }

@@ -274,61 +274,67 @@ public:
 		}
 	}
 
-	FORCEINLINE void GenerateDistanceBoxData(const FIntVector& LocalPosition, const int32 Range, TArray<FBox>& ReturnList) const
+	FORCEINLINE void GenerateDistanceBoxData(const FIntVector& LocalPosition, const bool bIsInner, int32 Range, TArray<FBox>& ReturnList) const
 	{
 		const auto& LookUpList = LFPVoxelRendererConstantData::FaceLoopDirectionList;
 		const auto& PositiveList = LFPVoxelRendererConstantData::FacePositiveList;
 
-		TArray<FIntVector4> ScanIndexList;
-
-		ScanIndexList.Reserve(6);
-
 		int32 Offset = 0;
+
+		if (bIsInner) Range--;
 
 		for (int32 Index = 0; Index < 6; Index++)
 		{
-			int32 ScanIndex = LocalPosition[LookUpList[Index].Z] + (PositiveList[Index] * -1 * Range);
+			int32 ScanIndex = LocalPosition[LookUpList[Index].Z];
+
+			//if (PositiveList[Index] < 0) ScanIndex = FaceDirectionAmount[LookUpList[Index].Z] - ScanIndex - 1;
+
+			ScanIndex += (bIsInner ? PositiveList[Index] * Range : PositiveList[Index] * -1 * Range);
 
 			ScanIndex = ScanIndex >= 0 && ScanIndex < FaceDirectionAmount[LookUpList[Index].Z] ? ScanIndex : INDEX_NONE;
 
-			ScanIndexList.Add(FIntVector4(LocalPosition[LookUpList[Index].X], LocalPosition[LookUpList[Index].Y], ScanIndex + Offset, ScanIndex));
+			const FIntVector4& ScanPosition = FIntVector4(LocalPosition[LookUpList[Index].X], LocalPosition[LookUpList[Index].Y], ScanIndex + Offset, ScanIndex);
+
+			//UE_LOG(LogTemp, Warning, TEXT("ScanIndex value is: %d : %d"), ScanIndex + Offset, ScanIndex);
 
 			Offset += FaceDirectionAmount[LookUpList[Index].Z];
-		}
 
-		int32 Index = 0;
-
-		for (const FIntVector4& ScanIndex : ScanIndexList)
-		{
-			if (ScanIndex.W == INDEX_NONE) continue;
-
-			const FInt32Rect IncludeRange =
-				FInt32Rect(
-					ScanIndex.X - Range, 
-					ScanIndex.Y - Range, 
-					ScanIndex.X + Range, 
-					ScanIndex.Y + Range
-				);
-
-			for (const auto& FaceData : DataList[ScanIndex.Z].FaceDataList)
 			{
-				if (FaceData.Intersect(IncludeRange))
+				if (ScanPosition.W == INDEX_NONE) continue;
+
+				const FInt32Rect IncludeRange =
+					FInt32Rect(
+						ScanPosition.X - Range,
+						ScanPosition.Y - Range,
+						ScanPosition.X + Range,
+						ScanPosition.Y + Range
+					);
+
+				//UE_LOG(LogTemp, Warning, TEXT("IncludeRange is %s"), *IncludeRange.ToString());
+
+				for (const auto& FaceData : DataList[ScanPosition.Z].FaceDataList)
 				{
-					FVector Min, Max;
+					//UE_LOG(LogTemp, Warning, TEXT("Check is %s"), *FaceData.ToString());
 
-					Min[LookUpList[Index].X] = FaceData.Min.X;
-					Min[LookUpList[Index].Y] = FaceData.Min.Y;
-					Min[LookUpList[Index].Z] = float(ScanIndex.W) + (float(PositiveList[Index]) * 0.5f);
+					if (IncludeRange.Min.X <= FaceData.Max.X && IncludeRange.Max.X >= FaceData.Min.X && IncludeRange.Min.Y <= FaceData.Max.Y && IncludeRange.Max.Y >= FaceData.Min.Y)
+						//if (FaceData.Intersect(IncludeRange))
+					{
+						FVector Min, Max;
 
-					Max[LookUpList[Index].X] = FaceData.Max.X;
-					Max[LookUpList[Index].Y] = FaceData.Max.Y;
-					Max[LookUpList[Index].Z] = float(ScanIndex.W) + (float(PositiveList[Index]) * 0.5f);
+						const float Depth = float(ScanPosition.W) + (float(PositiveList[Index])) * 0.5f;
 
-					ReturnList.Add(FBox(Min, Max));
+						Min[LookUpList[Index].X] = FaceData.Min.X - 0.5f;
+						Min[LookUpList[Index].Y] = FaceData.Min.Y - 0.5f;
+						Min[LookUpList[Index].Z] = Depth;
+
+						Max[LookUpList[Index].X] = FaceData.Max.X + 0.5f;
+						Max[LookUpList[Index].Y] = FaceData.Max.Y + 0.5f;
+						Max[LookUpList[Index].Z] = Depth;
+
+						ReturnList.Add(FBox(Min, Max));
+					}
 				}
 			}
-
-			Index++;
 		}
 	}
 };
@@ -429,7 +435,7 @@ public:
 public: /** Debugging */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE FString Test();
+		FORCEINLINE bool Test(const FIntVector& LocalPosition, const int32 Range, TArray<FBox>& ReturnList, TArray<FTransform>& OriginReturnList);
 
 public:
 
@@ -475,7 +481,7 @@ protected: /** Can be override to provide custom behavir */
 
 public:
 
-	FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult() const;
+	FORCEINLINE TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult();
 
 protected: // Rendering Handler
 

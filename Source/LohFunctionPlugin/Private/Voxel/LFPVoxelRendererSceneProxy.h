@@ -158,11 +158,10 @@ class FLFPVoxelRendererSceneProxy : public FPrimitiveSceneProxy
 {
 public:
 	FLFPVoxelRendererSceneProxy(ULFPVoxelRendererComponent* Component) : FPrimitiveSceneProxy(Component),
-		VoxelComponent(Component)
-		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+		VoxelComponent(Component),
+		RenderData(Component->GetThreadResult()),
+		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
-		RenderData = Component->GetThreadResult();
-
 		bHasDeformableMesh = false;
 		bCastDynamicShadow = true;
 		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
