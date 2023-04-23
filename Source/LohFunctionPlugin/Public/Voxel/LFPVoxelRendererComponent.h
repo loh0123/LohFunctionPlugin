@@ -345,9 +345,9 @@ struct FLFPVoxelRendererThreadResult
 
 	//FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
 
-	class FDistanceFieldVolumeData* DistanceFieldMeshData = nullptr;
+	TSharedPtr<class FDistanceFieldVolumeData> DistanceFieldMeshData = nullptr;
 
-	class FCardRepresentationData* LumenCardData = nullptr;
+	TSharedPtr<class FCardRepresentationData> LumenCardData = nullptr;
 
 public:
 
@@ -377,6 +377,9 @@ public:
 	/* Generate Distance Field And Lumen */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateLumenData = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+		uint8 LumenQuality = 3;
 };
 
 USTRUCT(BlueprintType)
@@ -465,6 +468,9 @@ public:
 
 	UFUNCTION()
 		FORCEINLINE void GenerateBatchFaceData();
+
+	UFUNCTION()
+		FORCEINLINE void GenerateLumenData();
 
 public:
 
