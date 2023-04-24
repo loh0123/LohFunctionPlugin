@@ -7,7 +7,7 @@
 
 #include "Math/LFPGridLibrary.h"
 
-bool ULFPGridLibrary::IsLocationValid(const FIntVector& Location, const FIntVector& GridSize)
+bool ULFPGridLibrary::IsGridLocationValid(const FIntVector& Location, const FIntVector& GridSize)
 {
 	return (Location.GetMin() >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z);
 }
@@ -54,22 +54,22 @@ TArray<FIntVector> ULFPGridLibrary::GetGridEdgeDirection(const FIntVector& Locat
 	return ReturnList;
 }
 
-int32 ULFPGridLibrary::ToIndex(const FIntVector& Location, const FIntVector& GridSize)
+int32 ULFPGridLibrary::ToGridIndex(const FIntVector& Location, const FIntVector& GridSize)
 {
-	if (IsLocationValid(Location, GridSize) == false) return INDEX_NONE;
+	if (IsGridLocationValid(Location, GridSize) == false) return INDEX_NONE;
 
 	return Location.X + (Location.Y * GridSize.X) + (Location.Z * (GridSize.X * GridSize.Y));
 }
 
-TArray<int32> ULFPGridLibrary::ToIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize)
+TArray<int32> ULFPGridLibrary::ToGridIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize)
 {
 	TArray<int32> ReturnData;
 
 	for (const FIntVector Item : GridLocations)
 	{
-		if (!IsLocationValid(Item + Offset, GridSize)) continue;
+		if (!IsGridLocationValid(Item + Offset, GridSize)) continue;
 
-		ReturnData.Add(ToIndex(Item + Offset, GridSize));
+		ReturnData.Add(ToGridIndex(Item + Offset, GridSize));
 	}
 
 	return ReturnData;
@@ -117,7 +117,7 @@ TArray<int32> ULFPGridLibrary::SectionGridIndex(const FIntVector SectionSize, co
 		for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
 			for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
 			{
-				int32 Index = ToIndex(FIntVector(X, Y, Z), GridSize);
+				int32 Index = ToGridIndex(FIntVector(X, Y, Z), GridSize);
 
 				if (!IgnoreIndexs.Contains(Index)) ReturnData.Add(Index);
 			}
@@ -142,7 +142,7 @@ TArray<int32> ULFPGridLibrary::RandomSectionGridIndex(const int32 Amount, const 
 		for (int32 Y = 0; Y < GridSize.Y; Y += SectionSize.Y)
 			for (int32 X = 0; X < GridSize.X; X += SectionSize.X)
 			{
-				int32 Index = ToIndex(FIntVector(X, Y, Z), GridSize);
+				int32 Index = ToGridIndex(FIntVector(X, Y, Z), GridSize);
 
 				if (!IgnoreIndexs.Contains(Index)) UnVisit.Add(Index);
 			}
@@ -176,9 +176,9 @@ TArray<int32> ULFPGridLibrary::GetGridAreaIndex(const int32 Index, const FIntVec
 			{
 				FIntVector LoopLoc = FIntVector(X, Y, Z) + StartLoc;
 
-				if (IsLocationValid(LoopLoc, GridSize))
+				if (IsGridLocationValid(LoopLoc, GridSize))
 				{
-					ReturnData.Add(ToIndex(LoopLoc, GridSize));
+					ReturnData.Add(ToGridIndex(LoopLoc, GridSize));
 				}
 			}
 

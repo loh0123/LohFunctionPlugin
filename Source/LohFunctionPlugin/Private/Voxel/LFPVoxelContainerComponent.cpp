@@ -198,7 +198,7 @@ FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalIndex(const FIntVector Voxe
 	const FIntVector ChuckPos	(PercentageVector(DivideVector(VoxelGlobalPosition, Setting.GetVoxelGrid()), Setting.GetChuckGrid()));
 	const FIntVector VoxelPos	(PercentageVector(VoxelGlobalPosition, Setting.GetVoxelGrid()));
 
-	return FIntVector(ULFPGridLibrary::ToIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToIndex(VoxelPos, Setting.GetVoxelGrid()));
+	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(VoxelPos, Setting.GetVoxelGrid()));
 }
 
 const FLFPVoxelPaletteData& ULFPVoxelContainerComponent::GetVoxelPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const

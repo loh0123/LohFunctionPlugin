@@ -22,7 +22,7 @@ class LOHFUNCTIONPLUGIN_API ULFPGridLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		static bool IsLocationValid(const FIntVector& Location, const FIntVector& GridSize);
+		static bool IsGridLocationValid(const FIntVector& Location, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
 		static bool IsOnGridEdge(const FIntVector& Location, const FIntVector& GridSize);
@@ -31,10 +31,10 @@ public:
 		static TArray<FIntVector> GetGridEdgeDirection(const FIntVector& Location, const FIntVector& GridSize);
 	
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
-		static int32 ToIndex(const FIntVector& Location, const FIntVector& GridSize);
+		static int32 ToGridIndex(const FIntVector& Location, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")
-		static TArray<int32> ToIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize);
+		static TArray<int32> ToGridIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
 		static FIntVector ToGridLocation(const int32& Index, const FIntVector& GridSize);

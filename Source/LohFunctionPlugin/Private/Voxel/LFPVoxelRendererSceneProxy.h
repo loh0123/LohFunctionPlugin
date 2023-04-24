@@ -168,8 +168,8 @@ public:
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 		bVerifyUsedMaterials = false;
 
-		//bSupportsDistanceFieldRepresentation = LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
-		//bSupportsMeshCardRepresentation = LumenData.GetReference() != nullptr && LumenData->LumenCardData != nullptr;
+		bSupportsDistanceFieldRepresentation = RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
+		bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
@@ -354,26 +354,26 @@ public:
 		return;
 	}
 
-	//virtual const FCardRepresentationData* GetMeshCardRepresentation() const
-	//{
-	//	return LumenData->LumenCardData;
-	//}
-	//
-	//virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
-	//{
-	//	OutDistanceFieldData = LumenData->DistanceFieldMeshData;
-	//	SelfShadowBias = DistanceFieldSelfShadowBias;
-	//}
+	virtual const FCardRepresentationData* GetMeshCardRepresentation() const
+	{
+		return RenderData->LumenCardData.Get();
+	}
+	
+	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
+	{
+		OutDistanceFieldData = RenderData->DistanceFieldMeshData.Get();
+		SelfShadowBias = 1.0f;
+	}
 
 	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override
 	{
 		ObjectLocalToWorldTransforms.Add(FRenderTransform::Identity);
 	}
 
-	//virtual bool HasDistanceFieldRepresentation() const override
-	//{
-	//	return LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
-	//}
+	virtual bool HasDistanceFieldRepresentation() const override
+	{
+		return RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
+	}
 
 #if RHI_RAYTRACING
 	virtual bool IsRayTracingRelevant() const override { return true; }
