@@ -418,7 +418,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 {
 	if (ThreadResult.IsValid() == false || IsValid(VoxelContainer) == false) return;
 
-	const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
+	//const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
 
 	/** Custom Struct For Lumen And Distance Field */
 	struct FLFPDFMipInfo
@@ -995,7 +995,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
+	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
 }
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
