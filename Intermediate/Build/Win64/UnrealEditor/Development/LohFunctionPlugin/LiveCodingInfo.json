@@ -2,7 +2,6 @@
 	"RemapUnityFiles": 
 	{
 		"Module.LohFunctionPlugin.1_of_4.cpp.obj": [
-			"LFPBaseVoxelMeshComponent.gen.cpp.obj",
 			"LFPEquipmentComponent.gen.cpp.obj",
 			"LFPExperienceComponent.gen.cpp.obj",
 			"LFPGridLibrary.gen.cpp.obj",
@@ -20,10 +19,13 @@
 		"Module.LohFunctionPlugin.3_of_4.cpp.obj": [
 			"LFProceduralRoomLibrary.gen.cpp.obj",
 			"LFPTickManager.gen.cpp.obj",
-			"LFPVoxelContainer.gen.cpp.obj",
+			"LFPVoxelContainerComponent.gen.cpp.obj",
+			"LFPVoxelRendererComponent.gen.cpp.obj",
 			"LFPWorldGrid.gen.cpp.obj",
 			"LohFunctionPlugin.init.gen.cpp.obj",
-			"LohFunctionPluginLibrary.gen.cpp.obj",
+			"LohFunctionPluginLibrary.gen.cpp.obj"
+		],
+		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
 			"LFPGridTickManager.cpp.obj",
 			"LFPInstanceGridComponent.cpp.obj",
 			"LFPTickManager.cpp.obj",
@@ -37,13 +39,11 @@
 			"LohFunctionPluginLibrary.cpp.obj",
 			"LFPGridLibrary.cpp.obj",
 			"LFPMazeLibrary.cpp.obj",
-			"LFPNoiseLibrary.cpp.obj"
-		],
-		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
+			"LFPNoiseLibrary.cpp.obj",
 			"LFProceduralRoomLibrary.cpp.obj",
 			"LFPRenderLibrary.cpp.obj",
-			"LFPBaseVoxelMeshComponent.cpp.obj",
-			"LFPVoxelContainer.cpp.obj"
+			"LFPVoxelContainerComponent.cpp.obj",
+			"LFPVoxelRendererComponent.cpp.obj"
 		]
 	}
 }

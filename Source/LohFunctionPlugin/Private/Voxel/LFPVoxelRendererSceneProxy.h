@@ -18,7 +18,7 @@
 #include "RayTracingInstance.h"
 #include "VectorUtil.h"
 #include "DynamicMeshBuilder.h"
-#include "Voxel/LFPBaseVoxelMeshComponent.h"
+#include "Voxel/LFPVoxelRendererComponent.h"
 
 using namespace UE::Geometry;
 
@@ -154,103 +154,66 @@ public:
 /**
  *
  */
-class FLFPBaseVoxelMeshSceneProxy : public FPrimitiveSceneProxy
+class FLFPVoxelRendererSceneProxy : public FPrimitiveSceneProxy
 {
 public:
-	FLFPBaseVoxelMeshSceneProxy(ULFPBaseVoxelMeshComponent* Component) : FPrimitiveSceneProxy(Component), 
-		  VoxelComponent(Component)
-		, RenderData(Component->RenderData.GetReference())
-		, LumenData(Component->LumenData.GetReference())
-		, MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+	FLFPVoxelRendererSceneProxy(ULFPVoxelRendererComponent* Component) : FPrimitiveSceneProxy(Component),
+		VoxelComponent(Component),
+		RenderData(Component->GetThreadResult()),
+		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
-
+		bHasDeformableMesh = false;
 		bCastDynamicShadow = true;
 		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 		bVerifyUsedMaterials = false;
 
-		bSupportsDistanceFieldRepresentation = LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
-		bSupportsMeshCardRepresentation = LumenData.GetReference() != nullptr && LumenData->LumenCardData != nullptr;
+		bSupportsDistanceFieldRepresentation = RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
+		bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 
-		if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
+		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
-		const TArray<FLFPBaseVoxelMeshSectionData>& BufferDataList = Component->RenderData->Sections;
+		const FVector3f VoxelHalfSize = FVector3f(Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
+		const FVector3f VoxelRenderOffset = FVector3f(-Component->VoxelContainer->GetSetting().GetVoxelHalfBounds() + Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
 
-		for (int32 MaterialIndex = 0; MaterialIndex < BufferDataList.Num(); MaterialIndex++)
+		for (int32 MaterialIndex = 0; MaterialIndex < RenderData->SectionData.Num(); MaterialIndex++)
 		{
-			const FLFPBaseVoxelMeshSectionData& BufferData = BufferDataList[MaterialIndex];
+			const auto& BufferData = RenderData->SectionData[MaterialIndex];
 
-			if (BufferData.TriangleIndexList.IsEmpty()) continue;
+			if (BufferData.TriangleCount == 0) continue;
 
 			FLFPVoxelMeshRenderBufferSet* Buffer = AllocateNewBuffer(MaterialIndex);
 
-			Buffer->PositionVertexBuffer.Init(BufferData.VertexList);
-
-			Buffer->IndexBuffer.Indices = BufferData.TriangleIndexList;
-
-			Buffer->ColorVertexBuffer.InitFromColorArray(BufferData.VoxelColorList);
-
-			Buffer->StaticMeshVertexBuffer.Init(BufferData.VertexList.Num(), 4);
-
-			ParallelFor(BufferData.UVList.Num(), [&](const int32 Index)
-				{
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 0, BufferData.UVList[Index]);
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 1, BufferData.EdgeUVList[Index]);
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 2, BufferData.PointUVList[Index]);
-					Buffer->StaticMeshVertexBuffer.SetVertexUV(Index, 3, BufferData.PositionUVList[Index]);
-				});
-
-			ParallelFor(BufferData.TriangleCount, [&](const int32 Index) {
-				int32 VertexIndStart = Index * 3;
-
-				const FVector3f TriVertices[3] = {
-					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart]],
-					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 1]],
-					BufferData.VertexList[BufferData.TriangleIndexList[VertexIndStart + 2]],
-				};
-
-				const FVector2f TriUVs[3] = {
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart]],
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 1]],
-					BufferData.UVList[BufferData.TriangleIndexList[VertexIndStart + 2]],
-				};
-
-				FVector3f Tangent, Bitangent, Normal;
-
-				Normal = VectorUtil::Normal(TriVertices[0], TriVertices[1], TriVertices[2]);
-
-				ComputeFaceTangent(TriVertices, TriUVs, Tangent, Bitangent);
-
-				FVector3f ProjectedTangent = Normalized(Tangent - Tangent.Dot(Normal) * Normal);
-
-				float BitangentSign = VectorUtil::BitangentSign(Normal, ProjectedTangent, Bitangent);
-				FVector3f ReconsBitangent = VectorUtil::Bitangent(Normal, ProjectedTangent, BitangentSign);
-
-				for (int32 VertexInd = VertexIndStart; VertexInd < VertexIndStart + 3; VertexInd++)
-				{
-					Buffer->StaticMeshVertexBuffer.SetVertexTangents(VertexInd, ProjectedTangent, ReconsBitangent, Normal);
-				}
-			});
+			BufferData.GenerateFaceData(VoxelHalfSize, VoxelRenderOffset, Buffer->StaticMeshVertexBuffer, Buffer->PositionVertexBuffer, Buffer->IndexBuffer, Buffer->ColorVertexBuffer);
 
 			if (Component->GetMaterial(MaterialIndex) != nullptr)
 			{
 				Buffer->Material = Component->GetMaterial(MaterialIndex);
+			}
+			else
+			{
+				Buffer->Material = UMaterial::GetDefaultMaterial(MD_Surface);
 			}
 
 			ENQUEUE_RENDER_COMMAND(FLFPBaseVoxelMeshSceneProxy)(
 				[Buffer](FRHICommandListImmediate& RHICmdList)
 				{
 					Buffer->Upload();
-				});
+				}
+			);
 		}
-		
+
+		EnableGPUSceneSupportFlags();
+
+		bSupportsSortedTriangles = true;
+
 		return;
 	}
 
-	virtual ~FLFPBaseVoxelMeshSceneProxy()
+	virtual ~FLFPVoxelRendererSceneProxy()
 	{
 		RenderData = nullptr;
-		LumenData = nullptr;
+		//LumenData = nullptr;
 		VoxelComponent = nullptr;
 
 		for (FLFPVoxelMeshRenderBufferSet* Buffer : AllocatedBufferSets)
@@ -281,37 +244,6 @@ public:
 		return Buffer;
 	}
 
-	FORCEINLINE void ComputeFaceTangent(
-		const FVector3f TriVertices[3], const FVector2f TriUVs[3],
-		FVector3f& TangentOut, FVector3f& BitangentOut)
-	{
-		FVector2f UVEdge1 = TriUVs[1] - TriUVs[0];
-		FVector2f UVEdge2 = TriUVs[2] - TriUVs[0];
-		FVector3f TriEdge1 = TriVertices[1] - TriVertices[0];
-		FVector3f TriEdge2 = TriVertices[2] - TriVertices[0];
-
-		FVector3f TriTangent = (UVEdge2.Y * TriEdge1) - (UVEdge1.Y * TriEdge2);
-		FVector3f TriBitangent = (-UVEdge2.X * TriEdge1) + (UVEdge1.X * TriEdge2);
-
-		double UVArea = (UVEdge1.X * UVEdge2.Y) - (UVEdge1.Y * UVEdge2.X);
-		bool bPreserveOrientation = (UVArea >= 0);
-
-		UVArea = FMathd::Abs(UVArea);
-
-		// if a triangle is zero-UV-area due to one edge being collapsed, we still have a 
-		// valid direction on the other edge. We are going to keep those
-		double TriTangentLength = TriTangent.Length();
-		double TriBitangentLength = TriBitangent.Length();
-		TangentOut = (TriTangentLength > 0) ? (TriTangent / TriTangentLength) : FVector3f::Zero();
-		BitangentOut = (TriBitangentLength > 0) ? (TriBitangent / TriBitangentLength) : FVector3f::Zero();
-
-		if (bPreserveOrientation == false)
-		{
-			TangentOut = -TangentOut;
-			BitangentOut = -BitangentOut;
-		}
-	}
-
 	virtual void DrawStaticElements(FStaticPrimitiveDrawInterface* PDI) override
 	{
 		for (FLFPVoxelMeshRenderBufferSet* BufferSet : AllocatedBufferSets)
@@ -329,7 +261,7 @@ public:
 
 				MeshBatch.LODIndex = 0;
 
-				PDI->DrawMesh(MeshBatch, 1.f);
+				PDI->DrawMesh(MeshBatch, FLT_MAX);
 			}
 		}
 	}
@@ -345,7 +277,7 @@ public:
 		FColoredMaterialRenderProxy* WireframeMaterialInstance = nullptr;
 
 		// set up wireframe material. Probably bad to reference GEngine here...also this material is very bad?
-		if (bWireframe) 
+		if (bWireframe)
 		{
 			WireframeMaterialInstance = new FColoredMaterialRenderProxy(
 				GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
@@ -364,7 +296,7 @@ public:
 			if (bNeedDynamicPath && IsShown(View) && (VisibilityMap & (1 << ViewIndex)))
 			{
 				FFrozenSceneViewMatricesGuard FrozenMatricesGuard(*const_cast<FSceneView*>(Views[ViewIndex]));
-	
+
 				// Draw the mesh.
 				for (FLFPVoxelMeshRenderBufferSet* BufferSet : AllocatedBufferSets)
 				{
@@ -372,16 +304,16 @@ public:
 					{
 						continue;
 					}
-	
+
 					if (BufferSet->IndexBuffer.Indices.Num() > 0)
 					{
 						FMeshBatch& MeshBatch = Collector.AllocateMesh();
-	
+
 						DrawBatch(MeshBatch, *BufferSet, bWireframe ? WireframeMaterialInstance : BufferSet->Material->GetRenderProxy(), false);
 
 						MeshBatch.bWireframe = bWireframe;
 						MeshBatch.bDitheredLODTransition = false;
-					
+
 						Collector.AddMesh(ViewIndex, MeshBatch);
 					}
 				}
@@ -417,21 +349,20 @@ public:
 		MeshBatch.DepthPriorityGroup = SDPG_World;
 		MeshBatch.bCanApplyViewModeOverrides = false;
 		MeshBatch.SegmentIndex = RenderBuffers.SectionID;
-
-		//MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
+		MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
 
 		return;
 	}
 
 	virtual const FCardRepresentationData* GetMeshCardRepresentation() const
 	{
-		return LumenData->LumenCardData;
+		return RenderData->LumenCardData.Get();
 	}
-
+	
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
 	{
-		OutDistanceFieldData = LumenData->DistanceFieldMeshData;
-		SelfShadowBias = DistanceFieldSelfShadowBias;
+		OutDistanceFieldData = RenderData->DistanceFieldMeshData.Get();
+		SelfShadowBias = 1.0f;
 	}
 
 	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override
@@ -441,7 +372,7 @@ public:
 
 	virtual bool HasDistanceFieldRepresentation() const override
 	{
-		return LumenData.GetReference() != nullptr && LumenData->DistanceFieldMeshData != nullptr;
+		return RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
 	}
 
 #if RHI_RAYTRACING
@@ -532,28 +463,12 @@ public:
 
 protected:
 
-	ULFPBaseVoxelMeshComponent* VoxelComponent = nullptr;
+	TObjectPtr<ULFPVoxelRendererComponent> VoxelComponent = nullptr;
 
-	TRefCountPtr<FLFPBaseVoxelMeshRenderData> RenderData = nullptr;
-
-	TRefCountPtr<FLFPBaseVoxelMeshLumenData> LumenData = nullptr;
+	TSharedPtr<FLFPVoxelRendererThreadResult> RenderData = nullptr;
 
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
 
 	FMaterialRelevance MaterialRelevance;
 };
 
-//class FLFPBaseVoxelMeshSceneProxyTask : public FNonAbandonableTask
-//{
-//	friend class FAutoDeleteAsyncTask<FLFPBaseVoxelMeshSceneProxyTask>;
-//
-//public:
-//
-//	FLFPBaseVoxelMeshSceneProxyTask() {}
-//
-//	void DoWork();
-//
-//	// This next section of code needs to be here. Not important as to why.
-//
-//	FORCEINLINE TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLFPBaseVoxelMeshSceneProxyTask, STATGROUP_ThreadPoolAsyncTasks); }
-//};

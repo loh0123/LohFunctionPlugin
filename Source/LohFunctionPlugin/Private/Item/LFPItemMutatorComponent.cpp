@@ -62,6 +62,8 @@ bool ULFPItemMutatorComponent::SetInventoryComponent(ULFPInventoryComponent* Com
 
 bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPItemMutatorComponent : AddItemToQueue InventoryComponent is not valid"));
@@ -119,6 +121,8 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 
 bool ULFPItemMutatorComponent::RemoveItemFromQueue(const int32 QueueIndex)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPItemMutatorComponent : RemoveItemFromQueue InventoryComponent is not valid"));
@@ -151,6 +155,8 @@ bool ULFPItemMutatorComponent::RemoveItemFromQueue(const int32 QueueIndex)
 
 bool ULFPItemMutatorComponent::PauseItemCountdown(const int32 QueueIndex)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsQueueIndexValid(QueueIndex) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : PauseItemCountdown index not valid"));
@@ -174,6 +180,8 @@ bool ULFPItemMutatorComponent::PauseItemCountdown(const int32 QueueIndex)
 
 bool ULFPItemMutatorComponent::ResumeItemCountdown(const int32 QueueIndex)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsQueueIndexValid(QueueIndex) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : ResumeItemCountdown index not valid"));
@@ -197,6 +205,8 @@ bool ULFPItemMutatorComponent::ResumeItemCountdown(const int32 QueueIndex)
 
 bool ULFPItemMutatorComponent::DeleteItemFromQueue(const int32 QueueIndex)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (IsQueueIndexValid(QueueIndex) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : DeleteItemFromQueue index not valid"));
@@ -222,6 +232,8 @@ bool ULFPItemMutatorComponent::DeleteItemFromQueue(const int32 QueueIndex)
 
 void ULFPItemMutatorComponent::ClearItemQueue(const bool bDeleteItem)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	for (int32 Index = MutatorQueue.Num() - 1; Index >= 0; Index--)
 	{
 		if (bDeleteItem) 
@@ -239,6 +251,8 @@ void ULFPItemMutatorComponent::ClearItemQueue(const bool bDeleteItem)
 
 void ULFPItemMutatorComponent::ProcessItemQueue(const float ConsumeDelayAmount)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	for (int32 Index = QueueProcessAmount - 1; Index >= 0 && MutatorQueue.IsValidIndex(Index); Index--)
 	{
 		FLFPItemMutatorQueueData& MutatorData = MutatorQueue[Index];
