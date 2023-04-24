@@ -94,7 +94,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 {
 	if (IsValid(WorldGrid) == false) return false;
 
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(InstanceInfo.Location, WorldGrid->GetGridSize());
+	const int32 GridIndex = ULFPGridLibrary::ToGridIndex(InstanceInfo.Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex) == false) return false;
 	
@@ -169,7 +169,7 @@ bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const i
 {
 	if (IsValid(WorldGrid) == false) return false;
 
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, WorldGrid->GetGridSize());
+	const int32 GridIndex = ULFPGridLibrary::ToGridIndex(Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{
@@ -190,7 +190,7 @@ bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const 
 {
 	if (IsValid(WorldGrid) == false) return false;
 
-	const int32 GridIndex = ULFPGridLibrary::ToIndex(Location, WorldGrid->GetGridSize());
+	const int32 GridIndex = ULFPGridLibrary::ToGridIndex(Location, WorldGrid->GetGridSize());
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{

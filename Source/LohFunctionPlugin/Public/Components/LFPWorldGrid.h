@@ -48,7 +48,7 @@ public:
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsLocationValid(WorldLocationToGridLocation(Location), GridSize); }
+		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsGridLocationValid(WorldLocationToGridLocation(Location), GridSize); }
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
