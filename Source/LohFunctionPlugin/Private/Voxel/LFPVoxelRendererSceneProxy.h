@@ -162,6 +162,8 @@ public:
 		RenderData(Component->GetThreadResult()),
 		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
+		//const double StartTime = FPlatformTime::Seconds();
+
 		bHasDeformableMesh = false;
 		bCastDynamicShadow = true;
 		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
@@ -206,6 +208,8 @@ public:
 		EnableGPUSceneSupportFlags();
 
 		bSupportsSortedTriangles = true;
+
+		//UE_LOG(LogTemp, Warning, TEXT("VoxelRendererSceneProxy Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 
 		return;
 	}

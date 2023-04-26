@@ -9,8 +9,6 @@
 
 FLFPVoxelPaletteData FLFPVoxelPaletteData::EmptyData = FLFPVoxelPaletteData();
 
-//using namespace UE::Tasks;
-
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
 // Sets default values for this component's properties
@@ -18,7 +16,7 @@ ULFPVoxelRendererComponent::ULFPVoxelRendererComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -46,14 +44,10 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	}
 }
 
-
-// Called every frame
-void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void ULFPVoxelRendererComponent::UpdateData()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	if (IsValid(VoxelContainer) == false) return;
-	
+
 	if (Status.bIsVoxelAttributeDirty && IsValid(AttributesTexture))
 	{
 		Status.bIsVoxelAttributeDirty = false;
@@ -65,22 +59,70 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		AttributeList.SetNum(DataColorSize);
 
-		ParallelFor(DataColorSize,
-			[&](const int32 Index)
-			{
-				const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
-				const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
+		for (int32 Index = 0; Index < DataColorSize; Index++)
+		{
+			const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+			const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
 
-				const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
+			const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
 
-				AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
-			}
-		);
+			AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
+		}
+
+		//ParallelFor(DataColorSize,
+		//	[&](const int32 Index)
+		//	{
+		//		const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+		//		const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
+		//
+		//		const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
+		//
+		//		AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
+		//	}
+		//);
 
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
 
-	if (Status.bIsVoxelMeshDirty && WorkThread.IsCompleted()) GenerateBatchFaceData();
+	if (Status.bIsVoxelMeshDirty)
+	{
+		Status.bIsVoxelMeshDirty = false;
+
+		GenerateBatchFaceData();
+
+		Status.bIsLumenDataDirty = true;
+
+		return;
+	}
+
+	if (Status.bIsLumenDataDirty)
+	{
+		Status.bIsLumenDataDirty = false;
+
+		if (Setting.bGenerateLumenData) GenerateLumenData();
+
+		Status.bIsRenderDirty = true;
+
+		return;
+	}
+
+	if (Status.bIsRenderDirty)
+	{
+		UpdateBounds();
+
+		MarkRenderStateDirty();
+
+		if (Setting.bGenerateCollisionData) RebuildPhysicsData();
+	}
+
+	GetOwner()->GetWorldTimerManager().ClearTimer(ProcessTimer);
+}
+
+
+// Called every frame
+void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 bool ULFPVoxelRendererComponent::Test(const FIntVector& LocalPosition, const bool bCheck, TArray<FBox>& ReturnList, TArray<FTransform>& OriginReturnList)
@@ -264,6 +306,8 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
 		Status.bIsVoxelMeshDirty = true;
+
+		MarkForUpdate();
 	}
 	else
 	{
@@ -276,6 +320,8 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
 		Status.bIsVoxelAttributeDirty = true;
+
+		MarkForUpdate();
 	}
 	else
 	{
@@ -283,11 +329,18 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	}
 }
 
+void ULFPVoxelRendererComponent::MarkForUpdate()
+{
+	if (ProcessTimer.IsValid()) return;
+	
+	GetOwner()->GetWorldTimerManager().SetTimer(ProcessTimer, this, &ULFPVoxelRendererComponent::UpdateData, 0.001f, true);
+}
+
 void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 {
-	//Status.bIsGeneratingMesh = true;
+	//const double StartTime = FPlatformTime::Seconds();
 
-	Status.bIsVoxelMeshDirty = false;
+	//Status.bIsGeneratingMesh = true;
 
 	//WorkThread = Launch(
 	//	UE_SOURCE_LOCATION,
@@ -407,18 +460,14 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 		}
 	}
 
-	if (Setting.bGenerateLumenData) GenerateLumenData();
-
-	UpdateBounds();
-	MarkRenderStateDirty();
-	RebuildPhysicsData();
+	//UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 void ULFPVoxelRendererComponent::GenerateLumenData()
 {
-	if (ThreadResult.IsValid() == false || IsValid(VoxelContainer) == false) return;
+	if (IsValid(VoxelContainer) == false || ThreadResult.IsValid() == false) return;
 
-	//const double DistanceCacheMapStartTime = FPlatformTime::Seconds();
+	//const double StartTime = FPlatformTime::Seconds();
 
 	/** Custom Struct For Lumen And Distance Field */
 	struct FLFPDFMipInfo
@@ -553,7 +602,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 	/////////////////////////////////////////////////
 
 	/** Begin Data */
-	const auto& ContainerSetting = VoxelContainer->GetSetting();
+	const FLFPVoxelContainerSetting ContainerSetting = VoxelContainer->GetSetting();
 
 	const FVector& VoxelSize = ContainerSetting.GetVoxelHalfSize() * 2;
 
@@ -910,8 +959,6 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 
 		ThreadResult->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds;
 
-		check(ThreadResult->LumenCardData);
-
 		TArray<FLumenCardBuildData>& CardBuildList = ThreadResult->LumenCardData->MeshCardsBuildData.CardBuildData;
 
 		struct FLFPFaceListData
@@ -995,7 +1042,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 		}
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("Voxel Mesh Distance Field Cache Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - DistanceCacheMapStartTime));
+	//UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
@@ -1029,7 +1076,7 @@ FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalT
 {
 	FBox VoxelBox;
 
-	if (IsValid(VoxelContainer) && WorkThread.IsCompleted() && ThreadResult.IsValid())
+	if (IsValid(VoxelContainer) && ThreadResult.IsValid())
 	{
 		VoxelBox = FBox(-VoxelContainer->GetSetting().GetVoxelHalfBounds(), VoxelContainer->GetSetting().GetVoxelHalfBounds());
 	}
