@@ -641,8 +641,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 			AccelerationInfoList[Index].MaterialIndex = GetVoxelMaterialIndex(VoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, ULFPGridLibrary::ToGridIndex(VoxelPosition, ContainerSetting.GetVoxelGrid())));
 		}
 
-		for (int32 Index = 0; Index < CheckLength; Index++)
-		{
+		ParallelFor(CheckLength, [&](const int32 Index) {
 			FLFPCacheAccelerationInfo& CurrentCacheInfo = AccelerationInfoList[Index];
 
 			const FIntVector CacheLocation = ULFPGridLibrary::ToGridLocation(Index, CheckSize) - FIntVector(SizeHalfOffset);
@@ -701,7 +700,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 					}
 				}
 			}
-		}
+		}, EParallelForFlags::Unbalanced | EParallelForFlags::BackgroundPriority);
 	}
 
 	{
@@ -768,12 +767,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 				));
 			}
 
-			EParallelForFlags Flags = EParallelForFlags::BackgroundPriority | EParallelForFlags::Unbalanced;
-
-			ParallelForTemplate(BrickTaskList.Num(), [&BrickTaskList](int32 TaskIndex)
+			ParallelFor(BrickTaskList.Num(), [&BrickTaskList](int32 TaskIndex)
 				{
 					BrickTaskList[TaskIndex].DoTask();
-				}, Flags);
+				}, EParallelForFlags::Unbalanced | EParallelForFlags::BackgroundPriority);
 
 			TArray<FLFPDFBrickTask*> ValidBricks;
 			ValidBricks.Empty(BrickTaskList.Num());
