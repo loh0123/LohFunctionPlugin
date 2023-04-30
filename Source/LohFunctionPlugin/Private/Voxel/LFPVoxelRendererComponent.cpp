@@ -16,8 +16,8 @@ ULFPVoxelRendererComponent::ULFPVoxelRendererComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
-
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 	// ...
 }
 
@@ -44,8 +44,10 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	}
 }
 
-void ULFPVoxelRendererComponent::UpdateData()
+void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
 	if (IsValid(VoxelContainer) == false) return;
 
 	if (Status.bIsVoxelAttributeDirty && IsValid(AttributesTexture))
@@ -68,18 +70,6 @@ void ULFPVoxelRendererComponent::UpdateData()
 
 			AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
 		}
-
-		//ParallelFor(DataColorSize,
-		//	[&](const int32 Index)
-		//	{
-		//		const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
-		//		const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
-		//
-		//		const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
-		//
-		//		AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
-		//	}
-		//);
 
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
@@ -115,14 +105,7 @@ void ULFPVoxelRendererComponent::UpdateData()
 		if (Setting.bGenerateCollisionData) RebuildPhysicsData();
 	}
 
-	GetOwner()->GetWorldTimerManager().ClearTimer(ProcessTimer);
-}
-
-
-// Called every frame
-void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	SetComponentTickEnabled(false);
 }
 
 bool ULFPVoxelRendererComponent::Test(const FIntVector& LocalPosition, const bool bCheck, TArray<FBox>& ReturnList, TArray<FTransform>& OriginReturnList)
@@ -307,7 +290,7 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 	{
 		Status.bIsVoxelMeshDirty = true;
 
-		MarkForUpdate();
+		SetComponentTickEnabled(true);
 	}
 	else
 	{
@@ -321,19 +304,12 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	{
 		Status.bIsVoxelAttributeDirty = true;
 
-		MarkForUpdate();
+		SetComponentTickEnabled(true);
 	}
 	else
 	{
 		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
 	}
-}
-
-void ULFPVoxelRendererComponent::MarkForUpdate()
-{
-	if (ProcessTimer.IsValid()) return;
-	
-	GetOwner()->GetWorldTimerManager().SetTimer(ProcessTimer, this, &ULFPVoxelRendererComponent::UpdateData, 0.001f, true);
 }
 
 void ULFPVoxelRendererComponent::GenerateBatchFaceData()
@@ -1047,9 +1023,9 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
 {
-	UpdateAttribute();
+	if (Data.bIsVoxelTagDirty) UpdateAttribute();
 
-	UpdateMesh();
+	if (Data.bIsVoxelNameDirty) UpdateMesh();
 }
 
 FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const

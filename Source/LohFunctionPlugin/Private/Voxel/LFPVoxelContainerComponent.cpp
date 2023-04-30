@@ -11,7 +11,7 @@ ULFPVoxelContainerComponent::ULFPVoxelContainerComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 	// ...
 }
 
@@ -30,10 +30,11 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (UpdateChuckData())
-	{
-		UpdateChuckState();
-	}
+	if (UpdateChuckData() == false) return;
+
+	if (UpdateChuckState() == false) return;
+
+	SetComponentTickEnabled(false);
 }
 
 //FString ULFPVoxelContainerComponent::MemorySize(const int32 SaveFileAmount, const int32 ChuckAmount, const int32 VoxelAmount) const
@@ -119,6 +120,8 @@ bool ULFPVoxelContainerComponent::SetVoxelPalette(const int32 RegionIndex, const
 
 	ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.Add(VoxelIndex, VoxelPalette);
 
+	SetComponentTickEnabled(true);
+
 	return true;
 }
 
@@ -139,6 +142,8 @@ bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, 
 	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
 
 	ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex));
+
+	SetComponentTickEnabled(true);
 
 	return true;
 }
@@ -257,56 +262,9 @@ void ULFPVoxelContainerComponent::RemoveRenderChuck(const int32 RegionIndex, con
 	ChuckDelegateList.Remove(ChuckPos);
 }
 
-/** Chuck Request */
-
-//void ULFPVoxelContainerComponent::RequestRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& ChuckDelegate)
-//{
-//	if (ChuckDelegateList.Contains(ChuckVector)) return;
-//
-//	ChuckDelegate = ChuckDelegateList.Add(ChuckVector);
-//}
-//
-//void ULFPVoxelContainerComponent::ReleaseRenderChuck(const int32 RegionIndex, const int32 ChuckIndex)
-//{
-//	if (ChuckDelegateList.Contains(ChuckVector) == false) return;
-//
-//	ChuckDelegateList.FindChecked(ChuckVector).VoxelChuckUpdateEvent.Unbind();
-//
-//	ChuckDelegateList.Remove(ChuckVector);
-//}
-//
-//void ULFPVoxelContainerComponent::RequestRenderData(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelContainerSetting& ChuckSetting, TArray<FLFPVoxelChuckData*>& RenderData)
-//{
-//	checkf(ChuckDelegateList.Contains(ChuckVector) == false, TEXT("Chuck is not connect"));
-//
-//	ContainerThreadLock.ReadLock();
-//
-//	ChuckSetting = Setting;
-//
-//	RenderData.Empty(27);
-//
-//	for (int32 Z = -1; Z <= 1; Z++)
-//	{
-//		for (int32 Y = -1; Y <= 1; Y++)
-//		{
-//			for (int32 X = -1; X <= 1; X++)
-//			{
-//				RenderData.Add(ChuckDataList.Find(ChuckVector + FIntVector(X, Y, Z)));
-//			}
-//		}
-//	}
-//}
-//
-//void ULFPVoxelContainerComponent::ReleaseRenderData(const int32 RegionIndex, const int32 ChuckIndex)
-//{
-//	checkf(ChuckDelegateList.Contains(ChuckVector) == false, TEXT("Chuck is not connect"));
-//
-//	ContainerThreadLock.ReadUnlock();
-//}
-
-void ULFPVoxelContainerComponent::UpdateChuckState()
+bool ULFPVoxelContainerComponent::UpdateChuckState()
 {
-	if (ChuckUpdateStateList.IsEmpty()) return;
+	if (ChuckUpdateStateList.IsEmpty()) return false;
 
 	auto ChuckUpdateState = ChuckUpdateStateList.CreateIterator();
 
@@ -321,7 +279,7 @@ void ULFPVoxelContainerComponent::UpdateChuckState()
 		ChuckUpdateStateList.Shrink();
 	}
 
-	return;
+	return ChuckUpdateStateList.Num() == 0;
 }
 
 bool ULFPVoxelContainerComponent::UpdateChuckData()
@@ -349,7 +307,23 @@ bool ULFPVoxelContainerComponent::UpdateChuckData()
 		/** This change the outdate voxel name */
 		for (const auto& ChangeVoxel : ChuckUpdate.Value.ChangePalette)
 		{
-			if (ChuckData.GetIndexData(ChangeVoxel.Key) == ChangeVoxel.Value) continue;
+			bool IsDirty = false;
+
+			if (ChuckData.GetIndexData(ChangeVoxel.Key).VoxelName != ChangeVoxel.Value.VoxelName)
+			{
+				ChuckUpdateAction.bIsVoxelNameDirty = true;
+
+				IsDirty = true;
+			}
+
+			if (ChuckData.GetIndexData(ChangeVoxel.Key).VoxelTag != ChangeVoxel.Value.VoxelTag)
+			{
+				ChuckUpdateAction.bIsVoxelTagDirty = true;
+
+				IsDirty = true;
+			}
+
+			if (IsDirty == false) continue;
 
 			ChuckData.SetIndexData(ChangeVoxel.Key, ChangeVoxel.Value);
 

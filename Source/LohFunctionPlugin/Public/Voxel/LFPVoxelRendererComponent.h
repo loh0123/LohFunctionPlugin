@@ -435,8 +435,6 @@ protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	FORCEINLINE void UpdateData();
-
 public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -469,9 +467,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void UpdateAttribute();
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void MarkForUpdate();
 
 public:
 
@@ -570,6 +565,4 @@ private:
 	
 
 	TSharedPtr<FLFPVoxelRendererThreadResult> ThreadResult;
-
-	FTimerHandle ProcessTimer;
 };

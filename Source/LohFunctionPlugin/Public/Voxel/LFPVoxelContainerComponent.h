@@ -449,12 +449,21 @@ struct FLFPChuckUpdateAction
 {
 	GENERATED_BODY()
 
+	FLFPChuckUpdateAction() : bIsVoxelNameDirty(false), bIsVoxelTagDirty(false) {}
+
 public:
+
+	UPROPERTY() uint8 bIsVoxelNameDirty : 1;
+
+	UPROPERTY() uint8 bIsVoxelTagDirty : 1;
 
 public: // Operator
 
 	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
+		if (bIsVoxelNameDirty == false) bIsVoxelNameDirty = Other.bIsVoxelNameDirty;
+		if (bIsVoxelTagDirty == false) bIsVoxelTagDirty = Other.bIsVoxelNameDirty;
+
 		return *this;
 	}
 };
@@ -595,7 +604,7 @@ public: /** Chuck Request */
 
 protected: /** Function for updating chuck and data */
 
-	FORCEINLINE void UpdateChuckState();
+	FORCEINLINE bool UpdateChuckState();
 
 	FORCEINLINE bool UpdateChuckData();
 
