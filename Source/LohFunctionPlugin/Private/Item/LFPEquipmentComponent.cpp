@@ -5,7 +5,7 @@
 
 
 #include "Item/LFPEquipmentComponent.h"
-//#include "Net/UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 ULFPEquipmentComponent::ULFPEquipmentComponent()
@@ -17,12 +17,12 @@ ULFPEquipmentComponent::ULFPEquipmentComponent()
 	// ...
 }
 
-//void ULFPEquipmentComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-//{
-//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-//
-//	//DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, EquipmentSlotList, COND_None, REPNOTIFY_Always);
-//}
+void ULFPEquipmentComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, InventoryComponent, COND_None, REPNOTIFY_Always);
+}
 
 
 // Called when the game starts
@@ -69,6 +69,8 @@ void ULFPEquipmentComponent::Serialize(FArchive& Ar)
 
 void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	if (IsValid(InventoryComponent))
 	{
 		InventoryComponent->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
@@ -310,4 +312,23 @@ int32 ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIn
 	}
 
 	return INDEX_NONE;
+}
+
+void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue)
+{
+	if (IsValid(OldValue))
+	{
+		OldValue->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+
+		OldValue->CheckComponentList.Remove(this);
+	}
+
+	if (IsValid(InventoryComponent))
+	{
+		InventoryComponent->OnUpdateItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+
+		InventoryComponent->CheckComponentList.Add(this);
+
+		RunEquipOnAllSlot();
+	}
 }

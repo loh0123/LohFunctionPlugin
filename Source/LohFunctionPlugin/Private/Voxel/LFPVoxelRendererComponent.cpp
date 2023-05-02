@@ -61,15 +61,14 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		AttributeList.SetNum(DataColorSize);
 
-		for (int32 Index = 0; Index < DataColorSize; Index++)
-		{
+		ParallelFor(DataColorSize, [&](const int32 Index) {
 			const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 			const FIntVector VoxelGridIndex = VoxelContainer->ToVoxelGlobalIndex(VoxelGlobalGridLocation);
 
 			const FLFPVoxelPaletteData& VoxelPalette = VoxelContainer->GetVoxelPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
 
 			AttributeList[Index] = GetVoxelAttribute(VoxelPalette);
-		}
+			}, EParallelForFlags::Unbalanced);
 
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}

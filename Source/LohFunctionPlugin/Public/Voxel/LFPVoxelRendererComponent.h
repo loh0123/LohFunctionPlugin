@@ -214,7 +214,7 @@ public:
 				{
 					VertexDataBuffer.SetVertexTangents(Loop, FVector3f(FaceDirection.Forward), FVector3f(FaceDirection.Right), FVector3f(FaceDirection.Up));
 					VertexDataBuffer.SetVertexUV(Loop, 0, UVDataList[Loop] * Scale2D);
-					VertexDataBuffer.SetVertexUV(Loop, 1, UVDataList[Loop]);
+					VertexDataBuffer.SetVertexUV(Loop, 1, ((UVDataList[Loop] * -1) + 1) * Scale2D);
 				}
 			}
 		);

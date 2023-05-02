@@ -110,6 +110,12 @@ public: // Getter
 
 public:
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPEquipmentComponent | Event")
+		void OnInventoryComponentRep(ULFPInventoryComponent* OldValue);
+		virtual void OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue);
+
+public:
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
 		bool bAutoSetup = true;
 
@@ -118,6 +124,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
 		TArray<int32> EquipmentSlotList = TArray<int32>();
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPEquipmentComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated, ReplicatedUsing = OnInventoryComponentRep, Category = "LFPEquipmentComponent | Cache")
 		TObjectPtr<ULFPInventoryComponent> InventoryComponent = nullptr;
 };
