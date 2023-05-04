@@ -339,7 +339,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 
 	ThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
-	ThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
+	ThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), Setting.MinSectionNum));
 
 	//const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 
@@ -749,15 +749,15 @@ void ULFPVoxelRendererComponent::GenerateLumenData()
 				for (int32 SectionIndex = 0; SectionIndex < ThreadResult->SectionData.Num(); SectionIndex++)
 				{
 					ThreadResult->SectionData[SectionIndex].GenerateDistanceBoxData(CacheLocation, SectionIndex == CurrentCacheInfo.MaterialIndex, CurrentCacheInfo.TraceDistance, CurrentCacheInfo.TraceBoxList);
+				}
 
-					for (FBox& TraceBox : CurrentCacheInfo.TraceBoxList)
-					{
-						TraceBox.Min *= ContainerSetting.GetVoxelHalfSize() * 2;
-						TraceBox.Max *= ContainerSetting.GetVoxelHalfSize() * 2;
+				for (FBox& TraceBox : CurrentCacheInfo.TraceBoxList)
+				{
+					TraceBox.Min *= ContainerSetting.GetVoxelHalfSize() * 2;
+					TraceBox.Max *= ContainerSetting.GetVoxelHalfSize() * 2;
 
-						TraceBox.Min += ContainerSetting.GetVoxelHalfSize();
-						TraceBox.Max += ContainerSetting.GetVoxelHalfSize();
-					}
+					TraceBox.Min += ContainerSetting.GetVoxelHalfSize();
+					TraceBox.Max += ContainerSetting.GetVoxelHalfSize();
 				}
 			}
 		}, EParallelForFlags::Unbalanced | EParallelForFlags::BackgroundPriority);
@@ -1130,36 +1130,36 @@ void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& O
 	OutMaterials.Append(MaterialList);
 }
 
-UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
-{
-	UMaterialInterface* Result = nullptr;
-	SectionIndex = 0;
-
-	if (ThreadResult.IsValid() && FaceIndex >= 0)
-	{
-		// Look for section that corresponds to the supplied face
-		int32 TotalFaceCount = 0;
-
-		for (int32 SectionIdx = 0; SectionIdx < ThreadResult->SectionData.Num(); SectionIdx++)
-		{
-			const auto& Section = ThreadResult->SectionData[SectionIdx];
-
-			TotalFaceCount += Section.TriangleCount;
-
-			if (FaceIndex < TotalFaceCount)
-			{
-				// Get the current material for it, from this component
-				Result = GetMaterial(SectionIdx);
-
-				SectionIndex = SectionIdx;
-
-				break;
-			}
-		}
-	}
-
-	return Result;
-}
+//UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
+//{
+//	UMaterialInterface* Result = nullptr;
+//	SectionIndex = 0;
+//
+//	if (ThreadResult.IsValid() && FaceIndex >= 0)
+//	{
+//		// Look for section that corresponds to the supplied face
+//		int32 TotalFaceCount = 0;
+//
+//		for (int32 SectionIdx = 0; SectionIdx < ThreadResult->SectionData.Num(); SectionIdx++)
+//		{
+//			const auto& Section = ThreadResult->SectionData[SectionIdx];
+//
+//			TotalFaceCount += Section.TriangleCount;
+//
+//			if (FaceIndex < TotalFaceCount)
+//			{
+//				// Get the current material for it, from this component
+//				Result = GetMaterial(SectionIdx);
+//
+//				SectionIndex = SectionIdx;
+//
+//				break;
+//			}
+//		}
+//	}
+//
+//	return Result;
+//}
 
 int32 ULFPVoxelRendererComponent::GetNumMaterials() const
 {

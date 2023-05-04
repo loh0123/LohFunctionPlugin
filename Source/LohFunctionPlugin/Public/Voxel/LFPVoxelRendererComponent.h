@@ -238,8 +238,8 @@ public:
 
 		const int32 VertexStartIndex = ReturnData->Vertices.Num();
 
-		ReturnData->Vertices.Reserve(VertexStartIndex + VertexAmount);
-		ReturnData->Indices.Reserve(VertexStartIndex + TriangleCount);
+		ReturnData->Indices.Reserve(ReturnData->Indices.Num() + TriangleCount);
+		ReturnData->MaterialIndices.Reserve(ReturnData->MaterialIndices.Num() + TriangleCount);
 
 		// See if we should copy UVs
 		bool bCopyUVs = UPhysicsSettings::Get()->bSupportUVFromHitResults;
@@ -250,14 +250,18 @@ public:
 		}
 
 		TArray<uint32> IndexList;
+		TArray<FVector3f> VerticeList;
 		TArray<FVector2f> UVDataList;
 
 		IndexList.Reserve(VertexAmount);
+		VerticeList.Reserve(VertexAmount);
 		UVDataList.Reserve(VertexAmount);
 
-		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, ReturnData->Vertices, IndexList, UVDataList,
+		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VerticeList, IndexList, UVDataList,
 			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D){}
 		);
+
+		ReturnData->Vertices.Append(VerticeList);
 
 		for (int32 Index = 0; Index < IndexList.Num(); Index += 3)
 		{
@@ -266,9 +270,9 @@ public:
 			Triangle.v1 = IndexList[Index + 1] + VertexStartIndex;
 			Triangle.v2 = IndexList[Index + 2] + VertexStartIndex;
 			ReturnData->Indices.Add(Triangle);
-
+		
 			ReturnData->MaterialIndices.Add(SectionIndex);
-
+		
 			if (bCopyUVs)
 			{
 				ReturnData->UVs[0].Append(
@@ -398,6 +402,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
 		uint8 LumenQuality = 3;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+		int32 MinSectionNum = 1;
 };
 
 USTRUCT(BlueprintType)
@@ -519,7 +526,7 @@ public: // Material Handler
 
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 
-	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
+	//virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
 	virtual int32 GetNumMaterials() const override;
 
