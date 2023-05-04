@@ -86,15 +86,15 @@ public:
 			Initializer.bFastBuild = true;
 			Initializer.bAllowUpdate = false;
 
-			RayTracingGeometry.SetInitializer(Initializer);
-			RayTracingGeometry.InitResource();
-
 			FRayTracingGeometrySegment Segment;
 			Segment.VertexBuffer = PositionVertexBuffer.VertexBufferRHI;
 			Segment.VertexBufferStride = PositionVertexBuffer.GetStride();
-			Segment.NumPrimitives = RayTracingGeometry.Initializer.TotalPrimitiveCount;
+			Segment.NumPrimitives = Initializer.TotalPrimitiveCount;
 			Segment.MaxVertices = PositionVertexBuffer.GetNumVertices();
-			RayTracingGeometry.Initializer.Segments.Add(Segment);
+			Initializer.Segments.Add(Segment);
+
+			RayTracingGeometry.SetInitializer(Initializer);
+			RayTracingGeometry.InitResource();
 
 			RayTracingGeometry.UpdateRHI();
 		}
@@ -252,21 +252,18 @@ public:
 	{
 		for (FLFPVoxelMeshRenderBufferSet* BufferSet : AllocatedBufferSets)
 		{
-			if (BufferSet == nullptr)
+			if (BufferSet == nullptr || BufferSet->IndexBuffer.Indices.Num() == 0)
 			{
 				continue;
 			}
 
-			if (BufferSet->IndexBuffer.Indices.Num() > 0)
-			{
-				FMeshBatch MeshBatch;
+			FMeshBatch MeshBatch;
 
-				DrawBatch(MeshBatch, *BufferSet, BufferSet->Material->GetRenderProxy(), false);
+			DrawBatch(MeshBatch, *BufferSet, BufferSet->Material->GetRenderProxy(), false);
 
-				MeshBatch.LODIndex = 0;
+			MeshBatch.LODIndex = 0;
 
-				PDI->DrawMesh(MeshBatch, FLT_MAX);
-			}
+			PDI->DrawMesh(MeshBatch, FLT_MAX);
 		}
 	}
 
@@ -352,7 +349,7 @@ public:
 		MeshBatch.Type = PT_TriangleList;
 		MeshBatch.DepthPriorityGroup = SDPG_World;
 		MeshBatch.bCanApplyViewModeOverrides = false;
-		MeshBatch.SegmentIndex = RenderBuffers.SectionID;
+		MeshBatch.SegmentIndex = 0;
 		MeshBatch.MeshIdInPrimitive = RenderBuffers.SectionID;
 
 		return;
@@ -381,39 +378,39 @@ public:
 
 #if RHI_RAYTRACING
 	virtual bool IsRayTracingRelevant() const override { return true; }
-
+	
 	virtual bool IsRayTracingStaticRelevant() const override { return false; }
-
+	
 	virtual bool HasRayTracingRepresentation() const override { return true; }
-
+	
 	virtual void GetDynamicRayTracingInstances(FRayTracingMaterialGatheringContext& Context, TArray<FRayTracingInstance>& OutRayTracingInstances) override final
 	{
 		for (const FLFPVoxelMeshRenderBufferSet* Section : AllocatedBufferSets)
 		{
-			if (Section != nullptr)
+			if (Section == nullptr || Section->IndexBuffer.Indices.Num() == 0 || Section->RayTracingGeometry.RayTracingGeometryRHI.IsValid() == false)
 			{
-				FMaterialRenderProxy* MaterialProxy = Section->Material->GetRenderProxy();
-
-				if (Section->RayTracingGeometry.RayTracingGeometryRHI.IsValid())
-				{
-					check(Section->RayTracingGeometry.Initializer.TotalPrimitiveCount > 0);
-					check(Section->RayTracingGeometry.Initializer.IndexBuffer.IsValid());
-
-					FRayTracingInstance RayTracingInstance;
-					RayTracingInstance.Geometry = &Section->RayTracingGeometry;
-					RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
-
-					FMeshBatch MeshBatch;
-
-					DrawBatch(MeshBatch, *Section, Section->Material->GetRenderProxy(), false);
-
-					MeshBatch.CastRayTracedShadow = IsShadowCast(Context.ReferenceView);
-
-					RayTracingInstance.Materials.Add(MeshBatch);
-					RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
-					OutRayTracingInstances.Add(RayTracingInstance);
-				}
+				continue;
 			}
+
+			FMaterialRenderProxy* MaterialProxy = Section->Material->GetRenderProxy();
+
+			check(Section->RayTracingGeometry.RayTracingGeometryRHI);
+			check(Section->RayTracingGeometry.Initializer.TotalPrimitiveCount > 0);
+			check(Section->RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+
+			FRayTracingInstance RayTracingInstance;
+			RayTracingInstance.Geometry = &Section->RayTracingGeometry;
+			RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
+
+			FMeshBatch MeshBatch;
+
+			DrawBatch(MeshBatch, *Section, Section->Material->GetRenderProxy(), true);
+
+			MeshBatch.CastRayTracedShadow = IsShadowCast(Context.ReferenceView);
+
+			RayTracingInstance.Materials.Add(MeshBatch);
+			RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
+			OutRayTracingInstances.Add(RayTracingInstance);
 		}
 	}
 

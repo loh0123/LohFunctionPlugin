@@ -355,6 +355,8 @@ struct FLFPVoxelRendererThreadResult
 
 	//FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
 
+	FKAggregateGeom CollisionData = FKAggregateGeom();
+
 	TSharedPtr<class FDistanceFieldVolumeData> DistanceFieldMeshData = nullptr;
 
 	TSharedPtr<class FCardRepresentationData> LumenCardData = nullptr;
@@ -387,7 +389,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateCollisionData = false;
 
-	/* Generate Distance Field And Lumen */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+		bool bGenerateSimpleCollisionData = false;
+
+	/* Generate Distance Field And Lumen Card */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateLumenData = false;
 
@@ -405,6 +410,7 @@ public:
 	FLFPVoxelRendererStatus() : 
 		bIsVoxelAttributeDirty(false), 
 		bIsVoxelMeshDirty(false), 
+		bIsCollisionDataDirty(false),
 		bIsLumenDataDirty(false),
 		bIsBodyInvalid(false)
 	{}
@@ -412,6 +418,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelAttributeDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelMeshDirty : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsCollisionDataDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsLumenDataDirty : 1;
 
@@ -479,6 +487,9 @@ public:
 		FORCEINLINE void GenerateBatchFaceData();
 
 	UFUNCTION()
+		FORCEINLINE void GenerateSimpleCollisionData();
+
+	UFUNCTION()
 		FORCEINLINE void GenerateLumenData();
 
 public:
@@ -508,7 +519,7 @@ public: // Material Handler
 
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 
-	/*virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;*/
+	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
 	virtual int32 GetNumMaterials() const override;
 

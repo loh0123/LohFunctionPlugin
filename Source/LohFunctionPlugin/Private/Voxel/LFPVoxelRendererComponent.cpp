@@ -79,6 +79,17 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		GenerateBatchFaceData();
 
+		Status.bIsCollisionDataDirty = true;
+
+		return;
+	}
+
+	if (Status.bIsCollisionDataDirty)
+	{
+		Status.bIsCollisionDataDirty = false;
+
+		if (Setting.bGenerateCollisionData) GenerateSimpleCollisionData();
+
 		Status.bIsLumenDataDirty = true;
 
 		return;
@@ -324,13 +335,13 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 
 	//FReadScopeLock Lock(VoxelContainer->ContainerThreadLock);
 
-	const FLFPVoxelContainerSetting VoxelSetting(VoxelContainer->GetSetting());
+	const FLFPVoxelContainerSetting& VoxelSetting = VoxelContainer->GetSetting();
 
 	ThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
 	ThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
 
-	const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+	//const FIntVector ChuckStartPos = VoxelContainer->ToVoxelGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 
 	const auto& PushFaceData = [&](TMap<FIntVector, FInt32Rect>& BatchDataMap, FInt32Rect& CurrentBatchFaceData, int32& CurrentBatchMaterial) {
 		const FInt32Rect* TargetData = BatchDataMap.Find(FIntVector(CurrentBatchFaceData.Max.X - 1, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial));
@@ -340,7 +351,6 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 			FInt32Rect NewData = BatchDataMap.FindAndRemoveChecked(FIntVector(CurrentBatchFaceData.Max.X - 1, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial));
 
 			CurrentBatchFaceData.Min.X = NewData.Min.X;
-			CurrentBatchFaceData.Min.Y = NewData.Min.Y;
 		}
 
 		BatchDataMap.Add(FIntVector(CurrentBatchFaceData.Max.X, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial), CurrentBatchFaceData);
@@ -378,11 +388,11 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 					CurrentPos[FaceLoopDirection.Y] = V;
 					CurrentPos[FaceLoopDirection.Z] = I;
 
-					FIntVector NextPos;
-
-					NextPos[FaceLoopDirection.X] = U;
-					NextPos[FaceLoopDirection.Y] = V + 1;
-					NextPos[FaceLoopDirection.Z] = I;
+					//FIntVector NextPos;
+					//
+					//NextPos[FaceLoopDirection.X] = U;
+					//NextPos[FaceLoopDirection.Y] = V + 1;
+					//NextPos[FaceLoopDirection.Z] = I;
 
 					const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentPos, VoxelSetting.GetVoxelGrid());
 
@@ -410,7 +420,12 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 						{
 							CurrentBatchFaceData.Max.Y += 1;
 						}
-						else if (CurrentBatchMaterial == INDEX_NONE)
+						else if (CurrentBatchMaterial != INDEX_NONE)
+						{
+							PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+						}
+
+						if (CurrentBatchMaterial == INDEX_NONE)
 						{
 							CurrentBatchFaceData = FInt32Rect(U, V, U, V);
 							CurrentBatchMaterial = CurrentMaterialIndex;
@@ -432,7 +447,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 			for (const auto& BatchData : BatchDataMap)
 			{
 				ThreadResult->SectionData[BatchData.Key.Z].GetVoxelFaceData(DirectionIndex, I).FaceDataList.Add(BatchData.Value);
-				ThreadResult->SectionData[BatchData.Key.Z].TriangleCount += 2;
+				//ThreadResult->SectionData[BatchData.Key.Z].TriangleCount += 2;
 			}
 		});
 	}
@@ -441,11 +456,47 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 	{
 		for (auto& Data : Section.DataList)
 		{
+			Section.TriangleCount += Data.FaceDataList.Num() * 2;
 			Data.FaceDataList.Shrink();
 		}
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+}
+
+void ULFPVoxelRendererComponent::GenerateSimpleCollisionData()
+{
+	const FLFPVoxelContainerSetting& VoxelSetting = VoxelContainer->GetSetting();
+
+	TMap<FIntVector, FIntVector> BatchDataMap;
+
+	TPair<FIntVector, FIntVector> CurrentBatchData(INDEX_NONE, INDEX_NONE);
+
+	//const auto& PushFaceData = [&]() {
+	//	const FIntVector TargetMax = CurrentBatchData.Key - FIntVector(0, 1, 0);
+	//	const FIntVector* TargetMinPtr = BatchDataMap.Find(TargetMax);
+	//
+	//	if (TargetMinPtr != nullptr && TargetMinPtr->Y == CurrentBatchData.Value.Y)
+	//	{
+	//		FIntVector TargetMin = BatchDataMap.FindAndRemoveChecked(TargetMax);
+	//
+	//		CurrentBatchData.Value.X = TargetMin.X;
+	//	}
+	//
+	//	BatchDataMap.Add(FIntVector(CurrentBatchFaceData.Max.X, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial), CurrentBatchFaceData);
+	//	CurrentBatchMaterial = INDEX_NONE;
+	//};
+
+	for (int32 Z = 0; Z < VoxelSetting.GetVoxelGrid().Z; Z++)
+	{
+		for (int32 Y = 0; Y < VoxelSetting.GetVoxelGrid().Y; Y++)
+		{
+			for (int32 X = 0; X < VoxelSetting.GetVoxelGrid().X; X++)
+			{
+
+			}
+		}
+	}
 }
 
 void ULFPVoxelRendererComponent::GenerateLumenData()
@@ -1041,7 +1092,7 @@ FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData&
 
 int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const
 {
-	return VoxelPalette.VoxelName == FName("Dirt") ? 0 : INDEX_NONE;
+	return VoxelPalette.VoxelName == FName("Dirt") ? 0 : VoxelPalette.VoxelName == FName("Grass") ? 1 : INDEX_NONE;
 }
 
 TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult()
@@ -1079,36 +1130,36 @@ void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& O
 	OutMaterials.Append(MaterialList);
 }
 
-//UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
-//{
-//	UMaterialInterface* Result = nullptr;
-//	SectionIndex = 0;
-//
-//	if (RenderData && FaceIndex >= 0)
-//	{
-//		// Look for section that corresponds to the supplied face
-//		int32 TotalFaceCount = 0;
-//
-//		for (int32 SectionIdx = 0; SectionIdx < RenderData->Sections.Num(); SectionIdx++)
-//		{
-//			const FLFPBaseVoxelMeshSectionData& Section = RenderData->Sections[SectionIdx];
-//
-//			TotalFaceCount += Section.TriangleCount;
-//
-//			if (FaceIndex < TotalFaceCount)
-//			{
-//				// Get the current material for it, from this component
-//				Result = GetMaterial(SectionIdx);
-//
-//				SectionIndex = SectionIdx;
-//
-//				break;
-//			}
-//		}
-//	}
-//
-//	return Result;
-//}
+UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
+{
+	UMaterialInterface* Result = nullptr;
+	SectionIndex = 0;
+
+	if (ThreadResult.IsValid() && FaceIndex >= 0)
+	{
+		// Look for section that corresponds to the supplied face
+		int32 TotalFaceCount = 0;
+
+		for (int32 SectionIdx = 0; SectionIdx < ThreadResult->SectionData.Num(); SectionIdx++)
+		{
+			const auto& Section = ThreadResult->SectionData[SectionIdx];
+
+			TotalFaceCount += Section.TriangleCount;
+
+			if (FaceIndex < TotalFaceCount)
+			{
+				// Get the current material for it, from this component
+				Result = GetMaterial(SectionIdx);
+
+				SectionIndex = SectionIdx;
+
+				break;
+			}
+		}
+	}
+
+	return Result;
+}
 
 int32 ULFPVoxelRendererComponent::GetNumMaterials() const
 {
@@ -1197,7 +1248,7 @@ UBodySetup* ULFPVoxelRendererComponent::CreateBodySetup()
 	NewBodySetup->BodySetupGuid = FGuid::NewGuid();
 
 	NewBodySetup->bGenerateMirroredCollision = false;
-	NewBodySetup->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+	NewBodySetup->CollisionTraceFlag = Setting.bGenerateSimpleCollisionData ? ECollisionTraceFlag::CTF_UseSimpleAndComplex : ECollisionTraceFlag::CTF_UseComplexAsSimple;
 
 	return NewBodySetup;
 }
@@ -1210,6 +1261,12 @@ void ULFPVoxelRendererComponent::RebuildPhysicsData()
 	}
 	else
 	{
+		if (ThreadResult.IsValid() && Setting.bGenerateSimpleCollisionData)
+		{
+			BodySetup->AggGeom.EmptyElements();
+			BodySetup->AddCollisionFrom(ThreadResult->CollisionData);
+		}
+
 		BodySetup->CreatePhysicsMeshesAsync(FOnAsyncPhysicsCookFinished::CreateUObject(this, &ULFPVoxelRendererComponent::FinishPhysicsAsyncCook, BodySetup.Get()));
 	}
 }
