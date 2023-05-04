@@ -77,6 +77,12 @@ namespace LFPVoxelRendererConstantData
 
 struct FLFPVoxelRendererFaceData
 {
+	FLFPVoxelRendererFaceData() {}
+	FLFPVoxelRendererFaceData(const int32 Reserve)
+	{
+		FaceDataList.Reserve(Reserve);
+	}
+
 	///** Raw Vertex Generated For The Function */
 	//TArray<FVector3f> VertexList;
 
@@ -109,9 +115,11 @@ public:
 	{
 		FaceDirectionAmount = NewFaceDirectionAmount;
 
+		const int32 MaxFace = FaceDirectionAmount.GetMax();
+
 		const int32 FaceAmount = (FaceDirectionAmount.X * 2) + (FaceDirectionAmount.Y * 2) + (FaceDirectionAmount.Z * 2);
 
-		DataList.Init(FLFPVoxelRendererFaceData(), FaceAmount);
+		DataList.Init(FLFPVoxelRendererFaceData(MaxFace), FaceAmount);
 	}
 
 	FORCEINLINE FLFPVoxelRendererFaceData& GetVoxelFaceData(const int32 DirectionIndex, const int32 FaceIndex)
@@ -378,9 +386,6 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateCollisionData = false;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bUseThread = false;
 
 	/* Generate Distance Field And Lumen */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")

@@ -347,6 +347,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 		CurrentBatchMaterial = INDEX_NONE;
 	};
 
+	//ParallelFor(6, [&](const int32 DirectionIndex) {
 	for (int32 DirectionIndex = 0; DirectionIndex < 6; DirectionIndex++)
 	{
 		const FIntVector FaceLoopDirection = LFPVoxelRendererConstantData::FaceLoopDirectionList[DirectionIndex];
@@ -355,8 +356,9 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 		const int32 LoopV = VoxelSetting.GetVoxelGrid()[FaceLoopDirection.Y];
 		const int32 LoopI = VoxelSetting.GetVoxelGrid()[FaceLoopDirection.Z];
 
-		for (int32 I = 0; I < LoopI; I++)
-		{
+		ParallelFor(LoopI, [&](const int32 I) {
+			//for (int32 I = 0; I < LoopI; I++)
+			//{
 			TMap<FIntVector, FInt32Rect> BatchDataMap;
 
 			FInt32Rect CurrentBatchFaceData(INDEX_NONE, INDEX_NONE);
@@ -432,6 +434,14 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData()
 				ThreadResult->SectionData[BatchData.Key.Z].GetVoxelFaceData(DirectionIndex, I).FaceDataList.Add(BatchData.Value);
 				ThreadResult->SectionData[BatchData.Key.Z].TriangleCount += 2;
 			}
+		});
+	}
+
+	for (auto& Section : ThreadResult->SectionData)
+	{
+		for (auto& Data : Section.DataList)
+		{
+			Data.FaceDataList.Shrink();
 		}
 	}
 
