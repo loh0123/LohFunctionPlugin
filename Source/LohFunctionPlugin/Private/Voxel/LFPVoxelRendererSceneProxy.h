@@ -322,20 +322,22 @@ public:
 			}
 		}
 
-		//for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
-		//{
-		//	if (VisibilityMap & (1 << ViewIndex))
-		//	{
-		//		// Draw simple collision as wireframe if 'show collision', and collision is enabled, and we are not using the complex as the simple
-		//		if (CollisionBody)
-		//		{
-		//			FTransform GeomTransform(GetLocalToWorld());
-		//			CollisionBody->AggGeom.GetAggGeom(GeomTransform, GetSelectionColor(FColor(157, 149, 223, 255), IsSelected(), IsHovered()).ToFColor(true), NULL, false, false, DrawsVelocity(), ViewIndex, Collector);
-		//		}
-		//		// Render bounds
-		//		//RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
-		//	}
-		//}
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+		{
+			if (VisibilityMap & (1 << ViewIndex))
+			{
+				// Draw simple collision as wireframe if 'show collision', and collision is enabled, and we are not using the complex as the simple
+				if (CollisionBody && ViewFamily.EngineShowFlags.Collision && IsCollisionEnabled() && CollisionBody->GetCollisionTraceFlag() != ECollisionTraceFlag::CTF_UseComplexAsSimple)
+				{
+					FTransform GeomTransform(GetLocalToWorld());
+					CollisionBody->AggGeom.GetAggGeom(GeomTransform, GetSelectionColor(FColor(157, 149, 223, 255), IsSelected(), IsHovered()).ToFColor(true), NULL, false, false, DrawsVelocity(), ViewIndex, Collector);
+				}
+				// Render bounds
+				RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
+			}
+		}
+#endif
 	}
 
 	FORCEINLINE void DrawBatch(FMeshBatch& MeshBatch,

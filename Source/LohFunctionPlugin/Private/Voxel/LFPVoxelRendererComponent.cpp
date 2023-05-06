@@ -471,7 +471,7 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 			const FIntVector TargetMax = CurrentBatchData.Key - FIntVector(0, 1, 0);
 			const FIntVector* TargetMinPtr = BatchDataMap.Find(TargetMax);
 
-			if (TargetMinPtr != nullptr && TargetMinPtr->X == CurrentBatchData.Value.X)
+			if (TargetMinPtr != nullptr && TargetMinPtr->X == CurrentBatchData.Value.X && TargetMinPtr->Z == CurrentBatchData.Value.Z)
 			{
 				const FIntVector TargetMin = BatchDataMap.FindAndRemoveChecked(TargetMax);
 
@@ -512,7 +512,7 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 
 				if (IsSelfSolid)
 				{
-					if (CurrentBatchData.Key.Y != Y && IsBatchValid)
+					if ((CurrentBatchData.Key.Y != Y || CurrentBatchData.Key.Z != Z) && IsBatchValid)
 					{
 						PushData();
 					}
