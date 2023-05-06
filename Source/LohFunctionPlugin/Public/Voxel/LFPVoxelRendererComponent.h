@@ -408,9 +408,6 @@ public:
 		uint8 LumenQuality = 3;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		float DistanceFieldSelfShadowBias = 1.0f;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
 };
 
@@ -446,6 +443,8 @@ class LOHFUNCTIONPLUGIN_API ULFPVoxelRendererComponent : public UMeshComponent, 
 {
 	GENERATED_BODY()
 
+/** Core Handling */
+
 public:
 	// Sets default values for this component's properties
 	ULFPVoxelRendererComponent();
@@ -460,11 +459,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public: /** Debugging */
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE bool Test(const FIntVector& LocalPosition, const bool bCheck, TArray<FBox>& ReturnList, TArray<FTransform>& OriginReturnList);
-
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
@@ -475,14 +469,6 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Checker")
-		FORCEINLINE bool IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const;
-
-public:
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
-
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void UpdateMesh();
 
@@ -491,41 +477,20 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Checker")
-		FORCEINLINE FLFPVoxelRendererSetting GetSetting() const;
-
-public:
-
-	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
-
-	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
-
-	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
-
-public:
-
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
-protected: /** Can be override to provide custom behavir */
 
-	UFUNCTION()
-		virtual FColor GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const;
+/**********************/
 
-	UFUNCTION()
-		virtual int32 GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const;
+/** Material Handling */
 
-public:
+public: // Blueprint Expose Function
 
-	FORCEINLINE TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult();
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
 
-protected: // Rendering Handler
-
-	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
-
-	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
-
-public: // Material Handler
+public: // override Handler
 
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 
@@ -539,6 +504,85 @@ public: // Material Handler
 
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
+
+private: // Variable
+
+	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
+
+/**********************/
+
+/** Share Data Generation Handling */
+
+public:
+
+	/** Get Generation Setting OutSide The Class */
+	FORCEINLINE const FLFPVoxelRendererSetting& GetGenerationSetting() const;
+
+	FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult();
+
+private:
+
+	FORCEINLINE bool IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const;
+
+private:
+
+	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+
+	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+
+	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+
+protected: /** Can be override to provide custom behavir */
+
+	virtual FColor GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const;
+
+	virtual int32 GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const;
+
+private: // Variable
+
+	FLFPVoxelRendererStatus Status;
+
+	UE::Tasks::TTask<TSharedPtr<FLFPVoxelRendererThreadResult>> ThreadOutput;
+
+	TSharedPtr<FLFPVoxelRendererThreadResult> ThreadResult;
+
+public:
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelRendererComponent | Cache")
+		TObjectPtr<UTexture2D> AttributesTexture = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
+		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
+		int32 RegionIndex = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
+		int32 ChuckIndex = INDEX_NONE;
+
+protected:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
+		FLFPVoxelRendererSetting GenerationSetting = FLFPVoxelRendererSetting();
+
+/**********************/
+
+/** Rendering Handling */
+
+protected: // Rendering Handler
+
+	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
+
+	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+
+public:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		float DistanceFieldSelfShadowBias = 1.0f;
+
+/**********************/
+
+/** Collision Handling */
 
 public: // Collision Handler
 
@@ -556,43 +600,11 @@ public: // Collision Handler
 
 	FORCEINLINE void RebuildPhysicsData();
 
-	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);
-
-protected:
-
-	UPROPERTY(VisibleAnywhere, Category = "LFPVoxelRendererComponent")
-		FLFPVoxelRendererStatus Status;
-
-public:
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelRendererComponent | Cache")
-		TObjectPtr<UTexture2D> AttributesTexture = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		int32 RegionIndex = INDEX_NONE;
-		
-	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		int32 ChuckIndex = INDEX_NONE;
-
-protected:
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
-		FLFPVoxelRendererSetting Setting = FLFPVoxelRendererSetting();
-
-
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
-		float DistanceFieldSelfShadowBias = 1.0f;
+	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);;
 
 private:
 
-	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
-
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
-	
-	UE::Tasks::TTask<TSharedPtr<FLFPVoxelRendererThreadResult>> ThreadOutput;
-	TSharedPtr<FLFPVoxelRendererThreadResult> ThreadResult;
+
+/**********************/
 };
