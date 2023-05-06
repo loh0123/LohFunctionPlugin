@@ -404,7 +404,7 @@ public:
 		uint8 LumenQuality = 3;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
-		int32 MinSectionNum = 1;
+		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
 };
 
 USTRUCT(BlueprintType)
@@ -417,18 +417,12 @@ public:
 	FLFPVoxelRendererStatus() : 
 		bIsVoxelAttributeDirty(false), 
 		bIsVoxelMeshDirty(false), 
-		bIsCollisionDataDirty(false),
-		bIsLumenDataDirty(false),
 		bIsBodyInvalid(false)
 	{}
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelAttributeDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelMeshDirty : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsCollisionDataDirty : 1;
-
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsLumenDataDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsRenderDirty : 1;
 
@@ -490,14 +484,11 @@ public:
 
 public:
 
-	UFUNCTION()
-		FORCEINLINE void GenerateBatchFaceData();
+	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
 
-	UFUNCTION()
-		FORCEINLINE void GenerateSimpleCollisionData();
+	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
 
-	UFUNCTION()
-		FORCEINLINE void GenerateLumenData();
+	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
 
 public:
 
@@ -526,7 +517,7 @@ public: // Material Handler
 
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 
-	//virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
+	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
 	virtual int32 GetNumMaterials() const override;
 
@@ -537,7 +528,9 @@ public: // Material Handler
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
 
-//public: // Collision Handler
+public: // Collision Handler
+
+	virtual bool GetTriMeshSizeEstimates(struct FTriMeshCollisionDataEstimates& OutTriMeshEstimates, bool bInUseAllTriData) const override;
 
 	virtual bool GetPhysicsTriMeshData(struct FTriMeshCollisionData* CollisionData, bool InUseAllTriData) override;
 
@@ -586,6 +579,6 @@ private:
 
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 	
-
+	UE::Tasks::TTask<TSharedPtr<FLFPVoxelRendererThreadResult>> ThreadOutput;
 	TSharedPtr<FLFPVoxelRendererThreadResult> ThreadResult;
 };

@@ -160,6 +160,7 @@ public:
 	FLFPVoxelRendererSceneProxy(ULFPVoxelRendererComponent* Component) : FPrimitiveSceneProxy(Component),
 		VoxelComponent(Component),
 		RenderData(Component->GetThreadResult()),
+		CollisionBody(Component->GetBodySetup()),
 		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
 	{
 		//const double StartTime = FPlatformTime::Seconds();
@@ -318,14 +319,23 @@ public:
 						Collector.AddMesh(ViewIndex, MeshBatch);
 					}
 				}
-
-				// Draw bounds
-#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-				// Render bounds
-				RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
-#endif
 			}
 		}
+
+		//for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+		//{
+		//	if (VisibilityMap & (1 << ViewIndex))
+		//	{
+		//		// Draw simple collision as wireframe if 'show collision', and collision is enabled, and we are not using the complex as the simple
+		//		if (CollisionBody)
+		//		{
+		//			FTransform GeomTransform(GetLocalToWorld());
+		//			CollisionBody->AggGeom.GetAggGeom(GeomTransform, GetSelectionColor(FColor(157, 149, 223, 255), IsSelected(), IsHovered()).ToFColor(true), NULL, false, false, DrawsVelocity(), ViewIndex, Collector);
+		//		}
+		//		// Render bounds
+		//		//RenderBounds(Collector.GetPDI(ViewIndex), ViewFamily.EngineShowFlags, GetBounds(), IsSelected());
+		//	}
+		//}
 	}
 
 	FORCEINLINE void DrawBatch(FMeshBatch& MeshBatch,
@@ -469,6 +479,8 @@ protected:
 	TSharedPtr<FLFPVoxelRendererThreadResult> RenderData = nullptr;
 
 	TArray<FLFPVoxelMeshRenderBufferSet*> AllocatedBufferSets;
+
+	TObjectPtr<UBodySetup> CollisionBody = nullptr;
 
 	FMaterialRelevance MaterialRelevance;
 };
