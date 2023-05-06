@@ -373,7 +373,7 @@ public:
 	virtual void GetDistanceFieldAtlasData(const class FDistanceFieldVolumeData*& OutDistanceFieldData, float& SelfShadowBias) const override
 	{
 		OutDistanceFieldData = RenderData->DistanceFieldMeshData.Get();
-		SelfShadowBias = 1.0f;
+		SelfShadowBias = VoxelComponent->GetSetting().DistanceFieldSelfShadowBias;
 	}
 
 	virtual void GetDistanceFieldInstanceData(TArray<FRenderTransform>& ObjectLocalToWorldTransforms) const override

@@ -46,6 +46,8 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 		BodySetup = nullptr;
 	}
 
+	ThreadResult.Reset();
+
 	ThreadOutput = {};
 }
 
@@ -321,6 +323,11 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	}
 }
 
+FLFPVoxelRendererSetting ULFPVoxelRendererComponent::GetSetting() const
+{
+	return Setting;
+}
+
 void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
 {
 	const FLFPVoxelContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
@@ -382,7 +389,13 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 					const FIntVector TargetGlobalIndex = TargetVoxelContainer->ToVoxelGlobalIndex(TargetGlobalPos);
 
 					const FLFPVoxelPaletteData& SelfVoxelPalette = TargetVoxelContainer->GetVoxelPaletteRef(RegionIndex, ChuckIndex, CurrentIndex);
-					const FLFPVoxelPaletteData& TargetVoxelPalette = TargetVoxelContainer->GetVoxelPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+
+					/** Check Do We Ignore Border Data And Always Fill The Face */
+					const FLFPVoxelPaletteData& TargetVoxelPalette = 
+						Setting.bFillChuckFace && (RegionIndex != TargetGlobalIndex.X || ChuckIndex != TargetGlobalIndex.Y) ? 
+						FLFPVoxelPaletteData::EmptyData 
+						: 
+						TargetVoxelContainer->GetVoxelPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
 
 					/*************************************************/
 

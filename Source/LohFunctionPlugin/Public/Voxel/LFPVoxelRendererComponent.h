@@ -390,20 +390,27 @@ struct FLFPVoxelRendererSetting
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+	/* Always Fill Face On Chuck Border If True */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		bool bFillChuckFace = false;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateCollisionData = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateSimpleCollisionData = false;
 
 	/* Generate Distance Field And Lumen Card */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateLumenData = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		uint8 LumenQuality = 3;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VoxelRendererSetting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		float DistanceFieldSelfShadowBias = 1.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
 };
 
@@ -481,6 +488,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void UpdateAttribute();
+
+public:
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Checker")
+		FORCEINLINE FLFPVoxelRendererSetting GetSetting() const;
 
 public:
 
@@ -565,12 +577,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
 		int32 ChuckIndex = INDEX_NONE;
 
-public:
+protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
 		FLFPVoxelRendererSetting Setting = FLFPVoxelRendererSetting();
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, AdvancedDisplay, Category = Lighting)
+
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
 		float DistanceFieldSelfShadowBias = 1.0f;
 
 private:
