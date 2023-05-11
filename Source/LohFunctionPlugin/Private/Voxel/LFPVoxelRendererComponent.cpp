@@ -13,6 +13,8 @@ FLFPVoxelPaletteData FLFPVoxelPaletteData::EmptyData = FLFPVoxelPaletteData();
 
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
+/** Core Handling */
+
 // Sets default values for this component's properties
 ULFPVoxelRendererComponent::ULFPVoxelRendererComponent()
 {
@@ -23,7 +25,6 @@ ULFPVoxelRendererComponent::ULFPVoxelRendererComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	// ...
 }
-
 
 // Called when the game starts
 void ULFPVoxelRendererComponent::BeginPlay()
@@ -116,6 +117,8 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		if (GenerationSetting.bGenerateCollisionData) RebuildPhysicsData();
 
 		SetComponentTickEnabled(false);
+
+		OnVoxelRendererUpdate.Broadcast();
 	}
 }
 
@@ -170,34 +173,6 @@ bool ULFPVoxelRendererComponent::ReleaseRenderer()
 	return true;
 }
 
-bool ULFPVoxelRendererComponent::IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const
-{
-	const int32 CurrentIndex = GetVoxelMaterialIndex(FromPaletteData);
-
-	return CurrentIndex != INDEX_NONE && CurrentIndex != GetVoxelMaterialIndex(ToPaletteData);
-}
-
-void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface*>& Material)
-{
-	if (Material.IsEmpty() == false)
-	{
-		for (int k = 0; k < Material.Num(); ++k)
-		{
-			SetMaterial(k, Material[k]);
-		}
-
-		if (IsValid(VoxelContainer))
-		{
-			UpdateMesh();
-			UpdateAttribute();
-		}
-	}
-	else
-	{
-		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Can't Set Material Because Array Is Empty"));
-	}
-}
-
 void ULFPVoxelRendererComponent::UpdateMesh()
 {
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
@@ -226,13 +201,133 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	}
 }
 
+void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
+{
+	if (Data.bIsVoxelTagDirty) UpdateAttribute();
+
+	if (Data.bIsVoxelNameDirty) UpdateMesh();
+}
+
+/**********************/
+/** Material Handling */
+
+void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface*>& Material)
+{
+	if (Material.IsEmpty() == false)
+	{
+		for (int k = 0; k < Material.Num(); ++k)
+		{
+			SetMaterial(k, Material[k]);
+		}
+	}
+	else
+	{
+		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Can't Set Material Because Array Is Empty"));
+	}
+}
+
+void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
+{
+	OutMaterials.Append(MaterialList);
+}
+
+UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
+{
+	UMaterialInterface* Result = nullptr;
+	SectionIndex = 0;
+
+	if (ThreadResult.IsValid() && FaceIndex >= 0)
+	{
+		// Look for section that corresponds to the supplied face
+		int32 TotalFaceCount = 0;
+
+		for (int32 SectionIdx = 0; SectionIdx < ThreadResult->SectionData.Num(); SectionIdx++)
+		{
+			const auto& Section = ThreadResult->SectionData[SectionIdx];
+
+			TotalFaceCount += Section.TriangleCount;
+
+			if (FaceIndex < TotalFaceCount)
+			{
+				// Get the current material for it, from this component
+				Result = GetMaterial(SectionIdx);
+
+				SectionIndex = SectionIdx;
+
+				break;
+			}
+		}
+	}
+
+	return Result;
+}
+
+int32 ULFPVoxelRendererComponent::GetNumMaterials() const
+{
+	return MaterialList.Num();
+}
+
+UMaterialInterface* ULFPVoxelRendererComponent::GetMaterial(int32 ElementIndex) const
+{
+	return MaterialList.IsValidIndex(ElementIndex) ? MaterialList[ElementIndex] : nullptr;
+}
+
+void ULFPVoxelRendererComponent::SetMaterial(int32 ElementIndex, UMaterialInterface* Material)
+{
+	check(ElementIndex >= 0);
+
+	if (ElementIndex >= MaterialList.Num())
+	{
+		MaterialList.SetNum(ElementIndex + 1, false);
+	}
+
+	MaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
+
+	if (IsValid(VoxelContainer))
+	{
+		UpdateMesh();
+		UpdateAttribute();
+	}
+}
+
+UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInstance(int32 ElementIndex, UMaterialInterface* SourceMaterial, FName OptionalName)
+{
+	UMaterialInstanceDynamic* MID = Super::CreateDynamicMaterialInstance(ElementIndex, SourceMaterial, OptionalName);
+
+	if (IsValid(MID))
+	{
+		MID->SetTextureParameterValue("AttributesTexture", AttributesTexture);
+
+		if (IsValid(VoxelContainer)) MID->SetVectorParameterValue("VoxelChuckSize", FVector(VoxelContainer->GetSetting().GetVoxelGrid()));
+	}
+
+	return MID;
+}
+
+/**********************/
+/** Share Data Generation Handling */
+
 const FLFPVoxelRendererSetting& ULFPVoxelRendererComponent::GetGenerationSetting() const
 {
 	return GenerationSetting;
 }
 
+const TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult()
+{
+	return ThreadResult;
+}
+
+bool ULFPVoxelRendererComponent::IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const
+{
+	const int32 CurrentIndex = GetVoxelMaterialIndex(FromPaletteData);
+
+	return CurrentIndex != INDEX_NONE && CurrentIndex != GetVoxelMaterialIndex(ToPaletteData);
+}
+
 void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
 {
+	const double StartTime = FPlatformTime::Seconds();
+
 	const FLFPVoxelContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
 
 	TargetThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
@@ -356,11 +451,13 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 		}
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
 {
+	const double StartTime = FPlatformTime::Seconds();
+
 	const FLFPVoxelContainerSetting& VoxelSetting = VoxelContainer->GetSetting();
 
 	TMap<FIntVector, FIntVector> BatchDataMap;
@@ -464,13 +561,15 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 		TargetThreadResult->CollisionData.BoxElems.Add(CurrentBoxElem);
 		//TargetThreadResult->CollisionData.ConvexElems.Add(CurrentConverElem);
 	}
+
+	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Collision Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
 {
 	if (IsValid(TargetVoxelContainer) == false || TargetThreadResult.IsValid() == false) return;
 
-	//const double StartTime = FPlatformTime::Seconds();
+	const double StartTime = FPlatformTime::Seconds();
 
 	/** Custom Struct For Lumen And Distance Field */
 	struct FLFPDFMipInfo
@@ -1042,19 +1141,12 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 		}
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
-}
-
-void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
-{
-	if (Data.bIsVoxelTagDirty) UpdateAttribute();
-
-	if (Data.bIsVoxelNameDirty) UpdateMesh();
+	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const
 {
-	return FColor(0);
+	return VoxelPalette.VoxelName.IsNone() ? FColor(255) : FColor(0);
 }
 
 int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const
@@ -1062,10 +1154,8 @@ int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteDa
 	return VoxelPalette.VoxelName == FName("Dirt") ? 0 : VoxelPalette.VoxelName == FName("Grass") && GetNumMaterials() >= 0 ? 1 : INDEX_NONE;
 }
 
-const TSharedPtr<FLFPVoxelRendererThreadResult>& ULFPVoxelRendererComponent::GetThreadResult()
-{
-	return ThreadResult;
-}
+/**********************/
+/** Rendering Handling */
 
 FPrimitiveSceneProxy* ULFPVoxelRendererComponent::CreateSceneProxy()
 {
@@ -1092,77 +1182,8 @@ FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalT
 	return Ret;
 }
 
-void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
-{
-	OutMaterials.Append(MaterialList);
-}
-
-UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
-{
-	UMaterialInterface* Result = nullptr;
-	SectionIndex = 0;
-
-	if (ThreadResult.IsValid() && FaceIndex >= 0)
-	{
-		// Look for section that corresponds to the supplied face
-		int32 TotalFaceCount = 0;
-
-		for (int32 SectionIdx = 0; SectionIdx < ThreadResult->SectionData.Num(); SectionIdx++)
-		{
-			const auto& Section = ThreadResult->SectionData[SectionIdx];
-
-			TotalFaceCount += Section.TriangleCount;
-
-			if (FaceIndex < TotalFaceCount)
-			{
-				// Get the current material for it, from this component
-				Result = GetMaterial(SectionIdx);
-
-				SectionIndex = SectionIdx;
-
-				break;
-			}
-		}
-	}
-
-	return Result;
-}
-
-int32 ULFPVoxelRendererComponent::GetNumMaterials() const
-{
-	return MaterialList.Num();
-}
-
-UMaterialInterface* ULFPVoxelRendererComponent::GetMaterial(int32 ElementIndex) const
-{
-	return MaterialList.IsValidIndex(ElementIndex) ? MaterialList[ElementIndex] : nullptr;
-}
-
-void ULFPVoxelRendererComponent::SetMaterial(int32 ElementIndex, UMaterialInterface* Material)
-{
-	check(ElementIndex >= 0);
-
-	if (ElementIndex >= MaterialList.Num())
-	{
-		MaterialList.SetNum(ElementIndex + 1, false);
-	}
-
-	MaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
-}
-
-UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInstance(int32 ElementIndex, UMaterialInterface* SourceMaterial, FName OptionalName)
-{
-	UMaterialInstanceDynamic* MID = Super::CreateDynamicMaterialInstance(ElementIndex, SourceMaterial, OptionalName);
-
-	if (IsValid(MID))
-	{
-		MID->SetTextureParameterValue("AttributesTexture", AttributesTexture);
-
-		if (IsValid(VoxelContainer)) MID->SetVectorParameterValue("VoxelChuckSize", FVector(VoxelContainer->GetSetting().GetVoxelGrid()));
-	}
-
-	return MID;
-}
+/**********************/
+/** Collision Handling */
 
 bool ULFPVoxelRendererComponent::GetTriMeshSizeEstimates(FTriMeshCollisionDataEstimates& OutTriMeshEstimates, bool bInUseAllTriData) const
 {
@@ -1275,3 +1296,6 @@ void ULFPVoxelRendererComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetu
 		RebuildPhysicsData();
 	}
 }
+
+/**********************/
+/**********************/

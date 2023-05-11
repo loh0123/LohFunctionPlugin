@@ -390,6 +390,9 @@ struct FLFPVoxelRendererSetting
 
 public:
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		bool bPrintGenerateTime = false;
+
 	/* Always Fill Face On Chuck Border If True */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bFillChuckFace = false;
@@ -435,6 +438,8 @@ public:
 
 class ULFPVoxelContainerComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnVoxelRendererUpdate);
+
 /**
  * 
  */
@@ -479,6 +484,11 @@ public:
 
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
+
+public: /** Delegate */
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
+		FOnVoxelRendererUpdate OnVoxelRendererUpdate;
 
 
 /**********************/
