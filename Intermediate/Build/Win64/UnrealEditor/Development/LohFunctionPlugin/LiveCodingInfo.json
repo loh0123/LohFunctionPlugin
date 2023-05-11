@@ -21,15 +21,15 @@
 			"LFPTickManager.gen.cpp.obj",
 			"LFPVoxelContainerComponent.gen.cpp.obj",
 			"LFPVoxelRendererComponent.gen.cpp.obj",
-			"LFPWorldGrid.gen.cpp.obj",
+			"LFPWorldGrid.gen.cpp.obj"
+		],
+		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
 			"LohFunctionPlugin.init.gen.cpp.obj",
 			"LohFunctionPluginLibrary.gen.cpp.obj",
 			"LFPGridTickManager.cpp.obj",
 			"LFPInstanceGridComponent.cpp.obj",
 			"LFPTickManager.cpp.obj",
-			"LFPWorldGrid.cpp.obj"
-		],
-		"Module.LohFunctionPlugin.4_of_4.cpp.obj": [
+			"LFPWorldGrid.cpp.obj",
 			"LFPExperienceComponent.cpp.obj",
 			"LFPEquipmentComponent.cpp.obj",
 			"LFPInventoryComponent.cpp.obj",

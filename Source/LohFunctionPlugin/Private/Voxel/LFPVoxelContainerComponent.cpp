@@ -112,11 +112,55 @@ bool ULFPVoxelContainerComponent::IsVoxelPositionValid(const int32 RegionIndex, 
 	return IsChuckPositionValid(RegionIndex, ChuckIndex) && Setting.GetVoxelLength() > VoxelIndex && VoxelIndex >= 0;
 }
 
+bool ULFPVoxelContainerComponent::AddVoxelTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag)
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
+
+	FLFPVoxelPaletteData NewPalette(GetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex));
+
+	NewPalette.AddTag(VoxelTag);
+
+	return SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, NewPalette);
+}
+
+bool ULFPVoxelContainerComponent::AddVoxelTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag, const uint8 VoxelData)
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
+
+	FLFPVoxelPaletteData NewPalette(GetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex));
+
+	NewPalette.AddTagData(VoxelTag, VoxelData);
+
+	return SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, NewPalette);
+}
+
+bool ULFPVoxelContainerComponent::RemoveVoxelTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag)
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
+
+	FLFPVoxelPaletteData NewPalette(GetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex));
+
+	NewPalette.RemoveTag(VoxelTag);
+
+	return SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, NewPalette);
+}
+
+bool ULFPVoxelContainerComponent::RemoveVoxelTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag)
+{
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
+
+	FLFPVoxelPaletteData NewPalette(GetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex));
+
+	NewPalette.RemoveTagData(VoxelTag);
+
+	return SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, NewPalette);
+}
+
 /** Setter */
 
 bool ULFPVoxelContainerComponent::SetVoxelPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FLFPVoxelPaletteData& VoxelPalette)
 {
-	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false) return false;
+	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false || VoxelPalette.IsValid() == false) return false;
 
 	ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.Add(VoxelIndex, VoxelPalette);
 

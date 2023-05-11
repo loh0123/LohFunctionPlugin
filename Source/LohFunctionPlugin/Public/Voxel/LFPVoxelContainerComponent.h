@@ -106,7 +106,9 @@ struct FLFPVoxelPaletteData
 
 	FLFPVoxelPaletteData() {}
 
-	FLFPVoxelPaletteData(const FName& NewVoxelName, const TArray<FName>& NewVoxelTag) : VoxelName(NewVoxelName), VoxelTag(NewVoxelTag), RefCounter(1) {}
+	FLFPVoxelPaletteData(const FLFPVoxelPaletteData& Other) : VoxelName(Other.VoxelName), VoxelTag(Other.VoxelTag), VoxelData(Other.VoxelData), RefCounter(1) { check(VoxelData.Num() <= VoxelTag.Num()) }
+
+	FLFPVoxelPaletteData(const FName& NewVoxelName, const TArray<FName>& NewVoxelTag, const TArray<uint8>& NewVoxelData) : VoxelName(NewVoxelName), VoxelTag(NewVoxelTag), VoxelData(NewVoxelData), RefCounter(1) { check(VoxelData.Num() <= VoxelTag.Num()) }
 
 public:
 
@@ -120,12 +122,75 @@ public:
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelPaletteData")
 		TArray<FName> VoxelTag = TArray<FName>();
 
+	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPVoxelPaletteData")
+		TArray<uint8> VoxelData = TArray<uint8>();
+
 private:
 
 	UPROPERTY(SaveGame)
 		uint32 RefCounter = 0;
 
 public:
+
+	FORCEINLINE bool IsValid() const
+	{
+		return VoxelData.Num() <= VoxelTag.Num();
+	}
+
+	FORCEINLINE void RemoveTag(const FName& TagName)
+	{
+		int32 Index = INDEX_NONE;
+
+		if (VoxelTag.Find(TagName, Index) == false) return;
+
+		VoxelTag.RemoveAt(Index);
+
+		if (VoxelData.IsValidIndex(Index)) VoxelData.RemoveAt(Index);
+	}
+
+	FORCEINLINE void RemoveTagData(const FName& TagName)
+	{
+		int32 Index = INDEX_NONE;
+
+		if (VoxelTag.Find(TagName, Index) == false || VoxelData.IsValidIndex(Index) == false) return;
+
+		VoxelTag.Swap(Index, VoxelData.Num() - 1);
+		VoxelData.Swap(Index, VoxelData.Num() - 1);
+
+		Index = VoxelData.Num() - 1;
+
+		VoxelTag.RemoveAt(Index);
+		VoxelData.RemoveAt(Index);
+	}
+
+	FORCEINLINE void AddTag(const FName& TagName)
+	{
+		VoxelTag.AddUnique(TagName);
+	}
+
+	FORCEINLINE void AddTagData(const FName& TagName, const uint8 TagData)
+	{
+		int32 Index = INDEX_NONE;
+
+		if (VoxelTag.Find(TagName, Index))
+		{
+			if (VoxelData.IsValidIndex(Index))
+			{
+				VoxelData[Index] = TagData;
+			}
+			else
+			{
+				VoxelTag.Swap(Index, VoxelData.Num());
+				VoxelData.Add(TagData);
+			}
+		}
+		else
+		{
+			VoxelTag.Add(TagName);
+			VoxelTag.Swap(VoxelTag.Num() - 1, VoxelData.Num());
+			VoxelData.Add(TagData);
+		}
+	}
 
 	FORCEINLINE bool IsNone() const
 	{
@@ -156,12 +221,12 @@ public:
 
 	FORCEINLINE bool operator==(const FLFPVoxelPaletteData& Other) const
 	{
-		return VoxelName == Other.VoxelName && VoxelTag == Other.VoxelTag;
+		return VoxelName == Other.VoxelName && VoxelTag == Other.VoxelTag && VoxelData == Other.VoxelData;
 	}
 
 	FORCEINLINE bool operator!=(const FLFPVoxelPaletteData& Other) const
 	{
-		return VoxelName != Other.VoxelName || VoxelTag != Other.VoxelTag;
+		return VoxelName != Other.VoxelName || VoxelTag != Other.VoxelTag || VoxelData != Other.VoxelData;
 	}
 };
 
@@ -546,6 +611,18 @@ public: /** Checker */
 		FORCEINLINE bool IsVoxelPositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const;
 
 public: /** Setter */
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool AddVoxelTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool AddVoxelTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag, const uint8 VoxelData);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool RemoveVoxelTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool RemoveVoxelTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FName& VoxelTag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
 		FORCEINLINE bool SetVoxelPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FLFPVoxelPaletteData& VoxelPalette);
