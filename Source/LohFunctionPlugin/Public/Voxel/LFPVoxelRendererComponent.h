@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tasks/Task.h"
 #include "Components/MeshComponent.h"
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "Rendering/StaticMeshVertexBuffer.h"

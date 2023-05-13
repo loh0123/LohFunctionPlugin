@@ -7,8 +7,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MaterialDomain.h"
 #include "PrimitiveSceneProxy.h"
 #include "LocalVertexFactory.h"
+#include "Materials/MaterialRenderProxy.h"
 #include "PrimitiveViewRelevance.h"
 #include "Rendering/StaticMeshVertexBuffer.h"
 #include "Rendering/PositionVertexBuffer.h"
@@ -172,7 +174,7 @@ public:
 		bVerifyUsedMaterials = false;
 
 		bSupportsDistanceFieldRepresentation = RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
-		bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
+		//bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
@@ -410,7 +412,8 @@ public:
 			check(Section->RayTracingGeometry.Initializer.TotalPrimitiveCount > 0);
 			check(Section->RayTracingGeometry.Initializer.IndexBuffer.IsValid());
 
-			FRayTracingInstance RayTracingInstance;
+			FRayTracingInstance& RayTracingInstance = OutRayTracingInstances.AddDefaulted_GetRef();
+
 			RayTracingInstance.Geometry = &Section->RayTracingGeometry;
 			RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
 
@@ -421,8 +424,6 @@ public:
 			MeshBatch.CastRayTracedShadow = IsShadowCast(Context.ReferenceView);
 
 			RayTracingInstance.Materials.Add(MeshBatch);
-			RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
-			OutRayTracingInstances.Add(RayTracingInstance);
 		}
 	}
 

@@ -4,7 +4,8 @@
 #include "Voxel/LFPVoxelRendererComponent.h"
 #include "Voxel/LFPVoxelRendererSceneProxy.h"
 #include "DistanceFieldAtlas.h"
-#include "MeshCardRepresentation.h"
+#include "MaterialDomain.h"
+#include "MeshCardBuild.h"
 #include "Math/LFPGridLibrary.h"
 
 using namespace UE::Tasks;
