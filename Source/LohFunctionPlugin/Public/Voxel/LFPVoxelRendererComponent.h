@@ -481,6 +481,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void UpdateAttribute();
 
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE void SetFillChuckFace(const bool value);
+
 public:
 
 	UFUNCTION()
@@ -537,11 +540,11 @@ private:
 
 private:
 
-	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
 
-	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
 
-	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult);
+	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
 
 protected: /** Can be override to provide custom behavir */
 

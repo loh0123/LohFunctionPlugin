@@ -98,10 +98,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 				TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
-				GenerateBatchFaceData(CurrentContainer, TargetThreadResult);
+				GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
-				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult);
-				if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult);
+				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
+				if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
 				return TargetThreadResult;
 			}, ETaskPriority::BackgroundNormal);
@@ -197,6 +197,13 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	{
 		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
 	}
+}
+
+void ULFPVoxelRendererComponent::SetFillChuckFace(const bool value)
+{
+	GenerationSetting.bFillChuckFace = value;
+
+	UpdateMesh();
 }
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
@@ -326,7 +333,7 @@ bool ULFPVoxelRendererComponent::IsFaceVisible(const FLFPVoxelPaletteData& FromP
 	return CurrentIndex != INDEX_NONE && CurrentIndex != GetVoxelMaterialIndex(ToPaletteData);
 }
 
-void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
+void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
 {
 	const double StartTime = FPlatformTime::Seconds();
 
@@ -392,7 +399,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 
 					/** Check Do We Ignore Border Data And Always Fill The Face */
 					const FLFPVoxelPaletteData& TargetVoxelPalette = 
-						GenerationSetting.bFillChuckFace && (RegionIndex != TargetGlobalIndex.X || ChuckIndex != TargetGlobalIndex.Y) ? 
+						TargetGenerationSetting.bFillChuckFace && (RegionIndex != TargetGlobalIndex.X || ChuckIndex != TargetGlobalIndex.Y) ? 
 						FLFPVoxelPaletteData::EmptyData 
 						: 
 						TargetVoxelContainer->GetVoxelPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
@@ -453,10 +460,10 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 		}
 	}
 
-	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("BatchFace Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
-void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
+void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
 {
 	const double StartTime = FPlatformTime::Seconds();
 
@@ -564,10 +571,10 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 		//TargetThreadResult->CollisionData.ConvexElems.Add(CurrentConverElem);
 	}
 
-	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Collision Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Collision Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
-void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult)
+void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
 {
 	if (IsValid(TargetVoxelContainer) == false || TargetThreadResult.IsValid() == false) return;
 
@@ -710,7 +717,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 
 	const FVector& VoxelSize = ContainerSetting.GetVoxelHalfSize() * 2;
 
-	const FVector TargetDimensions = FVector(ContainerSetting.GetVoxelGrid()) * (double(GenerationSetting.LumenQuality) / 8.0);
+	const FVector TargetDimensions = FVector(ContainerSetting.GetVoxelGrid()) * (double(TargetGenerationSetting.LumenQuality) / 8.0);
 
 	const FIntVector MaxIndirectionDimensions(
 		FMath::Clamp(FMath::RoundToInt32(TargetDimensions.X), 1, int32(DistanceField::MaxIndirectionDimension)),
@@ -1145,7 +1152,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 		}
 	}
 
-	if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
+	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
 FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const
