@@ -299,7 +299,11 @@ UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInsta
 	{
 		MID->SetTextureParameterValue("AttributesTexture", AttributesTexture);
 
-		if (IsValid(VoxelContainer)) MID->SetVectorParameterValue("VoxelChuckSize", FVector(VoxelContainer->GetSetting().GetVoxelGrid()));
+		if (IsValid(VoxelContainer)) 
+		{
+			MID->SetVectorParameterValue("VoxelChuckSize", FVector(VoxelContainer->GetSetting().GetVoxelGrid()));
+			MID->SetVectorParameterValue("VoxelBlockSize", FVector(VoxelContainer->GetSetting().GetVoxelHalfSize() * 2));
+		}
 	}
 
 	return MID;
@@ -637,7 +641,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 			const int32 FullGridIndex = ULFPGridLibrary::ToGridIndex(GridLocation + FIntVector(SizeHalfOffset), CheckSize);
 			//const int32 GridIndex = ULFPGridLibrary::ToGridIndex(GridLocation, ContainerSetting.GetVoxelGrid());
 
-			checkf(FullGridIndex >= 0, TEXT("Error Index : %s"), *GridLocation.ToString());
+			checkf(FullGridIndex >= 0, TEXT("Error Index : %s : %d : %s : %s : %s"), *GridLocation.ToString(), SizeHalfOffset, *VoxelSize.ToString(), *LocalLocation.ToString(), *BrickSpaceLocation.ToString());
 
 			const FLFPCacheAccelerationInfo& CurrentInfo = AccelerationInfoList[FullGridIndex];
 
@@ -723,9 +727,9 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 		FMath::DivideAndRoundUp(MaxIndirectionDimensions.Z, 1 << (DistanceField::NumMips - 1))
 	);
 
-	const float BoundExpand = 5.0f;
+	const float BoundExpand = ContainerSetting.GetVoxelHalfSize().GetMax() * 0.5f;
 
-	const FBox LocalBounds = FBox(-ContainerSetting.GetVoxelHalfBounds() - BoundExpand, ContainerSetting.GetVoxelHalfBounds() + BoundExpand);
+	const FBox LocalBounds = FBox(-ContainerSetting.GetVoxelHalfBounds(), ContainerSetting.GetVoxelHalfBounds());
 
 	const FBox LocalSpaceMeshBounds(LocalBounds.ExpandBy(
 		LocalBounds.GetSize() / FVector(MinIndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * 0.25f))
@@ -744,8 +748,8 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 
 	const FVector MinBrickOffset = MinMipInfo.DistanceFieldVolumeBounds.Min + ContainerSetting.GetVoxelHalfBounds();
 
-	const int32 SizeOffset = FMath::DivideAndRoundUp(MinBrickOffset.GetAbsMax(), ContainerSetting.GetVoxelHalfSize().GetAbsMax() * 2) * 2;
-	const int32 SizeHalfOffset = SizeOffset / 2;
+	const int32 SizeHalfOffset = FMath::DivideAndRoundUp(MinBrickOffset.GetAbs(), ContainerSetting.GetVoxelHalfSize().GetAbs() * 2).GetMax();
+	const int32 SizeOffset = SizeHalfOffset * 2;
 
 	const FIntVector CheckSize(
 		ContainerSetting.GetVoxelGrid().X + SizeOffset,
@@ -879,6 +883,8 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 			{
 				const FIntVector BrickLocation = (ULFPGridLibrary::ToGridLocation(BrickIndex, IndirectionDimensions));
 				const FVector BrickSpaceLocation = (FVector(BrickLocation) * BrickSpaceSize) + BrickOffset;
+
+				//checkf((BrickSpaceLocation / (ContainerSetting.GetVoxelHalfSize() * 2)).GetMin() + SizeHalfOffset >= 0.0f, TEXT("Error Size : %s : %s : %lg : %lg"), *BrickOffset.ToString(), *MinBrickOffset.ToString(), MinBrickOffset.GetAbsMax(), ContainerSetting.GetVoxelHalfSize().GetAbsMax() * 2);
 
 				BrickTaskList.Add(FLFPDFBrickTask(
 					BrickLength,
@@ -1147,7 +1153,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 
 FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const
 {
-	return VoxelPalette.VoxelName.IsNone() ? FColor(255) : FColor(0);
+	return VoxelPalette.VoxelName.IsNone() ? FColor(0) : FColor(255);
 }
 
 int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const

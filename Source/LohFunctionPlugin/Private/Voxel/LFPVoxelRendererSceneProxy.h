@@ -174,6 +174,7 @@ public:
 		bVerifyUsedMaterials = false;
 
 		bSupportsDistanceFieldRepresentation = RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
+		bVisibleInLumenScene = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 		//bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
