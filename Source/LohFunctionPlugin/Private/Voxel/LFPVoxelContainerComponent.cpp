@@ -194,6 +194,11 @@ bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, 
 
 /** Getter */
 
+int32 ULFPVoxelContainerComponent::GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const
+{
+	return ChuckDelegateList.Contains(FIntPoint(RegionIndex, ChuckIndex)) ? ChuckDelegateList.FindChecked(FIntPoint(RegionIndex, ChuckIndex)).GetAmount() : INDEX_NONE;
+}
+
 FLFPVoxelChuckData ULFPVoxelContainerComponent::GetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex) const
 {
 	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return FLFPVoxelChuckData();
@@ -281,29 +286,29 @@ void ULFPVoxelContainerComponent::InitializeChuck(const int32 RegionIndex, const
 	return;
 }
 
-bool ULFPVoxelContainerComponent::AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& Delegate)
+FLFPVoxelChuckDelegate& ULFPVoxelContainerComponent::AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex)
 {
 	FIntPoint ChuckPos(RegionIndex, ChuckIndex);
 
 	if (ChuckDelegateList.Contains(ChuckPos))
 	{
-		return false;
+		return ChuckDelegateList.FindChecked(ChuckPos);
 	}
 
-	ChuckDelegateList.Add(ChuckPos, Delegate);
-
-	return true;
+	return ChuckDelegateList.Add(ChuckPos, FLFPVoxelChuckDelegate());
 }
 
-void ULFPVoxelContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex)
+void ULFPVoxelContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UObject* RemoveObject)
 {
 	FIntPoint ChuckPos(RegionIndex, ChuckIndex);
 
 	if (ChuckDelegateList.Contains(ChuckPos) == false) return;
 
-	ChuckDelegateList.FindChecked(ChuckPos).VoxelChuckUpdateEvent.Unbind();
+	auto& Delegate = ChuckDelegateList.FindChecked(ChuckPos);
 
-	ChuckDelegateList.Remove(ChuckPos);
+	Delegate.RemoveUObject(RemoveObject);
+
+	if (Delegate.CanRemove()) ChuckDelegateList.Remove(ChuckPos);
 }
 
 bool ULFPVoxelContainerComponent::UpdateChuckState()
@@ -314,7 +319,7 @@ bool ULFPVoxelContainerComponent::UpdateChuckState()
 
 	const FLFPVoxelChuckDelegate* ChuckDelegate = ChuckDelegateList.Find(ChuckUpdateState.Key());
 
-	if (ChuckDelegate != nullptr) ChuckDelegate->VoxelChuckUpdateEvent.ExecuteIfBound(ChuckUpdateState.Value());
+	if (ChuckDelegate != nullptr) ChuckDelegate->Broadcast(ChuckUpdateState.Value());
 
 	ChuckUpdateStateList.Remove(ChuckUpdateState.Key());
 

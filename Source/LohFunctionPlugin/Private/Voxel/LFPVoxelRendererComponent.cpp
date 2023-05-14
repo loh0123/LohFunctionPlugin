@@ -48,6 +48,8 @@ void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 		BodySetup = nullptr;
 	}
 
+	ThreadOutput.Wait();
+
 	ThreadResult.Reset();
 
 	ThreadOutput = {};
@@ -131,33 +133,28 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 
 	VoxelContainer = NewVoxelContainer;
 
-	FLFPVoxelChuckDelegate Delegate;
+	FLFPVoxelChuckDelegate& Delegate = VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex);
 
-	Delegate.VoxelChuckUpdateEvent.BindUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
+	Delegate.AddUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
 
-	if (VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex, Delegate))
-	{
-		RegionIndex = NewRegionIndex;
+	RegionIndex = NewRegionIndex;
 
-		ChuckIndex = NewChuckIndex;
+	ChuckIndex = NewChuckIndex;
 
-		VoxelContainer->InitializeVoxelChuck(NewRegionIndex, NewChuckIndex);
+	VoxelContainer->InitializeVoxelChuck(NewRegionIndex, NewChuckIndex);
 
-		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetVoxelGrid().X + 2, (VoxelContainer->GetSetting().GetVoxelGrid().Y + 2) * (VoxelContainer->GetSetting().GetVoxelGrid().Z + 2));
+	const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetVoxelGrid().X + 2, (VoxelContainer->GetSetting().GetVoxelGrid().Y + 2) * (VoxelContainer->GetSetting().GetVoxelGrid().Z + 2));
 
-		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+	AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
 
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 bool ULFPVoxelRendererComponent::ReleaseRenderer()
 {
 	if (IsValid(VoxelContainer) == false) return false;
 
-	VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex);
+	VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex, this);
 
 	VoxelContainer = nullptr;
 
@@ -463,7 +460,7 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 {
 	const double StartTime = FPlatformTime::Seconds();
 
-	const FLFPVoxelContainerSetting& VoxelSetting = VoxelContainer->GetSetting();
+	const FLFPVoxelContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
 
 	TMap<FIntVector, FIntVector> BatchDataMap;
 

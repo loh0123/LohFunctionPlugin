@@ -534,18 +534,52 @@ public: // Operator
 };
 
 
-DECLARE_DELEGATE_OneParam(FOnVoxelChuckUpdate, const FLFPChuckUpdateAction&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVoxelChuckUpdate, const FLFPChuckUpdateAction&);
 
 USTRUCT()
 struct FLFPVoxelChuckDelegate
 {
 	GENERATED_BODY()
 
-public:
+private:
 
 	// Update Event For Notify Chuck On Voxel Update
 	FOnVoxelChuckUpdate VoxelChuckUpdateEvent;
 
+
+	UPROPERTY()
+		int32 BindAmount = 0;
+public:
+
+	template <typename UserClass, typename... ParamTypes>
+	FORCEINLINE void AddUObject(UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void(const FLFPChuckUpdateAction&)>::Type InFunc)
+	{
+		VoxelChuckUpdateEvent.AddUObject(InUserObject, InFunc);
+
+		BindAmount++;
+	}
+
+	FORCEINLINE void RemoveUObject(const UObject* InUserObject)
+	{
+		VoxelChuckUpdateEvent.RemoveAll(InUserObject);
+
+		BindAmount--;
+	}
+
+	FORCEINLINE void Broadcast(const FLFPChuckUpdateAction& UpdateData) const
+	{
+		VoxelChuckUpdateEvent.Broadcast(UpdateData);
+	}
+
+	FORCEINLINE bool CanRemove() const
+	{
+		return BindAmount <= 0;
+	}
+
+	FORCEINLINE int32 GetAmount() const
+	{
+		return BindAmount;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -636,6 +670,10 @@ public: /** Setter */
 public: /** Getter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE int32 GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const;
+
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE FLFPVoxelChuckData GetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelContainerComponent | Getter")
@@ -673,11 +711,11 @@ public: /** Chuck Request */
 
 	/** Request chuck info on chuck spawn */
 	UFUNCTION() 
-		FORCEINLINE bool AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, FLFPVoxelChuckDelegate& Delegate);
+		FORCEINLINE FLFPVoxelChuckDelegate& AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 	/** Release chuck info on chuck destroy */
 	UFUNCTION() 
-		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
+		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UObject* RemoveObject);
 
 protected: /** Function for updating chuck and data */
 
