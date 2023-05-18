@@ -29,25 +29,33 @@ void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	auto& CurrentTickIndex = TickList[FMath::RandHelper(TickList.Num())];
+	TickList.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
+		{
+			if (CurrentTickIndex.CanTick())
+			{
+				OnTick.Broadcast(CurrentTickIndex.Index);
 
-	if (CurrentTickIndex.CanTick())
-	{
-		OnTick.Broadcast(CurrentTickIndex.Index);
+				return true;
+			}
 
-		CurrentTickIndex.ResetInterval();
-	}
-	else
-	{
-		CurrentTickIndex.DecreaseInterval();
-	}
+			CurrentTickIndex.DecreaseInterval();
+
+			return false;
+		});
 }
 
 void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData)
 {
-	TickList.RemoveSingleSwap(TickData);
+	const int32 Index = TickList.Find(TickData);
 
-	TickList.Add(TickData);
+	if (Index != INDEX_NONE)
+	{
+		TickList[Index].Interval = TickData.Interval;
+	}
+	else
+	{
+		TickList.Add(TickData);
+	}
 
 	SetComponentTickEnabled(true);
 }

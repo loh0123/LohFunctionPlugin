@@ -14,9 +14,9 @@ struct FLFPIndexTickData
 
 public:
 
-	FLFPIndexTickData() : Index(INDEX_NONE), StartInterval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex) : Index(NewIndex), StartInterval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex, const int32 NewStartInterval) : Index(NewIndex), StartInterval(NewStartInterval){}
+	FLFPIndexTickData() : Index(INDEX_NONE), Interval(INDEX_NONE) {}
+	FLFPIndexTickData(const int32 NewIndex) : Index(NewIndex), Interval(INDEX_NONE) {}
+	FLFPIndexTickData(const int32 NewIndex, const int32 NewStartInterval) : Index(NewIndex), Interval(NewStartInterval){}
 
 public:
 
@@ -24,12 +24,7 @@ public:
 		int32 Index = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
-		int32 StartInterval = INDEX_NONE;
-
-private:
-
-	UPROPERTY(SaveGame)
-		int32 CurrentInterval = INDEX_NONE;
+		int32 Interval = INDEX_NONE;
 
 public: // Operator
 
@@ -42,19 +37,12 @@ public:
 
 	FORCEINLINE bool CanTick() const
 	{
-		return CurrentInterval <= 0;
+		return Interval <= 0;
 	}
 
 	FORCEINLINE int32 DecreaseInterval()
 	{
-		return --CurrentInterval;
-	}
-
-	FORCEINLINE int32 ResetInterval()
-	{
-		CurrentInterval = StartInterval;
-
-		return CurrentInterval;
+		return --Interval;
 	}
 };
 
