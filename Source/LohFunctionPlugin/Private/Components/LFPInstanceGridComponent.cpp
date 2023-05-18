@@ -42,6 +42,29 @@ void ULFPInstanceGridComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
+void ULFPInstanceGridComponent::Serialize(FArchive& Ar)
+{
+	const TArray<FLFPInstanceGridMeshData> TempMeshList = MeshList;
+
+	Super::Serialize(Ar);
+	
+	if (Ar.IsLoading() == false || Ar.IsSaveGame() == false) return;
+
+	for (int32 Index = 0; Index < TempMeshList.Num(); Index++)
+	{
+		if (MeshList.Num() <= Index)
+		{
+			MeshList.Add(TempMeshList[Index]);
+		}
+		else
+		{
+			MeshList[Index].InstanceGridIndexList = TempMeshList[Index].InstanceGridIndexList;
+		}
+	}
+
+	RefreshInstance();
+}
+
 bool ULFPInstanceGridComponent::IsMeshIndexValid(const int32 Index) const
 {
 	return MeshList.IsValidIndex(Index) && IsValid(MeshList[Index].ISMComponent);
@@ -90,6 +113,20 @@ int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponentList(TArray<
 	return Count;
 }
 
+void ULFPInstanceGridComponent::RefreshInstance()
+{
+	for (auto& MeshData : MeshList)
+	{
+		MeshData.ISMComponent->ClearInstances();
+
+		for (const auto InstanceGridIndex : MeshData.InstanceGridIndexList)
+		{
+			const int32 ISMIndex = MeshData.ISMComponent->AddInstance(InstanceGridIndex.ISMTransform);
+			MeshData.ISMComponent->SetCustomData(ISMIndex, InstanceGridIndex.ISMCustomDataList);
+		}
+	}
+}
+
 bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
 {
 	if (IsValid(WorldGrid) == false) return false;
@@ -102,7 +139,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 	FVector InstanceWorldLocation;
 	FRotator InstanceWorldRotation;
 
-	WorldGrid->GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bIsWorld, InstanceWorldLocation, InstanceWorldRotation);
+	WorldGrid->GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bAddHalfGap, InstanceWorldLocation, InstanceWorldRotation);
 
 	FTransform TargetTransform(InstanceWorldRotation + InstanceInfo.RotationOffset, InstanceWorldLocation + InstanceInfo.LocationOffset, InstanceInfo.Scale);
 
@@ -120,7 +157,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 		/* Same Instance So Just Update Transform */
 		if (GridInstanceIndexList[GridIndex] == InstanceInfo.InstanceIndex)
 		{
-			ISMData.ISMComponent->UpdateInstanceTransform(TargetIndex, TargetTransform, InstanceInfo.bIsWorld, true);
+			ISMData.ISMComponent->UpdateInstanceTransform(TargetIndex, TargetTransform, true, true);
 
 			return true;
 		}
@@ -142,9 +179,11 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 
 		FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
 
-		ISMData.ISMComponent->AddInstance(TargetTransform, InstanceInfo.bIsWorld);
+		const int32 ISMIndex = ISMData.ISMComponent->AddInstance(TargetTransform, true);
 
-		ISMData.InstanceGridIndexList.Add(GridIndex);
+		ISMData.ISMComponent->GetInstanceTransform(ISMIndex, TargetTransform);
+
+		ISMData.InstanceGridIndexList.Add(FLFPInstanceData(TargetTransform, GridIndex));
 	}
 
 	return true;
@@ -179,6 +218,13 @@ bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const i
 
 			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
 
+			if (ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList.IsValidIndex(DataIndex) == false)
+			{
+				ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList.SetNum(DataIndex + 1);
+			}
+
+			ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList[DataIndex] = DataValue;
+
 			return ISMData.ISMComponent->SetCustomDataValue(TargetIndex, DataIndex, DataValue, bMarkRenderStateDirty);
 		}
 	}
@@ -199,6 +245,8 @@ bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const 
 			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
 
 			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
+
+			ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList = DataList;
 
 			return ISMData.ISMComponent->SetCustomData(TargetIndex, DataList, bMarkRenderStateDirty);
 		}

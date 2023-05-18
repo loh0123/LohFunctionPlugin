@@ -26,7 +26,7 @@ struct FLFPInventoryItemData
 
 	static const FLFPInventoryItemData EmptyInventoryItemData;
 
-	FORCEINLINE	bool operator==(const FLFPInventoryItemData& NewData)
+	FORCEINLINE	bool operator==(const FLFPInventoryItemData& NewData) const
 	{
 		return ItemTag == NewData.ItemTag && MetaData.JsonString == NewData.MetaData.JsonString;
 	}
