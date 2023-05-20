@@ -90,9 +90,17 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		ULFPVoxelContainerComponent* CurrentContainer = VoxelContainer;
 		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
+		TArray<bool> MaterialLumenSupportList;
+
+		MaterialLumenSupportList.Init(true, MaterialList.Num());
+
+		for (int32 Index = 0; Index < MaterialList.Num(); Index++)
+		{
+			if (IsValid(MaterialList[Index])) MaterialLumenSupportList[Index] = MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
+		}
 
 		ThreadOutput = 
-			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting]
+			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
 			{ 
 				FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
 
@@ -101,7 +109,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
 				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
-				if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting);
+				if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
 
 				return TargetThreadResult;
 			}, ETaskPriority::BackgroundNormal);
@@ -339,7 +347,9 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 
 	const FLFPVoxelContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
 
-	TargetThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
+	//TargetThreadResult->SectionData.Init(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()), FMath::Max(GetNumMaterials(), 1));
+
+	int32 MaxMaterialIndex = 1;
 
 	const auto& PushFaceData = [&](TMap<FIntVector, FIntPoint>& BatchDataMap, FInt32Rect& CurrentBatchFaceData, int32& CurrentBatchMaterial) {
 		const FIntVector TargetMax = FIntVector(CurrentBatchFaceData.Max.X - 1, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial);
@@ -353,6 +363,9 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 		}
 
 		BatchDataMap.Add(FIntVector(CurrentBatchFaceData.Max.X, CurrentBatchFaceData.Max.Y, CurrentBatchMaterial), CurrentBatchFaceData.Min);
+
+		if (MaxMaterialIndex < CurrentBatchMaterial) MaxMaterialIndex = CurrentBatchMaterial;
+
 		CurrentBatchMaterial = INDEX_NONE;
 	};
 
@@ -441,6 +454,14 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 			if (CurrentBatchMaterial != INDEX_NONE)
 			{
 				PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+			}
+
+			TargetThreadResult->SectionData.Reserve(MaxMaterialIndex + 1);
+
+			/** Fill Up Section If Not Enought */
+			while (TargetThreadResult->SectionData.IsValidIndex(MaxMaterialIndex) == false)
+			{
+				TargetThreadResult->SectionData.Add(FLFPVoxelRendererSectionData(VoxelSetting.GetVoxelGrid()));
 			}
 
 			for (const auto& BatchData : BatchDataMap)
@@ -574,7 +595,7 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPVoxelContainerC
 	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Collision Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
-void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
+void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting, const TArray<bool>& MaterialLumenSupportList)
 {
 	if (IsValid(TargetVoxelContainer) == false || TargetThreadResult.IsValid() == false) return;
 
@@ -773,7 +794,12 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPVoxelContainerComponent* 
 		{
 			const FIntVector VoxelPosition(ULFPGridLibrary::ToGridLocation(Index, CheckSize) - FIntVector(SizeHalfOffset));
 
-			AccelerationInfoList[Index].MaterialIndex = GetVoxelMaterialIndex(TargetVoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, ULFPGridLibrary::ToGridIndex(VoxelPosition, ContainerSetting.GetVoxelGrid())));
+			const int32 MaterialIndex = GetVoxelMaterialIndex(TargetVoxelContainer->GetVoxelPalette(RegionIndex, ChuckIndex, ULFPGridLibrary::ToGridIndex(VoxelPosition, ContainerSetting.GetVoxelGrid())));
+
+			if (MaterialLumenSupportList.IsValidIndex(MaterialIndex) == false || MaterialLumenSupportList[MaterialIndex])
+			{
+				AccelerationInfoList[Index].MaterialIndex = MaterialIndex;
+			}
 		}
 
 		ParallelFor(CheckLength, [&](const int32 Index) {
