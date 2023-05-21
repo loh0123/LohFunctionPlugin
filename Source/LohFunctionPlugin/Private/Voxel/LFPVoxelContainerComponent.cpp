@@ -2,6 +2,7 @@
 
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "./Math/LFPGridLibrary.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ReflectedTypeAccessors.h"
 
 
@@ -13,6 +14,15 @@ ULFPVoxelContainerComponent::ULFPVoxelContainerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	// ...
+}
+
+void ULFPVoxelContainerComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	FDoRepLifetimeParams Params;
+
+	DOREPLIFETIME_WITH_PARAMS(ULFPVoxelContainerComponent, RegionDataList, Params);
 }
 
 
@@ -52,37 +62,7 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 FString ULFPVoxelContainerComponent::Test()
 {
-	FLFPVoxelChuckData TestChuckData;
-
-	FLFPVoxelPaletteData TestPalette;
-
-	TestChuckData.InitChuckData(TestPalette, Setting.GetVoxelLength());
-
-	TestPalette.VoxelName = FName("Dirt");
-
-	TestChuckData.SetIndexData(0, TestPalette);
-	TestChuckData.SetIndexData(10, TestPalette);
-
-	TestPalette.VoxelName = FName("Stone");
-
-	TestChuckData.SetIndexData(20, TestPalette);
-	TestChuckData.SetIndexData(30, TestPalette);
-
-	TestPalette.VoxelName = FName("Grass");
-	
-	TestChuckData.SetIndexData(20, TestPalette);
-	TestChuckData.SetIndexData(30, TestPalette);
-
-	TestPalette.VoxelName = FName("Hello");
-
-	TestChuckData.SetIndexData(40, TestPalette);
-	TestChuckData.SetIndexData(50, TestPalette);
-
-	return FString::Printf(TEXT("Total : %d, Encode : %d, Palette : %d, Default : %llu"),
-		TestChuckData.GetPaletteIndex(10),
-		TestChuckData.GetEncodeLength(), 
-		TestChuckData.GetPaletteLength(),
-		sizeof(FLFPVoxelChuckData));
+	return "";
 }
 
 /** Checker */

@@ -38,6 +38,9 @@ public class LohFunctionPlugin : ModuleRules
 				"Engine",
 				"RenderCore",
 				"RHI",
+
+                "Networking",
+                "Sockets",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

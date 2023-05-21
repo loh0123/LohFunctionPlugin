@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Engine/DataTable.h"
+//#include "Engine/DataTable.h"
+//#include "Engine/NetSerialization.h"
+//#include "Common/TcpListener.h"
 #include "LFPVoxelContainerComponent.generated.h"
 
 USTRUCT( BlueprintType )
@@ -741,7 +743,7 @@ protected: // Initialize Data
 protected:  // Runtime Data
 
 	/** This store the chuck */
-	UPROPERTY(SaveGame) 
+	UPROPERTY(SaveGame, Replicated)
 		TArray<FLFPVoxelRegionData> RegionDataList;
 
 	/** This store chuck delegate to call */
