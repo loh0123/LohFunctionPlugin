@@ -2,7 +2,7 @@
 
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "./Math/LFPGridLibrary.h"
-#include "Net/UnrealNetwork.h"
+#include "Serialization/ArchiveProxy.h"
 #include "UObject/ReflectedTypeAccessors.h"
 
 
@@ -14,15 +14,6 @@ ULFPVoxelContainerComponent::ULFPVoxelContainerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	// ...
-}
-
-void ULFPVoxelContainerComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	FDoRepLifetimeParams Params;
-
-	DOREPLIFETIME_WITH_PARAMS(ULFPVoxelContainerComponent, RegionDataList, Params);
 }
 
 
@@ -62,6 +53,18 @@ void ULFPVoxelContainerComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 FString ULFPVoxelContainerComponent::Test()
 {
+	TArray<uint8> SrData;
+
+	FMemoryWriter MemoryWriter(SrData, true);
+	FArchiveProxy Ar(MemoryWriter);
+	Ar.SetIsSaving(true);
+
+	Ar << RegionDataList;
+
+	FIntVector Pos(0, 0, 0);
+
+	Pos.Serialize(Ar);
+
 	return "";
 }
 

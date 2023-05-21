@@ -221,6 +221,13 @@ public:
 		return RefCounter == 0;
 	}
 
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPVoxelPaletteData& Data)
+	{
+		return Ar << Data.VoxelName << Data.VoxelTag << Data.VoxelData << Data.RefCounter;
+	}
+
 	FORCEINLINE bool operator==(const FLFPVoxelPaletteData& Other) const
 	{
 		return VoxelName == Other.VoxelName && VoxelTag == Other.VoxelTag && VoxelData == Other.VoxelData;
@@ -485,6 +492,13 @@ public:
 		return IndexSize;
 	}
 
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPVoxelChuckData& Data)
+	{
+		return Ar << Data.PaletteList << Data.OpenPaletteList << Data.IndexList << Data.EncodeBtye << Data.IndexSize;
+	}
+
 };
 
 USTRUCT(BlueprintType)
@@ -509,6 +523,12 @@ public:
 		ChuckData.Init(FLFPVoxelChuckData(), ChuckLength);
 	}
 
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPVoxelRegionData& Data)
+	{
+		return Ar << Data.ChuckData;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -743,7 +763,7 @@ protected: // Initialize Data
 protected:  // Runtime Data
 
 	/** This store the chuck */
-	UPROPERTY(SaveGame, Replicated)
+	UPROPERTY(SaveGame)
 		TArray<FLFPVoxelRegionData> RegionDataList;
 
 	/** This store chuck delegate to call */
