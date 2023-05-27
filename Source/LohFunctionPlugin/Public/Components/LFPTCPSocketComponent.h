@@ -10,8 +10,64 @@
 #include "LFPTCPSocketComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpConnectionAccepted, const TArray<uint8>&, IPAddress);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpDataReceive, const TArray<uint8>&, Data);
+UENUM(BlueprintType)
+enum class ELFPTCPDIsconnectFlags : uint8
+{
+	LFP_User			UMETA(DisplayName = "User"),
+	LFP_NoConnection	UMETA(DisplayName = "NoConnection"),
+	LFP_LoseConnection	UMETA(DisplayName = "LoseConnection"),
+};
+
+USTRUCT(BlueprintType)
+struct FLFPTCPSocketSetting
+{
+	GENERATED_BODY()
+
+public:
+
+	/** How many time to try reconnect. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		uint8 ReconnectAttempt = 15;
+
+	/** Soceket listen amount, if -1 than switch to client mode. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		int32 MaxConnection = INDEX_NONE;
+
+	/** Soceket read and write buffer size. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		int32 BufferMaxSize = 2 * 1024 * 1024;
+
+	/** Holds the server / client IP. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		FString Desc;
+
+	/** Holds the server / client IP. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		FString IP;
+
+	/** Holds the server / client port. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		int32 Port;
+
+	/** How much time before trying to reconnect. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		float ReconnectTime = 3.0f;
+
+	/** Holds the time to sleep between checking for pending connections. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		float TickInterval = 0.01f;
+
+	/** Holds a flag indicating if the bound address can be used by other sockets. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		bool bSocketReusable;
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLFPTCPSocketEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPTCPSocketDIsconnect, const ELFPTCPDIsconnectFlags, DIsconnectFlags, const FLFPTCPSocketSetting, SocketSetting);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPTCPSocketMessage, const TArray<uint8>&, FromIP, const int32, FromPort, const TArray<uint8>&, Bytes);
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpConnectionAccepted, const TArray<uint8>&, IPAddress);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpDataReceive, const TArray<uint8>&, Data);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPTCPSocketComponent : public UActorComponent
@@ -26,35 +82,60 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public: /** Delegate */
+public:
 
-	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Delegate")
-		FOnTcpConnectionAccepted OnTcpConnectionAccepted;
+	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
+		int32 AddTcpServerList(const int32 MaxConnection, const FString IPAddress, const int32 Port, const float TickInterval);
 
-	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Delegate")
-		FOnTcpDataReceive OnTcpDataReceive;
+	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
+		void ConnectToServer(FLFPTCPSocketSetting InSocketSetting);
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
+		FLFPTCPSocketEvent OnConnected;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
+		FLFPTCPSocketEvent OnReconnected;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
+		FLFPTCPSocketDIsconnect OnDisconnected;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
+		FLFPTCPSocketMessage OnDataReceived;
+
+private:
+
+	TArray<TSharedRef<class FLFPTcpSocket>> SocketList;
+
+	TArray<int32> InvalidSocketList;
 };
 
 /**  */
-class FLFPSocketListener : public FRunnable
+class FLFPTcpSocket : public FRunnable, public TSharedFromThis<FLFPTcpSocket>
 {
-	FLFPSocketListener(ULFPTCPSocketComponent* NewComponent, int32 NewMaxConnection, const FIPv4Endpoint& LocalEndpoint, const FTimespan& InSleepTime = FTimespan::FromSeconds(1), bool bInReusable = true)
-		: Component(NewComponent)
-		, MaxConnection(NewMaxConnection)
-		, Endpoint(LocalEndpoint)
-		, SleepTime(InSleepTime)
-		, Socket(nullptr)
-		, bStopping(false)
-		, bSocketReusable(bInReusable)
+public:
+
+	FLFPTcpSocket(ULFPTCPSocketComponent* NewComponent, const FLFPTCPSocketSetting& InSocketSetting)
+		: bStopping(false)
+		, Component(NewComponent)
+		, SocketSetting(InSocketSetting)
+		, MainSocket(nullptr)
+		, Thread(nullptr)
+		, ConnectedSocketList({})
+		, Endpoint(ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr())
+		, EndCode(ELFPTCPDIsconnectFlags::LFP_User)
 	{
-		Thread = FRunnableThread::Create(this, TEXT("FLFPSocketListener"), 8 * 1024, TPri_Normal);
+		Thread = FRunnableThread::Create(this, TEXT("FLFPTcpSocket"), 8 * 1024, TPri_Normal);
 	}
 
-	~FLFPSocketListener()
+	~FLFPTcpSocket()
 	{
 		Component = nullptr;
 
@@ -64,131 +145,55 @@ class FLFPSocketListener : public FRunnable
 			delete Thread;
 		}
 
-		if (Socket != nullptr)
+		if (MainSocket != nullptr)
 		{
-			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
-			Socket = nullptr;
+			MainSocket->Close();
+			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
+			MainSocket = nullptr;
+		}
+
+		for (FSocket*& ClientSocket : ConnectedSocketList)
+		{
+			ClientSocket->Close();
+			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
+			ClientSocket = nullptr;
 		}
 	}
 
 public:
 
-	const FIPv4Endpoint& GetLocalEndpoint() const
-	{
-		return Endpoint;
-	}
+	virtual bool Init() override;
 
-	FSocket* GetSocket() const
-	{
-		return Socket;
-	}
+	virtual uint32 Run() override;
 
-	bool IsActive() const
-	{
-		return ((Socket != nullptr) && !bStopping);
-	}
+	virtual void Stop() override;
 
-public:
+	virtual void Exit() override;
 
-	virtual bool Init() override
-	{
-		if (Socket == nullptr)
-		{
-			Socket = FTcpSocketBuilder(TEXT("FLFPSocketListener server"))
-				.AsReusable(bSocketReusable)
-				.BoundToEndpoint(Endpoint)
-				.Listening(MaxConnection)
-				.WithSendBufferSize(2 * 1024 * 1024);
-		}
-
-		return (Socket != nullptr);
-	}
-
-	virtual uint32 Run() override
-	{
-		TSharedRef<FInternetAddr> RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-
-		const bool bHasZeroSleepTime = (SleepTime == FTimespan::Zero());
-
-		while (!bStopping)
-		{
-			auto TargetComp = Component;
-
-			bool Pending = false;
-
-			if (Socket->HasPendingConnection(Pending) && Pending)
-			{
-				Socket->Accept(*RemoteAddress, TEXT("FLFPSocketListener client accepted"));
-
-				AsyncTask(ENamedThreads::GameThread, [TargetComp, RemoteAddress]() {
-					TargetComp->OnTcpConnectionAccepted.Broadcast(RemoteAddress.Get().GetRawIp());
-				});
-			}
-			else
-			{
-				if (IsValid(Component) && IsValid(Component->GetOwner())) UE_LOG(LogTemp, Log, TEXT("TCP connection failed : %s"), *Component->GetOwner()->GetName());
-
-				break;
-			}
-
-			uint32 PendingDataSize = 0;
-
-			if (Socket->HasPendingData(PendingDataSize) && PendingDataSize != 0)
-			{
-				TArray<uint8> RecData;
-
-				int32 BytesRead = 0;
-
-				RecData.SetNumUninitialized(PendingDataSize);
-
-				if (Socket->Recv(RecData.GetData(), PendingDataSize, BytesRead))
-				{
-					AsyncTask(ENamedThreads::GameThread, [TargetComp, RecData]() {
-						TargetComp->OnTcpDataReceive.Broadcast(RecData);
-						});
-				}
-				else
-				{
-					if (IsValid(Component) && IsValid(Component->GetOwner())) UE_LOG(LogTemp, Log, TEXT("TCP data read failed : %s : PendingDataSize = %d : BytesRead = %d"), *Component->GetOwner()->GetName(), PendingDataSize, BytesRead);
-
-					break;
-				}
-			}
-
-			FPlatformProcess::Sleep(SleepTime.GetSeconds());
-		}
-
-		return 0;
-	}
-
-	virtual void Stop() override
-	{
-		bStopping = true;
-	}
-
-	virtual void Exit() override { }
+	FORCEINLINE bool IsSocketConnected(FSocket* InSocket) const;
 
 private:
 
-	TObjectPtr<ULFPTCPSocketComponent> Component;
+	/** Is this socket closing. */
+	bool bStopping = false;
 
-	int32 MaxConnection = 8;
+	/** Component that create the socket. */
+	TWeakObjectPtr<ULFPTCPSocketComponent> Component;
 
-	/** Holds the server endpoint. */
-	FIPv4Endpoint Endpoint;
+	/** This contain all socket setting */
+	FLFPTCPSocketSetting SocketSetting;
 
-	/** Holds the time to sleep between checking for pending connections. */
-	FTimespan SleepTime;
-
-	/** Holds the server socket. */
-	FSocket* Socket;
-
-	/** Holds a flag indicating that the thread is stopping. */
-	bool bStopping;
-
-	/** Holds a flag indicating if the bound address can be used by other sockets. */
-	bool bSocketReusable;
+	/** Holds the main socket. */
+	FSocket* MainSocket;
 
 	/** Holds the thread object. */
 	FRunnableThread* Thread;
+
+	/** Holds the connected socket. */
+	TArray<FSocket*> ConnectedSocketList;
+
+	/** Holds the server endpoint. */
+	TSharedRef<FInternetAddr> Endpoint;
+
+	ELFPTCPDIsconnectFlags EndCode = ELFPTCPDIsconnectFlags::LFP_User;
 };
