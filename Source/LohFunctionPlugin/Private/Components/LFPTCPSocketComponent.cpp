@@ -268,6 +268,10 @@ uint32 FLFPTcpSocket::Run()
 
 					ClientSocket->SetNonBlocking(false);
 				}
+				else
+				{
+					CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+				}
 			}
 		}
 		else
