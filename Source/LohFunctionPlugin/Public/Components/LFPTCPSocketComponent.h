@@ -37,9 +37,13 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
 		int32 BufferMaxSize = 2 * 1024 * 1024;
 
-	/** Holds the server / client IP. */
+	/** Holds the main socket description. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString Desc;
+		FString MainDesc;
+
+	/** Holds the connected socket description. */
+	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
+		FString ConnectedDesc;
 
 	/** Holds the server / client IP. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
@@ -62,9 +66,9 @@ public:
 		bool bSocketReusable;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLFPTCPSocketEvent);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPTCPSocketDIsconnect, const ELFPTCPDIsconnectFlags, DIsconnectFlags, const FLFPTCPSocketSetting, SocketSetting);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPTCPSocketMessage, const TArray<uint8>&, FromIP, const int32, FromPort, const TArray<uint8>&, Bytes);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPTCPSocketEvent, const int32, SocketID, const int32, ClientID);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FLFPTCPSocketDisconnect, const ELFPTCPDIsconnectFlags, DIsconnectFlags, const FLFPTCPSocketSetting, SocketSetting, const int32, SocketID, const int32, ClientID);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPTCPSocketMessage, const int32, SocketID, const int32, ClientID, const TArray<uint8>&, Bytes);
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpConnectionAccepted, const TArray<uint8>&, IPAddress);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTcpDataReceive, const TArray<uint8>&, Data);
@@ -91,10 +95,13 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
-		int32 AddTcpServerList(const int32 MaxConnection, const FString IPAddress, const int32 Port, const float TickInterval);
+		void ResizeSocketList();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
-		void ConnectToServer(FLFPTCPSocketSetting InSocketSetting);
+		int32 CreateSocket(FLFPTCPSocketSetting InSocketSetting);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
+		bool SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID = -1);
 
 public:
 
@@ -105,7 +112,7 @@ public:
 		FLFPTCPSocketEvent OnReconnected;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
-		FLFPTCPSocketDIsconnect OnDisconnected;
+		FLFPTCPSocketDisconnect OnDisconnected;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPTCPSocketComponent | Events")
 		FLFPTCPSocketMessage OnDataReceived;
@@ -113,8 +120,6 @@ public:
 private:
 
 	TArray<TSharedRef<class FLFPTcpSocket>> SocketList;
-
-	TArray<int32> InvalidSocketList;
 };
 
 /**  */
@@ -122,8 +127,9 @@ class FLFPTcpSocket : public FRunnable, public TSharedFromThis<FLFPTcpSocket>
 {
 public:
 
-	FLFPTcpSocket(ULFPTCPSocketComponent* NewComponent, const FLFPTCPSocketSetting& InSocketSetting)
-		: bStopping(false)
+	FLFPTcpSocket(const int32 InID, ULFPTCPSocketComponent* NewComponent, const FLFPTCPSocketSetting& InSocketSetting)
+		: SocketID(InID)
+		, bStopping(false)
 		, Component(NewComponent)
 		, SocketSetting(InSocketSetting)
 		, MainSocket(nullptr)
@@ -170,12 +176,27 @@ public:
 
 	virtual void Exit() override;
 
-	FORCEINLINE bool IsSocketConnected(FSocket* InSocket) const;
+public:
+
+	FORCEINLINE bool IsStopped() const;
+
+	FORCEINLINE FSocket* GetConnectedSocket(const int32 ID);
+
+	FORCEINLINE FCriticalSection& GetCriticalSection();
 
 private:
 
+	FORCEINLINE bool IsSocketConnected(FSocket* InSocket) const;
+
+	FORCEINLINE bool CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, const int32 ClientID = -1);
+
+private:
+
+	/** For identify socket. */
+	int32 SocketID = INDEX_NONE;
+
 	/** Is this socket closing. */
-	bool bStopping = false;
+	std::atomic<bool> bStopping = false;
 
 	/** Component that create the socket. */
 	TWeakObjectPtr<ULFPTCPSocketComponent> Component;
@@ -196,4 +217,6 @@ private:
 	TSharedRef<FInternetAddr> Endpoint;
 
 	ELFPTCPDIsconnectFlags EndCode = ELFPTCPDIsconnectFlags::LFP_User;
+
+	FCriticalSection CriticalSection;
 };
