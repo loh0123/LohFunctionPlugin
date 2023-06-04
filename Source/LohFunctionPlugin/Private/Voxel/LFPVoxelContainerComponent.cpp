@@ -187,7 +187,7 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckDataInBtyes(const int32 RegionInd
 {
 	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
 
-	FArchiveLoadCompressedProxy CompressedProxy(Data, EName::Gzip);
+	FArchiveLoadCompressedProxy CompressedProxy(Data, EName::Oodle);
 
 	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
 
@@ -222,7 +222,7 @@ void ULFPVoxelContainerComponent::GetVoxelChuckDataInBtyes(const int32 RegionInd
 {
 	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return;
 
-	FArchiveSaveCompressedProxy CompressedProxy(Result, EName::Gzip, ECompressionFlags::COMPRESS_BiasSpeed);
+	FArchiveSaveCompressedProxy CompressedProxy(Result, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
 
 	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
 
