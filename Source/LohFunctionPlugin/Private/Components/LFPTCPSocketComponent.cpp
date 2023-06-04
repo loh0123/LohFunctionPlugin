@@ -11,7 +11,7 @@ ULFPTCPSocketComponent::ULFPTCPSocketComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -110,7 +110,7 @@ bool FLFPTcpSocket::Init()
 
 	if (SocketSubsystem == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : %s : SocketSubsystem is nullptr"), *SocketSetting.MainDesc);
+		UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : %s : SocketSubsystem is nullptr"), *SocketSetting.ServerDescription);
 
 		return false;
 	}
@@ -122,7 +122,7 @@ bool FLFPTcpSocket::Init()
 
 	if (ResolveInfo->GetErrorCode() != 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : %s : DNS resolve error code %d"), *SocketSetting.MainDesc, ResolveInfo->GetErrorCode());
+		UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : %s : DNS resolve error code %d"), *SocketSetting.ServerDescription, ResolveInfo->GetErrorCode());
 
 		return false;
 	}
@@ -134,7 +134,7 @@ bool FLFPTcpSocket::Init()
 	{
 		if (SocketSetting.MaxConnection > 0)
 		{
-			MainSocket = FTcpSocketBuilder(SocketSetting.MainDesc)
+			MainSocket = FTcpSocketBuilder(SocketSetting.ServerDescription)
 				.AsReusable(SocketSetting.bSocketReusable)
 				.BoundToEndpoint(FIPv4Endpoint(Endpoint))
 				.Listening(SocketSetting.MaxConnection)
@@ -147,7 +147,7 @@ bool FLFPTcpSocket::Init()
 		}
 		else
 		{
-			MainSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, SocketSetting.MainDesc, false);
+			MainSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, SocketSetting.ClientDescription, false);
 
 			//Set Send Buffer Size
 			MainSocket->SetSendBufferSize(SocketSetting.BufferMaxSize, SocketSetting.BufferMaxSize);
@@ -167,7 +167,7 @@ uint32 FLFPTcpSocket::Run()
 
 	TArray<uint8> ReconnectAttemptList;
 
-	ReconnectAttemptList.Init(SocketSetting.ReconnectAttempt, FMath::Max(1, SocketSetting.MaxConnection));
+	ReconnectAttemptList.Init(SocketSetting.MaxReconnectAttempt, FMath::Max(1, SocketSetting.MaxConnection));
 
 	const int32 LocalSocketID = SocketID;
 
@@ -180,7 +180,7 @@ uint32 FLFPTcpSocket::Run()
 			if (MainSocket->HasPendingConnection(bHasPendingConnection) && bHasPendingConnection)
 			{
 				TSharedPtr<FInternetAddr> Addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-				FSocket* Client = MainSocket->Accept(*Addr, SocketSetting.ConnectedDesc);
+				FSocket* Client = MainSocket->Accept(*Addr, SocketSetting.ClientDescription);
 
 				int32 ClientID = INDEX_NONE;
 
@@ -263,7 +263,7 @@ uint32 FLFPTcpSocket::Run()
 					}
 					else
 					{
-						ReconnectAttemptList[ClientID] = SocketSetting.ReconnectAttempt;
+						ReconnectAttemptList[ClientID] = SocketSetting.MaxReconnectAttempt;
 					}
 
 					ClientSocket->SetNonBlocking(false);
@@ -304,7 +304,7 @@ uint32 FLFPTcpSocket::Run()
 				}
 				else
 				{
-					ReconnectAttemptList[0] = SocketSetting.ReconnectAttempt;
+					ReconnectAttemptList[0] = SocketSetting.MaxReconnectAttempt;
 				}
 
 				MainSocket->SetNonBlocking(false);
@@ -331,7 +331,7 @@ uint32 FLFPTcpSocket::Run()
 						if (LocalComponent.IsValid()) LocalComponent->OnConnected.Broadcast(LocalSocketID, INDEX_NONE);
 						});
 
-					ReconnectAttemptList[0] = SocketSetting.ReconnectAttempt;
+					ReconnectAttemptList[0] = SocketSetting.MaxReconnectAttempt;
 
 					continue;
 				}

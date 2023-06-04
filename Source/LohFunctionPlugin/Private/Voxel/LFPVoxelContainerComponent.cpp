@@ -3,6 +3,9 @@
 #include "Voxel/LFPVoxelContainerComponent.h"
 #include "./Math/LFPGridLibrary.h"
 #include "Serialization/ArchiveProxy.h"
+#include "Serialization/NameAsStringProxyArchive.h"
+#include "Serialization/ArchiveSaveCompressedProxy.h"
+#include "Serialization/ArchiveLoadCompressedProxy.h"
 #include "UObject/ReflectedTypeAccessors.h"
 
 
@@ -152,6 +155,22 @@ bool ULFPVoxelContainerComponent::SetVoxelPalette(const int32 RegionIndex, const
 	return true;
 }
 
+bool ULFPVoxelContainerComponent::SetVoxelPalettes(const int32 RegionIndex, const int32 ChuckIndex, const TMap<int32, FLFPVoxelPaletteData>& VoxelPaletteMap)
+{
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
+
+	for (const auto& VoxelPalette : VoxelPaletteMap)
+	{
+		if (Setting.GetVoxelLength() <= VoxelPalette.Key || VoxelPalette.Key < 0) continue;
+
+		ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.Add(VoxelPalette);
+	}
+
+	SetComponentTickEnabled(true);
+
+	return true;
+}
+
 bool ULFPVoxelContainerComponent::SetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex, const FLFPVoxelChuckData& ChuckData)
 {
 	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false || ChuckData.IsInitialized() == false || ChuckData.GetIndexSize() != Setting.GetVoxelLength()) return false;
@@ -160,6 +179,23 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckData(const int32 RegionIndex, con
 	{
 		if (ChuckData.GetIndexData(VoxelIndex) != GetVoxelPaletteRef(RegionIndex, ChuckIndex, VoxelIndex)) SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, ChuckData.GetIndexData(VoxelIndex));
 	}
+
+	return true;
+}
+
+bool ULFPVoxelContainerComponent::SetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, const TArray<uint8>& Data)
+{
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
+
+	FArchiveLoadCompressedProxy CompressedProxy(Data, EName::Gzip);
+
+	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
+
+	FLFPVoxelChuckData DecompressedChuckData;
+
+	ProxyArchive << DecompressedChuckData;
+
+	SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
 
 	return true;
 }
@@ -180,6 +216,19 @@ bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, 
 int32 ULFPVoxelContainerComponent::GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const
 {
 	return ChuckDelegateList.Contains(FIntPoint(RegionIndex, ChuckIndex)) ? ChuckDelegateList.FindChecked(FIntPoint(RegionIndex, ChuckIndex)).GetAmount() : INDEX_NONE;
+}
+
+void ULFPVoxelContainerComponent::GetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, TArray<uint8>& Result)
+{
+	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return;
+
+	FArchiveSaveCompressedProxy CompressedProxy(Result, EName::Gzip, ECompressionFlags::COMPRESS_BiasSpeed);
+
+	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
+
+	ProxyArchive << RegionDataList[RegionIndex].ChuckData[ChuckIndex];
+
+	return;
 }
 
 FLFPVoxelChuckData ULFPVoxelContainerComponent::GetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex) const

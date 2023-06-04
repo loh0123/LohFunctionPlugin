@@ -684,7 +684,13 @@ public: /** Setter */
 		FORCEINLINE bool SetVoxelPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex, const FLFPVoxelPaletteData& VoxelPalette);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool SetVoxelPalettes(const int32 RegionIndex, const int32 ChuckIndex, const TMap<int32, FLFPVoxelPaletteData>& VoxelPaletteMap);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
 		FORCEINLINE bool SetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex, const FLFPVoxelChuckData& ChuckData);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
+		FORCEINLINE bool SetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, const TArray<uint8>& Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Setter")
 		FORCEINLINE bool InitializeVoxelChuck(const int32 RegionIndex, const int32 ChuckIndex);
@@ -694,6 +700,9 @@ public: /** Getter */
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE int32 GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const;
 
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
+		FORCEINLINE void GetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, TArray<uint8>& Result);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
 		FORCEINLINE FLFPVoxelChuckData GetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex) const;

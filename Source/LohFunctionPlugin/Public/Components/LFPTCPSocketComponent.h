@@ -27,7 +27,7 @@ public:
 
 	/** How many time to try reconnect. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		uint8 ReconnectAttempt = 15;
+		uint8 MaxReconnectAttempt = 15;
 
 	/** Soceket listen amount, if -1 than switch to client mode. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
@@ -39,11 +39,11 @@ public:
 
 	/** Holds the main socket description. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString MainDesc;
+		FString ServerDescription;
 
 	/** Holds the connected socket description. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString ConnectedDesc;
+		FString ClientDescription;
 
 	/** Holds the server / client IP. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
