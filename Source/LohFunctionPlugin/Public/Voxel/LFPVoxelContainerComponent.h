@@ -625,6 +625,8 @@ public: // Operator
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnVoxelContainerChuckUpdate, const int32, RegionIndex, const int32, ChuckIndex, const FLFPVoxelUpdateAction&, VoxelUpdateAction);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnVoxelContainerChuckInitialized, const int32, RegionIndex, const int32, ChuckIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVoxelContainerRegionInitialized, const int32, RegionIndex);
 
 
 UCLASS( Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin) )
@@ -758,6 +760,13 @@ public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelContainerComponent | Delegate")
 		FOnVoxelContainerChuckUpdate OnVoxelContainerChuckUpdate;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelContainerComponent | Delegate")
+		FOnVoxelContainerChuckInitialized OnVoxelContainerChuckInitialized;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelContainerComponent | Delegate")
+		FOnVoxelContainerRegionInitialized OnVoxelContainerRegionInitialized;
+
 
 public: /** Read and write lock */
 

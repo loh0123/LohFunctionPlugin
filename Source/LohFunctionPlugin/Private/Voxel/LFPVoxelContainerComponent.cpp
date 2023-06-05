@@ -191,11 +191,29 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckDataInBtyes(const int32 RegionInd
 
 	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
 
-	FLFPVoxelChuckData DecompressedChuckData;
+	uint8 DataID = 0;
 
-	ProxyArchive << DecompressedChuckData;
+	ProxyArchive << DataID;
 
-	SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
+	switch (DataID)
+	{
+	case 0:
+	{
+		FLFPVoxelChuckData DecompressedChuckData = FLFPVoxelChuckData();
+		ProxyArchive << DecompressedChuckData;
+		SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
+	}
+	break;
+
+	case 1:
+	{
+		TMap<int32, FLFPVoxelPaletteData> DecompressedChuckVoxelPalettes;
+		ProxyArchive << DecompressedChuckVoxelPalettes;
+		SetVoxelPalettes(RegionIndex, ChuckIndex, DecompressedChuckVoxelPalettes);
+	}
+	break;
+
+	}
 
 	return true;
 }
@@ -225,6 +243,10 @@ void ULFPVoxelContainerComponent::GetVoxelChuckDataInBtyes(const int32 RegionInd
 	FArchiveSaveCompressedProxy CompressedProxy(Result, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
 
 	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
+
+	uint8 DataID = 0;
+
+	ProxyArchive << DataID;
 
 	ProxyArchive << RegionDataList[RegionIndex].ChuckData[ChuckIndex];
 
@@ -304,6 +326,8 @@ void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)
 
 	ChuckData.InitRegionData(Setting.GetChuckLength());
 
+	OnVoxelContainerRegionInitialized.Broadcast(RegionIndex);
+
 	return;
 }
 
@@ -314,6 +338,8 @@ void ULFPVoxelContainerComponent::InitializeChuck(const int32 RegionIndex, const
 	auto& ChuckData = RegionDataList[RegionIndex].ChuckData[ChuckIndex];
 
 	ChuckData.InitChuckData(FLFPVoxelPaletteData(), Setting.GetVoxelLength());
+
+	OnVoxelContainerChuckInitialized.Broadcast(RegionIndex, ChuckIndex);
 
 	return;
 }

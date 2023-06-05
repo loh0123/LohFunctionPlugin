@@ -90,6 +90,15 @@ int32 ULFPTCPSocketComponent::CreateSocket(FLFPTCPSocketSetting InSocketSetting)
 	return SocketID;
 }
 
+bool ULFPTCPSocketComponent::DestroySocket(const int32 SocketID)
+{
+	if (SocketList.IsValidIndex(SocketID) == false) return false;
+
+	SocketList[SocketID]->Stop();
+
+	return true;
+}
+
 bool ULFPTCPSocketComponent::SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID)
 {
 	if (SocketList.IsValidIndex(SocketID) == false) return false;
@@ -139,7 +148,8 @@ bool FLFPTcpSocket::Init()
 				.BoundToEndpoint(FIPv4Endpoint(Endpoint))
 				.Listening(SocketSetting.MaxConnection)
 				.WithSendBufferSize(SocketSetting.BufferMaxSize)
-				.WithReceiveBufferSize(SocketSetting.BufferMaxSize);
+				.WithReceiveBufferSize(SocketSetting.BufferMaxSize)
+				.AsNonBlocking();
 
 			ConnectedSocketList.Init(nullptr, SocketSetting.MaxConnection);
 
@@ -241,7 +251,7 @@ uint32 FLFPTcpSocket::Run()
 					uint8 Dummy = 0;
 					int32 ErrorCode = 0;
 
-					ClientSocket->SetNonBlocking(true);
+					//ClientSocket->SetNonBlocking(true);
 
 					if (ClientSocket->Recv(&Dummy, 1, ErrorCode, ESocketReceiveFlags::Peek) == false)
 					{
@@ -266,7 +276,7 @@ uint32 FLFPTcpSocket::Run()
 						ReconnectAttemptList[ClientID] = SocketSetting.MaxReconnectAttempt;
 					}
 
-					ClientSocket->SetNonBlocking(false);
+					//ClientSocket->SetNonBlocking(false);
 				}
 				else
 				{

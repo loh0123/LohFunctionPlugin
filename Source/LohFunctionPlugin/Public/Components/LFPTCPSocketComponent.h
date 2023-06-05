@@ -101,6 +101,9 @@ public:
 		int32 CreateSocket(FLFPTCPSocketSetting InSocketSetting);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
+		bool DestroySocket(const int32 SocketID);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
 		bool SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID = -1);
 
 public:
