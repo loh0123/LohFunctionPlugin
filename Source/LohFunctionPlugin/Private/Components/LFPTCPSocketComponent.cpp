@@ -63,7 +63,7 @@ int32 ULFPTCPSocketComponent::CreateSocket(FLFPTCPSocketSetting InSocketSetting)
 	if (InSocketSetting.MaxConnection < 0) InSocketSetting.MaxConnection = INDEX_NONE;
 
 	if (InSocketSetting.TickInterval <= 0.0f) InSocketSetting.TickInterval = 0.0f;
-	if (InSocketSetting.ReconnectTime < 1.0f) InSocketSetting.ReconnectTime = 1.0f;
+	if (InSocketSetting.ReconnectTime <= 0.0f) InSocketSetting.ReconnectTime = 0.0f;
 
 	int32 SocketID = INDEX_NONE;
 
@@ -139,6 +139,8 @@ bool FLFPTcpSocket::Init()
 	Endpoint->SetRawIp(ResolveInfo->GetResolvedAddress().GetRawIp());
 	Endpoint->SetPort(SocketSetting.Port);
 
+	UE_LOG(LogTemp, Warning, TEXT("FLFPTcpSocket : %s : DNS is %s"), *SocketSetting.ServerDescription, *Endpoint->ToString(true));;
+
 	if (MainSocket == nullptr)
 	{
 		if (SocketSetting.MaxConnection > 0)
@@ -148,8 +150,7 @@ bool FLFPTcpSocket::Init()
 				.BoundToEndpoint(FIPv4Endpoint(Endpoint))
 				.Listening(SocketSetting.MaxConnection)
 				.WithSendBufferSize(SocketSetting.BufferMaxSize)
-				.WithReceiveBufferSize(SocketSetting.BufferMaxSize)
-				.AsNonBlocking();
+				.WithReceiveBufferSize(SocketSetting.BufferMaxSize);
 
 			ConnectedSocketList.Init(nullptr, SocketSetting.MaxConnection);
 
@@ -162,6 +163,7 @@ bool FLFPTcpSocket::Init()
 			//Set Send Buffer Size
 			MainSocket->SetSendBufferSize(SocketSetting.BufferMaxSize, SocketSetting.BufferMaxSize);
 			MainSocket->SetReceiveBufferSize(SocketSetting.BufferMaxSize, SocketSetting.BufferMaxSize);
+			//MainSocket->SetNonBlocking();
 		}
 	}
 
@@ -192,29 +194,36 @@ uint32 FLFPTcpSocket::Run()
 				TSharedPtr<FInternetAddr> Addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 				FSocket* Client = MainSocket->Accept(*Addr, SocketSetting.ClientDescription);
 
-				int32 ClientID = INDEX_NONE;
-
-				/** Find invalid or null socket */
-				for (FSocket*& ClientSocket : ConnectedSocketList)
+				if (Client != nullptr)
 				{
-					ClientID++;
+					Client->SetNonBlocking();
 
-					if (IsSocketConnected(ClientSocket)) continue;
+					int32 ClientID = INDEX_NONE;
 
-					/** Close the socket if it is valid but not connected */
-					CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+					/** Find invalid or null socket */
+					for (FSocket*& ClientSocket : ConnectedSocketList)
+					{
+						ClientID++;
 
-					ClientSocket = Client;
+						if (IsSocketConnected(ClientSocket)) continue;
 
-					Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, LocalSocketID, ClientID] {
-						if (LocalComponent.IsValid()) LocalComponent->OnConnected.Broadcast(LocalSocketID, ClientID);
-						});
+						/** Close the socket if it is valid but not connected */
+						CloseSocket(ELFPTCPDIsconnectFlags::LFP_NoConnection, ClientID);
 
-					break;
+						ClientSocket = Client;
+
+						Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, LocalSocketID, ClientID] {
+							if (LocalComponent.IsValid()) LocalComponent->OnConnected.Broadcast(LocalSocketID, ClientID);
+							});
+
+						break;
+					}
 				}
 			}
 
 			int32 ClientID = INDEX_NONE;
+
+			TArray<int32> DisconnectList;
 
 			//Check each endpoint for data
 			for (FSocket*& ClientSocket : ConnectedSocketList)
@@ -238,6 +247,8 @@ uint32 FLFPTcpSocket::Run()
 
 					const int32 LocalID = SocketID;
 
+					if (BufferSize != ReadBtyes) UE_LOG(LogTemp, Warning, TEXT("Error Recv is: %d : %d"), BufferSize, ReadBtyes);
+
 					//Pass the reference to be used on game thread
 					AsyncTask(ENamedThreads::GameThread, [LocalComponent, LocalID, ClientID, ReceiveBuffer]()
 						{
@@ -257,7 +268,8 @@ uint32 FLFPTcpSocket::Run()
 					{
 						if (ReconnectAttemptList[ClientID] == 0)
 						{
-							CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+							//CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+							DisconnectList.Add(ClientID);
 						}
 						else
 						{
@@ -280,8 +292,14 @@ uint32 FLFPTcpSocket::Run()
 				}
 				else
 				{
-					CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+					//CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, ClientID);
+					DisconnectList.Add(ClientID);
 				}
+			}
+
+			for (const int32 DisconnectIndex : DisconnectList)
+			{
+				CloseSocket(ELFPTCPDIsconnectFlags::LFP_LoseConnection, DisconnectIndex);
 			}
 		}
 		else
@@ -291,8 +309,6 @@ uint32 FLFPTcpSocket::Run()
 			{
 				uint8 Dummy = 0;
 				int32 ErrorCode = 0;
-
-				MainSocket->SetNonBlocking(true);
 
 				if (MainSocket->Recv(&Dummy, 1, ErrorCode, ESocketReceiveFlags::Peek) == false)
 				{
@@ -316,8 +332,6 @@ uint32 FLFPTcpSocket::Run()
 				{
 					ReconnectAttemptList[0] = SocketSetting.MaxReconnectAttempt;
 				}
-
-				MainSocket->SetNonBlocking(false);
 			}
 			/** Try to connect if no connection */
 			else
@@ -331,10 +345,6 @@ uint32 FLFPTcpSocket::Run()
 
 				ReconnectAttemptList[0]--;
 
-				Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, LocalSocketID] {
-					if (LocalComponent.IsValid()) LocalComponent->OnReconnected.Broadcast(LocalSocketID, INDEX_NONE);
-					});
-
 				if (MainSocket->Connect(*Endpoint))
 				{
 					Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, LocalSocketID] {
@@ -343,7 +353,15 @@ uint32 FLFPTcpSocket::Run()
 
 					ReconnectAttemptList[0] = SocketSetting.MaxReconnectAttempt;
 
+					MainSocket->SetNonBlocking();
+
 					continue;
+				}
+				else
+				{
+					Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, LocalSocketID] {
+						if (LocalComponent.IsValid()) LocalComponent->OnReconnected.Broadcast(LocalSocketID, INDEX_NONE);
+						});
 				}
 
 				//reconnect attempt every 3 sec
@@ -392,11 +410,6 @@ void FLFPTcpSocket::Exit()
 {
 	CloseSocket(EndCode);
 
-	for (int32 LocalCLientID = 0; LocalCLientID < ConnectedSocketList.Num(); LocalCLientID++)
-	{
-		CloseSocket(EndCode, LocalCLientID);
-	}
-
 	ConnectedSocketList.Empty();
 
 	bStopping = true;
@@ -437,13 +450,33 @@ bool FLFPTcpSocket::CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, co
 	auto LocalSetting = SocketSetting;
 	const int32 LocalSocketID = SocketID;
 
-	if (ClientID == INDEX_NONE && MainSocket != nullptr)
+	if (ClientID == INDEX_NONE)
 	{
-		bResult = MainSocket->Close();
-		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
-		MainSocket = nullptr;
+		int32 LocalID = 0;
+
+		for (FSocket*& ClientSocket : ConnectedSocketList)
+		{
+			if (ClientSocket == nullptr) continue;
+
+			ClientSocket->Close();
+			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
+			ClientSocket = nullptr;
+
+			Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, DIsconnectFlags, LocalSetting, LocalSocketID, LocalID] {
+				if (LocalComponent.IsValid()) LocalComponent->OnDisconnected.Broadcast(DIsconnectFlags, LocalSetting, LocalSocketID, LocalID);
+				});
+
+			LocalID++;
+		}
+
+		if (MainSocket != nullptr)
+		{
+			bResult = MainSocket->Close();
+			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
+			MainSocket = nullptr;
+		}
 	}
-	else if (IsSocketConnected(MainSocket) && ConnectedSocketList.IsValidIndex(ClientID) && ConnectedSocketList[ClientID] != nullptr)
+	else if (ConnectedSocketList.IsValidIndex(ClientID) && ConnectedSocketList[ClientID] != nullptr)
 	{
 		bResult = ConnectedSocketList[ClientID]->Close();
 		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ConnectedSocketList[ClientID]);

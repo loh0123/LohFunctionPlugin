@@ -183,41 +183,6 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckData(const int32 RegionIndex, con
 	return true;
 }
 
-bool ULFPVoxelContainerComponent::SetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, const TArray<uint8>& Data)
-{
-	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
-
-	FArchiveLoadCompressedProxy CompressedProxy(Data, EName::Oodle);
-
-	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
-
-	uint8 DataID = 0;
-
-	ProxyArchive << DataID;
-
-	switch (DataID)
-	{
-	case 0:
-	{
-		FLFPVoxelChuckData DecompressedChuckData = FLFPVoxelChuckData();
-		ProxyArchive << DecompressedChuckData;
-		SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
-	}
-	break;
-
-	case 1:
-	{
-		TMap<int32, FLFPVoxelPaletteData> DecompressedChuckVoxelPalettes;
-		ProxyArchive << DecompressedChuckVoxelPalettes;
-		SetVoxelPalettes(RegionIndex, ChuckIndex, DecompressedChuckVoxelPalettes);
-	}
-	break;
-
-	}
-
-	return true;
-}
-
 bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, const int32 ChuckIndex)
 {
 	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
@@ -234,23 +199,6 @@ bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, 
 int32 ULFPVoxelContainerComponent::GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const
 {
 	return ChuckDelegateList.Contains(FIntPoint(RegionIndex, ChuckIndex)) ? ChuckDelegateList.FindChecked(FIntPoint(RegionIndex, ChuckIndex)).GetAmount() : INDEX_NONE;
-}
-
-void ULFPVoxelContainerComponent::GetVoxelChuckDataInBtyes(const int32 RegionIndex, const int32 ChuckIndex, TArray<uint8>& Result)
-{
-	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return;
-
-	FArchiveSaveCompressedProxy CompressedProxy(Result, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
-
-	FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
-
-	uint8 DataID = 0;
-
-	ProxyArchive << DataID;
-
-	ProxyArchive << RegionDataList[RegionIndex].ChuckData[ChuckIndex];
-
-	return;
 }
 
 FLFPVoxelChuckData ULFPVoxelContainerComponent::GetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex) const
@@ -309,11 +257,59 @@ FIntVector ULFPVoxelContainerComponent::ToVoxelGlobalIndex(const FIntVector Voxe
 	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(VoxelPos, Setting.GetVoxelGrid()));
 }
 
+/** C++ Getter */
+
 const FLFPVoxelPaletteData& ULFPVoxelContainerComponent::GetVoxelPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 VoxelIndex) const
 {
 	if (IsVoxelPositionValid(RegionIndex, ChuckIndex, VoxelIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return FLFPVoxelPaletteData::EmptyData;
 
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetIndexData(VoxelIndex);
+}
+
+bool ULFPVoxelContainerComponent::GetVoxelChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar)
+{
+	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return false;
+
+	uint8 DataID = 0;
+
+	Ar << DataID;
+
+	Ar << RegionDataList[RegionIndex].ChuckData[ChuckIndex];
+
+	return true;
+}
+
+/** C++ Setter */
+
+bool ULFPVoxelContainerComponent::SetVoxelChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar)
+{
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
+
+	uint8 DataID = 0;
+
+	Ar << DataID;
+
+	switch (DataID)
+	{
+	case 0:
+	{
+		FLFPVoxelChuckData DecompressedChuckData = FLFPVoxelChuckData();
+		Ar << DecompressedChuckData;
+		SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
+	}
+	break;
+
+	case 1:
+	{
+		TMap<int32, FLFPVoxelPaletteData> DecompressedChuckVoxelPalettes;
+		Ar << DecompressedChuckVoxelPalettes;
+		SetVoxelPalettes(RegionIndex, ChuckIndex, DecompressedChuckVoxelPalettes);
+	}
+	break;
+
+	}
+
+	return true;
 }
 
 void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)

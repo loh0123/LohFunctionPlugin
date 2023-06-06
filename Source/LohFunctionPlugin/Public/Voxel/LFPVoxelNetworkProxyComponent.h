@@ -43,6 +43,9 @@ public:
 protected:  // Runtime Data
 
 	UPROPERTY()
+		TSet<FIntVector> ChuckUpdateQueue;
+
+	UPROPERTY()
 		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer;
 
 	UPROPERTY()

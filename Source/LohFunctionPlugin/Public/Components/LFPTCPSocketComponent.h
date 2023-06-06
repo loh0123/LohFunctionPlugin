@@ -154,18 +154,20 @@ public:
 			delete Thread;
 		}
 
+		for (FSocket*& ClientSocket : ConnectedSocketList)
+		{
+			if (ClientSocket == nullptr) continue;
+
+			ClientSocket->Close();
+			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
+			ClientSocket = nullptr;
+		}
+
 		if (MainSocket != nullptr)
 		{
 			MainSocket->Close();
 			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
 			MainSocket = nullptr;
-		}
-
-		for (FSocket*& ClientSocket : ConnectedSocketList)
-		{
-			ClientSocket->Close();
-			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
-			ClientSocket = nullptr;
 		}
 	}
 
