@@ -1,9 +1,3 @@
-// Copyright (c) 2023 Loh Zhi Kang ( loh0123@hotmail.com )
-//
-// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
-// or copy at http://opensource.org/licenses/MIT)
-
-
 #include "Item/LFPItemMutatorComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -47,7 +41,7 @@ void ULFPItemMutatorComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bProcessQueueOnTick && MutatorQueue.IsEmpty() == false)
+	if (bProcessQueueOnTick && MutatorQueue.Num() > 0)
 	{
 		ProcessItemQueue(DeltaTime);
 	}
@@ -308,7 +302,5 @@ bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLF
 
 	TArray<FLFPInventoryItemIndexData> ItemIndexList;
 
-	InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchRangeList, false);
-
-	return true;
+	return InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchRangeList, true);
 }

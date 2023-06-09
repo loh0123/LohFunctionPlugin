@@ -38,7 +38,7 @@ void ULFPInventoryComponent::BeginPlay()
 
 	// EquipmentSlotList.SetNum(MaxEquipmentSlotAmount);
 	// ...
-	
+
 }
 
 
@@ -115,7 +115,7 @@ bool ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, FLFPInvento
 
 		OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
-		ItemIndexData.InventoryIndexList.Add(SlotIndex);
+		ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]);
 
 		if (ItemData.ItemTag.IsValid() == false)
 		{
@@ -155,7 +155,7 @@ bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& It
 	return ReturnList;
 }
 
-bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const bool bApplyChange, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -177,6 +177,8 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 
 	ItemIndexData.ItemTag = ItemData.ItemTag;
 
+	ItemIndexData.InventoryChangeMap.Reserve(ItemIndexList.Num());
+
 	for (const auto& SlotIndex : ItemIndexList)
 	{
 		if (bForce == false)
@@ -187,31 +189,46 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 			}
 		}
 
-		const FLFPInventoryItemData OldItemData = InventorySlotList[SlotIndex];
+		ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]);
 
-		ProcessRemoveItem(InventorySlotList[SlotIndex], ItemData, SlotIndex, EventInfo);
-
-		if (InventorySlotList[SlotIndex].ItemTag.IsValid() == false)
-		{
-			OnRemoveItem.Broadcast(OldItemData, SlotIndex, EventInfo);
-		}
-
-		OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
-
-		ItemIndexData.InventoryIndexList.Add(SlotIndex);
+		ProcessRemoveItem(ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]), ItemData, SlotIndex, EventInfo);
 
 		if (ItemData.ItemTag.IsValid() == false)
 		{
-			return true;
+			break;
 		}
 	}
 
 	ItemIndexData.LeaveItemData = ItemData;
 
-	return bCheckAllRemove == false;
+	if (ItemData.ItemTag.IsValid() == false || bCheckAllRemove == false)
+	{
+		if (bApplyChange)
+		{
+			for (const auto& SlotChangeData : ItemIndexData.InventoryChangeMap)
+			{
+				const FLFPInventoryItemData OldItemData = InventorySlotList[SlotChangeData.Key];
+
+				InventorySlotList[SlotChangeData.Key] = SlotChangeData.Value;
+
+				if (InventorySlotList[SlotChangeData.Key].ItemTag.IsValid() == false)
+				{
+					OnRemoveItem.Broadcast(OldItemData, SlotChangeData.Key, EventInfo);
+				}
+
+				OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotChangeData.Key], SlotChangeData.Key, EventInfo);
+			}
+		}
+
+		return true;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Not all item can be remove"));
+
+	return false;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const bool bApplyChange, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -227,12 +244,32 @@ bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>&
 
 		ItemIndexList[Index].ItemIndex = Index;
 
-		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, EventInfo) == false)
+		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, false, EventInfo) == false)
 		{
 			ReturnList = false;
 		}
 
 		Index++;
+	}
+
+	if ((ReturnList || bCheckAllRemove == false) && bApplyChange)
+	{
+		for (const auto& InventoryChange : ItemIndexList)
+		{
+			for (const auto& SlotChangeData : InventoryChange.InventoryChangeMap)
+			{
+				const FLFPInventoryItemData OldItemData = InventorySlotList[SlotChangeData.Key];
+
+				InventorySlotList[SlotChangeData.Key] = SlotChangeData.Value;
+
+				if (InventorySlotList[SlotChangeData.Key].ItemTag.IsValid() == false)
+				{
+					OnRemoveItem.Broadcast(OldItemData, SlotChangeData.Key, EventInfo);
+				}
+
+				OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotChangeData.Key], SlotChangeData.Key, EventInfo);
+			}
+		}
 	}
 
 	return ReturnList;
@@ -248,7 +285,7 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 
 		FLFPInventoryItemIndexData ItemIndexData;
 
-		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, false, EventInfo);
+		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, false, true, EventInfo);
 	}
 
 	TrimInventorySlotList(InventorySlotList.Num() - 1);
@@ -281,7 +318,7 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlot, const int32 ToSlot, 
 
 	if (CanSwapItem(InventorySlotList[FromSlot], FromSlot, InventorySlotList[ToSlot], ToSlot, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem CanSwapItem return false"));
+		//UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem CanSwapItem return false"));
 
 		TrimInventorySlotList(InventorySlotList.Num() - 1);
 
@@ -340,8 +377,8 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 
 	FLFPInventoryItemIndexData ItemIndexData;
 
-	if (ToSlot != INDEX_NONE) ToInventory->RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
-	if (FromSlot != INDEX_NONE) RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
+	if (ToSlot != INDEX_NONE) ToInventory->RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, true, EventInfo);
+	if (FromSlot != INDEX_NONE) RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, true, EventInfo);
 
 	if (FromSlot != INDEX_NONE) ToInventory->AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
 	if (ToSlot != INDEX_NONE) AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);

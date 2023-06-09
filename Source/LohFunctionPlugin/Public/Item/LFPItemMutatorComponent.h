@@ -1,8 +1,3 @@
-// Copyright (c) 2023 Loh Zhi Kang ( loh0123@hotmail.com )
-//
-// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
-// or copy at http://opensource.org/licenses/MIT)
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -51,7 +46,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnProcessMutatorItemEvent, const F
 */
 
 UCLASS( Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPItemMutatorComponent : public UActorComponent
+class CHRONOFORGE_API ULFPItemMutatorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -103,19 +98,19 @@ public: // Event
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
 		bool CanAddItemToQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
 		virtual bool CanAddItemToQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
-
+	 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
 		bool CanRemoveItemFromQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
 		virtual bool CanRemoveItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
 		bool CanPauseItemCountdown(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
 		virtual bool CanPauseItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
 		bool CanResumeItemCountdown(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
 		virtual bool CanResumeItemCountdown_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Event")
 		bool CanDeleteItemFromQueue(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const;
 		virtual bool CanDeleteItemFromQueue_Implementation(const FLFPItemMutatorQueueData& ItemMutatorQueueData) const { return true; }
@@ -192,6 +187,6 @@ protected:
 		TArray<FLFPItemMutatorQueueData> MutatorQueue;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPItemMutatorComponent | Cache")
-		TObjectPtr<ULFPInventoryComponent> InventoryComponent = nullptr;
+		ULFPInventoryComponent* InventoryComponent = nullptr;
 
 };
