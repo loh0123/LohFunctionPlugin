@@ -46,7 +46,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnProcessMutatorItemEvent, const F
 */
 
 UCLASS( Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent) )
-class CHRONOFORGE_API ULFPItemMutatorComponent : public UActorComponent
+class LOHFUNCTIONPLUGIN_API ULFPItemMutatorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
