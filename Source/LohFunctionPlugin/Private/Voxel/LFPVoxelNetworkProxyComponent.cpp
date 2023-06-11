@@ -35,54 +35,87 @@ void ULFPVoxelNetworkProxyComponent::TickComponent(float DeltaTime, ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (IsValid(VoxelContainer) == false || IsValid(NetworkSocket) == false || ChuckUpdateQueue.IsEmpty()) return;
+
 	if (bIsServer)
 	{
-		if (IsValid(VoxelContainer) && IsValid(NetworkSocket) && ChuckUpdateQueue.IsEmpty() == false)
+		const auto ChuckPos = *ChuckUpdateQueue.CreateConstIterator();
+
+		FIntPoint ChuckPosTemp(ChuckPos.X, ChuckPos.Y);
+
+		TArray<uint8> ChuckDataList;
 		{
-			const auto ChuckPos = *ChuckUpdateQueue.CreateConstIterator();
+			FArchiveSaveCompressedProxy CompressedProxy(ChuckDataList, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
 
-			FIntPoint ChuckPosTemp(ChuckPos.X, ChuckPos.Y);
+			FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
 
-			TArray<uint8> ChuckDataList;
+			ProxyArchive << ChuckPosTemp;
+
+			if (VoxelContainer->GetVoxelChuckDataByArchive(ChuckPos.X, ChuckPos.Y, ProxyArchive) == false)
 			{
-				FArchiveSaveCompressedProxy CompressedProxy(ChuckDataList, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
+				UE_LOG(LogTemp, Warning, TEXT("Invalid Chuck Pos : %s"), *ChuckPos.ToString());
 
-				FNameAsStringProxyArchive ProxyArchive(CompressedProxy);
+				ChuckUpdateQueue.Remove(ChuckPos);
 
-				ProxyArchive << ChuckPosTemp;
-
-				VoxelContainer->GetVoxelChuckDataByArchive(ChuckPos.X, ChuckPos.Y, ProxyArchive);
+				return;
 			}
-
-			/** Insert Array Size */
-			{
-				int32 ChuckDataSize = ChuckDataList.Num();
-				TArray<uint8> RawSizeList;
-
-				RawSizeList.SetNumUninitialized(4);
-
-				FMemory::Memcpy(RawSizeList.GetData(), &ChuckDataSize, 4);
-
-				for (int32 Index = 3; Index >= 0; Index--)
-				{
-					ChuckDataList.Insert(RawSizeList[Index], 0);
-				}
-			}
-
-			if (ChuckDataList.IsValidIndex(0))
-			{
-				if (NetworkSocket->SendData(ChuckDataList, SocketIndex, ChuckPos.Z) == false)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Fail To Send Chuck Data : %s"), *ChuckPos.ToString());
-				}
-			}
-
-			ChuckUpdateQueue.Remove(ChuckPos);
 		}
+
+		/** Insert Array Size */
+		{
+			int32 ChuckDataSize = ChuckDataList.Num();
+			TArray<uint8> RawSizeList;
+
+			RawSizeList.SetNumUninitialized(4);
+
+			FMemory::Memcpy(RawSizeList.GetData(), &ChuckDataSize, 4);
+
+			for (int32 Index = 3; Index >= 0; Index--)
+			{
+				ChuckDataList.Insert(RawSizeList[Index], 0);
+			}
+		}
+
+		if (ChuckDataList.IsValidIndex(0))
+		{
+			if (NetworkSocket->SendData(ChuckDataList, SocketIndex, ChuckPos.Z) == false)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Fail To Send Chuck Data : %s"), *ChuckPos.ToString());
+			}
+		}
+
+		ChuckUpdateQueue.Remove(ChuckPos);
 	}
 	else
 	{
+		const auto ChuckPos = *ChuckUpdateQueue.CreateConstIterator();
 
+		int32 DataType = ChuckPos.Z;
+
+		FIntPoint ChuckPosTemp(ChuckPos.X, ChuckPos.Y);
+
+		TArray<uint8> ChuckDataList;
+		{
+			FMemoryWriter MemoryProxy(ChuckDataList);
+
+			FNameAsStringProxyArchive ProxyArchive(MemoryProxy);
+
+			ProxyArchive << DataType; /** Data Type */
+
+			ProxyArchive << ChuckPosTemp;
+		}
+
+		/** Don't need data size because it always the same */
+
+		if (ChuckDataList.IsValidIndex(0))
+		{
+			if (NetworkSocket->SendData(ChuckDataList, SocketIndex, ChuckPos.Z) == false)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Fail To Send Chuck Request Data : %s"), *ChuckPosTemp.ToString());
+			}
+		}
+
+		ChuckUpdateQueue.Remove(ChuckPos);
 	}
 }
 
@@ -121,16 +154,9 @@ bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InV
 
 bool ULFPVoxelNetworkProxyComponent::RequestChuckData(const int32 RegionIndex, const int32 ChuckIndex, const int32 ClientID)
 {
-	if (IsValid(NetworkSocket) == false || NetworkSocket->IsSocketValid(SocketIndex, ClientID) == false) return false;
+	if (IsValid(NetworkSocket) == false || NetworkSocket->IsSocketValid(SocketIndex, ClientID) == false || VoxelContainer->IsChuckPositionValid(RegionIndex, ChuckIndex) == false) return false;
 
-	if (bIsServer)
-	{
-		ChuckUpdateQueue.Add(FIntVector(RegionIndex, ChuckIndex, ClientID));
-	}
-	else
-	{
-		return false;
-	}
+	ChuckUpdateQueue.Add(FIntVector(RegionIndex, ChuckIndex, ClientID));
 
 	return true;
 }
@@ -139,7 +165,7 @@ void ULFPVoxelNetworkProxyComponent::OnChuckUpdate(const int32 RegionIndex, cons
 {
 	if (bIsServer)
 	{
-		ChuckUpdateQueue.Add(FIntVector(RegionIndex, ChuckIndex, INDEX_NONE));
+		RequestChuckData(RegionIndex, ChuckIndex, INDEX_NONE);
 	}
 	else
 	{
@@ -151,15 +177,38 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 {
 	if (IsValid(VoxelContainer) == false || Bytes.IsEmpty()) return;
 
+	IncomeDataBuffer.Append(Bytes);
+
 	if (bIsServer)
 	{
+		if (IncomeDataBuffer.Num() >= 12) return; /** Data Still Not Complete */
 
+		int32 DataType = INDEX_NONE;
+
+		FIntPoint ChuckPosTemp(INDEX_NONE);
+
+		FMemoryReader MemoryProxy(IncomeDataBuffer);
+
+		FNameAsStringProxyArchive ProxyArchive(MemoryProxy);
+
+		ProxyArchive << DataType; /** Data Type */
+
+		switch (DataType)
+		{
+		case 0: /** Chuck Request */
+			{
+				ProxyArchive << ChuckPosTemp;
+
+				RequestChuckData(ChuckPosTemp.X, ChuckPosTemp.Y, ClientID);
+			}
+		break;
+		}
+
+		IncomeDataBuffer.Empty();
 	}
 	else
 	{
-		IncomeDataBuffer.Append(Bytes);
-
-		if (IncomeDataBuffer.IsValidIndex(3) == false) return; /** Data Still Not Complete For Size*/
+		if (IncomeDataBuffer.IsValidIndex(3) == false) return; /** Data Still Not Complete For Size */
 		
 		int32 ChuckDataSize = INDEX_NONE;
 		{
@@ -186,6 +235,8 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 		VoxelContainer->SetVoxelChuckDataByArchive(ChuckPosTemp.X, ChuckPosTemp.Y, ProxyArchive);
 
 		CurrentDataCompleteness = -1.0f;
+
+		IncomeDataBuffer.Empty();
 	}
 }
 
