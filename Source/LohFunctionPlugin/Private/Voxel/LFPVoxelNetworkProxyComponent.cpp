@@ -90,7 +90,7 @@ void ULFPVoxelNetworkProxyComponent::TickComponent(float DeltaTime, ELevelTick T
 	{
 		const auto ChuckPos = *ChuckUpdateQueue.CreateConstIterator();
 
-		int32 DataType = ChuckPos.Z;
+		int32 DataType = 0;
 
 		FIntPoint ChuckPosTemp(ChuckPos.X, ChuckPos.Y);
 
@@ -181,7 +181,7 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 
 	if (bIsServer)
 	{
-		if (IncomeDataBuffer.Num() >= 12) return; /** Data Still Not Complete */
+		if (IncomeDataBuffer.Num() < 12) return; /** Data Still Not Complete */
 
 		int32 DataType = INDEX_NONE;
 
