@@ -175,7 +175,7 @@ void ULFPVoxelNetworkProxyComponent::OnChuckUpdate(const int32 RegionIndex, cons
 
 void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, const int32 ClientID, const TArray<uint8>& Bytes)
 {
-	if (IsValid(VoxelContainer) == false || Bytes.IsEmpty()) return;
+	if (IsValid(VoxelContainer) == false || Bytes.IsEmpty() || SocketID != SocketIndex) return;
 
 	IncomeDataBuffer.Append(Bytes);
 
