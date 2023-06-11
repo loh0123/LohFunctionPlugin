@@ -115,7 +115,7 @@ bool ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, FLFPInvento
 
 		OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
-		ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]);
+		ItemIndexData.InventoryChangeMap.Add(SlotIndex, OldItemData);
 
 		if (ItemData.ItemTag.IsValid() == false)
 		{
@@ -155,7 +155,7 @@ bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& It
 	return ReturnList;
 }
 
-bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const bool bApplyChange, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot, const int32 EndSlot, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -189,9 +189,18 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 			}
 		}
 
-		ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]);
+		const FLFPInventoryItemData OldItemData = InventorySlotList[SlotIndex];
 
-		ProcessRemoveItem(ItemIndexData.InventoryChangeMap.Add(SlotIndex, InventorySlotList[SlotIndex]), ItemData, SlotIndex, EventInfo);
+		ProcessRemoveItem(InventorySlotList[SlotIndex], ItemData, SlotIndex, EventInfo);
+
+		ItemIndexData.InventoryChangeMap.Add(SlotIndex, OldItemData);
+
+		if (InventorySlotList[SlotIndex].ItemTag.IsValid() == false)
+		{
+			OnRemoveItem.Broadcast(OldItemData, SlotIndex, EventInfo);
+		}
+
+		OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotIndex], SlotIndex, EventInfo);
 
 		if (ItemData.ItemTag.IsValid() == false)
 		{
@@ -201,34 +210,10 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 
 	ItemIndexData.LeaveItemData = ItemData;
 
-	if (ItemData.ItemTag.IsValid() == false || bCheckAllRemove == false)
-	{
-		if (bApplyChange)
-		{
-			for (const auto& SlotChangeData : ItemIndexData.InventoryChangeMap)
-			{
-				const FLFPInventoryItemData OldItemData = InventorySlotList[SlotChangeData.Key];
-
-				InventorySlotList[SlotChangeData.Key] = SlotChangeData.Value;
-
-				if (InventorySlotList[SlotChangeData.Key].ItemTag.IsValid() == false)
-				{
-					OnRemoveItem.Broadcast(OldItemData, SlotChangeData.Key, EventInfo);
-				}
-
-				OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotChangeData.Key], SlotChangeData.Key, EventInfo);
-			}
-		}
-
-		return true;
-	}
-
-	UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem Not all item can be remove"));
-
-	return false;
+	return true;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const bool bApplyChange, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -244,32 +229,12 @@ bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>&
 
 		ItemIndexList[Index].ItemIndex = Index;
 
-		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, false, EventInfo) == false)
+		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, EventInfo) == false)
 		{
-			ReturnList = false;
+			ReturnList = bCheckAllRemove == false;
 		}
 
 		Index++;
-	}
-
-	if ((ReturnList || bCheckAllRemove == false) && bApplyChange)
-	{
-		for (const auto& InventoryChange : ItemIndexList)
-		{
-			for (const auto& SlotChangeData : InventoryChange.InventoryChangeMap)
-			{
-				const FLFPInventoryItemData OldItemData = InventorySlotList[SlotChangeData.Key];
-
-				InventorySlotList[SlotChangeData.Key] = SlotChangeData.Value;
-
-				if (InventorySlotList[SlotChangeData.Key].ItemTag.IsValid() == false)
-				{
-					OnRemoveItem.Broadcast(OldItemData, SlotChangeData.Key, EventInfo);
-				}
-
-				OnUpdateItem.Broadcast(OldItemData, InventorySlotList[SlotChangeData.Key], SlotChangeData.Key, EventInfo);
-			}
-		}
 	}
 
 	return ReturnList;
@@ -285,7 +250,7 @@ void ULFPInventoryComponent::ClearInventory(const bool bForce, const FString Eve
 
 		FLFPInventoryItemIndexData ItemIndexData;
 
-		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, false, true, EventInfo);
+		RemoveItem(RemoveData, ItemIndexData, SlotIndex, SlotIndex, bForce, false, EventInfo);
 	}
 
 	TrimInventorySlotList(InventorySlotList.Num() - 1);
@@ -377,8 +342,8 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 
 	FLFPInventoryItemIndexData ItemIndexData;
 
-	if (ToSlot != INDEX_NONE) ToInventory->RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, true, EventInfo);
-	if (FromSlot != INDEX_NONE) RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, true, EventInfo);
+	if (ToSlot != INDEX_NONE) ToInventory->RemoveItem(ToData, ItemIndexData, ToSlot, ToSlot, false, false, EventInfo);
+	if (FromSlot != INDEX_NONE) RemoveItem(FromData, ItemIndexData, FromSlot, FromSlot, false, false, EventInfo);
 
 	if (FromSlot != INDEX_NONE) ToInventory->AddItem(FromData, ItemIndexData, ToSlot, ToSlot, EventInfo);
 	if (ToSlot != INDEX_NONE) AddItem(ToData, ItemIndexData, FromSlot, FromSlot, EventInfo);

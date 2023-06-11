@@ -17,7 +17,7 @@ struct FLFPInventoryItemData
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FJsonObjectWrapper MetaData = FJsonObjectWrapper();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
@@ -110,10 +110,10 @@ public: // Function
 	* @return Some item has been Removed from inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const bool bCheckAllRemove = false, const bool bApplyChange = true, const FString EventInfo = FString("None"));
+		bool RemoveItem(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const int32 StartSlot = -1, const int32 EndSlot = -1, const bool bForce = false, const bool bCheckAllRemove = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const bool bCheckAllRemove = false, const bool bApplyChange = true, const FString EventInfo = FString("None"));
+		bool RemoveItemList(const TArray<FLFPInventoryItemData>& ItemData, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce = false, const bool bCheckAllRemove = false, const FString EventInfo = FString("None"));
 
 	/**
 	* Remove All item From inventory
