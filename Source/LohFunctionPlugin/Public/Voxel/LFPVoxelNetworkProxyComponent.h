@@ -29,8 +29,16 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelNetworkProxyComponent | Function")
+		float GetDataCompleteness() const;
+
+public:
+
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
-		bool SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting, const bool InbIsServer = true);
+		bool SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting, const bool IsServer = true);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
+		bool RequestChuckData(const int32 RegionIndex, const int32 ChuckIndex, const int32 ClientID);
 
 public:
 
@@ -41,6 +49,12 @@ public:
 		void OnNetworkMessage(const int32 SocketID, const int32 ClientID, const TArray<uint8>& Bytes);
 
 protected:  // Runtime Data
+
+	UPROPERTY()
+		float CurrentDataCompleteness = -1.0f;
+
+	UPROPERTY()
+		TArray<uint8> IncomeDataBuffer;
 
 	UPROPERTY()
 		TSet<FIntVector> ChuckUpdateQueue;

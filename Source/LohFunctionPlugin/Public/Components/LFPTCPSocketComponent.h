@@ -94,6 +94,11 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "LFPTCPSocketComponent | Function")
+		bool IsSocketValid(const int32 SocketID, const int32 ClientID = -1) const;
+
+public:
+
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
 		void ResizeSocketList();
 
@@ -101,7 +106,7 @@ public:
 		int32 CreateSocket(FLFPTCPSocketSetting InSocketSetting);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
-		bool DestroySocket(const int32 SocketID);
+		bool DestroySocket(const int32 SocketID, const int32 ClientID = -1);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPTCPSocketComponent | Function")
 		bool SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID = -1);
@@ -154,7 +159,7 @@ public:
 			delete Thread;
 		}
 
-		for (FSocket*& ClientSocket : ConnectedSocketList)
+		for (auto& ClientSocket : ConnectedSocketList)
 		{
 			if (ClientSocket == nullptr) continue;
 
@@ -166,7 +171,7 @@ public:
 		if (MainSocket != nullptr)
 		{
 			MainSocket->Close();
-			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
+			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
 			MainSocket = nullptr;
 		}
 	}
@@ -185,17 +190,19 @@ public:
 
 	FORCEINLINE bool IsStopped() const;
 
-	FORCEINLINE FSocket* GetConnectedSocket(const int32 ID);
+	FORCEINLINE TSharedPtr<FSocket> GetConnectedSocket(const int32 ID);
 
-	FORCEINLINE FCriticalSection& GetCriticalSection();
+	FORCEINLINE bool RequestDisconnectClient(const int32 ID);
 
 private:
 
-	FORCEINLINE bool IsSocketConnected(FSocket* InSocket) const;
+	FORCEINLINE bool IsSocketConnected(const TSharedPtr<FSocket>& InSocket) const;
 
 	FORCEINLINE bool CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, const int32 ClientID = -1);
 
 private:
+
+	TQueue<int32, EQueueMode::Spsc> DisconnectQueue;
 
 	/** For identify socket. */
 	int32 SocketID = INDEX_NONE;
@@ -210,18 +217,16 @@ private:
 	FLFPTCPSocketSetting SocketSetting;
 
 	/** Holds the main socket. */
-	FSocket* MainSocket;
+	TSharedPtr<FSocket, ESPMode::ThreadSafe> MainSocket;
 
 	/** Holds the thread object. */
 	FRunnableThread* Thread;
 
 	/** Holds the connected socket. */
-	TArray<FSocket*> ConnectedSocketList;
+	TArray<TSharedPtr<FSocket, ESPMode::ThreadSafe>> ConnectedSocketList;
 
 	/** Holds the server endpoint. */
 	TSharedRef<FInternetAddr> Endpoint;
 
 	ELFPTCPDIsconnectFlags EndCode = ELFPTCPDIsconnectFlags::LFP_User;
-
-	FCriticalSection CriticalSection;
 };

@@ -46,6 +46,11 @@ void ULFPTCPSocketComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
+bool ULFPTCPSocketComponent::IsSocketValid(const int32 SocketID, const int32 ClientID) const
+{
+	return SocketList.IsValidIndex(SocketID) && SocketList[SocketID]->GetConnectedSocket(ClientID).IsValid();
+}
+
 void ULFPTCPSocketComponent::ResizeSocketList()
 {
 	while (SocketList.IsEmpty() == false && SocketList.Last()->IsStopped())
@@ -90,27 +95,24 @@ int32 ULFPTCPSocketComponent::CreateSocket(FLFPTCPSocketSetting InSocketSetting)
 	return SocketID;
 }
 
-bool ULFPTCPSocketComponent::DestroySocket(const int32 SocketID)
+bool ULFPTCPSocketComponent::DestroySocket(const int32 SocketID, const int32 ClientID)
 {
 	if (SocketList.IsValidIndex(SocketID) == false) return false;
 
-	SocketList[SocketID]->Stop();
-
-	return true;
+	return SocketList[SocketID]->RequestDisconnectClient(ClientID);
 }
 
 bool ULFPTCPSocketComponent::SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID)
 {
 	if (SocketList.IsValidIndex(SocketID) == false) return false;
 
-	/** Lock critical to prevent nullptr on run */
-	FScopeLock Lock(&SocketList[SocketID]->GetCriticalSection());
+	auto TargetSocket = SocketList[SocketID]->GetConnectedSocket(ClientID);
 
-	if (SocketList[SocketID]->GetConnectedSocket(ClientID) == nullptr) return false;
+	if (TargetSocket.IsValid() == false) return false;
 
 	int32 BtyeSended = 0;
 
-	return SocketList[SocketID]->GetConnectedSocket(ClientID)->Send(Data.GetData(), Data.Num(), BtyeSended);
+	return TargetSocket->Send(Data.GetData(), Data.Num(), BtyeSended);
 }
 
 bool FLFPTcpSocket::Init()
@@ -141,16 +143,18 @@ bool FLFPTcpSocket::Init()
 
 	UE_LOG(LogTemp, Warning, TEXT("FLFPTcpSocket : %s : DNS is %s"), *SocketSetting.ServerDescription, *Endpoint->ToString(true));;
 
-	if (MainSocket == nullptr)
+	if (MainSocket.IsValid() == false)
 	{
 		if (SocketSetting.MaxConnection > 0)
 		{
-			MainSocket = FTcpSocketBuilder(SocketSetting.ServerDescription)
+			MainSocket = MakeShareable(FTcpSocketBuilder(SocketSetting.ServerDescription)
 				.AsReusable(SocketSetting.bSocketReusable)
 				.BoundToEndpoint(FIPv4Endpoint(Endpoint))
 				.Listening(SocketSetting.MaxConnection)
 				.WithSendBufferSize(SocketSetting.BufferMaxSize)
-				.WithReceiveBufferSize(SocketSetting.BufferMaxSize);
+				.WithReceiveBufferSize(SocketSetting.BufferMaxSize)
+				.AsNonBlocking()
+				.Build());
 
 			ConnectedSocketList.Init(nullptr, SocketSetting.MaxConnection);
 
@@ -158,7 +162,7 @@ bool FLFPTcpSocket::Init()
 		}
 		else
 		{
-			MainSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, SocketSetting.ClientDescription, false);
+			MainSocket = MakeShareable(ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, SocketSetting.ClientDescription, false));
 
 			//Set Send Buffer Size
 			MainSocket->SetSendBufferSize(SocketSetting.BufferMaxSize, SocketSetting.BufferMaxSize);
@@ -167,7 +171,7 @@ bool FLFPTcpSocket::Init()
 		}
 	}
 
-	return (MainSocket != nullptr);
+	return MainSocket.IsValid();
 }
 
 uint32 FLFPTcpSocket::Run()
@@ -192,7 +196,7 @@ uint32 FLFPTcpSocket::Run()
 			if (MainSocket->HasPendingConnection(bHasPendingConnection) && bHasPendingConnection)
 			{
 				TSharedPtr<FInternetAddr> Addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-				FSocket* Client = MainSocket->Accept(*Addr, SocketSetting.ClientDescription);
+				TSharedPtr<FSocket> Client = MakeShareable(MainSocket->Accept(*Addr, SocketSetting.ClientDescription));
 
 				if (Client != nullptr)
 				{
@@ -201,7 +205,7 @@ uint32 FLFPTcpSocket::Run()
 					int32 ClientID = INDEX_NONE;
 
 					/** Find invalid or null socket */
-					for (FSocket*& ClientSocket : ConnectedSocketList)
+					for (auto& ClientSocket : ConnectedSocketList)
 					{
 						ClientID++;
 
@@ -226,7 +230,7 @@ uint32 FLFPTcpSocket::Run()
 			TArray<int32> DisconnectList;
 
 			//Check each endpoint for data
-			for (FSocket*& ClientSocket : ConnectedSocketList)
+			for (auto& ClientSocket : ConnectedSocketList)
 			{
 				ClientID++;
 
@@ -394,6 +398,16 @@ uint32 FLFPTcpSocket::Run()
 
 		//sleep until there is data
 		MainSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(SocketSetting.TickInterval * 1000.0f));
+
+		/** Disconnect All Socket In Queue */
+		{
+			int32 DisconnectID = INDEX_NONE;
+
+			while (DisconnectQueue.Dequeue(DisconnectID))
+			{
+				CloseSocket(ELFPTCPDIsconnectFlags::LFP_User, DisconnectID);
+			}
+		}
 	}
 
 	EndCode = ELFPTCPDIsconnectFlags::LFP_User;
@@ -417,33 +431,34 @@ void FLFPTcpSocket::Exit()
 
 bool FLFPTcpSocket::IsStopped() const
 {
-	return bStopping;
+	return bStopping || MainSocket.IsValid() == false;
 }
 
-FSocket* FLFPTcpSocket::GetConnectedSocket(const int32 ID)
+TSharedPtr<FSocket> FLFPTcpSocket::GetConnectedSocket(const int32 ID)
 {
-	if (ID == INDEX_NONE) return MainSocket;
+	if (ID < 0) return MainSocket;
 
 	if (ConnectedSocketList.IsValidIndex(ID) == false) return nullptr;
 
 	return ConnectedSocketList[ID];
 }
 
-FCriticalSection& FLFPTcpSocket::GetCriticalSection()
+bool FLFPTcpSocket::RequestDisconnectClient(const int32 ID)
 {
-	return CriticalSection;
+	if (GetConnectedSocket(ID).IsValid() == false) return false;
+
+	DisconnectQueue.Enqueue(FMath::Max(-1, ID));
+
+	return true;
 }
 
-bool FLFPTcpSocket::IsSocketConnected(FSocket* InSocket) const
+bool FLFPTcpSocket::IsSocketConnected(const TSharedPtr<FSocket>& InSocket) const
 {
-	return (InSocket != nullptr && (InSocket->GetConnectionState() == ESocketConnectionState::SCS_Connected));
+	return (InSocket.IsValid() && (InSocket->GetConnectionState() == ESocketConnectionState::SCS_Connected));
 }
 
 bool FLFPTcpSocket::CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, const int32 ClientID)
 {
-	/** Lock critical for socket clean up */
-	FScopeLock Lock(&CriticalSection);
-
 	bool bResult = false;
 
 	TWeakObjectPtr<ULFPTCPSocketComponent> LocalComponent = Component;
@@ -454,12 +469,12 @@ bool FLFPTcpSocket::CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, co
 	{
 		int32 LocalID = 0;
 
-		for (FSocket*& ClientSocket : ConnectedSocketList)
+		for (auto& ClientSocket : ConnectedSocketList)
 		{
-			if (ClientSocket == nullptr) continue;
+			if (ClientSocket.IsValid() == false) continue;
 
 			ClientSocket->Close();
-			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
+			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
 			ClientSocket = nullptr;
 
 			Async(EAsyncExecution::TaskGraphMainThread, [LocalComponent, DIsconnectFlags, LocalSetting, LocalSocketID, LocalID] {
@@ -469,17 +484,17 @@ bool FLFPTcpSocket::CloseSocket(const ELFPTCPDIsconnectFlags DIsconnectFlags, co
 			LocalID++;
 		}
 
-		if (MainSocket != nullptr)
+		if (MainSocket.IsValid())
 		{
 			bResult = MainSocket->Close();
-			ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
+			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
 			MainSocket = nullptr;
 		}
 	}
-	else if (ConnectedSocketList.IsValidIndex(ClientID) && ConnectedSocketList[ClientID] != nullptr)
+	else if (ConnectedSocketList.IsValidIndex(ClientID) && ConnectedSocketList[ClientID].IsValid())
 	{
 		bResult = ConnectedSocketList[ClientID]->Close();
-		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ConnectedSocketList[ClientID]);
+		//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ConnectedSocketList[ClientID]);
 		ConnectedSocketList[ClientID] = nullptr;
 	}
 
