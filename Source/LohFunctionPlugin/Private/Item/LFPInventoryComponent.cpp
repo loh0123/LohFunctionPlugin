@@ -309,6 +309,13 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
+	if (IsValid(ToInventory) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : TransferItem ToInventory Is Invalid"));
+
+		return false;
+	}
+
 	if (ToInventory->IsInventorySlotItemValid(ToSlot) && ToInventory->CanRemoveItem(ToInventory->GetInventorySlot(ToSlot), ToSlot, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPInventoryComponent : SwapItemFromOther ToInventory CanRemoveItem return false"));
