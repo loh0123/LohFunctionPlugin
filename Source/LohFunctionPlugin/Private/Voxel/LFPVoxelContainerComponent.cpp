@@ -268,7 +268,7 @@ const FLFPVoxelPaletteData& ULFPVoxelContainerComponent::GetVoxelPaletteRef(cons
 
 bool ULFPVoxelContainerComponent::GetVoxelChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar)
 {
-	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return false;
+	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false) return false;
 
 	uint8 DataID = 0;
 

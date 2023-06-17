@@ -10,6 +10,48 @@ class ULFPVoxelContainerComponent;
 class ULFPTCPSocketComponent;
 
 
+USTRUCT(BlueprintType)
+struct FLFPVoxelNetworkProxySendInfo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY() TSet<FIntPoint> ChuckList = TSet<FIntPoint>();
+};
+
+USTRUCT(BlueprintType)
+struct FLFPVoxelNetworkProxyReceiveInfo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY() TArray<uint8> Data = TArray<uint8>();
+
+	UPROPERTY() int32 DataSendAmount = 0;
+
+	UPROPERTY() int32 DataSize = INDEX_NONE;
+
+public:
+
+	FORCEINLINE bool HasDataInfo() const
+	{
+		return DataSize != INDEX_NONE;
+	}
+
+	FORCEINLINE bool IsDataComplete() const
+	{
+		return HasDataInfo() && DataSize <= Data.Num();
+	}
+
+	FORCEINLINE float GetDataCompleteness() const
+	{
+		return float(Data.Num()) / float(DataSize);
+	}
+};
+
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPVoxelNetworkProxyComponent : public UActorComponent
 {
@@ -30,7 +72,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelNetworkProxyComponent | Function")
-		float GetDataCompleteness() const;
+		float GetDataCompleteness(const int32 ClientID) const;
 
 public:
 
@@ -54,10 +96,10 @@ protected:  // Runtime Data
 		float CurrentDataCompleteness = -1.0f;
 
 	UPROPERTY()
-		TArray<uint8> IncomeDataBuffer;
+		TMap<int32, FLFPVoxelNetworkProxyReceiveInfo> IncomeDataMap;
 
 	UPROPERTY()
-		TSet<FIntVector> ChuckUpdateQueue;
+		TMap<int32, FLFPVoxelNetworkProxySendInfo> ChuckUpdateQueue;
 
 	UPROPERTY()
 		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer;
