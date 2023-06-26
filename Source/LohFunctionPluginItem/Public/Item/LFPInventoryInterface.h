@@ -20,7 +20,7 @@ class ULFPInventoryInterface : public UInterface
 /**
  * 
  */
-class LOHFUNCTIONPLUGIN_API ILFPInventoryInterface
+class LOHFUNCTIONPLUGINITEM_API ILFPInventoryInterface
 {
 	GENERATED_BODY()
 

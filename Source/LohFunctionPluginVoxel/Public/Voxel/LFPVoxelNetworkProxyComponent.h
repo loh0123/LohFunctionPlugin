@@ -53,7 +53,7 @@ public:
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPVoxelNetworkProxyComponent : public UActorComponent
+class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelNetworkProxyComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

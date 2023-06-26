@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class LohFunctionPlugin : ModuleRules
+public class LohFunctionPluginVoxel : ModuleRules
 {
-	public LohFunctionPlugin(ReadOnlyTargetRules Target) : base(Target)
+	public LohFunctionPluginVoxel(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -25,14 +25,21 @@ public class LohFunctionPlugin : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"GameplayTags",
 				"Core",
+                //"GameplayAbilities",
+                "JsonUtilities",
+
+				"PhysicsCore",
+				"StaticMeshDescription",
+				"DeveloperSettings",
+
 				"CoreUObject",
 				"Engine",
 				"RenderCore",
 				"RHI",
 
-                "Networking",
-                "Sockets",
+                "LohFunctionPlugin",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -41,11 +48,14 @@ public class LohFunctionPlugin : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "GameplayTags",
                 "CoreUObject",
 				"Engine",
-				"RenderCore",
+				"Slate",
+				"SlateCore",
 				"RHI",
-				"ImageWriteQueue",
+
+                "LohFunctionPlugin",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

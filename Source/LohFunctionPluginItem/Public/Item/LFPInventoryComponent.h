@@ -63,7 +63,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemFunctionEvent);
 
 
 UCLASS(Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent))
-class LOHFUNCTIONPLUGIN_API ULFPInventoryComponent : public UActorComponent
+class LOHFUNCTIONPLUGINITEM_API ULFPInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

@@ -445,7 +445,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnVoxelRendererUpdate);
  * 
  */
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
-class LOHFUNCTIONPLUGIN_API ULFPVoxelRendererComponent : public UMeshComponent, public IInterface_CollisionDataProvider
+class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelRendererComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	GENERATED_BODY()
 

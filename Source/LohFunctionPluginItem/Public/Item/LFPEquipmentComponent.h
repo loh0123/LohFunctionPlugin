@@ -56,7 +56,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEquipmentChangeEvent, const FLF
 
 
 UCLASS( Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPEquipmentComponent : public UActorComponent, public ILFPInventoryInterface
+class LOHFUNCTIONPLUGINITEM_API ULFPEquipmentComponent : public UActorComponent, public ILFPInventoryInterface
 {
 	GENERATED_BODY()
 

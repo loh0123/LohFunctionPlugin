@@ -19,6 +19,26 @@
 			"Name": "LohFunctionPlugin",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginExperience",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginItem",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginVoxel",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
 		}
 	],
 	"Plugins": [

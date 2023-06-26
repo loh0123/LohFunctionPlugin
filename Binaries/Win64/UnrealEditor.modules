@@ -2,6 +2,10 @@
 	"BuildId": "25360045",
 	"Modules": 
 	{
-		"LohFunctionPlugin": "UnrealEditor-LohFunctionPlugin.dll"
+		"LohFunctionPlugin": "UnrealEditor-LohFunctionPlugin.dll",
+		"LohFunctionPluginEditor": "UnrealEditor-LohFunctionPluginEditor.dll",
+		"LohFunctionPluginExperience": "UnrealEditor-LohFunctionPluginExperience.dll",
+		"LohFunctionPluginItem": "UnrealEditor-LohFunctionPluginItem.dll",
+		"LohFunctionPluginVoxel": "UnrealEditor-LohFunctionPluginVoxel.dll"
 	}
 }

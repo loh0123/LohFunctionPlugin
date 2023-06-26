@@ -9,7 +9,7 @@
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPExperienceComponent : public UActorComponent
+class LOHFUNCTIONPLUGINEXPERIENCE_API ULFPExperienceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

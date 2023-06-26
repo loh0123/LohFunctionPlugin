@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class LohFunctionPlugin : ModuleRules
+public class LohFunctionPluginExperience : ModuleRules
 {
-	public LohFunctionPlugin(ReadOnlyTargetRules Target) : base(Target)
+	public LohFunctionPluginExperience(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -25,14 +25,11 @@ public class LohFunctionPlugin : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"GameplayTags",
 				"Core",
+                "JsonUtilities",
 				"CoreUObject",
 				"Engine",
-				"RenderCore",
-				"RHI",
-
-                "Networking",
-                "Sockets",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -41,11 +38,11 @@ public class LohFunctionPlugin : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "GameplayTags",
                 "CoreUObject",
 				"Engine",
-				"RenderCore",
-				"RHI",
-				"ImageWriteQueue",
+				"Slate",
+				"SlateCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

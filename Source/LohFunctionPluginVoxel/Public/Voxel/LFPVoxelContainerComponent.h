@@ -630,7 +630,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVoxelContainerRegionInitialized, 
 
 
 UCLASS( Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin) )
-class LOHFUNCTIONPLUGIN_API ULFPVoxelContainerComponent : public UActorComponent
+class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelContainerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
