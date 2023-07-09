@@ -259,7 +259,7 @@ public: // Valid Checker
 		FORCEINLINE bool IsInventorySlotItemSame(const int32 IndexA, const int32 IndexB) const { return GetInventorySlot(IndexA).ItemName == GetInventorySlot(IndexB).ItemName; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool HasInventorySlotName(const FName SlotName) const { return SlotNameList.Contains(SlotName); }
+		FORCEINLINE bool HasInventorySlotName(const FName SlotName) const { return InventorySlotNameList.Contains(SlotName); }
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
 		FORCEINLINE bool IsInventorySlotHasName(const int32 Index, const FName SlotName) const;
@@ -289,7 +289,7 @@ public:
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
-		TMap<FName, FLFPInventorySlotName> SlotNameList = TMap<FName, FLFPInventorySlotName>();
+		TMap<FName, FLFPInventorySlotName> InventorySlotNameList = TMap<FName, FLFPInventorySlotName>();
 
 protected:
 
