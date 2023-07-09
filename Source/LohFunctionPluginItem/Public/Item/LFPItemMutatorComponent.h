@@ -13,7 +13,7 @@ struct FLFPItemMutatorQueueData
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPItemMutatorQueueData")
-		FGameplayTag RecipeTag = FGameplayTag::EmptyTag;
+		FName RecipeName = FName("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		TArray<FLFPInventoryItemData> ItemConsumeList;
@@ -69,7 +69,7 @@ public: // Function
 		bool SetInventoryComponent(ULFPInventoryComponent* Component);
 	
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPItemMutatorComponent | Function")
-		bool AddItemToQueue(const FGameplayTag RecipeTag);
+		bool AddItemToQueue(const FName RecipeName);
 	
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPItemMutatorComponent | Function")
 		bool RemoveItemFromQueue(const int32 QueueIndex);
@@ -136,8 +136,8 @@ public: // Getter
 		FLFPItemMutatorQueueData GetQueueItem(const int32 QueueIndex) const { return IsQueueIndexValid(QueueIndex) ? MutatorQueue[QueueIndex] : FLFPItemMutatorQueueData(); }
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPItemMutatorComponent | Function")
-		bool GetItemRecipe(const FGameplayTag RecipeTag, FLFPItemMutatorQueueData& RecipeData) const;
-		virtual bool GetItemRecipe_Implementation(const FGameplayTag RecipeTag, FLFPItemMutatorQueueData& RecipeData) const { return false; }
+		bool GetItemRecipe(const FName RecipeName, FLFPItemMutatorQueueData& RecipeData) const;
+		virtual bool GetItemRecipe_Implementation(const FName RecipeName, FLFPItemMutatorQueueData& RecipeData) const { return false; }
 
 public: // Delegate
 

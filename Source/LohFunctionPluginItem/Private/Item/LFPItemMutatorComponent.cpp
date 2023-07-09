@@ -54,7 +54,7 @@ bool ULFPItemMutatorComponent::SetInventoryComponent(ULFPInventoryComponent* Com
 	return IsValid(InventoryComponent);
 }
 
-bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
+bool ULFPItemMutatorComponent::AddItemToQueue(const FName RecipeName)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -74,14 +74,14 @@ bool ULFPItemMutatorComponent::AddItemToQueue(const FGameplayTag RecipeTag)
 
 	FLFPItemMutatorQueueData NewQueueData = FLFPItemMutatorQueueData();
 
-	if (GetItemRecipe(RecipeTag, NewQueueData) == false)
+	if (GetItemRecipe(RecipeName, NewQueueData) == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPItemMutatorComponent : AddItemToQueue GetItemRecipe return false"));
 
 		return false;
 	}
 
-	NewQueueData.RecipeTag = RecipeTag;
+	NewQueueData.RecipeName = RecipeName;
 
 	if (CanAddItemToQueue(NewQueueData) == false)
 	{

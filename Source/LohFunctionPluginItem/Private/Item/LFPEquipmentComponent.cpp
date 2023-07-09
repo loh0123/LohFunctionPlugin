@@ -111,7 +111,7 @@ bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, co
 		return false;
 	}
 
-	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
+	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemName.IsNone() == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex need to be empty"));
 
@@ -152,7 +152,7 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 
 	EquipmentSlotList.RemoveAt(EquipmentIndex);
 
-	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemTag != FGameplayTag::EmptyTag)
+	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemName.IsNone() == false)
 	{
 		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
 	}
@@ -208,16 +208,7 @@ bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, cons
 		return false;
 	}
 
-	TArray<int32> SwapIndexList;
-
-	if (InventoryComponent->FindAvailableInventorySlot(SwapIndexList, InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex].SlotIndex), InventoryComponent->StartInventorySlotIndex, -1, EventInfo) == false)
-	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryUnequipItem FindAvailableInventorySlot return false"));
-
-		return false;
-	}
-
-	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, SwapIndexList[0], EventInfo);
+	return InventoryComponent->SwapItemToAvailable(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
 }
 
 bool ULFPEquipmentComponent::SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo)
@@ -288,7 +279,7 @@ void ULFPEquipmentComponent::RunEquipOnAllSlot(const FString& EventInfo) const
 	{
 		if (EquipmentSlot.bIsActive == false) continue;
 
-		if (InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex).ItemTag == FGameplayTag::EmptyTag) continue;
+		if (InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex).ItemName.IsNone()) continue;
 
 		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex), Index++, EquipmentSlot.SlotIndex, EventInfo);
 	}
@@ -304,12 +295,12 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 
 	if (OldItemData != NewItemData)
 	{
-		if (OldItemData.ItemTag.IsValid())
+		if (OldItemData.ItemName.IsNone() == false)
 		{
 			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
 		}
 
-		if (NewItemData.ItemTag.IsValid())
+		if (NewItemData.ItemName.IsNone() == false)
 		{
 			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
 		}
@@ -343,14 +334,14 @@ bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInven
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		if (FromItemData.ItemTag.IsValid() && CanUnequipItem(FromItemData, EquipmentSlotIndexA.SlotIndex, FromSlot, EventInfo) == false) return false;
-		if (ToItemData.ItemTag.IsValid() && CanEquipItem(ToItemData, EquipmentSlotIndexA.SlotIndex, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanUnequipItem(FromItemData, EquipmentSlotIndexA.SlotIndex, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanEquipItem(ToItemData, EquipmentSlotIndexA.SlotIndex, ToSlot, EventInfo) == false) return false;
 	}
 
 	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		if (ToItemData.ItemTag.IsValid() && CanUnequipItem(ToItemData, EquipmentSlotIndexB.SlotIndex, ToSlot, EventInfo) == false) return false;
-		if (FromItemData.ItemTag.IsValid() && CanEquipItem(FromItemData, EquipmentSlotIndexB.SlotIndex, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanUnequipItem(ToItemData, EquipmentSlotIndexB.SlotIndex, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanEquipItem(FromItemData, EquipmentSlotIndexB.SlotIndex, FromSlot, EventInfo) == false) return false;
 	}
 
 	return true;

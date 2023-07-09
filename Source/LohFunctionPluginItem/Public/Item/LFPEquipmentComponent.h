@@ -150,7 +150,7 @@ public: // Valid Checker
 		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).ItemTag != FGameplayTag::EmptyTag; };
+		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).ItemName.IsNone() == false; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FORCEINLINE bool IsEquipmentSlotActive(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsActive; };
