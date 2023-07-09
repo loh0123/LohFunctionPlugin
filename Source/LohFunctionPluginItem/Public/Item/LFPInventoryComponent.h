@@ -65,15 +65,6 @@ struct FLFPInventoryItemIndexData
 		FLFPInventoryItemData LeaveItemData = FLFPInventoryItemData();
 };
 
-USTRUCT(BlueprintType)
-struct FLFPInventorySlotName
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotName")
-		TArray<FIntPoint> SlotRangeList = TArray<FIntPoint>();
-};
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemEvent, const FLFPInventoryItemData&, ItemData, const int32, SlotIndex, const FString&, EventInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnUpdateItemEvent, const FLFPInventoryItemData&, OldItemData, const FLFPInventoryItemData&, NewItemData, const int32, SlotIndex, const FString&, EventInfo);
@@ -198,10 +189,24 @@ public: // Event
 	virtual bool CanSwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const;
 
 
+	/**
+	* @param CurrentItemData The Item Currently On The Slot Under Process
+	* @param AddItemData The Item That Need To Be Add
+	* @param SlotIndex What Index This Slot In Inventory
+	* @param EventInfo Info to pass to trigger event
+	* @return Is The Process Completed And Stop Iteracte Next Slot
+	*/
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
 		bool ProcessAddItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& AddItemData, const int32 SlotIndex, const FString& EventInfo) const;
 		virtual bool ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& AddItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = AddItemData; return true; }
 
+	/**
+	* @param CurrentItemData The Item Currently On The Slot Under Process
+	* @param RemoveItemData The Item That Need To Be Remove
+	* @param SlotIndex What Index This Slot In Inventory
+	* @param EventInfo Info to pass to trigger event
+	* @return Is The Process Completed And Stop Iteracte Next Slot
+	*/
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
 		bool ProcessRemoveItem(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& RemoveItemData, const int32 SlotIndex, const FString& EventInfo) const;
 		virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& RemoveItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = FLFPInventoryItemData::EmptyInventoryItemData; return true; }
@@ -211,14 +216,17 @@ public: // Event
 	virtual void ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const { FLFPInventoryItemData AData = ItemDataA; FLFPInventoryItemData BData = ItemDataB; ItemDataA = BData; ItemDataB = AData; }
 
 
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsItemSortPriorityHigher(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const;
 	virtual bool IsItemSortPriorityHigher_Implementation(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const { return false; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
-	virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return true; }
+	virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.ItemName.IsNone(); }
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
+		bool IsInventorySlotHasTag(const int32& SlotIndex, const FGameplayTag& SlotTag) const;
+	virtual bool IsInventorySlotHasTag_Implementation(const int32& SlotIndex, const FGameplayTag& SlotTag) const { return false; }
 
 
 
@@ -266,13 +274,33 @@ public: // Valid Checker
 
 public: // Getter
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool FindAvailableInventorySlot(TArray<int32>& AvailableSlotList, const FLFPInventoryItemData& ForItem, int32 StartSlot = -1, int32 EndSlot = -1, const FString EventInfo = FString("None")) const;
+	/** 
+	* Find Empty Or Available Inventory Slot
+	* Please Override (IsInventorySlotHasTag) For Custom Behavior On Add Item
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
+		bool FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, int32 StartSlot = -1, int32 EndSlot = -1, const FString EventInfo = FString("None")) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		bool FindInventorySlotWithName(TArray<int32>& AvailableSlotList, const FName SlotName, int32 StartSlot = -1, int32 EndSlot = -1, const FString EventInfo = FString("None")) const;
+	/** 
+	* Find Inventory Slot Using Slot Name Defined On (InventorySlotNameList) variable
+	* Suitable To Using For Getting Slot Based On Slot Type
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
+		bool FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName, int32 StartSlot = -1, int32 EndSlot = -1, const FString EventInfo = FString("None")) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
+	/** 
+	* Find Items Using Gameplay Tag 
+	* Suitable To Using For Getting Item Based On Categorize
+	* Please Override (IsInventorySlotHasTag) To Use This Function 
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
+		bool FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, int32 StartSlot = -1, int32 EndSlot = -1, const FString EventInfo = FString("None")) const;
+
+	/** 
+	* Find Items Using Item Name 
+	* Suitable To Using For Getting Multiple Same Item
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
 		bool FindItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, int32 StartSlot = -1, int32 EndSlot = -1) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
@@ -283,13 +311,15 @@ public: // Getter
 
 public:
 
+	/** How big is this inventory can get ( It can't change runtime ) */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPInventoryComponent | Setting", meta = (ClampMin = "0"))
 		int32 MaxInventorySlotAmount = 16;
 
 protected:
 
+	/** Can use this to mark equipment slot and hidden slot ( It can't change runtime ) */
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
-		TMap<FName, FLFPInventorySlotName> InventorySlotNameList = TMap<FName, FLFPInventorySlotName>();
+		TMap<FName, FIntPoint> InventorySlotNameList = TMap<FName, FIntPoint>();
 
 protected:
 

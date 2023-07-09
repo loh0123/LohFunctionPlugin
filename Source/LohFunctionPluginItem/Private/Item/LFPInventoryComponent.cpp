@@ -498,19 +498,12 @@ bool ULFPInventoryComponent::IsInventorySlotHasName(const int32 Index, const FNa
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
-	const auto& SlotRangeList = InventorySlotNameList.FindChecked(SlotName).SlotRangeList;
+	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	for (const auto& SlotRange : SlotRangeList)
-	{
-		if (SlotRange.X < Index || SlotRange.Y > Index) continue;
-
-		return true;
-	}
-
-	return false;
+	return (SlotRange.X >= Index && SlotRange.Y <= Index);
 }
 
-bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& AvailableSlotList, const FLFPInventoryItemData& ForItem, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
+bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
 {
 	if (EndSlot == INDEX_NONE) EndSlot = MaxInventorySlotAmount - 1;
 
@@ -524,7 +517,7 @@ bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& Available
 	{
 		if (IsInventorySlotAvailable(SlotIndex, GetInventorySlot(SlotIndex), ForItem) == false) continue;
 
-		AvailableSlotList.Add(SlotIndex);
+		SlotList.Add(SlotIndex);
 
 		IsValidOutput = true;
 	}
@@ -532,7 +525,7 @@ bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& Available
 	return IsValidOutput;
 }
 
-bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& AvailableSlotList, const FName SlotName, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
+bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
 {
 	if (EndSlot == INDEX_NONE) EndSlot = MaxInventorySlotAmount - 1;
 
@@ -542,23 +535,42 @@ bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& AvailableS
 
 	if (HasInventorySlotName(SlotName) == false) return false;
 
-	const auto& SlotRangeList = InventorySlotNameList.FindChecked(SlotName).SlotRangeList;
+	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	TSet<int32> SlotList;
+	bool IsValidOutput = false;
 
-	for (const auto& SlotRange : SlotRangeList)
+	SlotList.Reserve(SlotList.Num() + FMath::Min(SlotRange.Y, MaxInventorySlotAmount));
+
+	for (int32 Index = FMath::Max(SlotRange.X, StartSlot); Index <= FMath::Min(SlotRange.Y, EndSlot); Index++)
 	{
-		SlotList.Reserve(SlotList.Num() + FMath::Min(SlotRange.Y, MaxInventorySlotAmount));
+		SlotList.Add(Index);
 
-		for (int32 Index = FMath::Max(SlotRange.X, StartSlot); Index <= FMath::Min(SlotRange.Y, EndSlot); Index++)
-		{
-			SlotList.Add(Index);
-		}
+		IsValidOutput = true;
 	}
 
-	AvailableSlotList.Append(SlotList.Array());
+	return IsValidOutput;
+}
 
-	return SlotList.IsEmpty() == false;
+bool ULFPInventoryComponent::FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, int32 StartSlot, int32 EndSlot, const FString EventInfo) const
+{
+	if (EndSlot == INDEX_NONE) EndSlot = MaxInventorySlotAmount - 1;
+
+	if (EndSlot >= MaxInventorySlotAmount || StartSlot >= MaxInventorySlotAmount) return false;
+
+	if (StartSlot < 0) StartSlot = 0;
+
+	bool IsValidOutput = false;
+
+	for (int32 SlotIndex = StartSlot; SlotIndex <= EndSlot; SlotIndex++)
+	{
+		if (IsInventorySlotHasTag(SlotIndex, SlotTag) == false) continue;
+
+		SlotList.Add(SlotIndex);
+
+		IsValidOutput = true;
+	}
+
+	return IsValidOutput;
 }
 
 bool ULFPInventoryComponent::FindItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, int32 StartSlot, int32 EndSlot) const
