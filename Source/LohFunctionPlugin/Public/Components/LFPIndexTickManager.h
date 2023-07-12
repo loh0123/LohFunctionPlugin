@@ -16,7 +16,7 @@ public:
 
 	FLFPIndexTickData() : Index(INDEX_NONE), Interval(INDEX_NONE) {}
 	FLFPIndexTickData(const int32 NewIndex) : Index(NewIndex), Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex, const int32 NewStartInterval) : Index(NewIndex), Interval(NewStartInterval){}
+	FLFPIndexTickData(const int32 NewIndex, const int32 NewMaxInterval, const int32 NewAmount) : Index(NewIndex), MaxInterval(NewMaxInterval), Interval(NewMaxInterval), Amount(NewAmount) {}
 
 public:
 
@@ -24,7 +24,13 @@ public:
 		int32 Index = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
+		int32 MaxInterval = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		int32 Interval = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
+		int32 Amount = INDEX_NONE;
 
 public: // Operator
 
@@ -40,9 +46,25 @@ public:
 		return Interval <= 0;
 	}
 
+	FORCEINLINE bool CanRemove() const
+	{
+		return Interval <= 0 && Amount == 0;
+	}
+
 	FORCEINLINE int32 DecreaseInterval()
 	{
-		return --Interval;
+		if (CanTick())
+		{
+			if (Amount > 0) Amount -= 1;
+
+			Interval = MaxInterval;
+
+			return Interval;
+		}
+		else
+		{
+			return --Interval;
+		}
 	}
 };
 

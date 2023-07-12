@@ -31,26 +31,31 @@ void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 	TickList.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
 		{
+			CurrentTickIndex.DecreaseInterval();
+
 			if (CurrentTickIndex.CanTick())
 			{
 				OnTick.Broadcast(CurrentTickIndex.Index);
-
-				return true;
 			}
 
-			CurrentTickIndex.DecreaseInterval();
-
-			return false;
+			return CurrentTickIndex.CanRemove();
 		});
 }
 
 void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData)
 {
+	if (TickData.Amount == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s : TickData Amount Can't Be Zero"), *GetName());
+
+		return;
+	}
+
 	const int32 Index = TickList.Find(TickData);
 
 	if (Index != INDEX_NONE)
 	{
-		TickList[Index].Interval = TickData.Interval;
+		TickList[Index] = TickData;
 	}
 	else
 	{

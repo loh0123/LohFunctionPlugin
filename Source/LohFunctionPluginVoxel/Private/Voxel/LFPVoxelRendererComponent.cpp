@@ -207,9 +207,10 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 	}
 }
 
-void ULFPVoxelRendererComponent::SetFillChuckFace(const bool value)
+void ULFPVoxelRendererComponent::SetDisableFaceCulling(const bool bChuck, const bool bRegion)
 {
-	GenerationSetting.bFillChuckFace = value;
+	GenerationSetting.bDisableChuckFaceCulling = bChuck;
+	GenerationSetting.bDisableRegionFaceCulling = bRegion;
 
 	UpdateMesh();
 }
@@ -412,7 +413,9 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPVoxelContainerCompone
 
 					/** Check Do We Ignore Border Data And Always Fill The Face */
 					const FLFPVoxelPaletteData& TargetVoxelPalette = 
-						TargetGenerationSetting.bFillChuckFace && (RegionIndex != TargetGlobalIndex.X || ChuckIndex != TargetGlobalIndex.Y) ? 
+						(TargetGenerationSetting.bDisableChuckFaceCulling && ChuckIndex != TargetGlobalIndex.Y) || 
+						(TargetGenerationSetting.bDisableRegionFaceCulling && RegionIndex != TargetGlobalIndex.X)
+						? 
 						FLFPVoxelPaletteData::EmptyData 
 						: 
 						TargetVoxelContainer->GetVoxelPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);

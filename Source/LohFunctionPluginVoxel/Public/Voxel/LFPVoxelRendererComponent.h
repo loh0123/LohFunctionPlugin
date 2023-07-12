@@ -394,9 +394,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bPrintGenerateTime = false;
 
-	/* Always Fill Face On Chuck Border If True */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bFillChuckFace = false;
+		bool bDisableChuckFaceCulling = false;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		bool bDisableRegionFaceCulling = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateCollisionData = false;
@@ -482,7 +484,7 @@ public:
 		FORCEINLINE void UpdateAttribute();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void SetFillChuckFace(const bool value);
+		FORCEINLINE void SetDisableFaceCulling(const bool bChuck, const bool bRegion);
 
 public:
 
