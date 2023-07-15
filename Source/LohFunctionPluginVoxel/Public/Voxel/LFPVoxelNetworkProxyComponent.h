@@ -93,9 +93,6 @@ public:
 protected:  // Runtime Data
 
 	UPROPERTY()
-		float CurrentDataCompleteness = -1.0f;
-
-	UPROPERTY()
 		TMap<int32, FLFPVoxelNetworkProxyReceiveInfo> IncomeDataMap;
 
 	UPROPERTY()

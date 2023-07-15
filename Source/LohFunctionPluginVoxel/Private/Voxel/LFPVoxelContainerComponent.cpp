@@ -173,14 +173,25 @@ bool ULFPVoxelContainerComponent::SetVoxelPalettes(const int32 RegionIndex, cons
 
 bool ULFPVoxelContainerComponent::SetVoxelChuckData(const int32 RegionIndex, const int32 ChuckIndex, const FLFPVoxelChuckData& ChuckData)
 {
-	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false || ChuckData.IsInitialized() == false || ChuckData.GetIndexSize() != Setting.GetVoxelLength()) return false;
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false || ChuckData.GetIndexSize() != Setting.GetVoxelLength()) return false;
+
+	bool bIsAllSuccess = true;
+	bool bHasPassed = false;
 
 	for (int32 VoxelIndex = 0; VoxelIndex < Setting.GetVoxelLength(); VoxelIndex++)
 	{
-		if (ChuckData.GetIndexData(VoxelIndex) != GetVoxelPaletteRef(RegionIndex, ChuckIndex, VoxelIndex)) SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, ChuckData.GetIndexData(VoxelIndex));
+		if (ChuckData.GetIndexData(VoxelIndex) != GetVoxelPaletteRef(RegionIndex, ChuckIndex, VoxelIndex)) 
+		{
+			bHasPassed = true;
+
+			if (SetVoxelPalette(RegionIndex, ChuckIndex, VoxelIndex, ChuckData.GetIndexData(VoxelIndex)) == false)
+			{
+				bIsAllSuccess = false;
+			}
+		}
 	}
 
-	return true;
+	return bIsAllSuccess && bHasPassed;
 }
 
 bool ULFPVoxelContainerComponent::InitializeVoxelChuck(const int32 RegionIndex, const int32 ChuckIndex)
@@ -295,7 +306,7 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckDataByArchive(const int32 RegionI
 	{
 		FLFPVoxelChuckData DecompressedChuckData = FLFPVoxelChuckData();
 		Ar << DecompressedChuckData;
-		SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
+		return SetVoxelChuckData(RegionIndex, ChuckIndex, DecompressedChuckData);
 	}
 	break;
 
@@ -303,13 +314,15 @@ bool ULFPVoxelContainerComponent::SetVoxelChuckDataByArchive(const int32 RegionI
 	{
 		TMap<int32, FLFPVoxelPaletteData> DecompressedChuckVoxelPalettes;
 		Ar << DecompressedChuckVoxelPalettes;
-		SetVoxelPalettes(RegionIndex, ChuckIndex, DecompressedChuckVoxelPalettes);
+		return SetVoxelPalettes(RegionIndex, ChuckIndex, DecompressedChuckVoxelPalettes);
 	}
 	break;
 
 	}
 
-	return true;
+	UE_LOG(LogTemp, Error, TEXT("LFPVoxelContainerComponent : SetVoxelChuckDataByArchive DataID Invalid : %d"), DataID);
+
+	return false;
 }
 
 void ULFPVoxelContainerComponent::InitializeRegion(const int32 RegionIndex)

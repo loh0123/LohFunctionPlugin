@@ -65,7 +65,7 @@ int32 ULFPTCPSocketComponent::CreateSocket(FLFPTCPSocketSetting InSocketSetting)
 {
 	ResizeSocketList();
 
-	if (InSocketSetting.MaxConnection < 0) InSocketSetting.MaxConnection = INDEX_NONE;
+	if (InSocketSetting.MaxConnection <= 0) InSocketSetting.MaxConnection = INDEX_NONE;
 
 	if (InSocketSetting.TickInterval <= 0.0f) InSocketSetting.TickInterval = 0.0f;
 	if (InSocketSetting.ReconnectTime <= 0.0f) InSocketSetting.ReconnectTime = 0.0f;
@@ -104,15 +104,48 @@ bool ULFPTCPSocketComponent::DestroySocket(const int32 SocketID, const int32 Cli
 
 bool ULFPTCPSocketComponent::SendData(const TArray<uint8>& Data, const int32 SocketID, const int32 ClientID)
 {
-	if (SocketList.IsValidIndex(SocketID) == false) return false;
+	if (SocketList.IsValidIndex(SocketID) == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : SendData Failed Socket Index Invalid : %d : %d"), SocketID, ClientID);
 
-	auto TargetSocket = SocketList[SocketID]->GetConnectedSocket(ClientID);
-
-	if (TargetSocket.IsValid() == false) return false;
+		return false;
+	}
 
 	int32 BtyeSended = 0;
 
-	return TargetSocket->Send(Data.GetData(), Data.Num(), BtyeSended);
+	if (ClientID < 0)
+	{
+		int32 CurrentClientIndex = 0;
+
+		auto TargetSocket = SocketList[SocketID]->GetConnectedSocket(CurrentClientIndex);
+
+		bool bIsAllSuccess = TargetSocket.IsValid();
+
+		while (TargetSocket.IsValid())
+		{
+			if (TargetSocket->Send(Data.GetData(), Data.Num(), BtyeSended) == false)
+			{
+				bIsAllSuccess = false;
+			}
+
+			TargetSocket = SocketList[SocketID]->GetConnectedSocket(++CurrentClientIndex);
+		}
+
+		return bIsAllSuccess;
+	}
+	else
+	{
+		auto TargetSocket = SocketList[SocketID]->GetConnectedSocket(ClientID);
+
+		if (TargetSocket.IsValid() == false)
+		{
+			UE_LOG(LogTemp, Error, TEXT("FLFPTcpSocket : SendData Failed Socket Null : %d : %d"), SocketID, ClientID);
+
+			return false;
+		}
+
+		return TargetSocket->Send(Data.GetData(), Data.Num(), BtyeSended);
+	}
 }
 
 bool FLFPTcpSocket::Init()

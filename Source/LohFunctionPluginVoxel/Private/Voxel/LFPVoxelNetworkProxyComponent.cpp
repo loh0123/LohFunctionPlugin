@@ -163,7 +163,7 @@ bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InV
 	VoxelContainer->OnVoxelContainerChuckUpdate.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnChuckUpdate);
 	NetworkSocket->OnDataReceived.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnNetworkMessage);
 
-	bIsServer = IsServer;
+	bIsServer = SocketSetting.MaxConnection <= 0;
 
 	SocketIndex = NetworkSocket->CreateSocket(SocketSetting);
 
@@ -206,6 +206,9 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 
 	IncomeData.Data.Append(Bytes);;
 
+	UE_LOG(LogTemp, Log, TEXT("////////////////// LFPVoxelNetworkProxyComponent : Incoming Data Start //////////////////"));
+	UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : Data Size = %d To %s : Socket = %d : Client = %d"), Bytes.Num(), (bIsServer ? TEXT("Server") : TEXT("Client")), SocketID, ClientID);
+
 	if (bIsServer)
 	{
 		/** Do we not has package info */
@@ -220,11 +223,15 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 			//ProxyArchive << IncomeData.DataSendAmount;
 			ProxyArchive << IncomeData.DataSize;
 
+			UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : IncomeData Full Size = %d"), IncomeData.DataSize);
+
 			IncomeData.Data.RemoveAt(0, 4, false);
 		}
 
 		if (IncomeData.IsDataComplete())
 		{
+			UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : IncomeData Is Completed"));
+
 			FMemoryReader MemoryProxy(IncomeData.Data);
 
 			FNameAsStringProxyArchive ProxyArchive(MemoryProxy);
@@ -257,11 +264,16 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 			ProxyArchive << IncomeData.DataSendAmount;
 			ProxyArchive << IncomeData.DataSize;
 
+			UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : IncomeData Send Amount = %d"), IncomeData.DataSendAmount);
+			UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : IncomeData Full Size = %d"), IncomeData.DataSize);
+
 			IncomeData.Data.RemoveAt(0, 8, false);
 		}
 		
 		if (IncomeData.IsDataComplete())
 		{
+			UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : IncomeData Is Completed"));
+
 			FArchiveLoadCompressedProxy MemoryProxy(IncomeData.Data, EName::Oodle, ECompressionFlags::COMPRESS_BiasMemory);
 
 			FNameAsStringProxyArchive ProxyArchive(MemoryProxy);
@@ -272,15 +284,22 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 
 				ProxyArchive << ChuckPosTemp;
 
-				VoxelContainer->SetVoxelChuckDataByArchive(ChuckPosTemp.X, ChuckPosTemp.Y, ProxyArchive);
+				if (VoxelContainer->SetVoxelChuckDataByArchive(ChuckPosTemp.X, ChuckPosTemp.Y, ProxyArchive))
+				{
+					UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : SetVoxelChuckDataByArchive Success : Pos Is %s"), *ChuckPosTemp.ToString());
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("LFPVoxelNetworkProxyComponent : SetVoxelChuckDataByArchive Failed : Pos Is %s"), *ChuckPosTemp.ToString());
+				}
 			}
-
-			CurrentDataCompleteness = -1.0f;
 
 			IncomeData.Data.RemoveAt(0, IncomeData.DataSize, false);
 
 			if (IncomeData.Data.IsEmpty()) IncomeDataMap.Remove(ClientID);
 		}
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("////////////////// LFPVoxelNetworkProxyComponent : Incoming Data End //////////////////"));
 }
 
