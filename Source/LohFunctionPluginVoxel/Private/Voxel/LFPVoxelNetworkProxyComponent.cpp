@@ -7,6 +7,7 @@
 #include "Serialization/NameAsStringProxyArchive.h"
 #include "Serialization/ArchiveSaveCompressedProxy.h"
 #include "Serialization/ArchiveLoadCompressedProxy.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/LFPTCPSocketComponent.h"
 
 // Sets default values for this component's properties
@@ -142,7 +143,7 @@ float ULFPVoxelNetworkProxyComponent::GetDataCompleteness(const int32 ClientID) 
 	return IncomeDataMap.Contains(ClientID) ? IncomeDataMap.FindChecked(ClientID).GetDataCompleteness() : -1.0f;
 }
 
-bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting, const bool IsServer)
+bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting)
 {
 	if (IsValid(InVoxelContainer) == false || IsValid(InNetworkSocket) == false) return false;
 
@@ -157,13 +158,29 @@ bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InV
 		NetworkSocket->DestroySocket(SocketIndex);
 	}
 
+	//{
+	//	auto PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	//
+	//	if (IsValid(PlayerController))
+	//	{
+	//		if (PlayerController->NetConnection.IsNull() == false)
+	//		{
+	//			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("Net request url is %s"), *PlayerController->NetConnection->URL.Host));
+	//		}
+	//		else
+	//		{
+	//			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("NetConnection is null")));
+	//		}
+	//	}
+	//}
+
 	VoxelContainer = InVoxelContainer;
 	NetworkSocket = InNetworkSocket;
 
 	VoxelContainer->OnVoxelContainerChuckUpdate.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnChuckUpdate);
 	NetworkSocket->OnDataReceived.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnNetworkMessage);
 
-	bIsServer = SocketSetting.MaxConnection <= 0;
+	bIsServer = SocketSetting.MaxConnection > 0;
 
 	SocketIndex = NetworkSocket->CreateSocket(SocketSetting);
 

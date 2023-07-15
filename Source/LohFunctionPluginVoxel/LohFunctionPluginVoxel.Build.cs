@@ -34,7 +34,9 @@ public class LohFunctionPluginVoxel : ModuleRules
 				"StaticMeshDescription",
 				"DeveloperSettings",
 
-				"CoreUObject",
+                "OnlineSubsystem",
+
+                "CoreUObject",
 				"Engine",
 				"RenderCore",
 				"RHI",
@@ -54,6 +56,7 @@ public class LohFunctionPluginVoxel : ModuleRules
 				"Slate",
 				"SlateCore",
 				"RHI",
+                "OnlineSubsystem",
 
                 "LohFunctionPlugin",
 				// ... add private dependencies that you statically link with here ...	

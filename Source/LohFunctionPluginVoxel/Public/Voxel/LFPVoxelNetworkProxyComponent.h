@@ -77,7 +77,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
-		bool SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting, const bool IsServer = true);
+		bool SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
 		bool RequestChuckData(const int32 RegionIndex, const int32 ChuckIndex, const int32 ClientID);
