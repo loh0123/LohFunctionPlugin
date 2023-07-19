@@ -74,13 +74,13 @@ void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const
 	{
 		GroupData.Members[Index] = TickData;
 
-		OnIndexUpdated.Broadcast(TickData.Index, GroupIndex);
+		OnIndexUpdated.Broadcast(TickData.Index, TickData.TickName, GroupIndex);
 	}
 	else
 	{
 		GroupData.Members.Add(TickData);
 
-		OnIndexAdded.Broadcast(TickData.Index, GroupIndex);
+		OnIndexAdded.Broadcast(TickData.Index, TickData.TickName, GroupIndex);
 	}
 
 	if (bAllowAutoTick) SetComponentTickEnabled(true);
