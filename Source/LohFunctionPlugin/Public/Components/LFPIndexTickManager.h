@@ -134,6 +134,9 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Function")
+		FORCEINLINE bool CallTick();
+
+	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Function")
 		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const int32 GroupIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Function")
@@ -164,6 +167,11 @@ public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
 		FLFPOnIndex OnIndexUpdated;
+
+protected:
+
+	UPROPERTY(BlueprintReadWrite, Category = "LFPIndexTickManager ")
+		bool bAllowAutoTick = true;
 
 private:
 

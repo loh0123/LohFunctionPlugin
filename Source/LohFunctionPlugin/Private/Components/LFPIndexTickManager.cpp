@@ -29,6 +29,11 @@ void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (CallTick() == false && bAllowAutoTick) SetComponentTickEnabled(false);
+}
+
+bool ULFPIndexTickManager::CallTick()
+{
 	TArray<int32> RemoveIndexList;
 
 	for (auto& CurrentGroupData : TickList)
@@ -45,7 +50,7 @@ void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, F
 		TickList.Remove(RemoveIndex);
 	}
 
-	if (TickList.IsEmpty()) SetComponentTickEnabled(false);
+	return TickList.IsEmpty() == false;
 }
 
 void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const int32 GroupIndex)
@@ -78,7 +83,7 @@ void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const
 		OnIndexAdded.Broadcast(TickData.Index, GroupIndex);
 	}
 
-	SetComponentTickEnabled(true);
+	if (bAllowAutoTick) SetComponentTickEnabled(true);
 }
 
 bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex, const int32 GroupIndex)
