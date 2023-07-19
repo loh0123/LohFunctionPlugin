@@ -68,7 +68,51 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTick, const int32, TickIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPOnTick, const int32, TickIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPOnIndex, const int32, TickIndex, const int32, GroupIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPOnGroup, const int32, GroupIndex);
+
+USTRUCT(BlueprintType)
+struct FLFPIndexTickGroupData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickGroupData")
+		TArray<FLFPIndexTickData> Members = TArray<FLFPIndexTickData>();
+
+public:
+
+	FORCEINLINE void Tick(const FLFPOnTick& TickDelegator, const FLFPOnIndex& RemoveDelegator, const int32 GroupIndex)
+	{
+		Members.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
+			{
+				CurrentTickIndex.DecreaseInterval();
+
+				if (CurrentTickIndex.CanTick())
+				{
+					TickDelegator.Broadcast(CurrentTickIndex.Index);
+				}
+
+				if (CurrentTickIndex.CanRemove())
+				{
+					RemoveDelegator.Broadcast(CurrentTickIndex.Index, GroupIndex);
+
+					return true;
+				}
+
+				return false;
+			});
+
+		return;
+	}
+
+	FORCEINLINE bool CanRemove() const
+	{
+		return Members.Num() <= 0;
+	}
+};
 
 UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent), Blueprintable )
 class LOHFUNCTIONPLUGIN_API ULFPIndexTickManager : public UActorComponent
@@ -89,18 +133,39 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
-		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData);
+	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Function")
+		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const int32 GroupIndex);
 
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelContainerComponent | Getter")
-		FORCEINLINE bool RemoveTickIndex(const int32 TickIndex);
+	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Function")
+		FORCEINLINE bool RemoveTickIndex(const int32 TickIndex, const int32 GroupIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Group")
+		FORCEINLINE bool LoadGroup(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Group")
+		FORCEINLINE bool SaveGroup(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex);
 
 public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
-		FOnTick OnTick;
+		FLFPOnTick OnTick;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
+		FLFPOnGroup OnGroupRemove;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
+		FLFPOnGroup OnGroupAdded;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
+		FLFPOnIndex OnIndexRemove;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
+		FLFPOnIndex OnIndexAdded;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickManager | Delegate")
+		FLFPOnIndex OnIndexUpdated;
 
 private:
 
-	UPROPERTY(SaveGame) TArray<FLFPIndexTickData> TickList;
+	UPROPERTY(SaveGame) TMap<int32, FLFPIndexTickGroupData> TickList;
 };

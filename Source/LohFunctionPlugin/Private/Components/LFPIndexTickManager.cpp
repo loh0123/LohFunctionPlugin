@@ -29,20 +29,26 @@ void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	TickList.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
-		{
-			CurrentTickIndex.DecreaseInterval();
+	TArray<int32> RemoveIndexList;
 
-			if (CurrentTickIndex.CanTick())
-			{
-				OnTick.Broadcast(CurrentTickIndex.Index);
-			}
+	for (auto& CurrentGroupData : TickList)
+	{
+		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key);
 
-			return CurrentTickIndex.CanRemove();
-		});
+		if (CurrentGroupData.Value.CanRemove()) RemoveIndexList.Add(CurrentGroupData.Key);
+	}
+
+	for (auto& RemoveIndex : RemoveIndexList)
+	{
+		OnGroupRemove.Broadcast(RemoveIndex);
+
+		TickList.Remove(RemoveIndex);
+	}
+
+	if (TickList.IsEmpty()) SetComponentTickEnabled(false);
 }
 
-void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData)
+void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const int32 GroupIndex)
 {
 	if (TickData.Amount == 0)
 	{
@@ -51,26 +57,63 @@ void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData)
 		return;
 	}
 
-	const int32 Index = TickList.Find(TickData);
+	const bool HasGroup = TickList.Contains(GroupIndex);
+
+	auto GroupData = TickList.FindOrAdd(GroupIndex);
+
+	if (HasGroup == false) OnGroupAdded.Broadcast(GroupIndex);
+
+	const int32 Index = GroupData.Members.Find(TickData);
 
 	if (Index != INDEX_NONE)
 	{
-		TickList[Index] = TickData;
+		GroupData.Members[Index] = TickData;
+
+		OnIndexUpdated.Broadcast(TickData.Index, GroupIndex);
 	}
 	else
 	{
-		TickList.Add(TickData);
+		GroupData.Members.Add(TickData);
+
+		OnIndexAdded.Broadcast(TickData.Index, GroupIndex);
 	}
 
 	SetComponentTickEnabled(true);
 }
 
-bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex)
+bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex, const int32 GroupIndex)
 {
-	const bool bRemoved = TickList.RemoveSingleSwap(FLFPIndexTickData(TickIndex)) == 1;
+	auto GroupData = TickList.Find(GroupIndex);
 
-	if (TickList.IsEmpty()) SetComponentTickEnabled(false);
+	if (GroupData == nullptr) return false;
+
+	const bool bRemoved = GroupData->Members.RemoveSingleSwap(FLFPIndexTickData(TickIndex)) == 1;
 
 	return bRemoved;
+}
+
+bool ULFPIndexTickManager::LoadGroup(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex)
+{
+	if (SaveVariable.Contains(GroupIndex) == false) return false;
+
+	TickList.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+
+	return true;
+}
+
+bool ULFPIndexTickManager::SaveGroup(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex)
+{
+	if (TickList.Contains(GroupIndex) == false && SaveVariable.Contains(GroupIndex) == false) return false;
+
+	if (TickList.Contains(GroupIndex))
+	{
+		SaveVariable.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+	}
+	else
+	{
+		SaveVariable.Remove(GroupIndex);
+	}
+
+	return true;
 }
 
