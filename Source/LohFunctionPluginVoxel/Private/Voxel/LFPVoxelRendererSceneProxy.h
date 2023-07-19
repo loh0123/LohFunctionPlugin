@@ -179,8 +179,9 @@ public:
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
 
-		const FVector3f VoxelHalfSize = FVector3f(Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
-		const FVector3f VoxelRenderOffset = FVector3f(-Component->VoxelContainer->GetSetting().GetVoxelHalfBounds() + Component->VoxelContainer->GetSetting().GetVoxelHalfSize());
+		const FVector3f VoxelHalfSize = FVector3f(Component->GetGenerationSetting().VoxelHalfSize);
+		const FVector3f VoxelHalfBounds = VoxelHalfSize * FVector3f(Component->VoxelContainer->GetSetting().GetPaletteGrid());
+		const FVector3f VoxelRenderOffset = FVector3f(-VoxelHalfBounds + VoxelHalfSize);
 
 		for (int32 MaterialIndex = 0; MaterialIndex < RenderData->SectionData.Num(); MaterialIndex++)
 		{

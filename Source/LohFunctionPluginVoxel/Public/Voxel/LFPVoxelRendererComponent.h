@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Tasks/Task.h"
 #include "Components/MeshComponent.h"
-#include "Voxel/LFPVoxelContainerComponent.h"
+#include "Components/LFPGridContainerComponent.h"
 #include "Rendering/StaticMeshVertexBuffer.h"
 #include "Rendering/PositionVertexBuffer.h"
 #include "DynamicMeshBuilder.h"
@@ -392,6 +392,9 @@ struct FLFPVoxelRendererSetting
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		FVector VoxelHalfSize = FVector(50.0f);
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bPrintGenerateTime = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
@@ -439,7 +442,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsBodyInvalid : 1;
 };
 
-class ULFPVoxelContainerComponent;
+class ULFPGridContainerComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnVoxelRendererUpdate);
 
@@ -470,7 +473,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
-		FORCEINLINE bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPVoxelContainerComponent* NewVoxelContainer);
+		FORCEINLINE bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPGridContainerComponent* NewVoxelContainer);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
 		FORCEINLINE bool ReleaseRenderer();
@@ -538,21 +541,21 @@ public:
 
 private:
 
-	FORCEINLINE bool IsFaceVisible(const FLFPVoxelPaletteData& FromPaletteData, const FLFPVoxelPaletteData& ToPaletteData) const;
+	FORCEINLINE bool IsFaceVisible(const FLFPGridPaletteData& FromPaletteData, const FLFPGridPaletteData& ToPaletteData) const;
 
 private:
 
-	FORCEINLINE void GenerateBatchFaceData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
+	FORCEINLINE void GenerateBatchFaceData(ULFPGridContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
 
-	FORCEINLINE void GenerateSimpleCollisionData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
+	FORCEINLINE void GenerateSimpleCollisionData(ULFPGridContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting);
 
-	FORCEINLINE void GenerateLumenData(ULFPVoxelContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting, const TArray<bool>& MaterialLumenSupportList);
+	FORCEINLINE void GenerateLumenData(ULFPGridContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting, const TArray<bool>& MaterialLumenSupportList);
 
 protected: /** Can be override to provide custom behavir */
 
-	virtual FColor GetVoxelAttribute(const FLFPVoxelPaletteData& VoxelPalette) const;
+	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette) const;
 
-	virtual int32 GetVoxelMaterialIndex(const FLFPVoxelPaletteData& VoxelPalette) const;
+	virtual int32 GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const;
 
 private: // Variable
 
@@ -568,7 +571,7 @@ public:
 		TObjectPtr<UTexture2D> AttributesTexture = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer = nullptr;
+		TObjectPtr<ULFPGridContainerComponent> VoxelContainer = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
 		int32 RegionIndex = INDEX_NONE;

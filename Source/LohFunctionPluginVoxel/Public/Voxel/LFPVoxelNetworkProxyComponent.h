@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "LFPVoxelNetworkProxyComponent.generated.h"
 
-class ULFPVoxelContainerComponent;
+class ULFPGridContainerComponent;
 class ULFPTCPSocketComponent;
 
 
@@ -77,7 +77,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
-		bool SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting);
+		bool SetupProxy(ULFPGridContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelNetworkProxyComponent | Function")
 		bool RequestChuckData(const int32 RegionIndex, const int32 ChuckIndex, const int32 ClientID);
@@ -85,7 +85,7 @@ public:
 public:
 
 	UFUNCTION()
-		void OnChuckUpdate(const int32 RegionIndex, const int32 ChuckIndex, const FLFPVoxelUpdateAction& VoxelUpdateAction);
+		void OnChuckUpdate(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridUpdateAction& VoxelUpdateAction);
 
 	UFUNCTION()
 		void OnNetworkMessage(const int32 SocketID, const int32 ClientID, const TArray<uint8>& Bytes);
@@ -99,7 +99,7 @@ protected:  // Runtime Data
 		TMap<int32, FLFPVoxelNetworkProxySendInfo> ChuckUpdateQueue;
 
 	UPROPERTY()
-		TObjectPtr<ULFPVoxelContainerComponent> VoxelContainer;
+		TObjectPtr<ULFPGridContainerComponent> VoxelContainer;
 
 	UPROPERTY()
 		TObjectPtr<ULFPTCPSocketComponent> NetworkSocket;

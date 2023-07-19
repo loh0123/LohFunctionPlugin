@@ -2,7 +2,7 @@
 
 
 #include "Voxel/LFPVoxelNetworkProxyComponent.h"
-#include "Voxel/LFPVoxelContainerComponent.h"
+#include "Components/LFPGridContainerComponent.h"
 #include "Serialization/ArchiveProxy.h"
 #include "Serialization/NameAsStringProxyArchive.h"
 #include "Serialization/ArchiveSaveCompressedProxy.h"
@@ -54,7 +54,7 @@ void ULFPVoxelNetworkProxyComponent::TickComponent(float DeltaTime, ELevelTick T
 				{
 					ProxyArchive << ChuckUpdateInfo;
 
-					if (VoxelContainer->GetVoxelChuckDataByArchive(ChuckUpdateInfo.X, ChuckUpdateInfo.Y, ProxyArchive) == false)
+					if (VoxelContainer->GetGridChuckDataByArchive(ChuckUpdateInfo.X, ChuckUpdateInfo.Y, ProxyArchive) == false)
 					{
 						UE_LOG(LogTemp, Warning, TEXT("Invalid Chuck Pos : %s / Client ID : %d"), *ChuckUpdateInfo.ToString(), SendInfo.Key);
 
@@ -143,13 +143,13 @@ float ULFPVoxelNetworkProxyComponent::GetDataCompleteness(const int32 ClientID) 
 	return IncomeDataMap.Contains(ClientID) ? IncomeDataMap.FindChecked(ClientID).GetDataCompleteness() : -1.0f;
 }
 
-bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting)
+bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPGridContainerComponent* InVoxelContainer, ULFPTCPSocketComponent* InNetworkSocket, const FLFPTCPSocketSetting SocketSetting)
 {
 	if (IsValid(InVoxelContainer) == false || IsValid(InNetworkSocket) == false) return false;
 
 	if (IsValid(VoxelContainer))
 	{
-		VoxelContainer->OnVoxelContainerChuckUpdate.RemoveAll(this);
+		VoxelContainer->OnGridContainerChuckUpdate.RemoveAll(this);
 	}
 
 	if (IsValid(NetworkSocket))
@@ -177,7 +177,7 @@ bool ULFPVoxelNetworkProxyComponent::SetupProxy(ULFPVoxelContainerComponent* InV
 	VoxelContainer = InVoxelContainer;
 	NetworkSocket = InNetworkSocket;
 
-	VoxelContainer->OnVoxelContainerChuckUpdate.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnChuckUpdate);
+	VoxelContainer->OnGridContainerChuckUpdate.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnChuckUpdate);
 	NetworkSocket->OnDataReceived.AddDynamic(this, &ULFPVoxelNetworkProxyComponent::OnNetworkMessage);
 
 	bIsServer = SocketSetting.MaxConnection > 0;
@@ -203,7 +203,7 @@ bool ULFPVoxelNetworkProxyComponent::RequestChuckData(const int32 RegionIndex, c
 	return true;
 }
 
-void ULFPVoxelNetworkProxyComponent::OnChuckUpdate(const int32 RegionIndex, const int32 ChuckIndex, const FLFPVoxelUpdateAction& VoxelUpdateAction)
+void ULFPVoxelNetworkProxyComponent::OnChuckUpdate(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridUpdateAction& VoxelUpdateAction)
 {
 	if (bIsServer)
 	{
@@ -301,13 +301,13 @@ void ULFPVoxelNetworkProxyComponent::OnNetworkMessage(const int32 SocketID, cons
 
 				ProxyArchive << ChuckPosTemp;
 
-				if (VoxelContainer->SetVoxelChuckDataByArchive(ChuckPosTemp.X, ChuckPosTemp.Y, ProxyArchive))
+				if (VoxelContainer->SetGridChuckDataByArchive(ChuckPosTemp.X, ChuckPosTemp.Y, ProxyArchive))
 				{
-					UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : SetVoxelChuckDataByArchive Success : Pos Is %s"), *ChuckPosTemp.ToString());
+					UE_LOG(LogTemp, Log, TEXT("LFPVoxelNetworkProxyComponent : SetGridChuckDataByArchive Success : Pos Is %s"), *ChuckPosTemp.ToString());
 				}
 				else
 				{
-					UE_LOG(LogTemp, Error, TEXT("LFPVoxelNetworkProxyComponent : SetVoxelChuckDataByArchive Failed : Pos Is %s"), *ChuckPosTemp.ToString());
+					UE_LOG(LogTemp, Error, TEXT("LFPVoxelNetworkProxyComponent : SetGridChuckDataByArchive Failed : Pos Is %s"), *ChuckPosTemp.ToString());
 				}
 			}
 
