@@ -86,6 +86,46 @@ void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Compo
 	return;
 }
 
+bool ULFPEquipmentComponent::AddEquipmentSlotName(const FName InventorySlotName, const bool bIsSlotActive, const bool bIsSlotLock, const FString EventInfo)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName InventoryComponent is not valid"));
+
+		return false;
+	}
+
+	if (InventoryComponent->HasInventorySlotName(InventorySlotName) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName InventorySlotName is not valid"));
+
+		return false;
+	}
+
+	TArray<int32> SlotIndexList;
+
+	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName, -1, -1, EventInfo) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName FindInventorySlotWithName return false"));
+
+		return false;
+	}
+
+	bool bHasAllSuccess = true;
+
+	for (const int32 SlotIndex : SlotIndexList)
+	{
+		if (AddEquipmentSlot(SlotIndex, bIsSlotActive, bIsSlotLock, EventInfo) == false)
+		{
+			bHasAllSuccess = false;
+		}
+	}
+
+	return bHasAllSuccess;
+}
+
 bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, const bool bIsSlotActive, const bool bIsSlotLock, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
@@ -111,14 +151,18 @@ bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, co
 		return false;
 	}
 
-	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemName.IsNone() == false)
+	const auto& CurrentItemData = InventoryComponent->GetInventorySlot(InventorySlotIndex);
+
+	if (CurrentItemData.ItemName.IsNone() == false && CanEquipItem(CurrentItemData, EquipmentSlotList.Num(), InventorySlotIndex, EventInfo) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex need to be empty"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex Item Cant Equip"));
 
 		return false;
 	}
 
-	EquipmentSlotList.Add(FLFPEquipmentSlotData(InventorySlotIndex, bIsSlotActive, bIsSlotLock));
+	const int32 EquipmentSlotIndex = EquipmentSlotList.Add(FLFPEquipmentSlotData(InventorySlotIndex, bIsSlotActive, bIsSlotLock));
+
+	OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, EquipmentSlotIndex, EventInfo);
 
 	return true;
 }
@@ -150,12 +194,20 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 		return false;
 	}
 
-	EquipmentSlotList.RemoveAt(EquipmentIndex);
+	const auto& CurrentItemData = InventoryComponent->GetInventorySlot(InventorySlotIndex);
 
-	if (InventoryComponent->GetInventorySlot(InventorySlotIndex).ItemName.IsNone() == false)
+	if (CurrentItemData.ItemName.IsNone() == false && CanUnequipItem(CurrentItemData, EquipmentIndex, InventorySlotIndex, EventInfo) == false)
 	{
-		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventorySlotIndex Item Cant Unequip"));
+
+		return false;
 	}
+
+	OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
+
+	OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), EquipmentIndex, EventInfo);
+
+	EquipmentSlotList.RemoveAt(EquipmentIndex);
 
 	return true;
 }
@@ -288,8 +340,6 @@ void ULFPEquipmentComponent::RunEquipOnAllSlot(const FString& EventInfo) const
 void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo)
 {
 	const auto EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
-
-	if (EquipmentSlotIndex == INDEX_NONE) return;
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 

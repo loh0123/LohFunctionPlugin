@@ -302,5 +302,5 @@ bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLF
 
 	TArray<FLFPInventoryItemIndexData> ItemIndexList;
 
-	return InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchRangeList, true);
+	return InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchSlotName, true);
 }

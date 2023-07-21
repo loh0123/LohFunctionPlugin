@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "LohFunctionPluginLibrary.h"
 #include "LFPGridContainerComponent.generated.h"
 
 USTRUCT( BlueprintType )
@@ -240,33 +241,9 @@ private:
 		TArray<int32> OpenPaletteList = {};
 
 	UPROPERTY(SaveGame)
-		TArray<uint32> IndexList = TArray<uint32>();
-
-	UPROPERTY(SaveGame)
-		uint32 EncodeBtye = 0;
-
-	UPROPERTY(SaveGame)
-		uint32 IndexSize = 0;
+		FLFPCompactIntArray IndexList = FLFPCompactIntArray();
 
 private:
-
-	/** Read / Write Bit Function */
-
-	FORCEINLINE FBitReference GetIndexRef(TArray<uint32>& GridIndexListRef, const int32 Index)
-	{
-		return FBitReference(
-			GridIndexListRef.GetData()[Index / NumBitsPerDWORD],
-			1 << (Index & (NumBitsPerDWORD - 1))
-		);
-	}
-
-	FORCEINLINE FConstBitReference GetIndexConstRef(const TArray<uint32>& GridIndexListRef, const int32 Index) const
-	{
-		return FConstBitReference(
-			GridIndexListRef.GetData()[Index / NumBitsPerDWORD],
-			1 << (Index & (NumBitsPerDWORD - 1))
-		);
-	}
 
 	/** Palette Function */
 
@@ -339,49 +316,11 @@ private:
 
 	/** Resize Function */
 
-	FORCEINLINE void ResizeBitArray(const uint32 NewSize)
-	{
-		if (NewSize == EncodeBtye) return;
-
-		const TArray<uint32> OldGridIndexList = IndexList;
-
-		const uint32 OldSize = EncodeBtye;
-
-		EncodeBtye = NewSize;
-
-		const int32 ChuckBitSize = FMath::DivideAndRoundUp(IndexSize, uint32(32));
-
-		IndexList.Init(0, (NewSize * ChuckBitSize) + 1);
-
-		if (OldSize == 0) return;
-
-		for (uint32 GridIndex = 0; GridIndex < IndexSize; GridIndex++)
-		{
-			for (uint32 EncodeIndex = 0; EncodeIndex < OldSize; EncodeIndex++)
-			{
-				const int32 OldBitIndex = int32((GridIndex * OldSize) + EncodeIndex);
-				const int32 NewBitIndex = int32((GridIndex * EncodeBtye) + EncodeIndex);
-
-				GetIndexRef(IndexList, NewBitIndex) = GetIndexConstRef(OldGridIndexList, OldBitIndex);
-			}
-		}
-	}
-
 	FORCEINLINE void ResizePalette()
 	{
 		check(IsInitialized());
 
-		const int32 PaletteSize = PaletteList.Num();
-
-		for (uint8 NewEncodeSize = 0; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
-		{
-			if (PaletteSize < 1 << NewEncodeSize)
-			{
-				ResizeBitArray(NewEncodeSize);
-
-				break;
-			}
-		}
+		IndexList.Resize(PaletteList.Num());
 
 		return;
 	}
@@ -401,12 +340,10 @@ public:
 	{
 		OpenPaletteList.Empty();
 
-		IndexSize = NewIndexSize;
-
 		PaletteList.Init(GridPalette, 1);
 		PaletteList[0].SetCounter(NewIndexSize);
 
-		EncodeBtye = 0;
+		IndexList = FLFPCompactIntArray(NewIndexSize);
 
 		ResizePalette();
 	}
@@ -415,18 +352,13 @@ public:
 
 	FORCEINLINE void SetIndexData(const int32 GridIndex, const FLFPGridPaletteData& NewData)
 	{
-		check(GridIndex >= 0 && GridIndex < int32(IndexSize) && EncodeBtye > 0);
+		check(GridIndex >= 0);
 
 		RemovePalette(GetPaletteIndex(GridIndex), false);
 
 		const int32 NewIndex = FindOrAddPalette(NewData, true, true);
 
-		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
-		{
-			const int32 BitIndex = (GridIndex * EncodeBtye) + EncodeIndex;
-
-			GetIndexRef(IndexList, BitIndex) = FConstBitReference(NewIndex, 1 << EncodeIndex);
-		}
+		IndexList.SetIndexNumber(GridIndex, NewIndex);
 	}
 
 	FORCEINLINE const FLFPGridPaletteData& GetIndexData(const int32 GridIndex) const
@@ -436,18 +368,7 @@ public:
 
 	FORCEINLINE int32 GetPaletteIndex(const int32 GridIndex) const
 	{
-		check(GridIndex >= 0 && GridIndex < int32(IndexSize) && EncodeBtye > 0);
-
-		uint32 OutIndex = 0;
-
-		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
-		{
-			const int32 BitIndex = (GridIndex * EncodeBtye) + EncodeIndex;
-
-			FBitReference(OutIndex, 1 << EncodeIndex) = GetIndexConstRef(IndexList, BitIndex);
-		}
-
-		return OutIndex;
+		return IndexList.GetIndexNumber(GridIndex);
 	}
 
 	FORCEINLINE const TArray<FLFPGridPaletteData>& GetPaletteList() const
@@ -455,28 +376,16 @@ public:
 		return PaletteList;
 	}
 
-	/** Debug Function */
-
-	FORCEINLINE uint8 GetEncodeLength() const
-	{
-		return EncodeBtye;
-	}
-
-	FORCEINLINE int32 GetPaletteLength() const
-	{
-		return PaletteList.Num();
-	}
-
 	FORCEINLINE int32 GetIndexSize() const
 	{
-		return IndexSize;
+		return IndexList.GetIndexSize();
 	}
 
 public:
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPGridChuckData& Data)
 	{
-		return Ar << Data.PaletteList << Data.OpenPaletteList << Data.IndexList << Data.EncodeBtye << Data.IndexSize;
+		return Ar << Data.PaletteList << Data.OpenPaletteList << Data.IndexList;
 	}
 
 };

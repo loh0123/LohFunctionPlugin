@@ -83,6 +83,9 @@ public:
 		void SetInventoryComponent(ULFPInventoryComponent* Component);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
+		bool AddEquipmentSlotName(const FName InventorySlotName, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool AddEquipmentSlot(const int32 InventorySlotIndex, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")

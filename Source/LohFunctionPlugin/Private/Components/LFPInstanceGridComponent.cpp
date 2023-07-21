@@ -42,29 +42,6 @@ void ULFPInstanceGridComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
-void ULFPInstanceGridComponent::Serialize(FArchive& Ar)
-{
-	const TArray<FLFPInstanceGridMeshData> TempMeshList = MeshList;
-
-	Super::Serialize(Ar);
-	
-	if (Ar.IsLoading() == false || Ar.IsSaveGame() == false) return;
-
-	for (int32 Index = 0; Index < TempMeshList.Num(); Index++)
-	{
-		if (MeshList.Num() <= Index)
-		{
-			MeshList.Add(TempMeshList[Index]);
-		}
-		else
-		{
-			MeshList[Index].InstanceGridIndexList = TempMeshList[Index].InstanceGridIndexList;
-		}
-	}
-
-	RefreshInstance();
-}
-
 bool ULFPInstanceGridComponent::IsMeshIndexValid(const int32 Index) const
 {
 	return MeshList.IsValidIndex(Index) && IsValid(MeshList[Index].ISMComponent);
@@ -76,11 +53,13 @@ void ULFPInstanceGridComponent::SetupGrid(ULFPWorldGrid* NewWorldGrid)
 
 	if (IsValid(WorldGrid))
 	{
-		GridInstanceIndexList.Init(INDEX_NONE, WorldGrid->GetGridSize().X * WorldGrid->GetGridSize().Y * WorldGrid->GetGridSize().Z);
+		GridInstanceIndexList = FLFPCompactIntArray(WorldGrid->GetGridSize().X * WorldGrid->GetGridSize().Y * WorldGrid->GetGridSize().Z);
+
+		GridInstanceIndexList.Resize(MeshList.Num());
 	}
 	else
 	{
-		GridInstanceIndexList.Empty();
+		GridInstanceIndexList = FLFPCompactIntArray();
 	}
 
 	return;
@@ -92,6 +71,8 @@ int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponent(UInstancedS
 	{
 		return INDEX_NONE;
 	}
+
+	if (GridInstanceIndexList.GetIndexSize() > 0) GridInstanceIndexList.Resize(MeshList.Num() + 1);
 
 	return MeshList.Add(FLFPInstanceGridMeshData(ISM));
 }
@@ -110,21 +91,9 @@ int32 ULFPInstanceGridComponent::RegisterInstanceStaticMeshComponentList(TArray<
 		}
 	}
 
+	if (GridInstanceIndexList.GetIndexSize() > 0) GridInstanceIndexList.Resize(MeshList.Num());
+
 	return Count;
-}
-
-void ULFPInstanceGridComponent::RefreshInstance()
-{
-	for (auto& MeshData : MeshList)
-	{
-		MeshData.ISMComponent->ClearInstances();
-
-		for (const auto InstanceGridIndex : MeshData.InstanceGridIndexList)
-		{
-			const int32 ISMIndex = MeshData.ISMComponent->AddInstance(InstanceGridIndex.ISMTransform);
-			MeshData.ISMComponent->SetCustomData(ISMIndex, InstanceGridIndex.ISMCustomDataList);
-		}
-	}
 }
 
 bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
@@ -146,16 +115,16 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 	///////////////////////////////////////////////
 
 	/* Find The Prev Data Is Valid And Remove Or Update It */
-	if (GridInstanceIndexList[GridIndex] != INDEX_NONE && IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+	if (GridInstanceIndexList.GetIndexNumber(GridIndex) - 1 != INDEX_NONE && IsMeshIndexValid(GridInstanceIndexList.GetIndexNumber(GridIndex) - 1))
 	{
-		FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+		FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList.GetIndexNumber(GridIndex) - 1];
 
 		const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
 
 		check(TargetIndex != INDEX_NONE);
 
 		/* Same Instance So Just Update Transform */
-		if (GridInstanceIndexList[GridIndex] == InstanceInfo.InstanceIndex)
+		if (GridInstanceIndexList.GetIndexNumber(GridIndex) - 1 == InstanceInfo.InstanceIndex)
 		{
 			ISMData.ISMComponent->UpdateInstanceTransform(TargetIndex, TargetTransform, true, true);
 
@@ -168,14 +137,14 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 			ISMData.InstanceGridIndexList.RemoveAt(TargetIndex);
 			ISMData.ISMComponent->RemoveInstance(TargetIndex);
 
-			GridInstanceIndexList[GridIndex] = INDEX_NONE;
+			GridInstanceIndexList.SetIndexNumber(GridIndex, 0);
 		}
 	}
 
 	/* Add Operation */
 	if (IsMeshIndexValid(InstanceInfo.InstanceIndex))
 	{
-		GridInstanceIndexList[GridIndex] = InstanceInfo.InstanceIndex;
+		GridInstanceIndexList.SetIndexNumber(GridIndex, InstanceInfo.InstanceIndex + 1);
 
 		FLFPInstanceGridMeshData& ISMData = MeshList[InstanceInfo.InstanceIndex];
 
@@ -183,7 +152,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 
 		ISMData.ISMComponent->GetInstanceTransform(ISMIndex, TargetTransform);
 
-		ISMData.InstanceGridIndexList.Add(FLFPInstanceData(TargetTransform, GridIndex));
+		ISMData.InstanceGridIndexList.Add(GridIndex);
 	}
 
 	return true;
@@ -212,18 +181,11 @@ bool ULFPInstanceGridComponent::SetCustomData(const FIntVector Location, const i
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{
-		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+		if (IsMeshIndexValid(GridInstanceIndexList.GetIndexNumber(GridIndex) - 1))
 		{
-			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList.GetIndexNumber(GridIndex) - 1];
 
 			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
-
-			if (ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList.IsValidIndex(DataIndex) == false)
-			{
-				ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList.SetNum(DataIndex + 1);
-			}
-
-			ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList[DataIndex] = DataValue;
 
 			return ISMData.ISMComponent->SetCustomDataValue(TargetIndex, DataIndex, DataValue, bMarkRenderStateDirty);
 		}
@@ -240,13 +202,11 @@ bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const 
 
 	if (GridInstanceIndexList.IsValidIndex(GridIndex))
 	{
-		if (IsMeshIndexValid(GridInstanceIndexList[GridIndex]))
+		if (IsMeshIndexValid(GridInstanceIndexList.GetIndexNumber(GridIndex) - 1))
 		{
-			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList[GridIndex]];
+			FLFPInstanceGridMeshData& ISMData = MeshList[GridInstanceIndexList.GetIndexNumber(GridIndex) - 1];
 
 			const int32 TargetIndex = ISMData.InstanceGridIndexList.Find(GridIndex);
-
-			ISMData.InstanceGridIndexList[TargetIndex].ISMCustomDataList = DataList;
 
 			return ISMData.ISMComponent->SetCustomData(TargetIndex, DataList, bMarkRenderStateDirty);
 		}

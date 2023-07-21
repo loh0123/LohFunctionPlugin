@@ -142,9 +142,34 @@ bool ULFPInventoryComponent::AddItem(FLFPInventoryItemData ItemData, FLFPInvento
 	return true;
 }
 
-bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const FString EventInfo)
+bool ULFPInventoryComponent::AddItemWithSlotName(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const FName Slotname, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (HasInventorySlotName(Slotname) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem HasInventorySlotName return false"));
+
+		return false;
+	}
+
+	const FIntPoint& SearchSlotRange = InventorySlotNameList.FindChecked(Slotname);
+
+	return AddItem(ItemData, ItemIndexData, SearchSlotRange.X, SearchSlotRange.Y, EventInfo);
+}
+
+bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& ItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const FName Slotname, const FString EventInfo)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (HasInventorySlotName(Slotname) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItemList HasInventorySlotName return false")); 
+		
+		return false;
+	}
+
+	const FIntPoint& SearchSlotRange = InventorySlotNameList.FindChecked(Slotname);
 
 	int32 Index = 0;
 
@@ -154,8 +179,6 @@ bool ULFPInventoryComponent::AddItemList(const TArray<FLFPInventoryItemData>& It
 
 	for (const auto& ItemData : ItemDataList)
 	{
-		const FIntPoint SearchSlotRange = SearchSlotRangeList.IsValidIndex(Index) ? SearchSlotRangeList[Index] : FIntPoint(-1);
-
 		ItemIndexList[Index].ItemIndex = Index;
 
 		if (AddItem(ItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, EventInfo) == false)
@@ -222,9 +245,34 @@ bool ULFPInventoryComponent::RemoveItem(FLFPInventoryItemData ItemData, FLFPInve
 	return true;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const TArray<FIntPoint>& SearchSlotRangeList, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemWithSlotName(FLFPInventoryItemData ItemData, FLFPInventoryItemIndexData& ItemIndexData, const FName Slotname, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (HasInventorySlotName(Slotname) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem HasInventorySlotName return false"));
+
+		return false;
+	}
+
+	const FIntPoint& SearchSlotRange = InventorySlotNameList.FindChecked(Slotname);
+
+	return RemoveItem(ItemData, ItemIndexData, SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, EventInfo);
+}
+
+bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>& RemovedItemDataList, TArray<FLFPInventoryItemIndexData>& ItemIndexList, const FName Slotname, const bool bForce, const bool bCheckAllRemove, const FString EventInfo)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (HasInventorySlotName(Slotname) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItemList HasInventorySlotName return false"));
+
+		return false;
+	}
+
+	const FIntPoint& SearchSlotRange = InventorySlotNameList.FindChecked(Slotname);
 
 	int32 Index = 0;
 
@@ -234,8 +282,6 @@ bool ULFPInventoryComponent::RemoveItemList(const TArray<FLFPInventoryItemData>&
 
 	for (const auto& RemovedItemData : RemovedItemDataList)
 	{
-		const FIntPoint SearchSlotRange = SearchSlotRangeList.IsValidIndex(Index) ? SearchSlotRangeList[Index] : FIntPoint(-1);
-
 		ItemIndexList[Index].ItemIndex = Index;
 
 		if (RemoveItem(RemovedItemData, ItemIndexList[Index], SearchSlotRange.X, SearchSlotRange.Y, bForce, bCheckAllRemove, EventInfo) == false)

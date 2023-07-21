@@ -19,7 +19,7 @@ struct FLFPItemMutatorQueueData
 		TArray<FLFPInventoryItemData> ItemConsumeList;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FIntPoint> ItemSearchRangeList;
+		FName ItemSearchSlotName;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		TArray<FLFPInventoryItemData> ItemProduceList;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "LohFunctionPluginLibrary.h"
 #include "LFPInstanceGridComponent.generated.h"
 
 class UInstancedStaticMeshComponent;
@@ -35,42 +36,42 @@ public:
 		int32 InstanceIndex = 0;
 };
 
-USTRUCT(BlueprintType)
-struct FLFPInstanceData
-{
-	GENERATED_BODY()
-
-public:
-
-	FLFPInstanceData() {}
-
-	FLFPInstanceData(const int32 NewGridIndex) : ISMTransform(), ISMCustomDataList({}), InstanceGridIndex(NewGridIndex) {}
-
-	FLFPInstanceData(const FTransform NewTransform, const int32 NewGridIndex) : ISMTransform(NewTransform), ISMCustomDataList({}), InstanceGridIndex(NewGridIndex) {}
-
-public:
-
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
-		FTransform ISMTransform;
-
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
-		TArray<float> ISMCustomDataList;
-
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
-		int32 InstanceGridIndex;
-
-public:
-
-	FORCEINLINE	bool operator==(const FLFPInstanceData& Other) const
-	{
-		return InstanceGridIndex == Other.InstanceGridIndex;
-	}
-
-	FORCEINLINE	bool operator==(const int32 OtherIndex) const
-	{
-		return InstanceGridIndex == OtherIndex;
-	}
-};
+//USTRUCT(BlueprintType)
+//struct FLFPInstanceData
+//{
+//	GENERATED_BODY()
+//
+//public:
+//
+//	FLFPInstanceData() {}
+//
+//	FLFPInstanceData(const int32 NewGridIndex) : ISMTransform(), ISMCustomDataList({}), InstanceGridIndex(NewGridIndex) {}
+//
+//	FLFPInstanceData(const FTransform NewTransform, const int32 NewGridIndex) : ISMTransform(NewTransform), ISMCustomDataList({}), InstanceGridIndex(NewGridIndex) {}
+//
+//public:
+//
+//	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
+//		FTransform ISMTransform;
+//
+//	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
+//		TArray<float> ISMCustomDataList;
+//
+//	UPROPERTY(VisibleAnywhere, SaveGame, Category = "FLFPInstanceData")
+//		int32 InstanceGridIndex;
+//
+//public:
+//
+//	FORCEINLINE	bool operator==(const FLFPInstanceData& Other) const
+//	{
+//		return InstanceGridIndex == Other.InstanceGridIndex;
+//	}
+//
+//	FORCEINLINE	bool operator==(const int32 OtherIndex) const
+//	{
+//		return InstanceGridIndex == OtherIndex;
+//	}
+//};
 
 
 USTRUCT(BlueprintType)
@@ -89,8 +90,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
 		TObjectPtr<UInstancedStaticMeshComponent> ISMComponent;
 
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridMeshData")
-		TArray<FLFPInstanceData> InstanceGridIndexList;
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
+		TArray<int32> InstanceGridIndexList;
 };
 
 UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
@@ -100,10 +101,13 @@ class LOHFUNCTIONPLUGIN_API ULFPInstanceGridComponent : public USceneComponent
 
 private:
 
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
-		TArray<uint8> GridInstanceIndexList = TArray<uint8>();
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
+		FLFPCompactIntArray GridInstanceIndexList = FLFPCompactIntArray();
 
-	UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
+	//UPROPERTY(VisibleAnywhere, SaveGame, Category = "LFPInstanceGridComponent")
+	//	TArray<uint8> GridInstanceIndexList = TArray<uint8>();
+
+	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
 		TArray<FLFPInstanceGridMeshData> MeshList = TArray<FLFPInstanceGridMeshData>();
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridComponent")
@@ -126,9 +130,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
-	virtual void Serialize(FArchive& Ar) override;
-
 	
 public: /* Function For External Blueprint Or C++ To Use */
 
@@ -144,10 +145,6 @@ public: /* Function For External Blueprint Or C++ To Use */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
 		FORCEINLINE int32 RegisterInstanceStaticMeshComponentList(TArray<UInstancedStaticMeshComponent*> ISMList);
-
-	/** Remove All Instance Mesh And Adding It Back */
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
-		FORCEINLINE void RefreshInstance();
 	
 	/** Set Instance Type On This Grid Location (Use -1 To Remove) */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceGridComponent | Function")
