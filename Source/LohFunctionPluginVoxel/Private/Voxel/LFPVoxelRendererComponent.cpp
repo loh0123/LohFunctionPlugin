@@ -142,19 +142,25 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 
 	VoxelContainer = NewVoxelContainer;
 
-	FLFPGridChuckDelegate& Delegate = VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex);
+	{
+		FLFPGridChuckDelegate& Delegate = VoxelContainer->AddRenderChuck(NewRegionIndex, NewChuckIndex);
 
-	Delegate.AddUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
+		Delegate.AddUObject(this, &ULFPVoxelRendererComponent::OnChuckUpdate);
 
-	RegionIndex = NewRegionIndex;
+		RegionIndex = NewRegionIndex;
 
-	ChuckIndex = NewChuckIndex;
+		ChuckIndex = NewChuckIndex;
 
-	VoxelContainer->InitializeGridChuck(NewRegionIndex, NewChuckIndex);
+		VoxelContainer->InitializeGridChuck(NewRegionIndex, NewChuckIndex);
+	}
 
-	const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetPaletteGrid().X + 2, (VoxelContainer->GetSetting().GetPaletteGrid().Y + 2) * (VoxelContainer->GetSetting().GetPaletteGrid().Z + 2));
+	{
+		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetPaletteGrid().X + 2, (VoxelContainer->GetSetting().GetPaletteGrid().Y + 2) * (VoxelContainer->GetSetting().GetPaletteGrid().Z + 2));
 
-	AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+
+		UpdateMaterialTexture();
+	}
 
 	return true;
 }
@@ -321,6 +327,14 @@ UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInsta
 	}
 
 	return MID;
+}
+
+void ULFPVoxelRendererComponent::UpdateMaterialTexture()
+{
+	for (int32 MaterialIndex = 0; MaterialIndex < GetNumMaterials(); MaterialIndex++)
+	{
+		CreateDynamicMaterialInstance(MaterialIndex, nullptr, FName());
+	}
 }
 
 /**********************/

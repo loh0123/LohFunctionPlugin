@@ -524,6 +524,8 @@ public: // override Handler
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
 
+	FORCEINLINE void UpdateMaterialTexture();
+
 private: // Variable
 
 	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
