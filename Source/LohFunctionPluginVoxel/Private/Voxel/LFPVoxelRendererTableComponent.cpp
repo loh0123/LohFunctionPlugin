@@ -86,5 +86,5 @@ int32 ULFPVoxelRendererTableComponent::GetVoxelMaterialIndex(const FLFPGridPalet
 
 	const auto VoxelType = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(VoxelPalette.Name));
 
-	return VoxelType->VoxelMaterial;
+	return VoxelType != nullptr ? VoxelType->VoxelMaterial : INDEX_NONE;
 }
