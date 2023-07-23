@@ -97,28 +97,32 @@ bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex, const int32 Gr
 	return bRemoved;
 }
 
-bool ULFPIndexTickManager::LoadGroup(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex)
+void ULFPIndexTickManager::LoadGroupList(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList)
 {
-	if (SaveVariable.Contains(GroupIndex) == false) return false;
+	for (const int32 GroupIndex : GroupIndexList)
+	{
+		if (SaveVariable.Contains(GroupIndex) == false) continue;
 
-	TickList.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+		TickList.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+	}
 
-	return true;
+	return;
 }
 
-bool ULFPIndexTickManager::SaveGroup(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex)
+void ULFPIndexTickManager::SaveGroupList(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList)
 {
-	if (TickList.Contains(GroupIndex) == false && SaveVariable.Contains(GroupIndex) == false) return false;
-
-	if (TickList.Contains(GroupIndex))
+	for (const int32 GroupIndex : GroupIndexList)
 	{
-		SaveVariable.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
-	}
-	else
-	{
-		SaveVariable.Remove(GroupIndex);
+		if (TickList.Contains(GroupIndex))
+		{
+			SaveVariable.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+		}
+		else
+		{
+			SaveVariable.Remove(GroupIndex);
+		}
 	}
 
-	return true;
+	return;
 }
 

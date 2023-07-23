@@ -147,10 +147,10 @@ public:
 		FORCEINLINE bool RemoveTickIndex(const int32 TickIndex, const int32 GroupIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Group")
-		FORCEINLINE bool LoadGroup(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex);
+		FORCEINLINE void LoadGroupList(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickManager | Group")
-		FORCEINLINE bool SaveGroup(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const int32 GroupIndex);
+		FORCEINLINE void SaveGroupList(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList);
 
 public: /** Delegate */
 

@@ -61,9 +61,9 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelRendererTableComponent | Setting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererTableComponent | Setting")
 		TObjectPtr<UDataTable> VoxelTypeTable = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelRendererTableComponent | Setting")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererTableComponent | Setting")
 		TObjectPtr<UDataTable> VoxelAttributeTable = nullptr;
 };
