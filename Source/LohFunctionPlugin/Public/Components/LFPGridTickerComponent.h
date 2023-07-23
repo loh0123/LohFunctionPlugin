@@ -53,7 +53,7 @@ protected:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, Category = "LFPGridTickerComponent ")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridTickerComponent ")
 		TObjectPtr<UDataTable> TickerTable = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPGridTickerComponent ")
