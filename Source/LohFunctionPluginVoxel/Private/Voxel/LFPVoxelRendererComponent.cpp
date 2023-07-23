@@ -1287,7 +1287,14 @@ bool ULFPVoxelRendererComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPVoxelRendererComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0;
+	if (ThreadResult.IsValid() == false) return false;
+
+	for (const auto& Section : ThreadResult->SectionData)
+	{
+		if (Section.TriangleCount > 0) return true;
+	}
+
+	return false;
 }
 
 bool ULFPVoxelRendererComponent::WantsNegXTriMesh()

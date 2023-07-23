@@ -407,7 +407,11 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 
 	if (ContainerThreadLock.TryWriteLock() == false) return false;
 
-	for (const auto& ChuckUpdate : ChuckUpdateDataList)
+	const auto CacheChuckUpdateDataList = ChuckUpdateDataList;
+
+	ChuckUpdateDataList.Empty();
+
+	for (const auto& ChuckUpdate : CacheChuckUpdateDataList)
 	{
 		/** Check Is Valid */
 		if (IsChuckPositionValid(ChuckUpdate.Key.X, ChuckUpdate.Key.Y) == false) continue;
@@ -464,9 +468,8 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 		OnGridContainerChuckUpdate.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y, ChuckUpdate.Value);
 	}
 
-	ChuckUpdateDataList.Empty();
-
 	ContainerThreadLock.WriteUnlock();
 
-	return true;
+	/** ChuckUpdateDataList Maybe Updated After Event Broadcast */
+	return ChuckUpdateDataList.IsEmpty();
 }

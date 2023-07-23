@@ -1,10 +1,10 @@
 // Copyright by Loh Zhi Kang
 
 
-#include "Components/LFPIndexTickManager.h"
+#include "Components/LFPIndexTickerComponent.h"
 
 // Sets default values for this component's properties
-ULFPIndexTickManager::ULFPIndexTickManager()
+ULFPIndexTickerComponent::ULFPIndexTickerComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -15,7 +15,7 @@ ULFPIndexTickManager::ULFPIndexTickManager()
 
 
 // Called when the game starts
-void ULFPIndexTickManager::BeginPlay()
+void ULFPIndexTickerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -25,16 +25,16 @@ void ULFPIndexTickManager::BeginPlay()
 
 
 // Called every frame
-void ULFPIndexTickManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void ULFPIndexTickerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (CallTick() == false && bAllowAutoTick) SetComponentTickEnabled(false);
 }
 
-bool ULFPIndexTickManager::CallTick()
+bool ULFPIndexTickerComponent::CallTick()
 {
-	TArray<int32> RemoveIndexList;
+	TArray<FIntPoint> RemoveIndexList;
 
 	for (auto& CurrentGroupData : TickList)
 	{
@@ -53,7 +53,7 @@ bool ULFPIndexTickManager::CallTick()
 	return TickList.IsEmpty() == false;
 }
 
-void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const int32 GroupIndex)
+void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const FIntPoint GroupIndex)
 {
 	if (TickData.Amount == 0)
 	{
@@ -86,7 +86,7 @@ void ULFPIndexTickManager::AddTickIndex(const FLFPIndexTickData& TickData, const
 	if (bAllowAutoTick) SetComponentTickEnabled(true);
 }
 
-bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex, const int32 GroupIndex)
+bool ULFPIndexTickerComponent::RemoveTickIndex(const int32 TickIndex, const FIntPoint GroupIndex)
 {
 	auto GroupData = TickList.Find(GroupIndex);
 
@@ -97,9 +97,9 @@ bool ULFPIndexTickManager::RemoveTickIndex(const int32 TickIndex, const int32 Gr
 	return bRemoved;
 }
 
-void ULFPIndexTickManager::LoadGroupList(const TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList)
+void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
 {
-	for (const int32 GroupIndex : GroupIndexList)
+	for (const FIntPoint& GroupIndex : GroupIndexList)
 	{
 		if (SaveVariable.Contains(GroupIndex) == false) continue;
 
@@ -109,9 +109,9 @@ void ULFPIndexTickManager::LoadGroupList(const TMap<int32, FLFPIndexTickGroupDat
 	return;
 }
 
-void ULFPIndexTickManager::SaveGroupList(TMap<int32, FLFPIndexTickGroupData>& SaveVariable, const TArray<int32>& GroupIndexList)
+void ULFPIndexTickerComponent::SaveGroupList(TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
 {
-	for (const int32 GroupIndex : GroupIndexList)
+	for (const FIntPoint& GroupIndex : GroupIndexList)
 	{
 		if (TickList.Contains(GroupIndex))
 		{
