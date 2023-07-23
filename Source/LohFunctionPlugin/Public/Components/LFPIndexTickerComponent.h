@@ -34,7 +34,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		int32 MaxInterval = INDEX_NONE;
 
-	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
+	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "LFPIndexTickData")
 		int32 Interval = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")

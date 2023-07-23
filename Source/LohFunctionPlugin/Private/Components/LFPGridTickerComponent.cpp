@@ -57,7 +57,7 @@ void ULFPGridTickerComponent::SetupContainer(ULFPGridContainerComponent* NewGrid
 
 	if (IsValid(NewGridContainer))
 	{
-		GridContainer->OnGridContainerChuckUpdate.AddDynamic(this, &ULFPGridTickerComponent::OnUpdateChuck);
+		NewGridContainer->OnGridContainerChuckUpdate.AddDynamic(this, &ULFPGridTickerComponent::OnUpdateChuck);
 
 		GridContainer = NewGridContainer;
 	}

@@ -64,7 +64,7 @@ void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, c
 
 	const bool HasGroup = TickList.Contains(GroupIndex);
 
-	auto GroupData = TickList.FindOrAdd(GroupIndex);
+	auto& GroupData = TickList.FindOrAdd(GroupIndex);
 
 	if (HasGroup == false) OnGroupAdded.Broadcast(GroupIndex);
 
