@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class LOHFUNCTIONPLUGIN_API ULFPTickerObject : public UObject
 {
 	GENERATED_BODY()
