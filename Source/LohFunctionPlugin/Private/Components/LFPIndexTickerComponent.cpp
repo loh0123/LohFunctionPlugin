@@ -38,7 +38,7 @@ bool ULFPIndexTickerComponent::CallTick()
 
 	for (auto& CurrentGroupData : TickList)
 	{
-		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key);
+		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this);
 
 		if (CurrentGroupData.Value.CanRemove()) RemoveIndexList.Add(CurrentGroupData.Key);
 	}

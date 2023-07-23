@@ -63,6 +63,11 @@ void ULFPGridTickerComponent::SetupContainer(ULFPGridContainerComponent* NewGrid
 	}
 }
 
+bool ULFPGridTickerComponent::CanGridIndexTick_Implementation(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& TickName, const FLFPGridPaletteData& PaletteData, ULFPIndexTickerComponent* Caller)
+{
+	return true;
+}
+
 void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridUpdateAction& GridUpdateAction)
 {
 	if (IsValid(GridContainer) == false || IsValid(TickerTable) == false) return;
@@ -75,7 +80,7 @@ void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32
 
 		const auto TickerStruct = reinterpret_cast<FLFPGridTickerTable*>(TickerTable->FindRowUnchecked(GridPalette.Name));
 
-		if (TickerStruct != nullptr && IsValid(TickerStruct->Ticker))
+		if (TickerStruct != nullptr && IsValid(TickerStruct->Ticker) && CanGridIndexTick(RegionIndex, ChuckIndex, GridData.Key, GridPalette.Name, GridPalette, this))
 		{
 			AddTickIndex(FLFPIndexTickData(GridData.Key, GridPalette.Name, TickerStruct->Ticker, TickerStruct->TickMaxIteration, TickerStruct->TickAmount), FIntPoint(RegionIndex, ChuckIndex));
 		}

@@ -48,6 +48,9 @@ public:
 
 protected:
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPGridTickerComponent | Event")
+		bool CanGridIndexTick(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& TickName, const FLFPGridPaletteData& PaletteData, ULFPIndexTickerComponent* Caller);
+
 	UFUNCTION()
 		FORCEINLINE void OnUpdateChuck(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridUpdateAction& GridUpdateAction);
 

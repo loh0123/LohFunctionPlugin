@@ -49,11 +49,11 @@ public: // Operator
 
 public:
 
-	FORCEINLINE void TryRunTicker(const FIntPoint& TickGroup) const
+	FORCEINLINE void TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnExecute(TickGroup, Index, TickName);
+			Ticker.GetDefaultObject()->OnExecute(TickGroup, Index, TickName, Caller);
 		}
 	}
 
@@ -69,18 +69,19 @@ public:
 
 	FORCEINLINE int32 DecreaseInterval()
 	{
-		if (CanTick())
-		{
-			if (Amount > 0) Amount -= 1;
+		Interval -= 1;
 
+		if (Interval < 0)
+		{
 			Interval = MaxInterval;
+		}
 
-			return Interval;
-		}
-		else
+		if (CanTick() && Amount > 0)
 		{
-			return --Interval;
+			Amount -= 1;
 		}
+
+		return Interval;
 	}
 };
 
@@ -99,7 +100,7 @@ public:
 
 public:
 
-	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex)
+	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller)
 	{
 		Members.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
 			{
@@ -107,7 +108,7 @@ public:
 
 				if (CurrentTickIndex.CanTick())
 				{
-					CurrentTickIndex.TryRunTicker(GroupIndex);
+					CurrentTickIndex.TryRunTicker(GroupIndex, Caller);
 
 					TickDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
 				}
