@@ -81,6 +81,8 @@ void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, c
 		GroupData.Members.Add(TickData);
 
 		OnIndexAdded.Broadcast(TickData.Index, TickData.TickName, GroupIndex);
+
+		TickData.TryStartTicker(GroupIndex, this);
 	}
 
 	if (bAllowAutoTick) SetComponentTickEnabled(true);
@@ -92,9 +94,18 @@ bool ULFPIndexTickerComponent::RemoveTickIndex(const int32 TickIndex, const FInt
 
 	if (GroupData == nullptr) return false;
 
-	const bool bRemoved = GroupData->Members.RemoveSingleSwap(FLFPIndexTickData(TickIndex)) == 1;
+	const int32 GroupDataMemberIndex = GroupData->Members.Find(FLFPIndexTickData(TickIndex));
 
-	return bRemoved;
+	if (GroupDataMemberIndex != INDEX_NONE)
+	{
+		GroupData->Members[GroupDataMemberIndex].TryEndTicker(GroupIndex, this);
+
+		GroupData->Members.RemoveAtSwap(GroupDataMemberIndex);
+
+		return true;
+	}
+
+	return false;
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)

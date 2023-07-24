@@ -49,11 +49,27 @@ public: // Operator
 
 public:
 
+	FORCEINLINE void TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	{
+		if (IsValid(Ticker))
+		{
+			Ticker.GetDefaultObject()->OnBegin(TickGroup, Index, TickName, Caller);
+		}
+	}
+
 	FORCEINLINE void TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
 			Ticker.GetDefaultObject()->OnExecute(TickGroup, Index, TickName, Caller);
+		}
+	}
+
+	FORCEINLINE void TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	{
+		if (IsValid(Ticker))
+		{
+			Ticker.GetDefaultObject()->OnEnd(TickGroup, Index, TickName, Caller);
 		}
 	}
 

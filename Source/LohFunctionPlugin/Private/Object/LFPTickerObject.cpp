@@ -4,6 +4,14 @@
 #include "Object/LFPTickerObject.h"
 #include "Components/LFPIndexTickerComponent.h"
 
+void ULFPTickerObject::OnBegin_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller)
+{
+}
+
 void ULFPTickerObject::OnExecute_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller)
+{
+}
+
+void ULFPTickerObject::OnEnd_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller)
 {
 }

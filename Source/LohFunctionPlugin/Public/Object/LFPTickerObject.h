@@ -19,5 +19,11 @@ class LOHFUNCTIONPLUGIN_API ULFPTickerObject : public UObject
 public:
 
 	UFUNCTION(BlueprintNativeEvent)
+		void OnBegin(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
+
+	UFUNCTION(BlueprintNativeEvent)
 		void OnExecute(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
+
+	UFUNCTION(BlueprintNativeEvent)
+		void OnEnd(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
 };
