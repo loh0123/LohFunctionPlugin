@@ -607,6 +607,12 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 		FORCEINLINE FIntVector ToGridGlobalIndex(const FIntVector GridGlobalPosition) const;
 
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
+		FORCEINLINE FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
+		FORCEINLINE FIntVector AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset) const;
+
 public: /** C++ Getter */
 
 	FORCEINLINE const FLFPGridPaletteContainerSetting& GetSetting() const { return Setting; }

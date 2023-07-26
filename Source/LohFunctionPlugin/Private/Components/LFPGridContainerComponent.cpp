@@ -264,11 +264,21 @@ FIntVector ULFPGridContainerComponent::ToGridGlobalIndex(const FIntVector GridGl
 
 	const FIntVector RegionGridSize(Setting.GetChuckGrid() * Setting.GetPaletteGrid());
 
-	const FIntVector RegionPos	(DivideVector(GridGlobalPosition, RegionGridSize));
+	const FIntVector RegionPos	(PercentageVector(DivideVector(GridGlobalPosition, RegionGridSize), Setting.GetRegionGrid()));
 	const FIntVector ChuckPos	(PercentageVector(DivideVector(GridGlobalPosition, Setting.GetPaletteGrid()), Setting.GetChuckGrid()));
 	const FIntVector GridPos	(PercentageVector(GridGlobalPosition, Setting.GetPaletteGrid()));
 
 	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(GridPos, Setting.GetPaletteGrid()));
+}
+
+FIntVector ULFPGridContainerComponent::AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset) const
+{
+	return ToGridGlobalPosition(ToGridGlobalIndex(GridGlobalPosition) + GridGlobalIndexOffset);
+}
+
+FIntVector ULFPGridContainerComponent::AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset) const
+{
+	return ToGridGlobalIndex(ToGridGlobalPosition(GridGlobalIndex) + GridGlobalPositionOffset);
 }
 
 /** C++ Getter */
