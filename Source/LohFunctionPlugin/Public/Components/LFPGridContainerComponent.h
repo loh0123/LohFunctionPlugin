@@ -89,9 +89,13 @@ struct FLFPGridPaletteData
 
 	FLFPGridPaletteData() {}
 
-	FLFPGridPaletteData(const FLFPGridPaletteData& Other) : Name(Other.Name), TagList(Other.TagList), DataList(Other.DataList), RefCounter(1) { check(DataList.Num() <= TagList.Num()) }
+	FLFPGridPaletteData(const FLFPGridPaletteData& Other) : Name(Other.Name), TagList(Other.TagList), RefCounter(1) {  }
 
-	FLFPGridPaletteData(const FName& NewName, const TArray<FName>& NewTag, const TArray<uint8>& NewData) : Name(NewName), TagList(NewTag), DataList(NewData), RefCounter(1) { check(DataList.Num() <= TagList.Num()) }
+	FLFPGridPaletteData(const FName& NewName, const TArray<FName>& NewTag) : Name(NewName), TagList(NewTag), RefCounter(1) {  }
+
+	//FLFPGridPaletteData(const FLFPGridPaletteData& Other) : Name(Other.Name), TagList(Other.TagList), DataList(Other.DataList), RefCounter(1) { check(DataList.Num() <= TagList.Num()) }
+
+	//FLFPGridPaletteData(const FName& NewName, const TArray<FName>& NewTag, const TArray<uint8>& NewData) : Name(NewName), TagList(NewTag), DataList(NewData), RefCounter(1) { check(DataList.Num() <= TagList.Num()) }
 
 public:
 
@@ -105,8 +109,8 @@ public:
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
 		TArray<FName> TagList = TArray<FName>();
 
-	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
-		TArray<uint8> DataList = TArray<uint8>();
+	//UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
+	//	TArray<uint8> DataList = TArray<uint8>();
 
 private:
 
@@ -115,10 +119,10 @@ private:
 
 public:
 
-	FORCEINLINE bool IsValid() const
-	{
-		return DataList.Num() <= TagList.Num();
-	}
+	//FORCEINLINE bool IsValid() const
+	//{
+	//	return DataList.Num() <= TagList.Num();
+	//}
 
 	FORCEINLINE void RemoveTag(const FName& TagName)
 	{
@@ -128,52 +132,52 @@ public:
 
 		TagList.RemoveAt(Index);
 
-		if (DataList.IsValidIndex(Index)) DataList.RemoveAt(Index);
+		//if (DataList.IsValidIndex(Index)) DataList.RemoveAt(Index);
 	}
 
-	FORCEINLINE void RemoveTagData(const FName& TagName)
-	{
-		int32 Index = INDEX_NONE;
+	//FORCEINLINE void RemoveTagData(const FName& TagName)
+	//{
+	//	int32 Index = INDEX_NONE;
 
-		if (TagList.Find(TagName, Index) == false || DataList.IsValidIndex(Index) == false) return;
+	//	if (TagList.Find(TagName, Index) == false/* || DataList.IsValidIndex(Index) == false*/) return;
 
-		TagList.Swap(Index, DataList.Num() - 1);
-		DataList.Swap(Index, DataList.Num() - 1);
+	//	//TagList.Swap(Index, DataList.Num() - 1);
+	//	//DataList.Swap(Index, DataList.Num() - 1);
 
-		Index = DataList.Num() - 1;
+	//	//Index = DataList.Num() - 1;
 
-		TagList.RemoveAt(Index);
-		DataList.RemoveAt(Index);
-	}
+	//	TagList.RemoveAt(Index);
+	//	/*DataList.RemoveAt(Index);*/
+	//}
 
 	FORCEINLINE void AddTag(const FName& TagName)
 	{
 		TagList.AddUnique(TagName);
 	}
 
-	FORCEINLINE void AddTagData(const FName& TagName, const uint8 TagData)
-	{
-		int32 Index = INDEX_NONE;
-
-		if (TagList.Find(TagName, Index))
-		{
-			if (DataList.IsValidIndex(Index))
-			{
-				DataList[Index] = TagData;
-			}
-			else
-			{
-				TagList.Swap(Index, DataList.Num());
-				DataList.Add(TagData);
-			}
-		}
-		else
-		{
-			TagList.Add(TagName);
-			TagList.Swap(TagList.Num() - 1, DataList.Num());
-			DataList.Add(TagData);
-		}
-	}
+	//FORCEINLINE void AddTagData(const FName& TagName, const uint8 TagData)
+	//{
+	//	int32 Index = INDEX_NONE;
+	//
+	//	if (TagList.Find(TagName, Index))
+	//	{
+	//		if (DataList.IsValidIndex(Index))
+	//		{
+	//			DataList[Index] = TagData;
+	//		}
+	//		else
+	//		{
+	//			TagList.Swap(Index, DataList.Num());
+	//			DataList.Add(TagData);
+	//		}
+	//	}
+	//	else
+	//	{
+	//		TagList.Add(TagName);
+	//		TagList.Swap(TagList.Num() - 1, DataList.Num());
+	//		DataList.Add(TagData);
+	//	}
+	//}
 
 	FORCEINLINE bool IsNone() const
 	{
@@ -206,17 +210,17 @@ public:
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPGridPaletteData& Data)
 	{
-		return Ar << Data.Name << Data.TagList << Data.DataList << Data.RefCounter;
+		return Ar << Data.Name << Data.TagList/* << Data.DataList*/ << Data.RefCounter;
 	}
 
 	FORCEINLINE bool operator==(const FLFPGridPaletteData& Other) const
 	{
-		return Name == Other.Name && TagList == Other.TagList && DataList == Other.DataList;
+		return Name == Other.Name && TagList == Other.TagList/* && DataList == Other.DataList*/;
 	}
 
 	FORCEINLINE bool operator!=(const FLFPGridPaletteData& Other) const
 	{
-		return Name != Other.Name || TagList != Other.TagList || DataList != Other.DataList;
+		return Name != Other.Name || TagList != Other.TagList/* || DataList != Other.DataList*/;
 	}
 };
 
@@ -242,6 +246,9 @@ private:
 
 	UPROPERTY(SaveGame)
 		FLFPCompactIntArray IndexList = FLFPCompactIntArray();
+
+	UPROPERTY(SaveGame)
+		TArray<FLFPCompactIntNameArray> DataList = TArray<FLFPCompactIntNameArray>();
 
 private:
 
@@ -349,6 +356,24 @@ public:
 	}
 
 	/** Read / Write Function */
+
+	FORCEINLINE void SetTagData(const int32 GridIndex, const FName TagName, const uint8 NewData)
+	{
+		check(GridIndex >= 0);
+
+		auto TagDataList = DataList.FindByKey(TagName);
+
+		if (TagDataList == nullptr)
+		{
+			const int32 NewIndex = DataList.Add(FLFPCompactIntNameArray(TagName, FLFPCompactIntArray(IndexList.GetIndexSize())));
+
+			TagDataList = &DataList[NewIndex];
+
+			TagDataList->Resize(255);
+		}
+
+		TagDataList->SetIndexNumber(GridIndex, uint32(NewData));
+	}
 
 	FORCEINLINE void SetIndexData(const int32 GridIndex, const FLFPGridPaletteData& NewData)
 	{
@@ -563,13 +588,10 @@ public: /** Setter */
 		FORCEINLINE bool AddPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool AddPaletteTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag, const uint8 Data);
-
-	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 		FORCEINLINE bool RemovePaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool RemovePaletteTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
+		FORCEINLINE bool SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag, const uint8 Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 		FORCEINLINE bool SetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FLFPGridPaletteData& Palette);
@@ -605,7 +627,7 @@ public: /** Getter */
 		FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector ToGridGlobalIndex(const FIntVector GridGlobalPosition) const;
+		FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 		FORCEINLINE FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset) const;

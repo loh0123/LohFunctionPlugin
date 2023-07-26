@@ -63,7 +63,7 @@ private:
 
 		const int32 ChuckBitSize = FMath::DivideAndRoundUp(IndexSize, uint32(32));
 
-		IndexList.Init(0, (NewSize * ChuckBitSize) + 1);
+		IndexList.Init(0, (NewSize * ChuckBitSize));
 
 		if (OldSize == 0) return;
 
@@ -94,9 +94,9 @@ public:
 
 		for (uint8 NewEncodeSize = 0; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
 		{
-			if (NewMaxSize < 1 << NewEncodeSize)
+			if (NewMaxSize <= 1 << NewEncodeSize)
 			{
-				ResizeBitArray(NewEncodeSize);
+				ResizeBitArray(NewEncodeSize + 1);
 
 				break;
 			}
@@ -109,7 +109,7 @@ public:
 
 	FORCEINLINE void SetIndexNumber(const int32 Index, const uint32 Number)
 	{
-		check(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0);
+		checkf(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0, TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
 
 		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
 		{
@@ -121,7 +121,7 @@ public:
 
 	FORCEINLINE uint32 GetIndexNumber(const int32 Index) const
 	{
-		check(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0);
+		checkf(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0, TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
 
 		uint32 OutIndex = 0;
 
@@ -159,6 +159,35 @@ public:
 		return Ar << Data.IndexList << Data.EncodeBtye << Data.IndexSize;
 	}
 
+};
+
+USTRUCT(BlueprintType)
+struct FLFPCompactIntNameArray : public FLFPCompactIntArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPCompactIntNameArray() {}
+
+	FLFPCompactIntNameArray(const FName& NewName) : Name(NewName) {}
+
+	FLFPCompactIntNameArray(const FName& NewName, const FLFPCompactIntArray& Setting) : Super(Setting), Name(NewName) {}
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPFunctionData")
+		FName Name = FName();
+
+public:
+
+	FORCEINLINE bool operator==(const FLFPCompactIntNameArray& Other) const
+	{
+		return Name == Other.Name;
+	}
+
+	FORCEINLINE bool operator==(const FName& Other) const
+	{
+		return Name == Other;
+	}
 };
 
 USTRUCT(BlueprintType)

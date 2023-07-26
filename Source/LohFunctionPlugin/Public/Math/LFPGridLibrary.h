@@ -31,13 +31,13 @@ public:
 		static TArray<FIntVector> GetGridEdgeDirection(const FIntVector& Location, const FIntVector& GridSize);
 	
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
-		static int32 ToGridIndex(const FIntVector& Location, const FIntVector& GridSize);
+		static int32 ToGridIndex(FIntVector Location, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")
 		static TArray<int32> ToGridIndexList(const TArray<FIntVector>& GridLocations, const FIntVector Offset, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridLibrary")
-		static FIntVector ToGridLocation(const int32& Index, const FIntVector& GridSize);
+		static FIntVector ToGridLocation(int32 Index, const FIntVector& GridSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridLibrary")
 		static TArray<FIntVector> ToGridLocationList(const TArray<int32>& Indexs, const int32 Offset, const FIntVector& GridSize);

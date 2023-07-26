@@ -49,28 +49,40 @@ public: // Operator
 
 public:
 
-	FORCEINLINE void TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
 			Ticker.GetDefaultObject()->OnBegin(TickGroup, Index, TickName, Caller);
+
+			return true;
 		}
+
+		return false;
 	}
 
-	FORCEINLINE void TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
 			Ticker.GetDefaultObject()->OnExecute(TickGroup, Index, TickName, Caller);
+
+			return true;
 		}
+
+		return false;
 	}
 
-	FORCEINLINE void TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
 			Ticker.GetDefaultObject()->OnEnd(TickGroup, Index, TickName, Caller);
+
+			return true;
 		}
+
+		return false;
 	}
 
 	FORCEINLINE bool CanTick() const
@@ -80,14 +92,14 @@ public:
 
 	FORCEINLINE bool CanRemove() const
 	{
-		return Interval <= 0 && Amount == 0;
+		return CanTick() && Amount == 0;
 	}
 
 	FORCEINLINE int32 DecreaseInterval()
 	{
-		Interval -= 1;
+		if (Interval > -1) Interval -= 1;
 
-		if (Interval < 0)
+		if (Interval < 0 && Amount > 0)
 		{
 			Interval = MaxInterval;
 		}
@@ -116,24 +128,28 @@ public:
 
 public:
 
-	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller)
+	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller, const uint8 TickerRunCounter)
 	{
+		uint8 CurrentTickerCounter = FMath::Max(TickerRunCounter, uint8(1));
+
 		Members.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
 			{
 				CurrentTickIndex.DecreaseInterval();
 
-				if (CurrentTickIndex.CanTick())
+				if (CurrentTickIndex.CanTick() && CurrentTickerCounter > 0)
 				{
 					CurrentTickIndex.TryRunTicker(GroupIndex, Caller);
 
 					TickDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
-				}
 
-				if (CurrentTickIndex.CanRemove())
-				{
-					RemoveDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
+					CurrentTickerCounter--;
 
-					return true;
+					if (CurrentTickIndex.CanRemove())
+					{
+						RemoveDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
+
+						return true;
+					}
 				}
 
 				return false;
@@ -204,8 +220,11 @@ public: /** Delegate */
 
 protected:
 
-	UPROPERTY(BlueprintReadWrite, Category = "LFPIndexTickerComponent ")
+	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
 		bool bAllowAutoTick = true;
+
+	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPGridTickerComponent ")
+		uint8 MaxTickerRunPerGroup = uint8(255);
 
 private:
 
