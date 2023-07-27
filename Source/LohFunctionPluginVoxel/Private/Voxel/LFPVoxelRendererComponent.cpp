@@ -103,9 +103,11 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ThreadOutput = 
 			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
 			{ 
-				FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
-
 				TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
+
+				if (IsValid(this) == false) return TargetThreadResult;
+
+				FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
 
 				GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
@@ -359,6 +361,8 @@ bool ULFPVoxelRendererComponent::IsFaceVisible(const FLFPGridPaletteData& FromPa
 
 void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
 {
+	if (IsValid(TargetVoxelContainer) == false || TargetThreadResult.IsValid() == false) return;
+
 	const double StartTime = FPlatformTime::Seconds();
 
 	const FLFPGridPaletteContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
@@ -504,6 +508,8 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 
 void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPGridContainerComponent* TargetVoxelContainer, TSharedPtr<FLFPVoxelRendererThreadResult>& TargetThreadResult, const FLFPVoxelRendererSetting& TargetGenerationSetting)
 {
+	if (IsValid(TargetVoxelContainer) == false || TargetThreadResult.IsValid() == false) return;
+
 	const double StartTime = FPlatformTime::Seconds();
 
 	const FLFPGridPaletteContainerSetting& VoxelSetting = TargetVoxelContainer->GetSetting();
@@ -591,7 +597,7 @@ void ULFPVoxelRendererComponent::GenerateSimpleCollisionData(ULFPGridContainerCo
 
 	const FVector BoxHalfSize = GetGenerationSetting().VoxelHalfSize;
 	const FVector BoxSize = BoxHalfSize * 2;
-	const FVector RenderOffset = -(BoxHalfSize * FVector(VoxelContainer->GetSetting().GetPaletteGrid()));
+	const FVector RenderOffset = -(BoxHalfSize * FVector(TargetVoxelContainer->GetSetting().GetPaletteGrid()));
 
 	/** Add To Result */
 	for (const auto& BatchData : BatchDataMap)
