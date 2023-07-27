@@ -15,15 +15,11 @@ struct FLFPIndexTickData
 
 public:
 
-	FLFPIndexTickData() : Index(INDEX_NONE), Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex) : Index(NewIndex), Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex, const FName NewTickName) : Index(NewIndex), TickName(NewTickName), Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const int32 NewIndex, const FName NewTickName, const TSubclassOf<ULFPTickerObject> NewTicker, const int32 NewMaxInterval, const int32 NewAmount) : Index(NewIndex), TickName(NewTickName), Ticker(NewTicker), MaxInterval(NewMaxInterval), Interval(NewMaxInterval), Amount(NewAmount) {}
+	FLFPIndexTickData() : Interval(INDEX_NONE) {}
+	FLFPIndexTickData(const FName NewTickName) : TickName(NewTickName), Interval(INDEX_NONE) {}
+	FLFPIndexTickData(const FName NewTickName, const TSubclassOf<ULFPTickerObject> NewTicker, const int32 NewMaxInterval, const int32 NewTickOffset, const int32 NewAmount) : TickName(NewTickName), Ticker(NewTicker), MaxInterval(NewMaxInterval), Interval(NewMaxInterval + NewTickOffset), Amount(NewAmount) {}
 
 public:
-
-	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
-		int32 Index = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		FName TickName = FName();
@@ -40,16 +36,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		int32 Amount = INDEX_NONE;
 
-public: // Operator
-
-	bool operator==(const FLFPIndexTickData& Other) const
-	{
-		return Index == Other.Index;
-	}
-
 public:
 
-	FORCEINLINE bool TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
 	{
 		if (IsValid(Ticker))
 		{
@@ -61,7 +50,7 @@ public:
 		return false;
 	}
 
-	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
 	{
 		if (IsValid(Ticker))
 		{
@@ -73,7 +62,7 @@ public:
 		return false;
 	}
 
-	FORCEINLINE bool TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
 	{
 		if (IsValid(Ticker))
 		{
@@ -124,7 +113,12 @@ struct FLFPIndexTickGroupData
 public:
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickGroupData")
-		TArray<FLFPIndexTickData> Members = TArray<FLFPIndexTickData>();
+		TMap<int32, FLFPIndexTickData> MemberList = TMap<int32, FLFPIndexTickData>();
+
+protected:
+
+	UPROPERTY(SaveGame)
+		int32 LastTickIndex = 0;
 
 public:
 
@@ -132,35 +126,62 @@ public:
 	{
 		uint8 CurrentTickerCounter = FMath::Max(TickerRunCounter, uint8(1));
 
-		Members.RemoveAllSwap([&](FLFPIndexTickData& CurrentTickIndex)
+		TArray<int32> RemoveIndexList;
+
+		int32 CurrentIndex = -1;
+
+		if (MemberList.Num() <= LastTickIndex)
+		{
+			LastTickIndex = 0;
+		}
+
+		for (auto& Member : MemberList)
+		{
+			CurrentIndex++;
+
+			if (CurrentIndex < LastTickIndex)
 			{
-				CurrentTickIndex.DecreaseInterval();
+				continue;
+			}
 
-				if (CurrentTickIndex.CanTick() && CurrentTickerCounter > 0)
+			Member.Value.DecreaseInterval();
+
+			if (Member.Value.CanTick() && CurrentTickerCounter > 0)
+			{
+				if (Member.Value.TryRunTicker(GroupIndex, Caller, Member.Key) == false)
 				{
-					CurrentTickIndex.TryRunTicker(GroupIndex, Caller);
-
-					TickDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
-
-					CurrentTickerCounter--;
-
-					if (CurrentTickIndex.CanRemove())
-					{
-						RemoveDelegator.Broadcast(CurrentTickIndex.Index, CurrentTickIndex.TickName, GroupIndex);
-
-						return true;
-					}
+					TickDelegator.Broadcast(Member.Key, Member.Value.TickName, GroupIndex);
 				}
 
-				return false;
-			});
+				CurrentTickerCounter--;
+
+				if (Member.Value.CanRemove())
+				{
+					RemoveDelegator.Broadcast(Member.Key, Member.Value.TickName, GroupIndex);
+
+					RemoveIndexList.Add(Member.Key);
+				}
+			}
+
+			if (CurrentTickerCounter == 0)
+			{
+				LastTickIndex = CurrentIndex;
+
+				break;
+			}
+		}
+
+		for (const int32 RemoveIndex : RemoveIndexList)
+		{
+			MemberList.Remove(RemoveIndex);
+		}
 
 		return;
 	}
 
 	FORCEINLINE bool CanRemove() const
 	{
-		return Members.Num() <= 0;
+		return MemberList.Num() <= 0;
 	}
 };
 
@@ -187,7 +208,7 @@ public:
 		virtual bool CallTick();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
-		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const FIntPoint GroupIndex);
+		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
 		FORCEINLINE bool RemoveTickIndex(const int32 TickIndex, const FIntPoint GroupIndex);

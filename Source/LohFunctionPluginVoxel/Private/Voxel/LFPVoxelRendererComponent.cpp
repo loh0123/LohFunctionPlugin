@@ -106,7 +106,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
 				return TargetThreadResult;
-			}, ETaskPriority::Default, EExtendedTaskPriority::Inline);
+			}, ETaskPriority::High, EExtendedTaskPriority::Inline);
 
 		Status.bIsVoxelLumenDirty = CurrentSetting.bGenerateLumenData;
 		Status.bIsRenderDirty = true;
@@ -115,6 +115,13 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	if (Status.bIsRenderDirty && ThreadOutput.IsCompleted())
 	{
 		Status.bIsRenderDirty = false;
+
+		/** If Lumen Data Havn't Been Generated Use Old Data */
+		if (Status.bIsVoxelLumenDirty && ThreadResult.IsValid())
+		{
+			ThreadOutput.GetResult()->DistanceFieldMeshData = ThreadResult->DistanceFieldMeshData;
+			ThreadOutput.GetResult()->LumenCardData = ThreadResult->LumenCardData;
+		}
 
 		ThreadResult = ThreadOutput.GetResult();
 

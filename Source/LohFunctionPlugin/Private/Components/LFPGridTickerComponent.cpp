@@ -82,7 +82,7 @@ void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32
 
 		if (TickerStruct != nullptr && IsValid(TickerStruct->Ticker) && CanGridIndexTick(RegionIndex, ChuckIndex, GridData.Key, GridPalette.Name, GridPalette, this))
 		{
-			AddTickIndex(FLFPIndexTickData(GridData.Key, GridPalette.Name, TickerStruct->Ticker, TickerStruct->TickMaxIteration, TickerStruct->TickAmount), FIntPoint(RegionIndex, ChuckIndex));
+			AddTickIndex(FLFPIndexTickData(GridPalette.Name, TickerStruct->Ticker, TickerStruct->TickMaxIteration, FMath::RandHelper(TickerStruct->TickOffset), TickerStruct->TickAmount), GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
 		}
 	}
 }

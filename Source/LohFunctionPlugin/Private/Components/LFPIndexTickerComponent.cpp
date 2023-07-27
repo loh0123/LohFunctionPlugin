@@ -53,7 +53,7 @@ bool ULFPIndexTickerComponent::CallTick()
 	return TickList.IsEmpty() == false;
 }
 
-void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const FIntPoint GroupIndex)
+void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
 {
 	if (TickData.Amount == 0)
 	{
@@ -68,21 +68,19 @@ void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, c
 
 	if (HasGroup == false) OnGroupAdded.Broadcast(GroupIndex);
 
-	const int32 Index = GroupData.Members.Find(TickData);
-
-	if (Index != INDEX_NONE)
+	if (GroupData.MemberList.Contains(TickIndex))
 	{
-		GroupData.Members[Index] = TickData;
+		GroupData.MemberList.FindChecked(TickIndex) = TickData;
 
-		OnIndexUpdated.Broadcast(TickData.Index, TickData.TickName, GroupIndex);
+		OnIndexUpdated.Broadcast(TickIndex, TickData.TickName, GroupIndex);
 	}
 	else
 	{
-		GroupData.Members.Add(TickData);
+		GroupData.MemberList.Add(TickIndex, TickData);
 
-		OnIndexAdded.Broadcast(TickData.Index, TickData.TickName, GroupIndex);
+		OnIndexAdded.Broadcast(TickIndex, TickData.TickName, GroupIndex);
 
-		TickData.TryStartTicker(GroupIndex, this);
+		TickData.TryStartTicker(GroupIndex, this, TickIndex);
 	}
 
 	if (bAllowAutoTick) SetComponentTickEnabled(true);
@@ -92,20 +90,15 @@ bool ULFPIndexTickerComponent::RemoveTickIndex(const int32 TickIndex, const FInt
 {
 	auto GroupData = TickList.Find(GroupIndex);
 
-	if (GroupData == nullptr) return false;
+	if (GroupData == nullptr || GroupData->MemberList.Contains(TickIndex) == false) return false;
 
-	const int32 GroupDataMemberIndex = GroupData->Members.Find(FLFPIndexTickData(TickIndex));
+	auto& Member = GroupData->MemberList.FindChecked(TickIndex);
 
-	if (GroupDataMemberIndex != INDEX_NONE)
-	{
-		GroupData->Members[GroupDataMemberIndex].TryEndTicker(GroupIndex, this);
+	Member.TryEndTicker(GroupIndex, this, TickIndex);
 
-		GroupData->Members.RemoveAtSwap(GroupDataMemberIndex);
+	GroupData->MemberList.Remove(TickIndex);
 
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
