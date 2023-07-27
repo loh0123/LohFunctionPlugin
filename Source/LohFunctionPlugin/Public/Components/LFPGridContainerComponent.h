@@ -624,16 +624,16 @@ public: /** Getter */
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex) const;
+		FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition) const;
+		FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset) const;
+		FORCEINLINE FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset) const;
+		FORCEINLINE FIntVector AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset, const bool bRound = false) const;
 
 public: /** C++ Getter */
 

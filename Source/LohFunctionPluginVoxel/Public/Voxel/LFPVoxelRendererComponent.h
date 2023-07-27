@@ -356,6 +356,8 @@ public:
 
 struct FLFPVoxelRendererThreadResult
 {
+public:
+
 	TArray<FLFPVoxelRendererSectionData> SectionData = TArray<FLFPVoxelRendererSectionData>();
 
 	//FBox RenderBounds = FBox(EForceInit::ForceInitToZero);
@@ -437,9 +439,20 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelMeshDirty : 1;
 
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelLumenDirty : 1;
+
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsRenderDirty : 1;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsBodyInvalid : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 VoxelLumenCounter = uint8(60);
+
+public:
+
+	FORCEINLINE bool HasDirty() const
+	{
+		return bIsVoxelAttributeDirty || bIsVoxelMeshDirty || bIsVoxelLumenDirty || bIsRenderDirty || bIsBodyInvalid;
+	}
 };
 
 class ULFPGridContainerComponent;

@@ -85,23 +85,15 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
 
-	if (Status.bIsVoxelMeshDirty)
+	if (Status.bIsVoxelMeshDirty && ThreadOutput.IsCompleted())
 	{
 		Status.bIsVoxelMeshDirty = false;
 
 		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
 		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
-		TArray<bool> MaterialLumenSupportList;
-
-		MaterialLumenSupportList.Init(true, MaterialList.Num());
-
-		for (int32 Index = 0; Index < MaterialList.Num(); Index++)
-		{
-			if (IsValid(MaterialList[Index])) MaterialLumenSupportList[Index] = MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
-		}
 
 		ThreadOutput = 
-			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
+			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting]
 			{ 
 				TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
@@ -112,16 +104,18 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
 				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
-				if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
 
 				return TargetThreadResult;
-			}, ETaskPriority::BackgroundNormal);
+			}, ETaskPriority::Default, EExtendedTaskPriority::Inline);
 
+		Status.bIsVoxelLumenDirty = CurrentSetting.bGenerateLumenData;
 		Status.bIsRenderDirty = true;
 	}
 
 	if (Status.bIsRenderDirty && ThreadOutput.IsCompleted())
 	{
+		Status.bIsRenderDirty = false;
+
 		ThreadResult = ThreadOutput.GetResult();
 
 		UpdateBounds();
@@ -130,9 +124,51 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		if (GenerationSetting.bGenerateCollisionData) RebuildPhysicsData();
 
-		SetComponentTickEnabled(false);
+		if (Status.HasDirty() == false) SetComponentTickEnabled(false);
 
 		OnVoxelRendererUpdate.Broadcast();
+	}
+
+	if (Status.bIsVoxelLumenDirty && ThreadOutput.IsCompleted())
+	{
+		if (Status.VoxelLumenCounter > 0)
+		{
+			Status.VoxelLumenCounter--;
+		}
+		else
+		{
+			Status.bIsVoxelLumenDirty = false;
+
+			Status.VoxelLumenCounter = uint8(60);
+
+			ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
+			FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
+			TArray<bool> MaterialLumenSupportList;
+
+			MaterialLumenSupportList.Init(true, MaterialList.Num());
+
+			for (int32 Index = 0; Index < MaterialList.Num(); Index++)
+			{
+				if (IsValid(MaterialList[Index])) MaterialLumenSupportList[Index] = MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
+			}
+
+			TSharedPtr<FLFPVoxelRendererThreadResult> UpdateResult = ThreadOutput.GetResult();
+
+			ThreadOutput =
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, UpdateResult]
+					{
+						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = UpdateResult;
+
+						if (IsValid(this) == false) return TargetThreadResult;
+
+						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+						if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
+
+						return TargetThreadResult;
+					}, ETaskPriority::Default, EExtendedTaskPriority::Inline);
+
+			Status.bIsRenderDirty = true;
+		}
 	}
 }
 
@@ -793,8 +829,6 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	/* Calculate MaxCheckDistance */
 	FLFPDFMipInfo MinMipInfo(MinIndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
 
-	const int32 MaxCheckDistance = FMath::CeilToInt(MinMipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
-
 	const FVector MinBrickOffset = MinMipInfo.DistanceFieldVolumeBounds.Min + VoxelHalfBounds;
 
 	const int32 SizeHalfOffset = FMath::DivideAndRoundUp(MinBrickOffset.GetAbs(), TargetGenerationSetting.VoxelHalfSize.GetAbs() * 2).GetMax();
@@ -811,6 +845,8 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	/** Acceleration Data To Speed Up Calculation */
 	TArray<FLFPCacheAccelerationInfo> AccelerationInfoList;
 	{
+		const double TaskTime = FPlatformTime::Seconds();
+
 		AccelerationInfoList.Init(FLFPCacheAccelerationInfo(), CheckLength);
 
 		/** Generate Material Index List */
@@ -826,14 +862,24 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 			}
 		}
 
-		ParallelFor(CheckLength, [&](const int32 Index) {
+		if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen AccelerationInfoList Get Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
+
+		const int32 MaxCheckDistance = FMath::CeilToInt(MinMipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
+
+		/*for (int32 Index = 0; Index  < CheckLength; Index ++)*/
+		ParallelFor(CheckLength, [&](const int32 Index) 
+		{
+			//const double SubTaskTime = FPlatformTime::Seconds();
+
 			FLFPCacheAccelerationInfo& CurrentCacheInfo = AccelerationInfoList[Index];
 
 			const FIntVector CacheLocation = ULFPGridLibrary::ToGridLocation(Index, CheckSize) - FIntVector(SizeHalfOffset);
 
+			const int32 CurrentMaxCheckDistance = FMath::Min(MaxCheckDistance, FMath::Max(CacheLocation.GetMax(), (ContainerSetting.GetPaletteGrid() - CacheLocation).GetMax()));
+
 			/** Generate Trace Distance */
 			{
-				for (CurrentCacheInfo.TraceDistance = 1; CurrentCacheInfo.TraceDistance <= MaxCheckDistance; CurrentCacheInfo.TraceDistance++)
+				for (CurrentCacheInfo.TraceDistance = 1; CurrentCacheInfo.TraceDistance <= CurrentMaxCheckDistance; CurrentCacheInfo.TraceDistance++)
 				{
 					bool bIsHit = false;
 
@@ -869,7 +915,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 				}
 			}
 
+			//const double SubTaskTimeTwo = FPlatformTime::Seconds();
+
 			/** Generate Trace Box */
+			if (CurrentCacheInfo.TraceDistance <= CurrentMaxCheckDistance)
 			{
 				for (int32 SectionIndex = 0; SectionIndex < TargetThreadResult->SectionData.Num(); SectionIndex++)
 				{
@@ -885,10 +934,16 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 					TraceBox.Max += TargetGenerationSetting.VoxelHalfSize;
 				}
 			}
+
+			//if (TargetGenerationSetting.bPrintGenerateTime && (float)(FPlatformTime::Seconds() - SubTaskTime) > 0.001f) UE_LOG(LogTemp, Warning, TEXT("Lumen AccelerationInfoList Error : %f : %f : Index = %d : TraceDistance = %d : %d"), (float)(FPlatformTime::Seconds() - SubTaskTime), (float)(FPlatformTime::Seconds() - SubTaskTimeTwo), Index, CurrentCacheInfo.TraceDistance, CurrentMaxCheckDistance);
 		}, EParallelForFlags::Unbalanced | EParallelForFlags::BackgroundPriority);
+
+		if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen AccelerationInfoList Use Time : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
 	}
 
 	{
+		const double TaskTime = FPlatformTime::Seconds();
+
 		TargetThreadResult->DistanceFieldMeshData = MakeShared<FDistanceFieldVolumeData>();
 
 		TargetThreadResult->DistanceFieldMeshData->AssetName = "Voxel Mesh";
@@ -1024,9 +1079,13 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 		FMemory::Memcpy(Ptr, StreamableMipData.GetData(), StreamableMipData.Num());
 		TargetThreadResult->DistanceFieldMeshData->StreamableMips.Unlock();
 		TargetThreadResult->DistanceFieldMeshData->StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
+
+		if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Bulk Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
 	}
 
 	{
+		const double TaskTime = FPlatformTime::Seconds();
+
 		TargetThreadResult->LumenCardData = MakeShared<FCardRepresentationData>();
 
 		auto SetCoverIndex = [&](FIntPoint& CoverIndex, int32 Index)
@@ -1200,6 +1259,8 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 				AddCardBuild(CardBuildList, CoverIndex, FaceData.FaceID);
 			}
 		}
+
+		if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Card Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
 	}
 
 	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));

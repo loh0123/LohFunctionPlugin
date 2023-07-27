@@ -230,16 +230,16 @@ int32 ULFPGridContainerComponent::GetGridPaletteIndex(const int32 RegionIndex, c
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetPaletteIndex(GridIndex);
 }
 
-FIntVector ULFPGridContainerComponent::ToGridGlobalPosition(const FIntVector GridGlobalIndex) const
+FIntVector ULFPGridContainerComponent::ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound) const
 {
-	const FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.X, Setting.GetRegionGrid()));
-	const FIntVector ChuckPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Y, Setting.GetChuckGrid()));
-	const FIntVector GridPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Z, Setting.GetPaletteGrid()));
+	const FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.X, Setting.GetRegionGrid(), bRound));
+	const FIntVector ChuckPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Y, Setting.GetChuckGrid(), bRound));
+	const FIntVector GridPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Z, Setting.GetPaletteGrid(), bRound));
 
 	return (RegionPos * Setting.GetChuckGrid() * Setting.GetPaletteGrid()) + (ChuckPos * Setting.GetPaletteGrid()) + GridPos;
 }
 
-FIntVector ULFPGridContainerComponent::ToGridGlobalIndex(FIntVector GridGlobalPosition) const
+FIntVector ULFPGridContainerComponent::ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound) const
 {
 	auto DivideVector = [&](const FIntVector& A, const FIntVector& B) {
 		return FIntVector(A.X / B.X, A.Y / B.Y, A.Z / B.Z);
@@ -247,28 +247,35 @@ FIntVector ULFPGridContainerComponent::ToGridGlobalIndex(FIntVector GridGlobalPo
 
 	const FIntVector TotalSize(Setting.GetRegionGrid() * Setting.GetChuckGrid() * Setting.GetPaletteGrid());
 
-	GridGlobalPosition.X %= TotalSize.X;
-	GridGlobalPosition.Y %= TotalSize.Y;
-	GridGlobalPosition.Z %= TotalSize.Z;
+	if (bRound)
+	{
+		GridGlobalPosition.X %= TotalSize.X;
+		GridGlobalPosition.Y %= TotalSize.Y;
+		GridGlobalPosition.Z %= TotalSize.Z;
 
-	if (GridGlobalPosition.X < 0) GridGlobalPosition.X += TotalSize.X;
-	if (GridGlobalPosition.Y < 0) GridGlobalPosition.Y += TotalSize.Y;
-	if (GridGlobalPosition.Z < 0) GridGlobalPosition.Z += TotalSize.Z;
+		if (GridGlobalPosition.X < 0) GridGlobalPosition.X += TotalSize.X;
+		if (GridGlobalPosition.Y < 0) GridGlobalPosition.Y += TotalSize.Y;
+		if (GridGlobalPosition.Z < 0) GridGlobalPosition.Z += TotalSize.Z;
+	}
+	else if (ULFPGridLibrary::IsGridLocationValid(GridGlobalPosition, TotalSize) == false)
+	{
+		return FIntVector(INDEX_NONE);
+	}
 
 	const FIntVector RegionPos	(DivideVector(GridGlobalPosition, Setting.GetChuckGrid() * Setting.GetPaletteGrid()));
 	const FIntVector ChuckPos	(DivideVector(GridGlobalPosition, Setting.GetPaletteGrid()));
 
-	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(GridGlobalPosition, Setting.GetPaletteGrid()));
+	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(GridGlobalPosition, Setting.GetPaletteGrid(), true));
 }
 
-FIntVector ULFPGridContainerComponent::AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset) const
+FIntVector ULFPGridContainerComponent::AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset, const bool bRound) const
 {
-	return ToGridGlobalPosition(ToGridGlobalIndex(GridGlobalPosition) + GridGlobalIndexOffset);
+	return ToGridGlobalPosition(ToGridGlobalIndex(GridGlobalPosition, bRound) + GridGlobalIndexOffset, bRound);
 }
 
-FIntVector ULFPGridContainerComponent::AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset) const
+FIntVector ULFPGridContainerComponent::AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset, const bool bRound) const
 {
-	return ToGridGlobalIndex(ToGridGlobalPosition(GridGlobalIndex) + GridGlobalPositionOffset);
+	return ToGridGlobalIndex(ToGridGlobalPosition(GridGlobalIndex, bRound) + GridGlobalPositionOffset, bRound);
 }
 
 /** C++ Getter */
