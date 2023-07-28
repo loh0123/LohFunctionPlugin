@@ -223,6 +223,13 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 		return false;
 	}
 
+	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryEquipItem InventorySlotIndex is empty"));
+
+		return false;
+	}
+
 	for (const auto& EquipmentSlot : EquipmentSlotList)
 	{
 		if ((bToActiveSlotOnly == false) && (EquipmentSlot.bIsActive == false)) continue;
