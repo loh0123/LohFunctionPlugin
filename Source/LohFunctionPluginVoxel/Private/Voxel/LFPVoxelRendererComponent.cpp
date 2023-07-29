@@ -13,6 +13,10 @@ using namespace UE::Tasks;
 
 FLFPGridPaletteData FLFPGridPaletteData::EmptyData = FLFPGridPaletteData();
 
+uint32 FLFPVoxelRendererStatus::CurrentTickAmount = 0;
+
+uint32 FLFPVoxelRendererStatus::CurrentLumenAmount = 1;
+
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
 /** Core Handling */
@@ -33,8 +37,8 @@ void ULFPVoxelRendererComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-
+	Status.MeshUpdateDelay = GenerationSetting.MeshUpdateDelayPerComponent;
+	Status.LumenUpdateDelay = GenerationSetting.LumenUpdateDelayPerComponent;
 }
 
 void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -62,7 +66,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (IsValid(VoxelContainer) == false) return;
 
-	if (Status.bIsVoxelAttributeDirty && IsValid(AttributesTexture))
+	if (Status.CanUpdateAttribute() && IsValid(AttributesTexture))
 	{
 		Status.bIsVoxelAttributeDirty = false;
 
@@ -85,45 +89,23 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
 
-	if (Status.bIsVoxelMeshDirty && ThreadOutput.IsCompleted())
+	if (ThreadOutput.IsCompleted() == false) return;
+
+	/** Is Tick Logic Cooling Down Or Is Not Rendering */
+	if (Status.DecreaseTickCounter() == false) return;
+
+	switch (Status.RendererMode)
 	{
-		Status.bIsVoxelMeshDirty = false;
-
-		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
-		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
-
-		ThreadOutput = 
-			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting]
-			{ 
-				TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
-
-				if (IsValid(this) == false) return TargetThreadResult;
-
-				FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
-
-				GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
-
-				if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
-
-				return TargetThreadResult;
-			}, ETaskPriority::High, EExtendedTaskPriority::Inline);
-
-		Status.bIsVoxelLumenDirty = CurrentSetting.bGenerateLumenData;
-		Status.bIsRenderDirty = true;
+	case ELFPVoxelRendererMode::LFP_None:
+	{
+		SetComponentTickEnabled(Status.HasRenderDirty());
 	}
-
-	if (Status.bIsRenderDirty && ThreadOutput.IsCompleted())
+	break;
+	case ELFPVoxelRendererMode::LFP_Render:
 	{
-		Status.bIsRenderDirty = false;
-
-		/** If Lumen Data Havn't Been Generated Use Old Data */
-		if (Status.bIsVoxelLumenDirty && ThreadResult.IsValid())
-		{
-			ThreadOutput.GetResult()->DistanceFieldMeshData = ThreadResult->DistanceFieldMeshData;
-			ThreadOutput.GetResult()->LumenCardData = ThreadResult->LumenCardData;
-		}
-
 		ThreadResult = ThreadOutput.GetResult();
+
+		check(ThreadResult.IsValid());
 
 		UpdateBounds();
 
@@ -131,51 +113,48 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		if (GenerationSetting.bGenerateCollisionData) RebuildPhysicsData();
 
-		if (Status.HasDirty() == false) SetComponentTickEnabled(false);
+		Status.UpdateNextRenderMode(ThreadOutput.GetResult()->DistanceFieldMeshData.IsValid() == false && GenerationSetting.bGenerateLumenData);
 
 		OnVoxelRendererUpdate.Broadcast();
 	}
-
-	if (Status.bIsVoxelLumenDirty && ThreadOutput.IsCompleted())
+	break;
+	case ELFPVoxelRendererMode::LFP_Mesh:
+	case ELFPVoxelRendererMode::LFP_Lumen:
 	{
-		if (Status.VoxelLumenCounter > 0)
+		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
+		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
+		TArray<bool> MaterialLumenSupportList;
 		{
-			Status.VoxelLumenCounter--;
-		}
-		else
-		{
-			Status.bIsVoxelLumenDirty = false;
-
-			Status.VoxelLumenCounter = uint8(60);
-
-			ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
-			FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
-			TArray<bool> MaterialLumenSupportList;
-
 			MaterialLumenSupportList.Init(true, MaterialList.Num());
 
 			for (int32 Index = 0; Index < MaterialList.Num(); Index++)
 			{
 				if (IsValid(MaterialList[Index])) MaterialLumenSupportList[Index] = MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
 			}
-
-			TSharedPtr<FLFPVoxelRendererThreadResult> UpdateResult = ThreadOutput.GetResult();
-
-			ThreadOutput =
-				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, UpdateResult]
-					{
-						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = UpdateResult;
-
-						if (IsValid(this) == false) return TargetThreadResult;
-
-						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
-						if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
-
-						return TargetThreadResult;
-					}, ETaskPriority::Default, EExtendedTaskPriority::Inline);
-
-			Status.bIsRenderDirty = true;
 		}
+
+		CurrentSetting.bGenerateLumenData = Status.RendererMode == ELFPVoxelRendererMode::LFP_Lumen && GenerationSetting.bGenerateLumenData;
+
+		ThreadOutput =
+			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
+				{
+					TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
+
+					if (IsValid(this) == false) return TargetThreadResult;
+
+					FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+
+					GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
+
+					if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
+					if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
+
+					return TargetThreadResult;
+				}, ETaskPriority::High, EExtendedTaskPriority::Inline);
+
+		Status.UpdateMode(ELFPVoxelRendererMode::LFP_Render);
+	}
+	break;
 	}
 }
 
@@ -235,7 +214,7 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 {
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
-		Status.bIsVoxelMeshDirty = true;
+		Status.SetNextRenderMode();
 
 		SetComponentTickEnabled(true);
 	}

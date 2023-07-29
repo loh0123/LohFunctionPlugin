@@ -34,7 +34,7 @@ public:
 
 namespace LFPVoxelRendererConstantData
 {
-	const TArray<FRotator> VertexRotationList =
+	static const TArray<FRotator> VertexRotationList =
 	{
 		FRotator(0.0f	,   0.0f, 0.0f),
 		FRotator(90.0f	,   0.0f, 0.0f),
@@ -44,7 +44,7 @@ namespace LFPVoxelRendererConstantData
 		FRotator(180.0f	,   0.0f, 0.0f),
 	};
 
-	const TArray<FLFPVoxelRendererFaceDirection> FaceDirection = {
+	static const TArray<FLFPVoxelRendererFaceDirection> FaceDirection = {
 		FLFPVoxelRendererFaceDirection(FIntVector(1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, 0, 1)),
 		FLFPVoxelRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(0, 1, 0), FIntVector(-1, 0, 0)),
 		FLFPVoxelRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(1, 0, 0), FIntVector(0, 1, 0)),
@@ -53,7 +53,7 @@ namespace LFPVoxelRendererConstantData
 		FLFPVoxelRendererFaceDirection(FIntVector(-1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, 0,-1)),
 	};
 
-	const TArray<FIntVector> FaceLoopDirectionList = {
+	static const TArray<FIntVector> FaceLoopDirectionList = {
 		FIntVector(0, 1, 2),
 		FIntVector(2, 1, 0),
 		FIntVector(2, 0, 1),
@@ -62,7 +62,7 @@ namespace LFPVoxelRendererConstantData
 		FIntVector(0, 1, 2),
 	};
 
-	const TArray<int32> FacePositiveList = {
+	static const TArray<int32> FacePositiveList = {
 	 1,
 	-1,
 	 1,
@@ -71,7 +71,7 @@ namespace LFPVoxelRendererConstantData
 	-1,
 	};
 
-	const TArray<int32> SurfaceDirectionID = {
+	static const TArray<int32> SurfaceDirectionID = {
 		5,0,3,1,2,4
 	};
 };
@@ -420,6 +420,21 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		uint8 MeshUpdateDelayPerComponent = uint8(0);
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		uint8 LumenUpdateDelayPerComponent = uint8(5);
+};
+
+UENUM(BlueprintType)
+enum class ELFPVoxelRendererMode : uint8
+{
+	LFP_Mesh		UMETA(DisplayName = "Mesh"),
+	LFP_Render		UMETA(DisplayName = "Render"),
+	LFP_Lumen		UMETA(DisplayName = "Lumen"),
+	LFP_None		UMETA(DisplayName = "None"),
 };
 
 USTRUCT(BlueprintType)
@@ -430,28 +445,129 @@ struct FLFPVoxelRendererStatus
 public:
 
 	FLFPVoxelRendererStatus() : 
-		bIsVoxelAttributeDirty(false), 
-		bIsVoxelMeshDirty(false), 
+		RendererMode(ELFPVoxelRendererMode::LFP_None),
+		NextRendererMode(ELFPVoxelRendererMode::LFP_None),
+		MeshUpdateDelay(0),
+		LumenUpdateDelay(0),
+		bIsVoxelAttributeDirty(false),
 		bIsBodyInvalid(false)
 	{}
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelAttributeDirty : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
+		ELFPVoxelRendererMode RendererMode;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelMeshDirty : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+		ELFPVoxelRendererMode NextRendererMode;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsVoxelLumenDirty : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+		uint8 MeshUpdateDelay;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsRenderDirty : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+		uint8 LumenUpdateDelay;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 bIsBodyInvalid : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
+		uint8 bIsVoxelAttributeDirty : 1;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") uint8 VoxelLumenCounter = uint8(60);
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
+		uint8 bIsBodyInvalid : 1;
 
 public:
 
-	FORCEINLINE bool HasDirty() const
+	static uint32 CurrentTickAmount;
+
+	static uint32 CurrentLumenAmount;
+
+public:
+
+	UPROPERTY() 
+		uint32 TickCounter = uint32(0);
+
+public:
+
+	FORCEINLINE void UpdateMode(const ELFPVoxelRendererMode NewMode)
 	{
-		return bIsVoxelAttributeDirty || bIsVoxelMeshDirty || bIsVoxelLumenDirty || bIsRenderDirty || bIsBodyInvalid;
+		if (RendererMode == NewMode)
+		{
+			return;
+		}
+
+		if (RendererMode == ELFPVoxelRendererMode::LFP_Render)
+		{
+			CurrentTickAmount--;
+		}
+
+		if (RendererMode == ELFPVoxelRendererMode::LFP_Lumen)
+		{
+			CurrentLumenAmount--;
+		}
+
+		if (NewMode == ELFPVoxelRendererMode::LFP_Render)
+		{
+			CurrentTickAmount++;
+		}
+
+		if (NewMode == ELFPVoxelRendererMode::LFP_Lumen)
+		{
+			CurrentLumenAmount++;
+		}
+
+		RendererMode = NewMode;
+	}
+
+	FORCEINLINE void SetNextRenderMode()
+	{
+		if (RendererMode != ELFPVoxelRendererMode::LFP_Render)
+		{
+			UpdateMode(ELFPVoxelRendererMode::LFP_Mesh);
+		}
+		else
+		{
+			NextRendererMode = ELFPVoxelRendererMode::LFP_Mesh;
+		}
+
+		ResetTickCounter();
+	}
+
+	FORCEINLINE void UpdateNextRenderMode(const bool bLumenDirty)
+	{
+		UpdateMode(bLumenDirty ? ELFPVoxelRendererMode::LFP_Lumen : NextRendererMode);
+
+		NextRendererMode = ELFPVoxelRendererMode::LFP_None;
+
+		if (bLumenDirty) ResetLumenCounter();
+	}
+
+	FORCEINLINE bool HasRenderDirty() const
+	{
+		return bIsVoxelAttributeDirty || RendererMode != ELFPVoxelRendererMode::LFP_None;
+	}
+
+	FORCEINLINE bool CanUpdateAttribute() const
+	{
+		return bIsVoxelAttributeDirty;
+	}
+
+	FORCEINLINE bool DecreaseTickCounter()
+	{
+		if (TickCounter > 0) TickCounter--;
+
+		return TickCounter == 0;
+	}
+
+private:
+
+	FORCEINLINE void ResetTickCounter()
+	{
+		if (TickCounter < CurrentTickAmount * MeshUpdateDelay && TickCounter != 0) return;
+
+		TickCounter = CurrentTickAmount * MeshUpdateDelay;
+	}
+
+	FORCEINLINE void ResetLumenCounter()
+	{
+		if (TickCounter < CurrentLumenAmount * LumenUpdateDelay && TickCounter != 0) return;
+
+		TickCounter = CurrentLumenAmount * LumenUpdateDelay;
 	}
 };
 

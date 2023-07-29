@@ -664,7 +664,7 @@ public: /** Chuck Request */
 
 	/** Release chuck info on chuck destroy */
 	UFUNCTION() 
-		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UObject* RemoveObject);
+		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UActorComponent* RemoveObject);
 
 protected: /** Function for updating chuck and data */
 

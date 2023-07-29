@@ -375,7 +375,7 @@ FLFPGridChuckDelegate& ULFPGridContainerComponent::AddRenderChuck(const int32 Re
 	return ChuckDelegateList.Add(ChuckPos, FLFPGridChuckDelegate());
 }
 
-void ULFPGridContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UObject* RemoveObject)
+void ULFPGridContainerComponent::RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UActorComponent* RemoveObject)
 {
 	FIntPoint ChuckPos(RegionIndex, ChuckIndex);
 
