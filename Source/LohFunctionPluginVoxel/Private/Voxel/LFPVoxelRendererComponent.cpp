@@ -1267,7 +1267,7 @@ int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPGridPaletteDat
 
 FPrimitiveSceneProxy* ULFPVoxelRendererComponent::CreateSceneProxy()
 {
-	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0 ? new FLFPVoxelRendererSceneProxy(this) : nullptr;
+	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0 ? new FLFPVoxelRendererSceneProxy(this, ThreadResult->DistanceFieldMeshData.IsValid() == false && GenerationSetting.bGenerateLumenData) : nullptr;
 }
 
 FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalToWorld) const

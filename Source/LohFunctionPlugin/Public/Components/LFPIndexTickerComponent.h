@@ -15,11 +15,14 @@ struct FLFPIndexTickData
 
 public:
 
-	FLFPIndexTickData() : Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const FName NewTickName) : TickName(NewTickName), Interval(INDEX_NONE) {}
-	FLFPIndexTickData(const FName NewTickName, const TSubclassOf<ULFPTickerObject> NewTicker, const int32 NewMaxInterval, const int32 NewTickOffset, const int32 NewAmount) : TickName(NewTickName), Ticker(NewTicker), MaxInterval(NewMaxInterval), Interval(NewMaxInterval + NewTickOffset), Amount(NewAmount) {}
+	FLFPIndexTickData() {}
+	FLFPIndexTickData(const int32 NewTickIndex, const FName NewTickName) : TickIndex(NewTickIndex), TickName(NewTickName) {}
+	FLFPIndexTickData(const int32 NewTickIndex, const FName NewTickName, const TSubclassOf<ULFPTickerObject> NewTicker, const int32 NewDelay) : TickIndex(NewTickIndex), TickName(NewTickName), Ticker(NewTicker), Delay(NewDelay) {}
 
 public:
+
+	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
+		int32 TickIndex = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		FName TickName = FName();
@@ -27,22 +30,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
 		TSubclassOf<ULFPTickerObject> Ticker = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
-		int32 MaxInterval = INDEX_NONE;
-
 	UPROPERTY(BlueprintReadOnly, SaveGame, Category = "LFPIndexTickData")
-		int32 Interval = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickData")
-		int32 Amount = INDEX_NONE;
+		int32 Delay = INDEX_NONE;
 
 public:
 
-	FORCEINLINE bool TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
+	FORCEINLINE bool TryStartTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnBegin(TickGroup, Index, TickName, Caller);
+			Ticker.GetDefaultObject()->OnBegin(TickGroup, TickIndex, TickName, Caller);
 
 			return true;
 		}
@@ -50,11 +47,11 @@ public:
 		return false;
 	}
 
-	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
+	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnExecute(TickGroup, Index, TickName, Caller);
+			Ticker.GetDefaultObject()->OnExecute(TickGroup, TickIndex, TickName, Caller);
 
 			return true;
 		}
@@ -62,43 +59,38 @@ public:
 		return false;
 	}
 
-	FORCEINLINE bool TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, const int32 Index) const
+	FORCEINLINE bool TryEndTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnEnd(TickGroup, Index, TickName, Caller);
+			Ticker.GetDefaultObject()->OnEnd(TickGroup, TickIndex, TickName, Caller);
 
 			return true;
 		}
 
 		return false;
+	}
+
+	FORCEINLINE bool CanRemove(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	{
+		return IsValid(Ticker) ? Ticker.GetDefaultObject()->CanEnd(TickGroup, TickIndex, TickName, Caller) : true;
+	}
+
+	FORCEINLINE bool IsDataValid() const
+	{
+		return TickIndex >= 0 && TickName.IsNone() == false;
 	}
 
 	FORCEINLINE bool CanTick() const
 	{
-		return Interval <= 0;
+		return Delay <= 0;
 	}
 
-	FORCEINLINE bool CanRemove() const
+	FORCEINLINE bool DecreaseDelay()
 	{
-		return CanTick() && Amount == 0;
-	}
+		if (Delay > 0) Delay -= 1;
 
-	FORCEINLINE int32 DecreaseInterval()
-	{
-		if (Interval > -1) Interval -= 1;
-
-		if (Interval < 0 && Amount > 0)
-		{
-			Interval = MaxInterval;
-		}
-
-		if (CanTick() && Amount > 0)
-		{
-			Amount -= 1;
-		}
-
-		return Interval;
+		return Delay <= 0;
 	}
 };
 
@@ -113,67 +105,44 @@ struct FLFPIndexTickGroupData
 public:
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickGroupData")
-		TMap<int32, FLFPIndexTickData> MemberList = TMap<int32, FLFPIndexTickData>();
+		TArray<FLFPIndexTickData> RandomTickList = TArray<FLFPIndexTickData>();
 
-protected:
-
-	UPROPERTY(SaveGame)
-		int32 LastTickIndex = 0;
+	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickGroupData")
+		TArray<FLFPIndexTickData> ScheduledTickList = TArray<FLFPIndexTickData>();
 
 public:
 
-	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller, const uint8 TickerRunCounter)
+	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller, const int32 RandomTickCount)
 	{
-		uint8 CurrentTickerCounter = FMath::Max(TickerRunCounter, uint8(1));
-
-		TArray<int32> RemoveIndexList;
-
-		int32 CurrentIndex = -1;
-
-		if (MemberList.Num() <= LastTickIndex)
+		auto TickFunction = [&](FLFPIndexTickData& Data)
 		{
-			LastTickIndex = 0;
-		}
-
-		for (auto& Member : MemberList)
-		{
-			CurrentIndex++;
-
-			if (CurrentIndex < LastTickIndex)
+			if (Data.DecreaseDelay())
 			{
-				continue;
-			}
-
-			Member.Value.DecreaseInterval();
-
-			if (Member.Value.CanTick() && CurrentTickerCounter > 0)
-			{
-				if (Member.Value.TryRunTicker(GroupIndex, Caller, Member.Key) == false)
+				if (Data.TryRunTicker(GroupIndex, Caller) == false)
 				{
-					TickDelegator.Broadcast(Member.Key, Member.Value.TickName, GroupIndex);
+					TickDelegator.Broadcast(Data.TickIndex, Data.TickName, GroupIndex);
 				}
 
-				CurrentTickerCounter--;
-
-				if (Member.Value.CanRemove())
-				{
-					RemoveDelegator.Broadcast(Member.Key, Member.Value.TickName, GroupIndex);
-
-					RemoveIndexList.Add(Member.Key);
-				}
+				return Data.CanRemove(GroupIndex, Caller);
 			}
 
-			if (CurrentTickerCounter == 0)
-			{
-				LastTickIndex = CurrentIndex;
+			return false;
+		};
 
-				break;
-			}
-		}
+		ScheduledTickList.RemoveAllSwap(TickFunction);
 
-		for (const int32 RemoveIndex : RemoveIndexList)
+		const int32 CacheTickCount = FMath::Min(RandomTickList.Num(), RandomTickCount);
+
+		for (int32 Index = 0; Index < CacheTickCount; Index++)
 		{
-			MemberList.Remove(RemoveIndex);
+			if (RandomTickList.IsEmpty()) break;
+
+			const int32 TickTarget = FMath::RandHelper(RandomTickList.Num() - 1);
+
+			if (TickFunction(RandomTickList[TickTarget]))
+			{
+				RandomTickList.RemoveAtSwap(TickTarget);
+			}
 		}
 
 		return;
@@ -181,7 +150,7 @@ public:
 
 	FORCEINLINE bool CanRemove() const
 	{
-		return MemberList.Num() <= 0;
+		return RandomTickList.Num() <= 0 && ScheduledTickList.Num() <= 0;
 	}
 };
 
@@ -208,10 +177,7 @@ public:
 		virtual bool CallTick();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
-		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex);
-
-	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
-		FORCEINLINE bool RemoveTickIndex(const int32 TickIndex, const FIntPoint GroupIndex);
+		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const bool bIsRandomTick, const FIntPoint GroupIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Group")
 		FORCEINLINE void LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList);
@@ -236,16 +202,13 @@ public: /** Delegate */
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
 		FLFPOnIndex OnIndexAdded;
 
-	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
-		FLFPOnIndex OnIndexUpdated;
-
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
 		bool bAllowAutoTick = true;
 
-	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPGridTickerComponent ")
-		uint8 MaxTickerRunPerGroup = uint8(255);
+	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
+		int32 RandomTickCount = 256;
 
 private:
 

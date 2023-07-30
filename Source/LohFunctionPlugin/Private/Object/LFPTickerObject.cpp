@@ -12,6 +12,11 @@ void ULFPTickerObject::OnExecute_Implementation(const FIntPoint& TickGroup, cons
 {
 }
 
+bool ULFPTickerObject::CanEnd_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller)
+{
+	return true;
+}
+
 void ULFPTickerObject::OnEnd_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller)
 {
 }

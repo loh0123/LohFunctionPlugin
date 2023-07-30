@@ -63,7 +63,7 @@ void ULFPGridTickerComponent::SetupContainer(ULFPGridContainerComponent* NewGrid
 	}
 }
 
-bool ULFPGridTickerComponent::CanGridIndexTick_Implementation(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& TickName, const FLFPGridPaletteData& PaletteData, ULFPIndexTickerComponent* Caller)
+bool ULFPGridTickerComponent::CanGridIndexTick_Implementation(const int32 RegionIndex, const int32 ChuckIndex, const FLFPIndexTickData& TickData, const FLFPGridPaletteData& PaletteData, ULFPIndexTickerComponent* Caller)
 {
 	return true;
 }
@@ -76,13 +76,13 @@ void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32
 	{
 		const auto& GridPalette = GridContainer->GetGridPalette(RegionIndex, ChuckIndex, GridData.Key);
 
-		RemoveTickIndex(GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
-
 		const auto TickerStruct = reinterpret_cast<FLFPGridTickerTable*>(TickerTable->FindRowUnchecked(GridPalette.Name));
 
-		if (TickerStruct != nullptr && IsValid(TickerStruct->Ticker) && CanGridIndexTick(RegionIndex, ChuckIndex, GridData.Key, GridPalette.Name, GridPalette, this))
+		const FLFPIndexTickData NewTickData = FLFPIndexTickData(GridData.Key, GridPalette.Name, TickerStruct->Ticker, TickerStruct->TickDelay + FMath::RandHelper(TickerStruct->TickRandomOffset));
+
+		if (TickerStruct != nullptr && IsValid(TickerStruct->Ticker) && CanGridIndexTick(RegionIndex, ChuckIndex, NewTickData, GridPalette, this))
 		{
-			AddTickIndex(FLFPIndexTickData(GridPalette.Name, TickerStruct->Ticker, TickerStruct->TickMaxIteration, FMath::RandHelper(TickerStruct->TickOffset), TickerStruct->TickAmount), GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
+			AddTickIndex(NewTickData, TickerStruct->bIsRandom, FIntPoint(RegionIndex, ChuckIndex));
 		}
 	}
 }

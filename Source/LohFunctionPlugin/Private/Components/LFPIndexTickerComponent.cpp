@@ -38,7 +38,7 @@ bool ULFPIndexTickerComponent::CallTick()
 
 	for (auto& CurrentGroupData : TickList)
 	{
-		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this, MaxTickerRunPerGroup);
+		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this, RandomTickCount);
 
 		if (CurrentGroupData.Value.CanRemove()) RemoveIndexList.Add(CurrentGroupData.Key);
 	}
@@ -53,11 +53,11 @@ bool ULFPIndexTickerComponent::CallTick()
 	return TickList.IsEmpty() == false;
 }
 
-void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
+void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const bool bIsRandomTick, const FIntPoint GroupIndex)
 {
-	if (TickData.Amount == 0)
+	if (TickData.IsDataValid() == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s : TickData Amount Can't Be Zero"), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("LFPIndexTickerComponent : AddTickIndex TickData Invalid"));
 
 		return;
 	}
@@ -68,37 +68,18 @@ void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, c
 
 	if (HasGroup == false) OnGroupAdded.Broadcast(GroupIndex);
 
-	if (GroupData.MemberList.Contains(TickIndex))
+	if (bIsRandomTick)
 	{
-		GroupData.MemberList.FindChecked(TickIndex) = TickData;
-
-		OnIndexUpdated.Broadcast(TickIndex, TickData.TickName, GroupIndex);
+		GroupData.RandomTickList.Add(TickData);
 	}
 	else
 	{
-		GroupData.MemberList.Add(TickIndex, TickData);
+		GroupData.ScheduledTickList.Add(TickData);
 
-		OnIndexAdded.Broadcast(TickIndex, TickData.TickName, GroupIndex);
-
-		TickData.TryStartTicker(GroupIndex, this, TickIndex);
+		TickData.TryStartTicker(GroupIndex, this);
 	}
 
 	if (bAllowAutoTick) SetComponentTickEnabled(true);
-}
-
-bool ULFPIndexTickerComponent::RemoveTickIndex(const int32 TickIndex, const FIntPoint GroupIndex)
-{
-	auto GroupData = TickList.Find(GroupIndex);
-
-	if (GroupData == nullptr || GroupData->MemberList.Contains(TickIndex) == false) return false;
-
-	auto& Member = GroupData->MemberList.FindChecked(TickIndex);
-
-	Member.TryEndTicker(GroupIndex, this, TickIndex);
-
-	GroupData->MemberList.Remove(TickIndex);
-
-	return true;
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)

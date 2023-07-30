@@ -159,11 +159,12 @@ public:
 class FLFPVoxelRendererSceneProxy : public FPrimitiveSceneProxy
 {
 public:
-	FLFPVoxelRendererSceneProxy(ULFPVoxelRendererComponent* Component) : FPrimitiveSceneProxy(Component),
+	FLFPVoxelRendererSceneProxy(ULFPVoxelRendererComponent* Component, bool IsDynamic) : FPrimitiveSceneProxy(Component),
 		VoxelComponent(Component),
 		RenderData(Component->GetThreadResult()),
 		CollisionBody(Component->GetBodySetup()),
-		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel()))
+		MaterialRelevance(Component->GetMaterialRelevance(GetScene().GetFeatureLevel())),
+		bForceDynamic(IsDynamic)
 	{
 		//const double StartTime = FPlatformTime::Seconds();
 
@@ -297,9 +298,7 @@ public:
 		{
 			const FSceneView* View = Views[ViewIndex];
 
-			bool bNeedDynamicPath = IsRichView(*Views[ViewIndex]->Family) || Views[ViewIndex]->Family->EngineShowFlags.Wireframe || IsSelected();
-
-			if (bNeedDynamicPath && IsShown(View) && (VisibilityMap & (1 << ViewIndex)))
+			if (IsShown(View) && (VisibilityMap & (1 << ViewIndex)))
 			{
 				FFrozenSceneViewMatricesGuard FrozenMatricesGuard(*const_cast<FSceneView*>(Views[ViewIndex]));
 
@@ -435,7 +434,7 @@ public:
 	{
 		FPrimitiveViewRelevance Result;
 
-		if (IsRichView(*View->Family) || IsSelected() || View->Family->EngineShowFlags.Wireframe)
+		if (IsRichView(*View->Family) || IsSelected() || View->Family->EngineShowFlags.Wireframe || bForceDynamic)
 		{
 			Result.bDynamicRelevance = true;
 		}
@@ -488,5 +487,7 @@ protected:
 	TObjectPtr<UBodySetup> CollisionBody = nullptr;
 
 	FMaterialRelevance MaterialRelevance;
+
+	const bool bForceDynamic;
 };
 
