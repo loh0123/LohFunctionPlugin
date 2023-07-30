@@ -364,11 +364,11 @@ public:
 
 	FKAggregateGeom CollisionData = FKAggregateGeom();
 
-	bool bGenerateComplexCollisionData = true;
-
 	TSharedPtr<class FDistanceFieldVolumeData> DistanceFieldMeshData = nullptr;
 
 	TSharedPtr<class FCardRepresentationData> LumenCardData = nullptr;
+
+	bool bIsDynamic = true;
 
 public:
 

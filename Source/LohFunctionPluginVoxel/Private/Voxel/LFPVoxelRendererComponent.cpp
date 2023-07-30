@@ -112,14 +112,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		}
 
 		/** Fast Path */
-		if (Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic)
-		{
-			CurrentSetting.bGenerateLumenData = false;
-			CurrentSetting.bGenerateComplexCollisionData = false;
-		}
+		const bool bIsDynamicPath = Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic;
 
 		ThreadOutput =
-			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
+			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, bIsDynamicPath]
 				{
 					TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
@@ -130,9 +126,9 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
 
 					if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
-					if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
+					if (CurrentSetting.bGenerateLumenData && bIsDynamicPath == false) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
 
-					TargetThreadResult->bGenerateComplexCollisionData = CurrentSetting.bGenerateComplexCollisionData;
+					TargetThreadResult->bIsDynamic = bIsDynamicPath;
 
 					return TargetThreadResult;
 				}, ETaskPriority::High, EExtendedTaskPriority::Inline);
@@ -1276,7 +1272,7 @@ int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPGridPaletteDat
 
 FPrimitiveSceneProxy* ULFPVoxelRendererComponent::CreateSceneProxy()
 {
-	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0 ? new FLFPVoxelRendererSceneProxy(this, ThreadResult->DistanceFieldMeshData.IsValid() == false && GenerationSetting.bGenerateLumenData) : nullptr;
+	return ThreadResult.IsValid() && ThreadResult->SectionData.Num() > 0 ? new FLFPVoxelRendererSceneProxy(this, ThreadResult->bIsDynamic) : nullptr;
 }
 
 FBoxSphereBounds ULFPVoxelRendererComponent::CalcBounds(const FTransform& LocalToWorld) const
@@ -1349,7 +1345,7 @@ bool ULFPVoxelRendererComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPVoxelRendererComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	if (ThreadResult.IsValid() == false || ThreadResult->bGenerateComplexCollisionData == false) return false;
+	if (ThreadResult.IsValid() == false || ThreadResult->bIsDynamic == false) return false;
 
 	for (const auto& Section : ThreadResult->SectionData)
 	{

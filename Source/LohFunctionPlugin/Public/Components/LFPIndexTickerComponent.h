@@ -47,11 +47,11 @@ public:
 		return false;
 	}
 
-	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
+	FORCEINLINE bool TryRunTicker(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller, bool& bCanRemove) const
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnExecute(TickGroup, TickIndex, TickName, Caller);
+			bCanRemove = Ticker.GetDefaultObject()->OnExecute(TickGroup, TickIndex, TickName, Caller);
 
 			return true;
 		}
@@ -69,11 +69,6 @@ public:
 		}
 
 		return false;
-	}
-
-	FORCEINLINE bool CanRemove(const FIntPoint& TickGroup, ULFPIndexTickerComponent* Caller) const
-	{
-		return IsValid(Ticker) ? Ticker.GetDefaultObject()->CanEnd(TickGroup, TickIndex, TickName, Caller) : true;
 	}
 
 	FORCEINLINE bool IsDataValid() const
@@ -118,12 +113,14 @@ public:
 		{
 			if (Data.DecreaseDelay())
 			{
-				if (Data.TryRunTicker(GroupIndex, Caller) == false)
+				bool bCanRemove = true;
+
+				if (Data.TryRunTicker(GroupIndex, Caller, bCanRemove) == false)
 				{
 					TickDelegator.Broadcast(Data.TickIndex, Data.TickName, GroupIndex);
 				}
 
-				return Data.CanRemove(GroupIndex, Caller);
+				return bCanRemove;
 			}
 
 			return false;

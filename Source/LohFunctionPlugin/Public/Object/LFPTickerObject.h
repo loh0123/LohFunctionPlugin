@@ -22,10 +22,7 @@ public:
 		void OnBegin(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
 
 	UFUNCTION(BlueprintNativeEvent)
-		void OnExecute(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
-
-	UFUNCTION(BlueprintNativeEvent)
-		bool CanEnd(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
+		bool OnExecute(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
 
 	UFUNCTION(BlueprintNativeEvent)
 		void OnEnd(const FIntPoint& TickGroup, const int32 TickIndex, const FName& TickName, ULFPIndexTickerComponent* Caller);
