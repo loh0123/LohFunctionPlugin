@@ -13,9 +13,9 @@ using namespace UE::Tasks;
 
 FLFPGridPaletteData FLFPGridPaletteData::EmptyData = FLFPGridPaletteData();
 
-uint32 FLFPVoxelRendererStatus::CurrentTickAmount = 0;
+uint32 FLFPVoxelRendererStatus::CurrentDynamicAmount = 1;
 
-uint32 FLFPVoxelRendererStatus::CurrentLumenAmount = 1;
+uint32 FLFPVoxelRendererStatus::CurrentStaticAmount = 1;
 
 DEFINE_LOG_CATEGORY(LFPVoxelRendererComponent);
 
@@ -37,8 +37,8 @@ void ULFPVoxelRendererComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Status.MeshUpdateDelay = GenerationSetting.MeshUpdateDelayPerComponent;
-	Status.LumenUpdateDelay = GenerationSetting.LumenUpdateDelayPerComponent;
+	Status.DynamicUpdateDelay = GenerationSetting.DynamicUpdateDelayPerComponent;
+	Status.StaticUpdateDelay = GenerationSetting.StaticUpdateDelayPerComponent;
 }
 
 void ULFPVoxelRendererComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -66,6 +66,11 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (IsValid(VoxelContainer) == false) return;
 
+	if (ThreadOutput.IsCompleted() == false) return;
+
+	/** Is Tick Logic Cooling Down Or Is Not Rendering */
+	if (Status.DecreaseTickCounter() == false) return;
+
 	if (Status.CanUpdateAttribute() && IsValid(AttributesTexture))
 	{
 		Status.bIsVoxelAttributeDirty = false;
@@ -77,7 +82,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 		AttributeList.SetNum(DataColorSize);
 
-		ParallelFor(DataColorSize, [&](const int32 Index) {
+		ParallelFor(TEXT("ParallelFor : Voxel Renderer Attribute Update"), DataColorSize, 4, [&](const int32 Index) {
 			const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToGridGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 			const FIntVector VoxelGridIndex = VoxelContainer->ToGridGlobalIndex(VoxelGlobalGridLocation);
 
@@ -89,37 +94,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
 	}
 
-	if (ThreadOutput.IsCompleted() == false) return;
-
-	/** Is Tick Logic Cooling Down Or Is Not Rendering */
-	if (Status.DecreaseTickCounter() == false) return;
-
-	switch (Status.RendererMode)
+	switch (Status.GetCurrentRenderMode())
 	{
-	case ELFPVoxelRendererMode::LFP_None:
-	{
-		SetComponentTickEnabled(Status.HasRenderDirty());
-	}
-	break;
-	case ELFPVoxelRendererMode::LFP_Render:
-	{
-		ThreadResult = ThreadOutput.GetResult();
-
-		check(ThreadResult.IsValid());
-
-		UpdateBounds();
-
-		MarkRenderStateDirty();
-
-		if (GenerationSetting.bGenerateCollisionData) RebuildPhysicsData();
-
-		Status.UpdateNextRenderMode(ThreadOutput.GetResult()->DistanceFieldMeshData.IsValid() == false && GenerationSetting.bGenerateLumenData);
-
-		OnVoxelRendererUpdate.Broadcast();
-	}
-	break;
-	case ELFPVoxelRendererMode::LFP_Mesh:
-	case ELFPVoxelRendererMode::LFP_Lumen:
+	case ELFPVoxelRendererMode::LFP_Dynamic:
+	case ELFPVoxelRendererMode::LFP_Static:
 	{
 		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
 		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
@@ -133,7 +111,12 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			}
 		}
 
-		CurrentSetting.bGenerateLumenData = Status.RendererMode == ELFPVoxelRendererMode::LFP_Lumen && GenerationSetting.bGenerateLumenData;
+		/** Fast Path */
+		if (Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic)
+		{
+			CurrentSetting.bGenerateLumenData = false;
+			CurrentSetting.bGenerateComplexCollisionData = false;
+		}
 
 		ThreadOutput =
 			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList]
@@ -149,10 +132,36 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 					if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
 					if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
 
+					TargetThreadResult->bGenerateComplexCollisionData = CurrentSetting.bGenerateComplexCollisionData;
+
 					return TargetThreadResult;
 				}, ETaskPriority::High, EExtendedTaskPriority::Inline);
 
-		Status.UpdateMode(ELFPVoxelRendererMode::LFP_Render);
+		Status.UpdateRenderMode(ELFPVoxelRendererMode::LFP_Render);
+	}
+	break;
+	case ELFPVoxelRendererMode::LFP_Render:
+	{
+		ThreadResult = ThreadOutput.GetResult();
+
+		check(ThreadResult.IsValid());
+
+		UpdateBounds();
+
+		MarkRenderStateDirty();
+
+		if (GenerationSetting.HasCollision()) RebuildPhysicsData();
+
+		Status.UpdateNextRenderMode();
+
+		OnVoxelRendererUpdate.Broadcast();
+	}
+	break;
+	case ELFPVoxelRendererMode::LFP_None:
+	{
+		Status.UpdateNextRenderMode();
+
+		SetComponentTickEnabled(Status.HasRenderDirty());
 	}
 	break;
 	}
@@ -214,7 +223,7 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 {
 	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
-		Status.SetNextRenderMode();
+		Status.MarkRendererModeDirty(GenerationSetting.StaticUpdateDelayPerComponent != 0);
 
 		SetComponentTickEnabled(true);
 	}
@@ -853,7 +862,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 		const int32 MaxCheckDistance = FMath::CeilToInt(MinMipInfo.LocalSpaceTraceDistance * LocalToVoxelScale);
 
 		/*for (int32 Index = 0; Index  < CheckLength; Index ++)*/
-		ParallelFor(CheckLength, [&](const int32 Index) 
+		ParallelFor(TEXT("ParallelFor : Voxel Renderer Distance Field Acceleration Info"), CheckLength, 4, [&](const int32 Index)
 		{
 			//const double SubTaskTime = FPlatformTime::Seconds();
 
@@ -995,7 +1004,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 				));
 			}
 
-			ParallelFor(BrickTaskList.Num(), [&BrickTaskList](int32 TaskIndex)
+			ParallelFor(TEXT("ParallelFor : Voxel Renderer Distance Field Brick"), BrickTaskList.Num(), IndirectionDimensions.GetMax(), [&BrickTaskList](int32 TaskIndex)
 				{
 					BrickTaskList[TaskIndex].DoTask();
 				}, EParallelForFlags::Unbalanced | EParallelForFlags::BackgroundPriority);
@@ -1340,7 +1349,7 @@ bool ULFPVoxelRendererComponent::GetPhysicsTriMeshData(FTriMeshCollisionData* Co
 
 bool ULFPVoxelRendererComponent::ContainsPhysicsTriMeshData(bool InUseAllTriData) const
 {
-	if (ThreadResult.IsValid() == false) return false;
+	if (ThreadResult.IsValid() == false || ThreadResult->bGenerateComplexCollisionData == false) return false;
 
 	for (const auto& Section : ThreadResult->SectionData)
 	{

@@ -392,20 +392,16 @@ bool ULFPGridContainerComponent::UpdateChuckState()
 {
 	if (ChuckUpdateStateList.IsEmpty()) return false;
 
-	auto ChuckUpdateState = ChuckUpdateStateList.CreateIterator();
-
-	const FLFPGridChuckDelegate* ChuckDelegate = ChuckDelegateList.Find(ChuckUpdateState.Key());
-
-	if (ChuckDelegate != nullptr) ChuckDelegate->Broadcast(ChuckUpdateState.Value());
-
-	ChuckUpdateStateList.Remove(ChuckUpdateState.Key());
-
-	if (ChuckUpdateStateList.Num() == 0)
+	for (const auto& ChuckUpdateState : ChuckUpdateStateList)
 	{
-		ChuckUpdateStateList.Shrink();
+		const FLFPGridChuckDelegate* ChuckDelegate = ChuckDelegateList.Find(ChuckUpdateState.Key);
+
+		if (ChuckDelegate != nullptr) ChuckDelegate->Broadcast(ChuckUpdateState.Value);
 	}
 
-	return ChuckUpdateStateList.Num() == 0;
+	ChuckUpdateStateList.Empty();
+
+	return false;
 }
 
 bool ULFPGridContainerComponent::UpdateChuckData()

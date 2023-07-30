@@ -364,6 +364,8 @@ public:
 
 	FKAggregateGeom CollisionData = FKAggregateGeom();
 
+	bool bGenerateComplexCollisionData = true;
+
 	TSharedPtr<class FDistanceFieldVolumeData> DistanceFieldMeshData = nullptr;
 
 	TSharedPtr<class FCardRepresentationData> LumenCardData = nullptr;
@@ -406,7 +408,7 @@ public:
 		bool bDisableRegionFaceCulling = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bGenerateCollisionData = false;
+		bool bGenerateComplexCollisionData = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		bool bGenerateSimpleCollisionData = false;
@@ -422,18 +424,25 @@ public:
 		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		uint8 MeshUpdateDelayPerComponent = uint8(0);
+		uint8 DynamicUpdateDelayPerComponent = uint8(0);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		uint8 LumenUpdateDelayPerComponent = uint8(5);
+		uint8 StaticUpdateDelayPerComponent = uint8(5);
+
+public:
+
+	FORCEINLINE bool HasCollision() const
+	{
+		return bGenerateComplexCollisionData || bGenerateSimpleCollisionData;
+	}
 };
 
 UENUM(BlueprintType)
 enum class ELFPVoxelRendererMode : uint8
 {
-	LFP_Mesh		UMETA(DisplayName = "Mesh"),
+	LFP_Dynamic		UMETA(DisplayName = "Dynamic"),
+	LFP_Static		UMETA(DisplayName = "Static"),
 	LFP_Render		UMETA(DisplayName = "Render"),
-	LFP_Lumen		UMETA(DisplayName = "Lumen"),
 	LFP_None		UMETA(DisplayName = "None"),
 };
 
@@ -445,25 +454,31 @@ struct FLFPVoxelRendererStatus
 public:
 
 	FLFPVoxelRendererStatus() : 
-		RendererMode(ELFPVoxelRendererMode::LFP_None),
+		CurrentRendererMode(ELFPVoxelRendererMode::LFP_None),
 		NextRendererMode(ELFPVoxelRendererMode::LFP_None),
-		MeshUpdateDelay(0),
-		LumenUpdateDelay(0),
+		DynamicUpdateDelay(0),
+		StaticUpdateDelay(0),
 		bIsVoxelAttributeDirty(false),
 		bIsBodyInvalid(false)
 	{}
 
+protected:
+
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		ELFPVoxelRendererMode RendererMode;
+		ELFPVoxelRendererMode CurrentRendererMode;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
 		ELFPVoxelRendererMode NextRendererMode;
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
-		uint8 MeshUpdateDelay;
+public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
-		uint8 LumenUpdateDelay;
+		uint8 DynamicUpdateDelay;
+
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+		uint8 StaticUpdateDelay;
+
+public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
 		uint8 bIsVoxelAttributeDirty : 1;
@@ -473,9 +488,9 @@ public:
 
 public:
 
-	static uint32 CurrentTickAmount;
+	static uint32 CurrentDynamicAmount;
 
-	static uint32 CurrentLumenAmount;
+	static uint32 CurrentStaticAmount;
 
 public:
 
@@ -484,62 +499,69 @@ public:
 
 public:
 
-	FORCEINLINE void UpdateMode(const ELFPVoxelRendererMode NewMode)
+	FORCEINLINE ELFPVoxelRendererMode GetCurrentRenderMode() const
 	{
-		if (RendererMode == NewMode)
+		return CurrentRendererMode;
+	}
+
+public:
+
+	FORCEINLINE void MarkRendererModeDirty(const bool bIsDynamic, const bool bImmediately = true)
+	{
+		NextRendererMode = bIsDynamic ? ELFPVoxelRendererMode::LFP_Dynamic : ELFPVoxelRendererMode::LFP_Static;
+
+		if (bImmediately && CurrentRendererMode < ELFPVoxelRendererMode::LFP_Render)
+		{
+			UpdateNextRenderMode();
+		}
+	}
+
+	FORCEINLINE void UpdateNextRenderMode()
+	{
+		UpdateRenderMode(NextRendererMode);
+
+		NextRendererMode = ELFPVoxelRendererMode::LFP_None;
+	}
+
+	FORCEINLINE void UpdateRenderMode(const ELFPVoxelRendererMode NewMode)
+	{
+		if (CurrentRendererMode == NewMode)
 		{
 			return;
 		}
 
-		if (RendererMode == ELFPVoxelRendererMode::LFP_Render)
+		if (CurrentRendererMode == ELFPVoxelRendererMode::LFP_Static)
 		{
-			CurrentTickAmount--;
+			CurrentStaticAmount--;
 		}
 
-		if (RendererMode == ELFPVoxelRendererMode::LFP_Lumen)
+		if (CurrentRendererMode == ELFPVoxelRendererMode::LFP_Dynamic)
 		{
-			CurrentLumenAmount--;
+			CurrentDynamicAmount--;
+
+			MarkRendererModeDirty(false, false);
 		}
 
-		if (NewMode == ELFPVoxelRendererMode::LFP_Render)
+		if (NewMode == ELFPVoxelRendererMode::LFP_Static)
 		{
-			CurrentTickAmount++;
+			CurrentStaticAmount++;
+
+			ResetStaticCounter();
 		}
 
-		if (NewMode == ELFPVoxelRendererMode::LFP_Lumen)
+		if (NewMode == ELFPVoxelRendererMode::LFP_Dynamic)
 		{
-			CurrentLumenAmount++;
+			CurrentDynamicAmount++;
+
+			ResetDynamicCounter();
 		}
 
-		RendererMode = NewMode;
-	}
-
-	FORCEINLINE void SetNextRenderMode()
-	{
-		if (RendererMode != ELFPVoxelRendererMode::LFP_Render)
-		{
-			UpdateMode(ELFPVoxelRendererMode::LFP_Mesh);
-		}
-		else
-		{
-			NextRendererMode = ELFPVoxelRendererMode::LFP_Mesh;
-		}
-
-		ResetTickCounter();
-	}
-
-	FORCEINLINE void UpdateNextRenderMode(const bool bLumenDirty)
-	{
-		UpdateMode(bLumenDirty ? ELFPVoxelRendererMode::LFP_Lumen : NextRendererMode);
-
-		NextRendererMode = ELFPVoxelRendererMode::LFP_None;
-
-		if (bLumenDirty) ResetLumenCounter();
+		CurrentRendererMode = NewMode;
 	}
 
 	FORCEINLINE bool HasRenderDirty() const
 	{
-		return bIsVoxelAttributeDirty || RendererMode != ELFPVoxelRendererMode::LFP_None;
+		return bIsVoxelAttributeDirty || CurrentRendererMode != ELFPVoxelRendererMode::LFP_None || NextRendererMode != ELFPVoxelRendererMode::LFP_None;
 	}
 
 	FORCEINLINE bool CanUpdateAttribute() const
@@ -556,18 +578,16 @@ public:
 
 private:
 
-	FORCEINLINE void ResetTickCounter()
+	FORCEINLINE void ResetDynamicCounter()
 	{
-		if (TickCounter < CurrentTickAmount * MeshUpdateDelay && TickCounter != 0) return;
+		if (TickCounter < CurrentDynamicAmount * DynamicUpdateDelay && TickCounter != 0) return;
 
-		TickCounter = CurrentTickAmount * MeshUpdateDelay;
+		TickCounter = CurrentDynamicAmount * DynamicUpdateDelay;
 	}
 
-	FORCEINLINE void ResetLumenCounter()
+	FORCEINLINE void ResetStaticCounter()
 	{
-		if (TickCounter < CurrentLumenAmount * LumenUpdateDelay && TickCounter != 0) return;
-
-		TickCounter = CurrentLumenAmount * LumenUpdateDelay;
+		TickCounter = CurrentStaticAmount * StaticUpdateDelay;
 	}
 };
 
