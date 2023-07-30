@@ -112,7 +112,7 @@ public:
 
 public:
 
-	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller, const int32 RandomTickCount)
+	FORCEINLINE void Tick(const FLFPOnIndex& TickDelegator, const FLFPOnIndex& RemoveDelegator, const FIntPoint GroupIndex, ULFPIndexTickerComponent* Caller, const int32 RandomTickCount, const bool bRandomTick, const bool bScheduledTick)
 	{
 		auto TickFunction = [&](FLFPIndexTickData& Data)
 		{
@@ -129,19 +129,22 @@ public:
 			return false;
 		};
 
-		ScheduledTickList.RemoveAllSwap(TickFunction);
+		if (bScheduledTick) ScheduledTickList.RemoveAllSwap(TickFunction);
 
-		const int32 CacheTickCount = FMath::Min(RandomTickList.Num(), RandomTickCount);
-
-		for (int32 Index = 0; Index < CacheTickCount; Index++)
+		if (bRandomTick)
 		{
-			if (RandomTickList.IsEmpty()) break;
+			const int32 CacheTickCount = FMath::Min(RandomTickList.Num(), RandomTickCount);
 
-			const int32 TickTarget = FMath::RandHelper(RandomTickList.Num() - 1);
-
-			if (TickFunction(RandomTickList[TickTarget]))
+			for (int32 Index = 0; Index < CacheTickCount; Index++)
 			{
-				RandomTickList.RemoveAtSwap(TickTarget);
+				if (RandomTickList.IsEmpty()) break;
+
+				const int32 TickTarget = FMath::RandHelper(RandomTickList.Num() - 1);
+
+				if (TickFunction(RandomTickList[TickTarget]))
+				{
+					RandomTickList.RemoveAtSwap(TickTarget);
+				}
 			}
 		}
 
@@ -174,7 +177,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
-		virtual bool CallTick();
+		FORCEINLINE bool CallTick(const bool bRandomTick = true, const bool bScheduledTick = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
 		FORCEINLINE void AddTickIndex(const FLFPIndexTickData& TickData, const bool bIsRandomTick, const FIntPoint GroupIndex);
@@ -205,7 +208,10 @@ public: /** Delegate */
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
-		bool bAllowAutoTick = true;
+		bool bAllowAutoRandomTick = true;
+
+	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
+		bool bAllowAutoScheduledTick = true;
 
 	UPROPERTY(BlueprintReadOnly, EditAnyWhere, Category = "LFPIndexTickerComponent ")
 		int32 RandomTickCount = 256;

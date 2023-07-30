@@ -29,16 +29,19 @@ void ULFPIndexTickerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (CallTick() == false && bAllowAutoTick) SetComponentTickEnabled(false);
+	if (bAllowAutoRandomTick || bAllowAutoScheduledTick)
+	{
+		if (CallTick(bAllowAutoRandomTick, bAllowAutoScheduledTick) == false) SetComponentTickEnabled(false);
+	}
 }
 
-bool ULFPIndexTickerComponent::CallTick()
+bool ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bScheduledTick)
 {
 	TArray<FIntPoint> RemoveIndexList;
 
 	for (auto& CurrentGroupData : TickList)
 	{
-		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this, RandomTickCount);
+		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this, RandomTickCount, bRandomTick, bScheduledTick);
 
 		if (CurrentGroupData.Value.CanRemove()) RemoveIndexList.Add(CurrentGroupData.Key);
 	}
@@ -79,7 +82,7 @@ void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, c
 		TickData.TryStartTicker(GroupIndex, this);
 	}
 
-	if (bAllowAutoTick) SetComponentTickEnabled(true);
+	if (bAllowAutoRandomTick || bAllowAutoScheduledTick) SetComponentTickEnabled(true);
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
