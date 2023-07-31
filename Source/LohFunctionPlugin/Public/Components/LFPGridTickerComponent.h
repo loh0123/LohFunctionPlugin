@@ -21,7 +21,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") int32 TickRandomOffset = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") bool bIsRandom = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") bool bIsRandomOnly = true;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -43,15 +43,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual ULFPTickerObject* GetRandomTicker(const FIntPoint GroupIndex, const int32 TickIndex) const override;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridTickerComponent | Function")
 		FORCEINLINE void SetupContainer(ULFPGridContainerComponent* NewGridContainer);
 
 protected:
-
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPGridTickerComponent | Event")
-		bool CanGridIndexTick(const int32 RegionIndex, const int32 ChuckIndex, const FLFPIndexTickData& TickData, const FLFPGridPaletteData& PaletteData, ULFPIndexTickerComponent* Caller);
 
 	UFUNCTION()
 		FORCEINLINE void OnUpdateChuck(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridUpdateAction& GridUpdateAction);

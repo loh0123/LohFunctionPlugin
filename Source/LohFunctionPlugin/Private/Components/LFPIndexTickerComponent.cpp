@@ -9,7 +9,7 @@ ULFPIndexTickerComponent::ULFPIndexTickerComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
 	// ...
 }
 
@@ -31,58 +31,99 @@ void ULFPIndexTickerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 	if (bAllowAutoRandomTick || bAllowAutoScheduledTick)
 	{
-		if (CallTick(bAllowAutoRandomTick, bAllowAutoScheduledTick) == false) SetComponentTickEnabled(false);
+		CallTick(bAllowAutoRandomTick, bAllowAutoScheduledTick);
 	}
 }
 
-bool ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bScheduledTick)
+void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bScheduledTick)
 {
-	TArray<FIntPoint> RemoveIndexList;
-
 	for (auto& CurrentGroupData : TickList)
 	{
-		CurrentGroupData.Value.Tick(OnTick, OnIndexRemove, CurrentGroupData.Key, this, RandomTickCount, bRandomTick, bScheduledTick);
+		if (bRandomTick)
+		{
+			for (int32 TickCount = 0; TickCount < RandomTickCount; TickCount++)
+			{
+				const int32 RandomTickIndex = GetCacheRandomTickIndex(CurrentGroupData.Value);
 
-		if (CurrentGroupData.Value.CanRemove()) RemoveIndexList.Add(CurrentGroupData.Key);
+				if (RandomTickIndex == INDEX_NONE)
+				{
+					break;
+				}
+
+				const ULFPTickerObject* RandomTicker = GetRandomTicker(CurrentGroupData.Key, RandomTickIndex);
+
+				if (IsValid(RandomTicker))
+				{
+					RandomTicker->OnRandomExecute(CurrentGroupData.Key, RandomTickIndex, this);
+				}
+			}
+		}
+
+		if (bScheduledTick)
+		{
+			TArray<int32> RemoveTickIndexList;
+
+			for (auto& TickData : CurrentGroupData.Value.ScheduledTickList)
+			{
+				if (TickData.Value.DecreaseDelay())
+				{
+					bool bCanRemove = true;
+
+					if (TickData.Value.TryRunTicker(CurrentGroupData.Key, this, bCanRemove, TickData.Key) == false)
+					{
+						OnTick.Broadcast(TickData.Key, CurrentGroupData.Key);
+					}
+
+					if (bCanRemove)
+					{
+						RemoveTickIndexList.Add(TickData.Key);
+					}
+				}
+			}
+
+			for (const int32 TickIndex : RemoveTickIndexList)
+			{
+				CurrentGroupData.Value.ScheduledTickList.Remove(TickIndex);
+			}
+		}
 	}
 
-	for (auto& RemoveIndex : RemoveIndexList)
-	{
-		OnGroupRemove.Broadcast(RemoveIndex);
-
-		TickList.Remove(RemoveIndex);
-	}
-
-	return TickList.IsEmpty() == false;
+	return;
 }
 
-void ULFPIndexTickerComponent::AddTickIndex(const FLFPIndexTickData& TickData, const bool bIsRandomTick, const FIntPoint GroupIndex)
+void ULFPIndexTickerComponent::AddRandomTickGroup(const FIntPoint GroupIndex)
 {
-	if (TickData.IsDataValid() == false)
+	if (TickList.Contains(GroupIndex) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("LFPIndexTickerComponent : AddTickIndex TickData Invalid"));
+		auto& GroupData = TickList.Add(GroupIndex);
+
+		GroupData.RandomTickIndex += GroupIndex.Y;
+	}
+}
+
+void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
+{
+	if (TickIndex < 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LFPIndexTickerComponent : AddTickIndex TickIndex Invalid"));
 
 		return;
 	}
 
-	const bool HasGroup = TickList.Contains(GroupIndex);
-
-	auto& GroupData = TickList.FindOrAdd(GroupIndex);
-
-	if (HasGroup == false) OnGroupAdded.Broadcast(GroupIndex);
-
-	if (bIsRandomTick)
+	if (TickList.Contains(GroupIndex) == false)
 	{
-		GroupData.RandomTickList.Add(TickData);
+		auto& GroupData = TickList.Add(GroupIndex);
+
+		GroupData.RandomTickIndex += GroupIndex.Y;
+
+		GroupData.ScheduledTickList.Add(TickIndex, TickData);
 	}
 	else
 	{
-		GroupData.ScheduledTickList.Add(TickData);
+		auto& GroupData = TickList.FindChecked(GroupIndex);
 
-		TickData.TryStartTicker(GroupIndex, this);
+		GroupData.ScheduledTickList.Add(TickIndex, TickData);
 	}
-
-	if (bAllowAutoRandomTick || bAllowAutoScheduledTick) SetComponentTickEnabled(true);
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
@@ -97,13 +138,17 @@ void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTick
 	return;
 }
 
-void ULFPIndexTickerComponent::SaveGroupList(TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
+void ULFPIndexTickerComponent::SaveGroupList(TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList, const bool bUnload)
 {
+	TArray<FIntPoint> RemoveIndexList;
+
 	for (const FIntPoint& GroupIndex : GroupIndexList)
 	{
 		if (TickList.Contains(GroupIndex))
 		{
-			SaveVariable.Add(GroupIndex, SaveVariable.FindChecked(GroupIndex));
+			SaveVariable.Add(GroupIndex, TickList.FindChecked(GroupIndex));
+
+			if (bUnload) RemoveIndexList.Add(GroupIndex);
 		}
 		else
 		{
@@ -111,6 +156,43 @@ void ULFPIndexTickerComponent::SaveGroupList(TMap<FIntPoint, FLFPIndexTickGroupD
 		}
 	}
 
+	for (const FIntPoint& RemoveGroup : RemoveIndexList)
+	{
+		TickList.Remove(RemoveGroup);
+	}
+
 	return;
+}
+
+int32 ULFPIndexTickerComponent::GetCacheRandomTickIndex(FLFPIndexTickGroupData& Data)
+{
+	if (RandomTickMaxIndex <= 0)
+	{
+		return INDEX_NONE;
+	}
+
+	if (CacheRandomTickList.IsEmpty())
+	{
+		CacheRandomTickList.SetNum(RandomTickMaxIndex);
+
+		for (int32 Index = 0; Index < RandomTickMaxIndex; Index++)
+		{
+			CacheRandomTickList[Index] = Index;
+		}
+
+		FRandomStream RandomSeed = FRandomStream(RandomTickSeed);
+
+		for (int32 Index = 0; Index < RandomTickMaxIndex; Index++)
+		{
+			CacheRandomTickList.Swap(Index, RandomSeed.RandHelper(RandomTickMaxIndex - 1));
+		}
+	}
+
+	if (CacheRandomTickList.IsValidIndex(Data.RandomTickIndex) == false)
+	{
+		Data.RandomTickIndex = 0;
+	}
+	
+	return CacheRandomTickList[Data.RandomTickIndex++];
 }
 
