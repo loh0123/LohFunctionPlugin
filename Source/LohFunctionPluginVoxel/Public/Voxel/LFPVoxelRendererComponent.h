@@ -622,7 +622,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
-		FORCEINLINE bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPGridContainerComponent* NewVoxelContainer);
+		FORCEINLINE bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPGridContainerComponent* NewVoxelContainer, TArray<UMaterialInstanceDynamic*>& OutDynamicMaterial);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
 		FORCEINLINE bool ReleaseRenderer();
@@ -655,30 +655,22 @@ public: /** Delegate */
 
 public: // Blueprint Expose Function
 
-	/* This Create A List Of Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
+	/* This Create A List Of Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelAttributesTexture) */
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
 
 public: // override Handler
 
-	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
-
 	virtual UMaterialInterface* GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const override;
 
 	virtual int32 GetNumMaterials() const override;
 
-	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
-
 	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
 
-	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
-	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName = NAME_None) override;
+	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelAttributesTexture) */
+	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial = nullptr, FName OptionalName = NAME_None) override;
 
-	FORCEINLINE void UpdateMaterialTexture();
-
-private: // Variable
-
-	UPROPERTY() TArray<TObjectPtr<UMaterialInterface>> MaterialList;
+	FORCEINLINE TArray<UMaterialInstanceDynamic*> UpdateMaterialTexture();
 
 /**********************/
 

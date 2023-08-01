@@ -39,19 +39,19 @@ public:
 
 	/** Holds the main socket description. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString ServerDescription;
+		FString ServerDescription = FString("");
 
 	/** Holds the connected socket description. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString ClientDescription;
+		FString ClientDescription = FString("");
 
 	/** Holds the server / client IP. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		FString IP;
+		FString IP = FString("");
 
 	/** Holds the server / client port. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		int32 Port;
+		int32 Port = 0;
 
 	/** How much time before trying to reconnect. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
@@ -63,7 +63,7 @@ public:
 
 	/** Holds a flag indicating if the bound address can be used by other sockets. */
 	UPROPERTY(BlueprintReadWrite, Category = "LFPTCPSocketSetting")
-		bool bSocketReusable;
+		bool bSocketReusable = true;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPTCPSocketEvent, const int32, SocketID, const int32, ClientID);

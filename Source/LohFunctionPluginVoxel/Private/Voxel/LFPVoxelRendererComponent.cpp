@@ -103,11 +103,11 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
 		TArray<bool> MaterialLumenSupportList;
 		{
-			MaterialLumenSupportList.Init(true, MaterialList.Num());
+			MaterialLumenSupportList.Init(true, GetNumMaterials());
 
-			for (int32 Index = 0; Index < MaterialList.Num(); Index++)
+			for (int32 Index = 0; Index < MaterialLumenSupportList.Num(); Index++)
 			{
-				if (IsValid(MaterialList[Index])) MaterialLumenSupportList[Index] = MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && MaterialList[Index]->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
+				if (IsValid(GetMaterial(Index))) MaterialLumenSupportList[Index] = GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
 			}
 		}
 
@@ -163,7 +163,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
-bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPGridContainerComponent* NewVoxelContainer)
+bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, const int32 NewChuckIndex, ULFPGridContainerComponent* NewVoxelContainer, TArray<UMaterialInstanceDynamic*>& OutDynamicMaterial)
 {
 	if (IsValid(NewVoxelContainer) == false) return false;
 
@@ -188,7 +188,7 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 
 		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
 
-		UpdateMaterialTexture();
+		OutDynamicMaterial = UpdateMaterialTexture();
 	}
 
 	return true;
@@ -217,29 +217,35 @@ bool ULFPVoxelRendererComponent::ReleaseRenderer()
 
 void ULFPVoxelRendererComponent::UpdateMesh()
 {
-	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
+	if (IsValid(VoxelContainer) == false)
+	{
+		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Mesh Can't Be Update Because Voxel Container Is Not Valid"));
+
+		return;
+	}
+
+	if (VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
 		Status.MarkRendererModeDirty(GenerationSetting.StaticUpdateDelayPerComponent != 0);
 
 		SetComponentTickEnabled(true);
 	}
-	else
-	{
-		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Mesh Can't Be Update Because Voxel Container Is Not Valid"));
-	}
 }
 
 void ULFPVoxelRendererComponent::UpdateAttribute()
 {
-	if (IsValid(VoxelContainer) && VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
+	if (IsValid(VoxelContainer) == false)
+	{
+		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
+
+		return;
+	}
+
+	if (VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
 		Status.bIsVoxelAttributeDirty = true;
 
 		SetComponentTickEnabled(true);
-	}
-	else
-	{
-		UE_LOG(LFPVoxelRendererComponent, Warning, TEXT("Voxel Color Can't Be Update Because Voxel Container Is Not Valid"));
 	}
 }
 
@@ -276,11 +282,6 @@ void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface
 	}
 }
 
-void ULFPVoxelRendererComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
-{
-	OutMaterials.Append(MaterialList);
-}
-
 UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceIndex(int32 FaceIndex, int32& SectionIndex) const
 {
 	UMaterialInterface* Result = nullptr;
@@ -314,24 +315,12 @@ UMaterialInterface* ULFPVoxelRendererComponent::GetMaterialFromCollisionFaceInde
 
 int32 ULFPVoxelRendererComponent::GetNumMaterials() const
 {
-	return MaterialList.Num();
-}
-
-UMaterialInterface* ULFPVoxelRendererComponent::GetMaterial(int32 ElementIndex) const
-{
-	return MaterialList.IsValidIndex(ElementIndex) ? MaterialList[ElementIndex] : nullptr;
+	return Super::GetNumOverrideMaterials();
 }
 
 void ULFPVoxelRendererComponent::SetMaterial(int32 ElementIndex, UMaterialInterface* Material)
 {
-	check(ElementIndex >= 0);
-
-	if (ElementIndex >= MaterialList.Num())
-	{
-		MaterialList.SetNum(ElementIndex + 1, false);
-	}
-
-	MaterialList[ElementIndex] = IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface);
+	Super::SetMaterial(ElementIndex, IsValid(Material) ? Material : UMaterial::GetDefaultMaterial(MD_Surface));
 
 	if (IsValid(VoxelContainer))
 	{
@@ -346,7 +335,7 @@ UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInsta
 
 	if (IsValid(MID))
 	{
-		MID->SetTextureParameterValue("AttributesTexture", AttributesTexture);
+		MID->SetTextureParameterValue("VoxelAttributesTexture", AttributesTexture);
 
 		if (IsValid(VoxelContainer)) 
 		{
@@ -358,12 +347,18 @@ UMaterialInstanceDynamic* ULFPVoxelRendererComponent::CreateDynamicMaterialInsta
 	return MID;
 }
 
-void ULFPVoxelRendererComponent::UpdateMaterialTexture()
+TArray<UMaterialInstanceDynamic*> ULFPVoxelRendererComponent::UpdateMaterialTexture()
 {
+	TArray<UMaterialInstanceDynamic*> Result;
+
+	Result.Reserve(GetNumMaterials());
+
 	for (int32 MaterialIndex = 0; MaterialIndex < GetNumMaterials(); MaterialIndex++)
 	{
-		CreateDynamicMaterialInstance(MaterialIndex, nullptr, FName());
+		Result.Add(CreateDynamicMaterialInstance(MaterialIndex));
 	}
+
+	return Result;
 }
 
 /**********************/
