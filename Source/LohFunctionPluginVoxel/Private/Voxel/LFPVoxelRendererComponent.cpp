@@ -265,9 +265,9 @@ void ULFPVoxelRendererComponent::SetMaterialList(const TArray<UMaterialInterface
 {
 	if (Material.IsEmpty() == false)
 	{
-		for (int k = 0; k < Material.Num(); ++k)
+		for (int32 Index = 0; Index < Material.Num(); Index++)
 		{
-			SetMaterial(k, Material[k]);
+			CreateDynamicMaterialInstance(Index, Material[Index]);
 		}
 	}
 	else

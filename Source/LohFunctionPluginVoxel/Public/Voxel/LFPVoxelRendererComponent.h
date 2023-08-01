@@ -655,6 +655,7 @@ public: /** Delegate */
 
 public: // Blueprint Expose Function
 
+	/* This Create A List Of Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
 
@@ -671,7 +672,7 @@ public: // override Handler
 	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
 
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelDataTexture or VoxelColorTexture) */
-	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName) override;
+	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial, FName OptionalName = NAME_None) override;
 
 	FORCEINLINE void UpdateMaterialTexture();
 
