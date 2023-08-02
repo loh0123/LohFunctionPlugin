@@ -697,7 +697,7 @@ private:
 
 protected: /** Can be override to provide custom behavir */
 
-	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette) const;
+	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const;
 
 	virtual int32 GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const;
 

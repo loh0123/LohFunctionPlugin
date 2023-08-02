@@ -28,7 +28,7 @@ void ULFPVoxelRendererTableComponent::BeginPlay()
 	}
 }
 
-FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette) const
+FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const
 {
 	if (IsValid(VoxelTypeTable) == false) return FColor(0);
 
@@ -42,15 +42,22 @@ FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteD
 	{
 		const auto VoxelAttribute = reinterpret_cast<FLFPVoxelAttributeTable*>(VoxelAttributeTable->FindRowUnchecked(VoxelPalette.TagList[TagIndex]));
 
+		FColor CurrentColor = VoxelAttribute->VoxelColor;
+
+		CurrentColor.R *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
+		CurrentColor.G *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
+		CurrentColor.B *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
+		CurrentColor.A *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
+
 		if (VoxelAttribute != nullptr)
 		{
 			switch (VoxelAttribute->Operation)
 			{
-			case ELFPVoxelAttributeOperation::Addition: VoxelColor += VoxelAttribute->VoxelColor; break;
-			case ELFPVoxelAttributeOperation::Override: VoxelColor = VoxelAttribute->VoxelColor; break;
+			case ELFPVoxelAttributeOperation::Addition: VoxelColor += CurrentColor; break;
+			case ELFPVoxelAttributeOperation::Override: VoxelColor = CurrentColor; break;
 			case ELFPVoxelAttributeOperation::Blend:
 			{
-				VoxelColor += VoxelAttribute->VoxelColor;
+				VoxelColor += CurrentColor;
 				VoxelColor.R *= 0.5f;
 				VoxelColor.G *= 0.5f;
 				VoxelColor.B *= 0.5f;
@@ -59,18 +66,18 @@ FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteD
 			break;
 			case ELFPVoxelAttributeOperation::Min:
 			{
-				VoxelColor.R = FMath::Min(VoxelAttribute->VoxelColor.R, VoxelColor.R);
-				VoxelColor.G = FMath::Min(VoxelAttribute->VoxelColor.G, VoxelColor.G);
-				VoxelColor.B = FMath::Min(VoxelAttribute->VoxelColor.B, VoxelColor.B);
-				VoxelColor.A = FMath::Min(VoxelAttribute->VoxelColor.A, VoxelColor.A);
+				VoxelColor.R = FMath::Min(CurrentColor.R, VoxelColor.R);
+				VoxelColor.G = FMath::Min(CurrentColor.G, VoxelColor.G);
+				VoxelColor.B = FMath::Min(CurrentColor.B, VoxelColor.B);
+				VoxelColor.A = FMath::Min(CurrentColor.A, VoxelColor.A);
 			}
 			break;
 			case ELFPVoxelAttributeOperation::Max:
 			{
-				VoxelColor.R = FMath::Max(VoxelAttribute->VoxelColor.R, VoxelColor.R);
-				VoxelColor.G = FMath::Max(VoxelAttribute->VoxelColor.G, VoxelColor.G);
-				VoxelColor.B = FMath::Max(VoxelAttribute->VoxelColor.B, VoxelColor.B);
-				VoxelColor.A = FMath::Max(VoxelAttribute->VoxelColor.A, VoxelColor.A);
+				VoxelColor.R = FMath::Max(CurrentColor.R, VoxelColor.R);
+				VoxelColor.G = FMath::Max(CurrentColor.G, VoxelColor.G);
+				VoxelColor.B = FMath::Max(CurrentColor.B, VoxelColor.B);
+				VoxelColor.A = FMath::Max(CurrentColor.A, VoxelColor.A);
 			}
 			break;
 			}

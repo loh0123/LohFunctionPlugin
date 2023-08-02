@@ -55,7 +55,7 @@ protected:
 
 public:
 	
-	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette) const override;
+	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const override;
 
 	virtual int32 GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const override;
 

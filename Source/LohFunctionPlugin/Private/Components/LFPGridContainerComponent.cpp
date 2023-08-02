@@ -287,6 +287,13 @@ const FLFPGridPaletteData& ULFPGridContainerComponent::GetGridPaletteRef(const i
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetIndexData(GridIndex);
 }
 
+const FLFPGridChuckData& ULFPGridContainerComponent::GetGridChuckRef(const int32 RegionIndex, const int32 ChuckIndex) const
+{
+	check(IsChuckPositionValid(RegionIndex, ChuckIndex) && IsRegionInitialized(RegionIndex));
+
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex];
+}
+
 bool ULFPGridContainerComponent::GetGridChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar)
 {
 	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false) return false;
