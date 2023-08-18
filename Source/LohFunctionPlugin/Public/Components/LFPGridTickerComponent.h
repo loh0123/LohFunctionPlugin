@@ -15,7 +15,9 @@ struct FLFPGridTickerTable : public FTableRowBase
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") TSubclassOf<ULFPTickerObject> Ticker = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") TSubclassOf<ULFPTickerObject> ScheduleTicker = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") TSubclassOf<ULFPTickerObject> RandomTicker = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") int32 TickDelay = INDEX_NONE;
 

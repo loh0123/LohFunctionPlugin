@@ -40,11 +40,5 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
 		}
-	],
-	"Plugins": [
-		{
-			"Name": "GeometryScripting",
-			"Enabled": true
-		}
 	]
 }

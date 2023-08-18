@@ -10,6 +10,7 @@
 
 
 FLFPGridPaletteData FLFPGridPaletteData::EmptyData = FLFPGridPaletteData();
+FLFPGridChuckData FLFPGridChuckData::EmptyData = FLFPGridChuckData();
 
 
 // Sets default values for this component's properties
@@ -29,6 +30,16 @@ void ULFPGridContainerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	Setting.InitSetting();
+
+	if (IsValid(TagDataTable))
+	{
+		if (TagDataTable->GetRowStruct()->IsChildOf(FLFPGridTagDataTable::StaticStruct()) == false)
+		{
+			TagDataTable = nullptr;
+
+			UE_LOG(LogTemp, Warning, TEXT("TagDataTable Is Not Using Struct ( FLFPGridTagDataTable )"));
+		}
+	}
 }
 
 
@@ -105,31 +116,41 @@ bool ULFPGridContainerComponent::AddPaletteTag(const int32 RegionIndex, const in
 {
 	if (IsGridPositionValid(RegionIndex, ChuckIndex, GridIndex) == false) return false;
 
-	FLFPGridPaletteData NewPalette(GetGridPalette(RegionIndex, ChuckIndex, GridIndex));
+	auto& NewPalette = ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.FindOrAdd(GridIndex);
+
+	if (NewPalette.IsNone()) NewPalette = (GetGridPalette(RegionIndex, ChuckIndex, GridIndex));
 
 	NewPalette.AddTag(GridTag);
 
-	return SetGridPalette(RegionIndex, ChuckIndex, GridIndex, NewPalette);
+	SetComponentTickEnabled(true);
+
+	return true;
 }
 
 bool ULFPGridContainerComponent::RemovePaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& GridTag)
 {
 	if (IsGridPositionValid(RegionIndex, ChuckIndex, GridIndex) == false) return false;
 
-	FLFPGridPaletteData NewPalette(GetGridPalette(RegionIndex, ChuckIndex, GridIndex));
+	auto& NewPalette = ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangePalette.FindOrAdd(GridIndex);
+
+	if (NewPalette.IsNone()) NewPalette = (GetGridPalette(RegionIndex, ChuckIndex, GridIndex));
 
 	NewPalette.RemoveTag(GridTag);
 
-	return SetGridPalette(RegionIndex, ChuckIndex, GridIndex, NewPalette);
+	SetComponentTickEnabled(true);
+
+	return true;
 }
 
 /** Setter */
 
-bool ULFPGridContainerComponent::SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& GridTag, const uint8 GridData)
+bool ULFPGridContainerComponent::SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName GridTag, const uint8 GridData)
 {
 	if (IsGridPositionValid(RegionIndex, ChuckIndex, GridIndex) == false) return false;
 
-	RegionDataList[RegionIndex].ChuckData[ChuckIndex].SetTagData(GridIndex, GridTag, GridData);
+	ChuckUpdateDataList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex)).ChangeTagData.FindOrAdd(GridIndex).ChangeData.Add(GridTag, GridData);
+
+	SetComponentTickEnabled(true);
 
 	return true;
 }
@@ -207,6 +228,13 @@ FLFPGridChuckData ULFPGridContainerComponent::GetGridChuckData(const int32 Regio
 	if (IsRegionInitialized(RegionIndex) == false || RegionDataList[RegionIndex].ChuckData.IsValidIndex(ChuckIndex) == false) return FLFPGridChuckData();
 
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex];
+}
+
+uint8 ULFPGridContainerComponent::GetGridTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName TagName) const
+{
+	if (IsGridPositionValid(RegionIndex, ChuckIndex, GridIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return uint8(0);
+
+	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetTagData(GridIndex, TagName);
 }
 
 FLFPGridPaletteData ULFPGridContainerComponent::GetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const
@@ -287,9 +315,18 @@ const FLFPGridPaletteData& ULFPGridContainerComponent::GetGridPaletteRef(const i
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetIndexData(GridIndex);
 }
 
+bool ULFPGridContainerComponent::GetGridTagDataListRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, TMap<FName, uint8>& TagDataList) const
+{
+	if (IsGridPositionValid(RegionIndex, ChuckIndex, GridIndex) == false || IsChuckInitialized(RegionIndex, ChuckIndex) == false) return false;
+
+	RegionDataList[RegionIndex].ChuckData[ChuckIndex].GetTagDataList(GridIndex, TagDataList);
+
+	return true;
+}
+
 const FLFPGridChuckData& ULFPGridContainerComponent::GetGridChuckRef(const int32 RegionIndex, const int32 ChuckIndex) const
 {
-	check(IsChuckPositionValid(RegionIndex, ChuckIndex) && IsRegionInitialized(RegionIndex));
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false || IsRegionInitialized(RegionIndex) == false) return FLFPGridChuckData::EmptyData;
 
 	return RegionDataList[RegionIndex].ChuckData[ChuckIndex];
 }
@@ -461,6 +498,24 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 			ChuckData.SetIndexData(ChangeGrid.Key, ChangeGrid.Value);
 
 			EdgeList.Append(ULFPGridLibrary::GetGridEdgeDirection(ULFPGridLibrary::ToGridLocation(ChangeGrid.Key, Setting.GetPaletteGrid()), Setting.GetPaletteGrid()));
+		}
+
+		/** This change the outdate Attribute texture */
+		{
+			if (ChuckUpdate.Value.ChangeTagData.IsEmpty() == false)
+			{
+				ChuckUpdateAction.bIsGridTagDirty = true;
+			}
+
+			for (const auto& ChangeTag : ChuckUpdate.Value.ChangeTagData)
+			{
+				for (const auto& ChangeData : ChangeTag.Value.ChangeData)
+				{
+					const FLFPGridTagDataTable* TagDataRef = IsValid(TagDataTable) ? reinterpret_cast<FLFPGridTagDataTable*>(TagDataTable->FindRowUnchecked(ChangeData.Key)) : nullptr;
+
+					ChuckData.SetTagData(ChangeTag.Key, ChangeData.Key, ChangeData.Value, TagDataRef != nullptr ? TagDataRef->DataSize : uint8(255));
+				}
+			}
 		}
 
 		const FIntVector CurrentGlobalPos = ToGridGlobalPosition(FIntVector(ChuckUpdate.Key.X, ChuckUpdate.Key.Y, 0));

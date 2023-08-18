@@ -54,7 +54,11 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 
 				if (IsValid(RandomTicker))
 				{
-					RandomTicker->OnRandomExecute(CurrentGroupData.Key, RandomTickIndex, this);
+					RandomTicker->OnExecute(CurrentGroupData.Key, RandomTickIndex, this);
+				}
+				else
+				{
+					OnScheduledAdded.Broadcast(RandomTickIndex, CurrentGroupData.Key);
 				}
 			}
 		}
@@ -71,11 +75,13 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 
 					if (TickData.Value.TryRunTicker(CurrentGroupData.Key, this, bCanRemove, TickData.Key) == false)
 					{
-						OnTick.Broadcast(TickData.Key, CurrentGroupData.Key);
+						OnScheduledTick.Broadcast(TickData.Key, CurrentGroupData.Key);
 					}
 
 					if (bCanRemove)
 					{
+						OnScheduledRemove.Broadcast(TickData.Key, CurrentGroupData.Key);
+
 						RemoveTickIndexList.Add(TickData.Key);
 					}
 				}
@@ -124,6 +130,8 @@ void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickD
 
 		GroupData.ScheduledTickList.Add(TickIndex, TickData);
 	}
+
+	OnScheduledAdded.Broadcast(TickIndex, GroupIndex);
 }
 
 void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList)
@@ -171,7 +179,7 @@ int32 ULFPIndexTickerComponent::GetCacheRandomTickIndex(FLFPIndexTickGroupData& 
 		return INDEX_NONE;
 	}
 
-	if (CacheRandomTickList.IsEmpty())
+	if (CacheRandomTickList.Num() != RandomTickMaxIndex)
 	{
 		CacheRandomTickList.SetNum(RandomTickMaxIndex);
 

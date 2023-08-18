@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "LohFunctionPluginLibrary.h"
+#include "Engine/DataTable.h"
 #include "LFPGridContainerComponent.generated.h"
 
 USTRUCT( BlueprintType )
@@ -180,12 +181,24 @@ public:
 //	return FCrc::MemCrc32(&Other, sizeof(FLFPGridPaletteData));
 //}
 
+USTRUCT(BlueprintType)
+struct FLFPGridTagDataTable : public FTableRowBase
+{
+	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTagDataTable") uint8 DataSize = uint8(255);
+};
 
 USTRUCT(BlueprintType)
 struct FLFPGridChuckData
 {
 	GENERATED_BODY()
+
+public:
+
+	static FLFPGridChuckData EmptyData;
 
 private:
 
@@ -308,7 +321,7 @@ public:
 
 	/** Read / Write Function */
 
-	FORCEINLINE void SetTagData(const int32 GridIndex, const FName TagName, const uint8 NewData)
+	FORCEINLINE void SetTagData(const int32 GridIndex, const FName& TagName, const uint8 NewData, const uint8 DataMaxSize)
 	{
 		check(GridIndex >= 0);
 
@@ -320,10 +333,36 @@ public:
 
 			TagDataList = &DataList[NewIndex];
 
-			TagDataList->Resize(255);
+			TagDataList->Resize(DataMaxSize);
 		}
 
-		TagDataList->SetIndexNumber(GridIndex, uint32(NewData));
+		TagDataList->SetIndexNumber(GridIndex, uint32(FMath::Min(NewData, DataMaxSize)));
+	}
+
+	FORCEINLINE uint8 GetTagData(const int32 GridIndex, const FName TagName) const
+	{
+		check(GridIndex >= 0);
+
+		auto TagDataList = DataList.FindByKey(TagName);
+
+		if (TagDataList == nullptr)
+		{
+			return uint8(0);
+		}
+		else
+		{
+			return uint8(TagDataList->GetIndexNumber(GridIndex));
+		}
+	}
+
+	FORCEINLINE void GetTagDataList(const int32 GridIndex, TMap<FName, uint8>& TagDataList) const
+	{
+		check(GridIndex >= 0);
+
+		for (const auto& Data : DataList)
+		{
+			TagDataList.Add(Data.Name, Data.GetIndexNumber(GridIndex));
+		}
 	}
 
 	FORCEINLINE void SetIndexData(const int32 GridIndex, const FLFPGridPaletteData& NewData)
@@ -335,22 +374,6 @@ public:
 		const int32 NewIndex = FindOrAddPalette(NewData, true, true);
 
 		IndexList.SetIndexNumber(GridIndex, NewIndex);
-	}
-
-	FORCEINLINE uint8 GetTagData(const int32 GridIndex, const FName TagName) const
-	{
-		check(GridIndex >= 0);
-
-		auto TagDataList = DataList.FindByKey(TagName);
-
-		if (TagDataList == nullptr)
-		{
-			return uint8(1);
-		}
-		else
-		{
-			return uint8(TagDataList->GetIndexNumber(GridIndex));
-		}
 	}
 
 	FORCEINLINE const FLFPGridPaletteData& GetIndexData(const int32 GridIndex) const
@@ -486,6 +509,17 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FLFPGridChangeTagData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, Category = "LFPGridChangeTagData")
+		TMap<FName, uint8> ChangeData = TMap<FName, uint8>();
+};
+
+USTRUCT(BlueprintType)
 struct FLFPGridUpdateAction
 {
 	GENERATED_BODY()
@@ -495,11 +529,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "LFPGridUpdateAction")
 		TMap<int32, FLFPGridPaletteData> ChangePalette = TMap<int32, FLFPGridPaletteData>();
 
+	UPROPERTY(BlueprintReadWrite, Category = "LFPGridUpdateAction")
+		TMap<int32, FLFPGridChangeTagData> ChangeTagData = TMap<int32, FLFPGridChangeTagData>();
+
 public: // Operator
 
 	FLFPGridUpdateAction& operator+=(const FLFPGridUpdateAction& Other)
 	{
 		ChangePalette.Append(Other.ChangePalette);
+		ChangeTagData.Append(Other.ChangeTagData);
 
 		return *this;
 	}
@@ -558,7 +596,7 @@ public: /** Setter */
 		FORCEINLINE bool RemovePaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag, const uint8 Data);
+		FORCEINLINE bool SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName Tag, const uint8 Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 		FORCEINLINE bool SetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FLFPGridPaletteData& Palette);
@@ -579,6 +617,9 @@ public: /** Getter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Getter")
 		FORCEINLINE FLFPGridChuckData GetGridChuckData(const int32 RegionIndex, const int32 ChuckIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
+		FORCEINLINE uint8 GetGridTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName TagName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 		FORCEINLINE FLFPGridPaletteData GetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
@@ -607,6 +648,8 @@ public: /** C++ Getter */
 	FORCEINLINE const FLFPGridPaletteContainerSetting& GetSetting() const { return Setting; }
 
 	FORCEINLINE const FLFPGridPaletteData& GetGridPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
+
+	FORCEINLINE bool GetGridTagDataListRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, TMap<FName, uint8>& TagDataList) const;
 
 	FORCEINLINE const FLFPGridChuckData& GetGridChuckRef(const int32 RegionIndex, const int32 ChuckIndex) const;
 
@@ -662,6 +705,9 @@ protected: // Initialize Data
 	/** What setting this component use when saving the Grid */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting")
 		FLFPGridPaletteContainerSetting Setting;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting ")
+		TObjectPtr<UDataTable> TagDataTable = nullptr;
 
 protected:  // Runtime Data
 

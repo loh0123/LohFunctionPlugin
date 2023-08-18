@@ -33,7 +33,7 @@ public:
 	{
 		if (IsValid(Ticker))
 		{
-			Ticker.GetDefaultObject()->OnScheduledExecute(TickGroup, TickIndex, Caller);
+			Ticker.GetDefaultObject()->OnExecute(TickGroup, TickIndex, Caller);
 
 			return true;
 		}
@@ -110,13 +110,16 @@ protected:
 public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
-		FLFPOnIndex OnTick;
+		FLFPOnIndex OnRandomTick;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
-		FLFPOnIndex OnIndexRemove;
+		FLFPOnIndex OnScheduledTick;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
-		FLFPOnIndex OnIndexAdded;
+		FLFPOnIndex OnScheduledRemove;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPIndexTickerComponent | Delegate")
+		FLFPOnIndex OnScheduledAdded;
 
 protected:
 

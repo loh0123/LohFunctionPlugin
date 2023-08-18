@@ -38,6 +38,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VoxelAttributeTable") FColor VoxelColor = FColor(0);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VoxelAttributeTable") FColor VoxelData = FColor(0);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VoxelAttributeTable") ELFPVoxelAttributeOperation Operation = ELFPVoxelAttributeOperation::Addition;
 };
 
@@ -55,7 +57,7 @@ protected:
 
 public:
 	
-	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const override;
+	virtual FColor GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const TMap<FName, uint8>& TagDataList) const override;
 
 	virtual int32 GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const override;
 

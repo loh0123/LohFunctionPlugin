@@ -88,7 +88,11 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 			const FLFPGridPaletteData& VoxelPalette = VoxelContainer->GetGridPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
 
-			AttributeList[Index] = GetVoxelAttribute(VoxelPalette, Index, VoxelContainer->GetGridChuckRef(VoxelGridIndex.X, VoxelGridIndex.Y));
+			TMap<FName, uint8> TagDataList;
+
+			if (VoxelGridIndex.Z >= 0) VoxelContainer->GetGridChuckRef(VoxelGridIndex.X, VoxelGridIndex.Y).GetTagDataList(VoxelGridIndex.Z, TagDataList);
+
+			AttributeList[Index] = GetVoxelAttribute(VoxelPalette, TagDataList);
 			}, EParallelForFlags::BackgroundPriority);
 
 		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
@@ -1252,7 +1256,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	if (TargetGenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Lumen Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 }
 
-FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const
+FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const TMap<FName, uint8>& TagDataList) const
 {
 	return VoxelPalette.Name.IsNone() ? FColor(0) : FColor(255);
 }

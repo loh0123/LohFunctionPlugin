@@ -92,11 +92,11 @@ public:
 	{
 		if (MaxSize == NewMaxSize) return;
 
-		for (uint8 NewEncodeSize = 0; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
+		for (uint8 NewEncodeSize = 1; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
 		{
-			if (NewMaxSize <= 1 << NewEncodeSize)
+			if (NewMaxSize <= (1 << NewEncodeSize) - 1)
 			{
-				ResizeBitArray(NewEncodeSize + 1);
+				ResizeBitArray(NewEncodeSize);
 
 				break;
 			}

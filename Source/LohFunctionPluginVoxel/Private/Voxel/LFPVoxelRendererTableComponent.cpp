@@ -28,7 +28,7 @@ void ULFPVoxelRendererTableComponent::BeginPlay()
 	}
 }
 
-FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const int32 GridIndex, const FLFPGridChuckData& ChuckData) const
+FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const TMap<FName, uint8>& TagDataList) const
 {
 	if (IsValid(VoxelTypeTable) == false) return FColor(0);
 
@@ -42,12 +42,26 @@ FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteD
 	{
 		const auto VoxelAttribute = reinterpret_cast<FLFPVoxelAttributeTable*>(VoxelAttributeTable->FindRowUnchecked(VoxelPalette.TagList[TagIndex]));
 
+		if (VoxelAttribute == nullptr)
+		{
+			continue;
+		}
+
 		FColor CurrentColor = VoxelAttribute->VoxelColor;
 
-		CurrentColor.R *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
-		CurrentColor.G *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
-		CurrentColor.B *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
-		CurrentColor.A *= ChuckData.GetTagData(GridIndex, VoxelPalette.TagList[TagIndex]);
+		const uint8* TagData = TagDataList.Find(VoxelPalette.TagList[TagIndex]);
+
+		if (TagData != nullptr)
+		{
+			FColor CurrentData = VoxelAttribute->VoxelData;
+
+			CurrentData.R *= *TagData;
+			CurrentData.G *= *TagData;
+			CurrentData.B *= *TagData;
+			CurrentData.A *= *TagData;
+
+			CurrentColor += CurrentData;
+		}
 
 		if (VoxelAttribute != nullptr)
 		{
