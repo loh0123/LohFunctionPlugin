@@ -99,7 +99,7 @@ void ULFPInventoryComponent::BroadcastItemEvent(const int32 SlotIndex, const FLF
 	OnUpdateItem.Broadcast(OldItemData, InventorySlotItemList[SlotIndex], SlotIndex, EventInfo);
 }
 
-bool ULFPInventoryComponent::AddItemWithSlotIndex(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString EventInfo)
+bool ULFPInventoryComponent::AddItemWithSlotIndex(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -138,7 +138,7 @@ bool ULFPInventoryComponent::AddItemWithSlotIndex(FLFPInventoryItemData& ItemDat
 	return true;
 }
 
-bool ULFPInventoryComponent::AddItemWithSlotName(FLFPInventoryItemData& ItemData, const FName Slotname, const FString EventInfo)
+bool ULFPInventoryComponent::AddItemWithSlotName(UPARAM(ref) FLFPInventoryItemData& ItemData, const FName Slotname, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -185,7 +185,7 @@ bool ULFPInventoryComponent::AddItemWithSlotName(FLFPInventoryItemData& ItemData
 	return false;
 }
 
-bool ULFPInventoryComponent::AddItemList(TArray<FLFPInventoryItemData>& ItemDataList, const FName Slotname, const FString EventInfo)
+bool ULFPInventoryComponent::AddItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemDataList, const FName Slotname, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -209,7 +209,7 @@ bool ULFPInventoryComponent::AddItemList(TArray<FLFPInventoryItemData>& ItemData
 	return bIsAllValid;
 }
 
-bool ULFPInventoryComponent::RemoveItemWithSlotIndex(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bForce, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemWithSlotIndex(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bForce, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -246,7 +246,7 @@ bool ULFPInventoryComponent::RemoveItemWithSlotIndex(FLFPInventoryItemData& Item
 	return true;
 }
 
-bool ULFPInventoryComponent::RemoveItemWithSlotName(FLFPInventoryItemData& ItemData, const FName Slotname, const bool bForce, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemWithSlotName(UPARAM(ref) FLFPInventoryItemData& ItemData, const FName Slotname, const bool bForce, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -291,7 +291,7 @@ bool ULFPInventoryComponent::RemoveItemWithSlotName(FLFPInventoryItemData& ItemD
 	return false;
 }
 
-bool ULFPInventoryComponent::RemoveItemList(TArray<FLFPInventoryItemData>& RemovedItemDataList, const FName Slotname, const bool bForce, const FString EventInfo)
+bool ULFPInventoryComponent::RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& RemovedItemDataList, const FName Slotname, const bool bForce, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 

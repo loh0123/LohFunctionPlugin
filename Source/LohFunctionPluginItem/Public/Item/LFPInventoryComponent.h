@@ -89,13 +89,13 @@ public: // Function
 	* @return Some item has been added to inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItemWithSlotIndex(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString EventInfo = FString("None"));
+		bool AddItemWithSlotIndex(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItemWithSlotName(FLFPInventoryItemData& ItemData, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+		bool AddItemWithSlotName(UPARAM(ref) FLFPInventoryItemData& ItemData, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItemList(TArray<FLFPInventoryItemData>& ItemDataList, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+		bool AddItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemDataList, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
 
 	/**
 	* Remove item From inventory
@@ -107,13 +107,13 @@ public: // Function
 	* @return Some item has been Removed from inventory
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemWithSlotIndex(FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItemWithSlotIndex(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const bool bForce = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemWithSlotName(FLFPInventoryItemData& ItemData, const FName Slotname = FName("All"), const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItemWithSlotName(UPARAM(ref) FLFPInventoryItemData& ItemData, const FName Slotname = FName("All"), const bool bForce = false, const FString EventInfo = FString("None"));
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemList(TArray<FLFPInventoryItemData>& ItemData, const FName Slotname = FName("All"), const bool bForce = false, const FString EventInfo = FString("None"));
+		bool RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemData, const FName Slotname = FName("All"), const bool bForce = false, const FString EventInfo = FString("None"));
 
 	/**
 	* Remove All item From inventory
