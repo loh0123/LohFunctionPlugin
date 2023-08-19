@@ -95,7 +95,7 @@ public:
 		bool TryEquipItem(const int32 InventorySlotIndex, const bool bToActiveSlotOnly = false, const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool TryUnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo = "");
+		bool TryUnequipItem(const int32 EquipmentSlotIndex, const FName Slotname = FName("All"), const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo = "");

@@ -106,7 +106,7 @@ bool ULFPEquipmentComponent::AddEquipmentSlotName(const FName InventorySlotName,
 
 	TArray<int32> SlotIndexList;
 
-	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName, -1, -1, EventInfo) == false)
+	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName, EventInfo) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName FindInventorySlotWithName return false"));
 
@@ -242,7 +242,7 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 	return false;
 }
 
-bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FString EventInfo)
+bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FName Slotname, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -267,7 +267,7 @@ bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, cons
 		return false;
 	}
 
-	return InventoryComponent->SwapItemToAvailable(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
+	return InventoryComponent->SwapItemToAvailable(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, Slotname, EventInfo);
 }
 
 bool ULFPEquipmentComponent::SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo)

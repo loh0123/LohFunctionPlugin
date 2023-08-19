@@ -138,7 +138,7 @@ bool ULFPItemMutatorComponent::RemoveItemFromQueue(const int32 QueueIndex)
 		return false;
 	}
 
-	const FLFPItemMutatorQueueData RemoveQueueData = MutatorQueue[QueueIndex];
+	FLFPItemMutatorQueueData RemoveQueueData = MutatorQueue[QueueIndex];
 
 	ProcessItem(RemoveQueueData, true, QueueIndex);
 
@@ -260,7 +260,7 @@ void ULFPItemMutatorComponent::ProcessItemQueue(const float ConsumeDelayAmount)
 	}
 }
 
-void ULFPItemMutatorComponent::ProcessItem(const FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume, const int32 QueueIndex)
+void ULFPItemMutatorComponent::ProcessItem(FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume, const int32 QueueIndex)
 {
 	if (IsValid(InventoryComponent) == false)
 	{
@@ -269,20 +269,18 @@ void ULFPItemMutatorComponent::ProcessItem(const FLFPItemMutatorQueueData& ItemD
 		return;
 	}
 
-	FLFPInventoryItemIndexData ItemIndexData;
-
 	if (bReturnConsume)
 	{
-		for (const auto& ConsumeItem : ItemData.ItemConsumeList)
+		for (auto& ConsumeItem : ItemData.ItemConsumeList)
 		{
-			InventoryComponent->AddItem(ConsumeItem, ItemIndexData, -1, -1, FString("ReturnConsume"));
+			InventoryComponent->AddItemWithSlotName(ConsumeItem, ItemData.ItemSearchSlotName, FString("ReturnConsume"));
 		}
 	}
 	else
 	{
-		for (const auto& ProduceItem : ItemData.ItemProduceList)
+		for (auto& ProduceItem : ItemData.ItemProduceList)
 		{
-			InventoryComponent->AddItem(ProduceItem, ItemIndexData, -1, -1, FString("ReturnProduce"));
+			InventoryComponent->AddItemWithSlotName(ProduceItem, ItemData.ItemSearchSlotName, FString("ReturnProduce"));
 		}
 	}
 
@@ -300,7 +298,7 @@ bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLF
 		return false;
 	}
 
-	TArray<FLFPInventoryItemIndexData> ItemIndexList;
+	auto ConsumeList = ItemMutatorQueueData.ItemConsumeList;
 
-	return InventoryComponent->RemoveItemList(ItemMutatorQueueData.ItemConsumeList, ItemIndexList, ItemMutatorQueueData.ItemSearchSlotName, true);
+	return InventoryComponent->RemoveItemList(ConsumeList, ItemMutatorQueueData.ItemSearchSlotName);
 }

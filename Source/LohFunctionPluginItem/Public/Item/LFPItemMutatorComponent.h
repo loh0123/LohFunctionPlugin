@@ -16,13 +16,13 @@ struct FLFPItemMutatorQueueData
 		FName RecipeName = FName("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPInventoryItemData> ItemConsumeList;
+		TArray<FLFPInventoryItemData> ItemConsumeList = TArray<FLFPInventoryItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		FName ItemSearchSlotName;
+		FName ItemSearchSlotName = FName("All");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPInventoryItemData> ItemProduceList;
+		TArray<FLFPInventoryItemData> ItemProduceList = TArray<FLFPInventoryItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		float MaxDelay = -1.0f;
@@ -91,7 +91,7 @@ public: // Function
 
 
 	UFUNCTION()
-		void ProcessItem(const FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume = false, const int32 QueueIndex = -1);
+		void ProcessItem(FLFPItemMutatorQueueData& ItemData, const bool bReturnConsume = false, const int32 QueueIndex = -1);
 	
 public: // Event
 
