@@ -709,6 +709,9 @@ protected: // Initialize Data
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting ")
 		TObjectPtr<UDataTable> TagDataTable = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting ")
+		bool bSwitchRegionZWithX = false;
+
 protected:  // Runtime Data
 
 	/** This store the chuck */

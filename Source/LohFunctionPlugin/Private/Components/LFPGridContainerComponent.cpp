@@ -260,9 +260,11 @@ int32 ULFPGridContainerComponent::GetGridPaletteIndex(const int32 RegionIndex, c
 
 FIntVector ULFPGridContainerComponent::ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound) const
 {
-	const FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.X, Setting.GetRegionGrid(), bRound));
+	FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.X, Setting.GetRegionGrid(), bRound));
 	const FIntVector ChuckPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Y, Setting.GetChuckGrid(), bRound));
 	const FIntVector GridPos(ULFPGridLibrary::ToGridLocation(GridGlobalIndex.Z, Setting.GetPaletteGrid(), bRound));
+
+	if (bSwitchRegionZWithX) RegionPos = FIntVector(RegionPos.Z, RegionPos.Y, RegionPos.X);
 
 	return (RegionPos * Setting.GetChuckGrid() * Setting.GetPaletteGrid()) + (ChuckPos * Setting.GetPaletteGrid()) + GridPos;
 }
@@ -290,8 +292,10 @@ FIntVector ULFPGridContainerComponent::ToGridGlobalIndex(FIntVector GridGlobalPo
 		return FIntVector(INDEX_NONE);
 	}
 
-	const FIntVector RegionPos	(DivideVector(GridGlobalPosition, Setting.GetChuckGrid() * Setting.GetPaletteGrid()));
+	FIntVector RegionPos	(DivideVector(GridGlobalPosition, Setting.GetChuckGrid() * Setting.GetPaletteGrid()));
 	const FIntVector ChuckPos	(DivideVector(GridGlobalPosition, Setting.GetPaletteGrid()));
+
+	if (bSwitchRegionZWithX) RegionPos = FIntVector(RegionPos.Z, RegionPos.Y, RegionPos.X);
 
 	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, Setting.GetRegionGrid()), ULFPGridLibrary::ToGridIndex(ChuckPos, Setting.GetChuckGrid()), ULFPGridLibrary::ToGridIndex(GridGlobalPosition, Setting.GetPaletteGrid(), true));
 }
