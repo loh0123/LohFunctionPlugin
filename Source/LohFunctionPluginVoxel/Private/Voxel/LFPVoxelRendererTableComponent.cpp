@@ -109,3 +109,26 @@ int32 ULFPVoxelRendererTableComponent::GetVoxelMaterialIndex(const FLFPGridPalet
 
 	return VoxelType != nullptr ? VoxelType->VoxelMaterial : INDEX_NONE;
 }
+
+bool ULFPVoxelRendererTableComponent::CanUpdateMesh(const FLFPChuckUpdateAction& Data) const
+{
+	if (IsValid(VoxelTypeTable))
+	{
+		for (const auto& ChangeData : Data.GridChangeNameList)
+		{
+			const auto VoxelTypeOld = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.Key));
+			const auto VoxelTypeNew = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.Value));
+
+			const int32 MaterialIDOld = VoxelTypeOld != nullptr ? VoxelTypeOld->VoxelMaterial : INDEX_NONE;
+			const int32 MaterialIDNew = VoxelTypeNew != nullptr ? VoxelTypeNew->VoxelMaterial : INDEX_NONE;
+
+			if (MaterialIDOld != MaterialIDNew) return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		return Super::CanUpdateMesh(Data);
+	}
+}

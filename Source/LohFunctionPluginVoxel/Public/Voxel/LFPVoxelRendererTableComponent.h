@@ -61,6 +61,8 @@ public:
 
 	virtual int32 GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const override;
 
+	virtual bool CanUpdateMesh(const FLFPChuckUpdateAction& Data) const override;
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererTableComponent | Setting")

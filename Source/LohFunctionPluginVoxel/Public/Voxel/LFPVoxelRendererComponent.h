@@ -643,6 +643,12 @@ public:
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
+	UFUNCTION()
+		virtual bool CanUpdateMesh(const FLFPChuckUpdateAction& Data) const;
+
+	UFUNCTION()
+		virtual bool CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const;
+
 public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")

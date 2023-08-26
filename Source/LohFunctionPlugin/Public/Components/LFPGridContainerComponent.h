@@ -440,11 +440,11 @@ struct FLFPChuckUpdateAction
 {
 	GENERATED_BODY()
 
-	FLFPChuckUpdateAction() : bIsGridNameDirty(false), bIsGridTagDirty(false) {}
+	FLFPChuckUpdateAction() : GridChangeNameList(TMap<FName, FName>()), bIsGridTagDirty(false) {}
 
 public:
 
-	UPROPERTY() uint8 bIsGridNameDirty : 1;
+	UPROPERTY() TMap<FName, FName> GridChangeNameList = TMap<FName, FName>();
 
 	UPROPERTY() uint8 bIsGridTagDirty : 1;
 
@@ -452,8 +452,9 @@ public: // Operator
 
 	FLFPChuckUpdateAction& operator+=(const FLFPChuckUpdateAction& Other)
 	{
-		if (bIsGridNameDirty == false) bIsGridNameDirty = Other.bIsGridNameDirty;
-		if (bIsGridTagDirty == false) bIsGridTagDirty = Other.bIsGridNameDirty;
+		GridChangeNameList.Append(Other.GridChangeNameList);
+
+		if (bIsGridTagDirty == false) bIsGridTagDirty = Other.bIsGridTagDirty;
 
 		return *this;
 	}

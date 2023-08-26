@@ -263,9 +263,19 @@ void ULFPVoxelRendererComponent::SetDisableFaceCulling(const bool bChuck, const 
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
 {
-	if (Data.bIsGridTagDirty) UpdateAttribute();
+	if (CanUpdateMesh(Data)) UpdateAttribute();
 
-	if (Data.bIsGridNameDirty) UpdateMesh();
+	if (CanUpdateAttribute(Data)) UpdateMesh();
+}
+
+bool ULFPVoxelRendererComponent::CanUpdateMesh(const FLFPChuckUpdateAction& Data) const
+{
+	return Data.bIsGridTagDirty;
+}
+
+bool ULFPVoxelRendererComponent::CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const
+{
+	return Data.GridChangeNameList.IsEmpty() == false;
 }
 
 /**********************/
