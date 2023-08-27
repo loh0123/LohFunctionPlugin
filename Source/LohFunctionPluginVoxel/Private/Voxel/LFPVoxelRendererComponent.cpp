@@ -812,7 +812,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 		FMath::DivideAndRoundUp(MaxIndirectionDimensions.Z, 1 << (DistanceField::NumMips - 1))
 	);
 
-	const float BoundExpand = TargetGenerationSetting.VoxelHalfSize.GetMax() * 0.5f;
+	const float BoundExpand = TargetGenerationSetting.VoxelHalfSize.GetMax() * TargetGenerationSetting.LumenBoundMultipy;
 
 	const FBox LocalBounds = FBox(-VoxelHalfBounds, VoxelHalfBounds);
 

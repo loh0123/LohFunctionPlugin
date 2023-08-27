@@ -396,6 +396,9 @@ struct FLFPVoxelRendererSetting
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		float LumenBoundMultipy = 0.5f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		FVector VoxelHalfSize = FVector(50.0f);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
