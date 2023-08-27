@@ -153,13 +153,13 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		if (GenerationSetting.HasCollision()) RebuildPhysicsData();
 
 		Status.UpdateNextRenderMode();
-
-		OnVoxelRendererUpdate.Broadcast();
 	}
 	break;
 	case ELFPVoxelRendererMode::LFP_None:
 	{
 		Status.UpdateNextRenderMode();
+
+		OnVoxelRendererUpdate.Broadcast();
 
 		SetComponentTickEnabled(Status.HasRenderDirty());
 	}
@@ -263,19 +263,19 @@ void ULFPVoxelRendererComponent::SetDisableFaceCulling(const bool bChuck, const 
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
 {
-	if (CanUpdateMesh(Data)) UpdateAttribute();
+	if (CanUpdateMesh(Data)) UpdateMesh();
 
-	if (CanUpdateAttribute(Data)) UpdateMesh();
+	if (CanUpdateAttribute(Data)) UpdateAttribute();
 }
 
 bool ULFPVoxelRendererComponent::CanUpdateMesh(const FLFPChuckUpdateAction& Data) const
 {
-	return Data.bIsGridTagDirty;
+	return Data.GridChangeNameList.IsEmpty() == false;
 }
 
 bool ULFPVoxelRendererComponent::CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const
 {
-	return Data.GridChangeNameList.IsEmpty() == false;
+	return Data.bIsGridTagDirty;
 }
 
 /**********************/

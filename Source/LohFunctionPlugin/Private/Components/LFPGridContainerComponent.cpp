@@ -487,6 +487,8 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 			{
 				ChuckUpdateAction.GridChangeNameList.Add(ChuckData.GetIndexData(ChangeGrid.Key).Name, ChangeGrid.Value.Name);
 
+				ChuckUpdateAction.bIsGridTagDirty = true;
+
 				IsDirty = true;
 			}
 
