@@ -84,22 +84,13 @@ struct FLFPVoxelRendererFaceData
 		FaceDataList.Reserve(Reserve);
 	}
 
-	///** Raw Vertex Generated For The Function */
-	//TArray<FVector3f> VertexList;
-
-	///** Raw Triangle Index Generated For The Function */
-	//TArray<uint32> TriangleIndexList;
-
-	///** Raw UV Generated For The Function */
-	//TArray<FVector2f> UVList;
-
 	TArray<FInt32Rect> FaceDataList = TArray<FInt32Rect>();
 };
 
 struct FLFPVoxelRendererSectionData
 {
 	FLFPVoxelRendererSectionData() {}
-	FLFPVoxelRendererSectionData(const FIntVector NewFaceDirectionAmount)
+	FLFPVoxelRendererSectionData(const FIntVector NewFaceDirectionAmount, const uint8 Index) : RenderIndex(Index)
 	{
 		SetFaceDirectionAmount(NewFaceDirectionAmount);
 	}
@@ -109,6 +100,8 @@ struct FLFPVoxelRendererSectionData
 	FIntVector FaceDirectionAmount = FIntVector(0);
 
 	uint32 TriangleCount = 0;
+
+	uint8 RenderIndex = 0;
 
 public:
 
@@ -137,7 +130,7 @@ public:
 		return DataList[FaceDataIndex + FaceIndex];
 	}
 
-	FORCEINLINE void GenerateRawFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, TArray<FVector3f>& VertexPosList, TArray<uint32>& IndexList, TArray<FVector2f>& UVList, const TFunctionRef<void(const FLFPVoxelRendererFaceDirection&, const int32, const FVector2f&)>& LoopFunc) const
+	FORCEINLINE void GenerateRawFaceData(const FVector3f& VoxelHalfSize, const FVector3f& VoxelRenderOffset, TArray<FVector3f>& VertexPosList, TArray<uint32>& IndexList, TArray<FVector2f>& UVList, TArray<FColor>& ColorList, const TFunctionRef<void(const FLFPVoxelRendererFaceDirection&, const int32, const FVector2f&)>& LoopFunc) const
 	{
 		const FVector3f VoxelFullSize = VoxelHalfSize * 2;
 
@@ -165,6 +158,8 @@ public:
 
 			const FIntVector FaceLoopDirection = LFPVoxelRendererConstantData::FaceLoopDirectionList[CurrentRotationIndex];
 
+			const FLFPVoxelRendererFaceDirection& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
+
 			for (const auto& FaceData : Data.FaceDataList)
 			{
 				FVector2f Scale2D;
@@ -182,8 +177,6 @@ public:
 				Scale[FaceLoopDirection.Y] = Scale2D.X = (FaceData.Max.Y - FaceData.Min.Y) + 1;
 				Scale[FaceLoopDirection.Z] = 1;
 
-				const FLFPVoxelRendererFaceDirection& FaceDirectionData = LFPVoxelRendererConstantData::FaceDirection[CurrentRotationIndex];
-
 				ULFPRenderLibrary::CreateFaceData(
 					ULFPRenderLibrary::CreateVertexPosList(
 						(FMath::Lerp(APoint, BPoint, 0.5f) * VoxelFullSize) + VoxelRenderOffset,
@@ -194,6 +187,26 @@ public:
 					UVList,
 					IndexList
 				);
+
+				{
+					auto LocalVertPosToColor = [&](const int32 Index)
+						{
+							FVector3f LocalPos = (VertexPosList[(VertexPosList.Num() - 1) - Index] - VoxelRenderOffset) / VoxelFullSize;
+
+							return FColor(FMath::RoundToInt(LocalPos.X), FMath::RoundToInt(LocalPos.Y), FMath::RoundToInt(LocalPos.Z), RenderIndex);
+						};
+
+					ColorList.Append(
+						{
+							LocalVertPosToColor(5),
+							LocalVertPosToColor(4),
+							LocalVertPosToColor(3),
+							LocalVertPosToColor(2),
+							LocalVertPosToColor(1),
+							LocalVertPosToColor(0)
+						}
+					);
+				}
 
 				LoopFunc(FaceDirectionData, VertexPosList.Num() - 6, Scale2D);
 			}
@@ -206,17 +219,17 @@ public:
 	{
 		TArray<FVector3f> VertexPosList;
 		TArray<FVector2f> UVDataList;
+		TArray<FColor> ColorList;
 
 		const int32 VertexAmount = TriangleCount * 3;
 
 		VertexPosList.Reserve(VertexAmount);
 		IndexBuffer.Indices.Reserve(VertexAmount);
+		ColorList.Reserve(VertexAmount);
 
 		VertexDataBuffer.Init(VertexAmount, 2);
 
-		ColorVertexBuffer.InitFromSingleColor(FColor(255), VertexAmount);
-
-		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VertexPosList, IndexBuffer.Indices, UVDataList,
+		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VertexPosList, IndexBuffer.Indices, UVDataList, ColorList,
 			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D)
 			{
 				for (int32 Loop = Index; Loop < Index + 6; Loop++)
@@ -227,6 +240,8 @@ public:
 				}
 			}
 		);
+
+		ColorVertexBuffer.InitFromColorArray(ColorList);
 
 		PositionVertexBuffer.Init(VertexPosList, true);
 	}
@@ -253,12 +268,14 @@ public:
 		TArray<uint32> IndexList;
 		TArray<FVector3f> VerticeList;
 		TArray<FVector2f> UVDataList;
+		TArray<FColor> ColorList;
 
 		IndexList.Reserve(VertexAmount);
 		VerticeList.Reserve(VertexAmount);
 		UVDataList.Reserve(VertexAmount);
+		ColorList.Reserve(VertexAmount);
 
-		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VerticeList, IndexList, UVDataList,
+		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VerticeList, IndexList, UVDataList, ColorList,
 			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D){}
 		);
 
@@ -394,6 +411,9 @@ struct FLFPVoxelRendererSetting
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
+		FColor EmptyVoxelNameColor = FColor(uint8(0), uint8(0), uint8(0), uint8(255));
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
 		float LumenBoundMultipy = 0.5f;

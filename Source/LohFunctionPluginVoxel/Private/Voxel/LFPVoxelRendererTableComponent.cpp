@@ -34,7 +34,7 @@ FColor ULFPVoxelRendererTableComponent::GetVoxelAttribute(const FLFPGridPaletteD
 
 	const auto VoxelType = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(VoxelPalette.Name));
 
-	FColor VoxelColor = VoxelType != nullptr ? VoxelType->VoxelDefaultColor : FColor(0);
+	FColor VoxelColor = VoxelType != nullptr ? VoxelType->VoxelDefaultColor : GetGenerationSetting().EmptyVoxelNameColor;
 
 	if (IsValid(VoxelAttributeTable) == false) return VoxelColor;
 

@@ -190,7 +190,7 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 	{
 		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetPaletteGrid().X + 2, (VoxelContainer->GetSetting().GetPaletteGrid().Y + 2) * (VoxelContainer->GetSetting().GetPaletteGrid().Z + 2));
 
-		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest);
+		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest, false);
 
 		OutDynamicMaterial = UpdateMaterialTexture();
 	}
@@ -519,7 +519,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 			/** Fill Up Section If Not Enought */
 			while (TargetThreadResult->SectionData.IsValidIndex(MaxMaterialIndex) == false)
 			{
-				TargetThreadResult->SectionData.Add(FLFPVoxelRendererSectionData(VoxelSetting.GetPaletteGrid()));
+				TargetThreadResult->SectionData.Add(FLFPVoxelRendererSectionData(VoxelSetting.GetPaletteGrid(), TargetThreadResult->SectionData.Num()));
 			}
 
 			for (const auto& BatchData : BatchDataMap)
@@ -1268,7 +1268,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 FColor ULFPVoxelRendererComponent::GetVoxelAttribute(const FLFPGridPaletteData& VoxelPalette, const TMap<FName, uint8>& TagDataList) const
 {
-	return VoxelPalette.Name.IsNone() ? FColor(0) : FColor(255);
+	return VoxelPalette.Name.IsNone() ? GetGenerationSetting().EmptyVoxelNameColor : FColor(255);
 }
 
 int32 ULFPVoxelRendererComponent::GetVoxelMaterialIndex(const FLFPGridPaletteData& VoxelPalette) const
