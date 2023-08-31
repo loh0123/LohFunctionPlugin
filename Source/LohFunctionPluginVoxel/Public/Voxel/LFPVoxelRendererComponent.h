@@ -90,7 +90,7 @@ struct FLFPVoxelRendererFaceData
 struct FLFPVoxelRendererSectionData
 {
 	FLFPVoxelRendererSectionData() {}
-	FLFPVoxelRendererSectionData(const FIntVector NewFaceDirectionAmount, const uint8 Index) : RenderIndex(Index)
+	FLFPVoxelRendererSectionData(const FIntVector NewFaceDirectionAmount)
 	{
 		SetFaceDirectionAmount(NewFaceDirectionAmount);
 	}
@@ -100,8 +100,6 @@ struct FLFPVoxelRendererSectionData
 	FIntVector FaceDirectionAmount = FIntVector(0);
 
 	uint32 TriangleCount = 0;
-
-	uint8 RenderIndex = 0;
 
 public:
 
@@ -193,7 +191,7 @@ public:
 						{
 							FVector3f LocalPos = (VertexPosList[(VertexPosList.Num() - 1) - Index] - VoxelRenderOffset) / VoxelFullSize;
 
-							return FColor(FMath::RoundToInt(LocalPos.X), FMath::RoundToInt(LocalPos.Y), FMath::RoundToInt(LocalPos.Z), RenderIndex);
+							return FColor(FMath::RoundToInt(LocalPos.X), FMath::RoundToInt(LocalPos.Y), FMath::RoundToInt(LocalPos.Z));
 						};
 
 					ColorList.Append(

@@ -519,7 +519,7 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 			/** Fill Up Section If Not Enought */
 			while (TargetThreadResult->SectionData.IsValidIndex(MaxMaterialIndex) == false)
 			{
-				TargetThreadResult->SectionData.Add(FLFPVoxelRendererSectionData(VoxelSetting.GetPaletteGrid(), TargetThreadResult->SectionData.Num()));
+				TargetThreadResult->SectionData.Add(FLFPVoxelRendererSectionData(VoxelSetting.GetPaletteGrid()));
 			}
 
 			for (const auto& BatchData : BatchDataMap)
