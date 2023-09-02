@@ -675,6 +675,12 @@ public: /** Delegate */
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
 		FOnVoxelRendererUpdate OnVoxelRendererUpdate;
 
+	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
+		FOnVoxelRendererUpdate OnVoxelMeshUpdate;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
+		FOnVoxelRendererUpdate OnVoxelAttributesUpdate;
+
 
 /**********************/
 

@@ -116,8 +116,8 @@ bool ULFPVoxelRendererTableComponent::CanUpdateMesh(const FLFPChuckUpdateAction&
 	{
 		for (const auto& ChangeData : Data.GridChangeNameList)
 		{
-			const auto VoxelTypeOld = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.Key));
-			const auto VoxelTypeNew = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.Value));
+			const auto VoxelTypeOld = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.FromName));
+			const auto VoxelTypeNew = reinterpret_cast<FLFPVoxelTypeTable*>(VoxelTypeTable->FindRowUnchecked(ChangeData.ToName));
 
 			const int32 MaterialIDOld = VoxelTypeOld != nullptr ? VoxelTypeOld->VoxelMaterial : INDEX_NONE;
 			const int32 MaterialIDNew = VoxelTypeNew != nullptr ? VoxelTypeNew->VoxelMaterial : INDEX_NONE;

@@ -233,6 +233,8 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 		Status.MarkRendererModeDirty(GenerationSetting.StaticUpdateDelayPerComponent != 0);
 
 		SetComponentTickEnabled(true);
+
+		OnVoxelMeshUpdate.Broadcast();
 	}
 }
 
@@ -250,6 +252,8 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 		Status.bIsVoxelAttributeDirty = true;
 
 		SetComponentTickEnabled(true);
+
+		OnVoxelAttributesUpdate.Broadcast();
 	}
 }
 

@@ -436,15 +436,55 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FLFPGridNameUpdateData
+{
+	GENERATED_BODY()
+
+	FLFPGridNameUpdateData() {}
+
+	FLFPGridNameUpdateData(const FName& A, const FName& B) : FromName(A), ToName(B) {}
+
+public:
+
+	UPROPERTY()
+		FName FromName = FName();
+
+	UPROPERTY()
+		FName ToName = FName();
+
+public:
+
+	bool operator==(const FLFPGridNameUpdateData& Other) const
+	{
+		return FromName == Other.FromName && ToName == Other.ToName;
+	}
+
+	bool operator!=(const FLFPGridNameUpdateData& Other) const
+	{
+		return FromName != Other.FromName || ToName != Other.ToName;
+	}
+};
+
+#if UE_BUILD_DEBUG
+uint32 GetTypeHash(const FLFPGridNameUpdateData& Thing);
+#else
+FORCEINLINE uint32 GetTypeHash(const FLFPGridNameUpdateData& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FLFPGridNameUpdateData));
+	return Hash;
+}
+#endif
+
+USTRUCT(BlueprintType)
 struct FLFPChuckUpdateAction
 {
 	GENERATED_BODY()
 
-	FLFPChuckUpdateAction() : GridChangeNameList(TMap<FName, FName>()), bIsGridTagDirty(false) {}
+	FLFPChuckUpdateAction() : GridChangeNameList(TSet<FLFPGridNameUpdateData>()), bIsGridTagDirty(false) {}
 
 public:
 
-	UPROPERTY() TMap<FName, FName> GridChangeNameList = TMap<FName, FName>();
+	UPROPERTY() TSet<FLFPGridNameUpdateData> GridChangeNameList = TSet<FLFPGridNameUpdateData>();
 
 	UPROPERTY() uint8 bIsGridTagDirty : 1;
 
