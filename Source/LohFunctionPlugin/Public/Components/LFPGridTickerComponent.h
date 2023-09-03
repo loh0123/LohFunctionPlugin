@@ -15,15 +15,20 @@ struct FLFPGridTickerTable : public FTableRowBase
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") TSubclassOf<ULFPTickerObject> ScheduleTicker = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") 
+		bool bIsRandomOnly = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") TSubclassOf<ULFPTickerObject> RandomTicker = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable")
+		TSubclassOf<ULFPTickerObject> RandomTicker = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") int32 TickDelay = INDEX_NONE;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable", meta = (EditCondition = "!bIsRandomOnly"))
+		TSubclassOf<ULFPTickerObject> ScheduleTicker = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") int32 TickRandomOffset = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable", meta = (EditCondition = "!bIsRandomOnly")) 
+		int32 TickDelay = INDEX_NONE;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable") bool bIsRandomOnly = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LFPGridTickerTable", meta = (EditCondition = "!bIsRandomOnly")) 
+		int32 TickRandomOffset = 0;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
