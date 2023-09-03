@@ -265,6 +265,24 @@ void ULFPVoxelRendererComponent::SetDisableFaceCulling(const bool bChuck, const 
 	UpdateMesh();
 }
 
+int32 ULFPVoxelRendererComponent::GetGridIndexWithWorldLocation(const FVector Location) const
+{
+	if (IsValid(VoxelContainer) == false)
+	{
+		return INDEX_NONE;
+	}
+
+	const FVector MaxLocation = (GenerationSetting.VoxelHalfSize * 2.0f);
+	const FVector CorrectlLocation = ((Location - GetComponentLocation()) + (FVector(VoxelContainer->GetSetting().GetPaletteGrid()) * GenerationSetting.VoxelHalfSize)) / (GenerationSetting.VoxelHalfSize * 2.0f);
+
+	if (CorrectlLocation.GetMin() < 0.0f || CorrectlLocation.X > MaxLocation.X || CorrectlLocation.Y > MaxLocation.Y || CorrectlLocation.Z > MaxLocation.Z)
+	{
+		return INDEX_NONE;
+	}
+
+	return ULFPGridLibrary::ToGridIndex(FIntVector(FMath::FloorToInt(CorrectlLocation.X), FMath::FloorToInt(CorrectlLocation.Y), FMath::FloorToInt(CorrectlLocation.Z)), VoxelContainer->GetSetting().GetPaletteGrid());
+}
+
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)
 {
 	if (CanUpdateMesh(Data)) UpdateMesh();

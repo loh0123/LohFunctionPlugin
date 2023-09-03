@@ -661,6 +661,11 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE int32 GetGridIndexWithWorldLocation(const FVector Location) const;
+
+public:
+
 	UFUNCTION()
 		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
