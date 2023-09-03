@@ -43,25 +43,22 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 		{
 			for (int32 TickCount = 0; TickCount < RandomTickCount; TickCount++)
 			{
-				const int32 CurrentRandomTickIndex = GetCacheRandomTickIndex(CurrentGroupData.Value);
+				const int32 RandomTickIndex = GetCacheRandomTickIndex(CurrentGroupData.Value);
 
-				if (CurrentRandomTickIndex == INDEX_NONE)
+				if (RandomTickIndex == INDEX_NONE)
 				{
 					break;
 				}
 
-				auto& TickData = CurrentGroupData.Value.RandomTickList[CurrentRandomTickIndex];
+				const ULFPTickerObject* RandomTicker = GetRandomTicker(CurrentGroupData.Key, RandomTickIndex);
 
-				if (TickData.DecreaseDelay())
+				if (IsValid(RandomTicker))
 				{
-					if (TickData.TryRunTicker(CurrentGroupData.Key, this, CurrentRandomTickIndex, false) == false)
-					{
-						OnRandomTick.Broadcast(CurrentRandomTickIndex, CurrentGroupData.Key);
-					}
-					else
-					{
-						TickData.Ticker = nullptr;
-					}
+					RandomTicker->OnExecute(CurrentGroupData.Key, RandomTickIndex, this);
+				}
+				else
+				{
+					OnScheduledAdded.Broadcast(RandomTickIndex, CurrentGroupData.Key);
 				}
 			}
 		}
@@ -74,11 +71,14 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 			{
 				if (TickData.Value.DecreaseDelay())
 				{
-					if (TickData.Value.TryRunTicker(CurrentGroupData.Key, this, TickData.Key, true) == false)
+					bool bCanRemove = true;
+
+					if (TickData.Value.TryRunTicker(CurrentGroupData.Key, this, bCanRemove, TickData.Key) == false)
 					{
 						OnScheduledTick.Broadcast(TickData.Key, CurrentGroupData.Key);
 					}
-					else
+
+					if (bCanRemove)
 					{
 						OnScheduledRemove.Broadcast(TickData.Key, CurrentGroupData.Key);
 
@@ -97,13 +97,14 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 	return;
 }
 
-void ULFPIndexTickerComponent::SetRandomTickData(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
+void ULFPIndexTickerComponent::AddRandomTickGroup(const FIntPoint GroupIndex)
 {
-	auto& GroupData = TickList.FindOrAdd(GroupIndex, FLFPIndexTickGroupData(RandomTickMaxIndex, GroupIndex.Y));
+	if (TickList.Contains(GroupIndex) == false)
+	{
+		auto& GroupData = TickList.Add(GroupIndex);
 
-	GroupData.ScheduledTickList.Add(TickIndex, TickData);
-
-	OnRandomTickUpdated.Broadcast(TickIndex, GroupIndex);
+		GroupData.RandomTickIndex += GroupIndex.Y;
+	}
 }
 
 void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
@@ -115,9 +116,20 @@ void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickD
 		return;
 	}
 
-	auto& GroupData = TickList.FindOrAdd(GroupIndex, FLFPIndexTickGroupData(RandomTickMaxIndex, GroupIndex.Y));
+	if (TickList.Contains(GroupIndex) == false)
+	{
+		auto& GroupData = TickList.Add(GroupIndex);
 
-	GroupData.ScheduledTickList.Add(TickIndex, TickData);
+		GroupData.RandomTickIndex += GroupIndex.Y;
+
+		GroupData.ScheduledTickList.Add(TickIndex, TickData);
+	}
+	else
+	{
+		auto& GroupData = TickList.FindChecked(GroupIndex);
+
+		GroupData.ScheduledTickList.Add(TickIndex, TickData);
+	}
 
 	OnScheduledAdded.Broadcast(TickIndex, GroupIndex);
 }
@@ -134,7 +146,7 @@ void ULFPIndexTickerComponent::LoadGroupList(const TMap<FIntPoint, FLFPIndexTick
 	return;
 }
 
-void ULFPIndexTickerComponent::SaveGroupList(UPARAM(ref) TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList, const bool bUnload)
+void ULFPIndexTickerComponent::SaveGroupList(TMap<FIntPoint, FLFPIndexTickGroupData>& SaveVariable, const TArray<FIntPoint>& GroupIndexList, const bool bUnload)
 {
 	TArray<FIntPoint> RemoveIndexList;
 
@@ -145,6 +157,10 @@ void ULFPIndexTickerComponent::SaveGroupList(UPARAM(ref) TMap<FIntPoint, FLFPInd
 			SaveVariable.Add(GroupIndex, TickList.FindChecked(GroupIndex));
 
 			if (bUnload) RemoveIndexList.Add(GroupIndex);
+		}
+		else
+		{
+			SaveVariable.Remove(GroupIndex);
 		}
 	}
 
@@ -186,10 +202,5 @@ int32 ULFPIndexTickerComponent::GetCacheRandomTickIndex(FLFPIndexTickGroupData& 
 	}
 	
 	return CacheRandomTickList[Data.RandomTickIndex++];
-}
-
-ULFPTickerObject* ULFPIndexTickerComponent::GetRandomTicker(const FIntPoint GroupIndex, const int32 TickIndex) const
-{
-	return nullptr;
 }
 

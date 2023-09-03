@@ -46,6 +46,20 @@ void ULFPGridTickerComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	// ...
 }
 
+ULFPTickerObject* ULFPGridTickerComponent::GetRandomTicker(const FIntPoint GroupIndex, const int32 TickIndex) const
+{
+	const auto& GridPalette = GridContainer->GetGridPalette(GroupIndex.X, GroupIndex.Y, TickIndex);
+
+	const auto TickerStruct = reinterpret_cast<FLFPGridTickerTable*>(TickerTable->FindRowUnchecked(GridPalette.Name));
+
+	if (TickerStruct != nullptr && IsValid(TickerStruct->RandomTicker))
+	{
+		return TickerStruct->RandomTicker->GetDefaultObject<ULFPTickerObject>();
+	}
+
+	return nullptr;
+}
+
 void ULFPGridTickerComponent::SetupContainer(ULFPGridContainerComponent* NewGridContainer)
 {
 	if (IsValid(GridContainer))
@@ -75,11 +89,15 @@ void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32
 
 		if (TickerStruct != nullptr)
 		{
-			SetRandomTickData(FLFPIndexTickData(TickerStruct->RandomTicker, TickerStruct->TickDelay + FMath::RandHelper(TickerStruct->TickRandomOffset)), GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
-
-			if (TickerStruct->bIsRandomOnly == false)
+			if (TickerStruct->bIsRandomOnly)
 			{
-				ScheduledTickIndex(FLFPIndexTickData(TickerStruct->ScheduleTicker, TickerStruct->TickDelay + FMath::RandHelper(TickerStruct->TickRandomOffset)), GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
+				AddRandomTickGroup(FIntPoint(RegionIndex, ChuckIndex));
+			}
+			else
+			{
+				const FLFPIndexTickData NewTickData = FLFPIndexTickData(TickerStruct->ScheduleTicker, TickerStruct->TickDelay + FMath::RandHelper(TickerStruct->TickRandomOffset));
+
+				ScheduledTickIndex(NewTickData, GridData.Key, FIntPoint(RegionIndex, ChuckIndex));
 			}
 		}
 	}

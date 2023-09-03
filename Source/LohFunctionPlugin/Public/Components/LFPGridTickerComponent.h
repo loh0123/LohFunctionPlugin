@@ -45,6 +45,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual ULFPTickerObject* GetRandomTicker(const FIntPoint GroupIndex, const int32 TickIndex) const override;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridTickerComponent | Function")
