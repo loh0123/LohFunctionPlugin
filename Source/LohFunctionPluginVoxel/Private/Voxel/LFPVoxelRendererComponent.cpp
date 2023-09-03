@@ -265,7 +265,7 @@ void ULFPVoxelRendererComponent::SetDisableFaceCulling(const bool bChuck, const 
 	UpdateMesh();
 }
 
-int32 ULFPVoxelRendererComponent::GetGridIndexWithWorldLocation(const FVector Location) const
+int32 ULFPVoxelRendererComponent::ToGridIndex(const FVector Location) const
 {
 	if (IsValid(VoxelContainer) == false)
 	{
@@ -281,6 +281,18 @@ int32 ULFPVoxelRendererComponent::GetGridIndexWithWorldLocation(const FVector Lo
 	}
 
 	return ULFPGridLibrary::ToGridIndex(FIntVector(FMath::FloorToInt(CorrectlLocation.X), FMath::FloorToInt(CorrectlLocation.Y), FMath::FloorToInt(CorrectlLocation.Z)), VoxelContainer->GetSetting().GetPaletteGrid());
+}
+
+FVector ULFPVoxelRendererComponent::ToWorldLocation(const int32 GridIndex) const
+{
+	if (IsValid(VoxelContainer) == false || GridIndex < 0 || GridIndex >= VoxelContainer->GetSetting().GetGridLength())
+	{
+		return FVector(-1.0f);
+	}
+
+	const FIntVector GridLocation = ULFPGridLibrary::ToGridLocation(GridIndex, VoxelContainer->GetSetting().GetPaletteGrid());
+
+	return (GetComponentLocation() - (FVector(VoxelContainer->GetSetting().GetPaletteGrid()) * GenerationSetting.VoxelHalfSize)) + (FVector(GridLocation) * GenerationSetting.VoxelHalfSize * 2.0f) + GenerationSetting.VoxelHalfSize;
 }
 
 void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data)

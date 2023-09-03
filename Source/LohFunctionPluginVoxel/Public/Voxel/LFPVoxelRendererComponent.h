@@ -662,7 +662,10 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE int32 GetGridIndexWithWorldLocation(const FVector Location) const;
+		FORCEINLINE int32 ToGridIndex(const FVector Location) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Function")
+		FORCEINLINE FVector ToWorldLocation(const int32 GridIndex) const;
 
 public:
 
