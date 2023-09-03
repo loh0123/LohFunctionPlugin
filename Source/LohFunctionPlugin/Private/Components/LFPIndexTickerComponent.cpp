@@ -58,7 +58,7 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 				}
 				else
 				{
-					OnScheduledAdded.Broadcast(RandomTickIndex, CurrentGroupData.Key);
+					OnRandomTick.Broadcast(RandomTickIndex, CurrentGroupData.Key);
 				}
 			}
 		}
@@ -97,14 +97,9 @@ void ULFPIndexTickerComponent::CallTick(const bool bRandomTick, const bool bSche
 	return;
 }
 
-void ULFPIndexTickerComponent::AddRandomTickGroup(const FIntPoint GroupIndex)
+void ULFPIndexTickerComponent::AddTickGroup(const FIntPoint GroupIndex)
 {
-	if (TickList.Contains(GroupIndex) == false)
-	{
-		auto& GroupData = TickList.Add(GroupIndex);
-
-		GroupData.RandomTickIndex += GroupIndex.Y;
-	}
+	TickList.FindOrAdd(GroupIndex, GroupIndex.Y);
 }
 
 void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex)
@@ -116,20 +111,9 @@ void ULFPIndexTickerComponent::ScheduledTickIndex(const FLFPIndexTickData& TickD
 		return;
 	}
 
-	if (TickList.Contains(GroupIndex) == false)
-	{
-		auto& GroupData = TickList.Add(GroupIndex);
+	auto& GroupData = TickList.FindOrAdd(GroupIndex, GroupIndex.Y);
 
-		GroupData.RandomTickIndex += GroupIndex.Y;
-
-		GroupData.ScheduledTickList.Add(TickIndex, TickData);
-	}
-	else
-	{
-		auto& GroupData = TickList.FindChecked(GroupIndex);
-
-		GroupData.ScheduledTickList.Add(TickIndex, TickData);
-	}
+	GroupData.ScheduledTickList.Add(TickIndex, TickData);
 
 	OnScheduledAdded.Broadcast(TickIndex, GroupIndex);
 }

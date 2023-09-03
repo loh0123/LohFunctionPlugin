@@ -91,7 +91,7 @@ void ULFPGridTickerComponent::OnUpdateChuck(const int32 RegionIndex, const int32
 		{
 			if (TickerStruct->bIsRandomOnly)
 			{
-				AddRandomTickGroup(FIntPoint(RegionIndex, ChuckIndex));
+				AddTickGroup(FIntPoint(RegionIndex, ChuckIndex));
 			}
 			else
 			{

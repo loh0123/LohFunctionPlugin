@@ -56,6 +56,10 @@ struct FLFPIndexTickGroupData
 {
 	GENERATED_BODY()
 
+	FLFPIndexTickGroupData() {}
+
+	FLFPIndexTickGroupData(const int32 StartIndex) : RandomTickIndex(StartIndex) {}
+
 public:
 
 	UPROPERTY(BlueprintReadWrite, SaveGame, Category = "LFPIndexTickGroupData")
@@ -88,7 +92,7 @@ public:
 		FORCEINLINE void CallTick(const bool bRandomTick = true, const bool bScheduledTick = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
-		FORCEINLINE void AddRandomTickGroup(const FIntPoint GroupIndex);
+		FORCEINLINE void AddTickGroup(const FIntPoint GroupIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPIndexTickerComponent | Function")
 		FORCEINLINE void ScheduledTickIndex(const FLFPIndexTickData& TickData, const int32 TickIndex, const FIntPoint GroupIndex);
