@@ -203,7 +203,7 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 		return false;
 	}
 
-	OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
+	OnUnequipItem.Broadcast(InventoryComponent->GetInventorySlot(InventorySlotIndex), EquipmentIndex, InventorySlotIndex, EventInfo);
 
 	OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), EquipmentIndex, EventInfo);
 
