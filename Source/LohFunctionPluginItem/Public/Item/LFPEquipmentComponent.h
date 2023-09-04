@@ -170,7 +170,7 @@ public: // Getter
 		const FLFPInventoryItemData& GetEquipmentSlot(const int32 Index) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(Index) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[Index].SlotIndex) : FLFPInventoryItemData::EmptyInventoryItemData; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		TPair<int32, FLFPEquipmentSlotData> FindEquipmentSlotIndex(const int32 InventorySlotIndex) const;
+		FLFPEquipmentSlotData FindEquipmentSlotIndex(const int32 InventorySlotIndex, int32& EquipmentIndex) const;
 
 public:
 
