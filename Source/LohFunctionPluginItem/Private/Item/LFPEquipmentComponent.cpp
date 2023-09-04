@@ -160,9 +160,9 @@ bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, co
 		return false;
 	}
 
-	const int32 EquipmentSlotIndex = EquipmentSlotList.Add(FLFPEquipmentSlotData(InventorySlotIndex, bIsSlotActive, bIsSlotLock));
+	EquipmentSlotList.Add(FLFPEquipmentSlotData(InventorySlotIndex, bIsSlotActive, bIsSlotLock));
 
-	OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, EquipmentSlotIndex, EventInfo);
+	OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, InventorySlotIndex, EventInfo);
 
 	return true;
 }
@@ -203,7 +203,7 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 		return false;
 	}
 
-	OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), EquipmentIndex, EventInfo);
+	OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), InventorySlotIndex, EventInfo);
 
 	EquipmentSlotList.RemoveAt(EquipmentIndex);
 
