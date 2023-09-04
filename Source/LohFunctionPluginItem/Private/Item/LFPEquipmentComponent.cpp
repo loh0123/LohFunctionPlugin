@@ -232,7 +232,7 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 	{
 		if ((bToActiveSlotOnly == false) && (EquipmentSlot.bIsActive == false)) continue;
 
-		if (InventoryComponent->SwapItem(InventorySlotIndex, EquipmentSlot.SlotIndex, EventInfo)) return true;
+		if (InventoryComponent->SwapItem(InventorySlotIndex, "All", EquipmentSlot.SlotIndex, "All", EventInfo)) return true;
 	}
 
 	UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryEquipItem No equipment slot available for this item"));
@@ -265,7 +265,7 @@ bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, cons
 		return false;
 	}
 
-	return InventoryComponent->SwapItemToAvailable(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, Slotname, EventInfo);
+	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, "All", INDEX_NONE, Slotname, EventInfo);
 }
 
 bool ULFPEquipmentComponent::SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo)
