@@ -354,12 +354,12 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 	{
 		if (OldItemData.ItemName.IsNone() == false)
 		{
-			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
+			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
 		}
 
 		if (NewItemData.ItemName.IsNone() == false)
 		{
-			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
+			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
 		}
 	}
 }
@@ -371,7 +371,7 @@ bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInvent
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
 
-	return CanEquipItem(ItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
+	return CanEquipItem(ItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
 }
 
 bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
@@ -381,7 +381,7 @@ bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInv
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
 
-	return CanUnequipItem(ItemData, EquipmentSlotIndex.SlotIndex, SlotIndex, EventInfo);
+	return CanUnequipItem(ItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
 }
 
 bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
@@ -391,37 +391,37 @@ bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInven
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		if ((FromItemData.ItemName.IsNone() == false) && CanUnequipItem(FromItemData, EquipmentSlotIndexA.SlotIndex, FromSlot, EventInfo) == false) return false;
-		if ((ToItemData.ItemName.IsNone() == false) && CanEquipItem(ToItemData, EquipmentSlotIndexA.SlotIndex, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanUnequipItem(FromItemData, EquipmentSlotIndexA.Key, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanEquipItem(ToItemData, EquipmentSlotIndexA.Key, ToSlot, EventInfo) == false) return false;
 	}
 
 	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		if ((ToItemData.ItemName.IsNone() == false) && CanUnequipItem(ToItemData, EquipmentSlotIndexB.SlotIndex, ToSlot, EventInfo) == false) return false;
-		if ((FromItemData.ItemName.IsNone() == false) && CanEquipItem(FromItemData, EquipmentSlotIndexB.SlotIndex, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanUnequipItem(ToItemData, EquipmentSlotIndexB.Key, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanEquipItem(FromItemData, EquipmentSlotIndexB.Key, FromSlot, EventInfo) == false) return false;
 	}
 
 	return true;
 }
 
-FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex) const
+TPair<int32, FLFPEquipmentSlotData> ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex) const
 {
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : FindEquipmentSlotIndex InventoryComponent is not valid"));
 
-		return INDEX_NONE;
+		return TPair<int32, FLFPEquipmentSlotData>(INDEX_NONE, FLFPEquipmentSlotData());
 	}
 
 	for (int32 EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
 	{
 		if (InventorySlotIndex == EquipmentSlotList[EquipmentSlotIndex].SlotIndex)
 		{
-			return EquipmentSlotList[EquipmentSlotIndex];
+			return TPair<int32, FLFPEquipmentSlotData>(EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex]);
 		}
 	}
 
-	return INDEX_NONE;
+	return TPair<int32, FLFPEquipmentSlotData>(INDEX_NONE, FLFPEquipmentSlotData());
 }
 
 void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue)
