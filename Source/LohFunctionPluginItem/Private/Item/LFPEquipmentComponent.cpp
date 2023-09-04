@@ -330,15 +330,17 @@ void ULFPEquipmentComponent::RunEquipOnAllSlot(const FString& EventInfo) const
 {
 	if (IsValid(InventoryComponent) == false) return;
 
-	int32 Index = 0;
+	int32 Index = INDEX_NONE;
 
 	for (const auto& EquipmentSlot : EquipmentSlotList)
 	{
+		Index++;
+		
 		if (EquipmentSlot.bIsActive == false) continue;
 
 		if (InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex).ItemName.IsNone()) continue;
 
-		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex), Index++, EquipmentSlot.SlotIndex, EventInfo);
+		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex), Index, EquipmentSlot.SlotIndex, EventInfo);
 	}
 }
 
