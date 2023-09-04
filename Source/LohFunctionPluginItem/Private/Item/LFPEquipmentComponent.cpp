@@ -346,7 +346,9 @@ void ULFPEquipmentComponent::RunEquipOnAllSlot(const FString& EventInfo) const
 
 void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo)
 {
-	const auto EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+	int32 EquipmentSlotIndex = INDEX_NONE;
+
+	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 
@@ -354,74 +356,83 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 	{
 		if (OldItemData.ItemName.IsNone() == false)
 		{
-			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
+			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 		}
 
 		if (NewItemData.ItemName.IsNone() == false)
 		{
-			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
+			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 		}
 	}
 }
 
 bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	const auto EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+	int32 EquipmentSlotIndex = INDEX_NONE;
+
+	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
 
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
 
-	return CanEquipItem(ItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
+	return CanEquipItem(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 }
 
 bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
-	const auto EquipmentSlotIndex = FindEquipmentSlotIndex(SlotIndex);
+	int32 EquipmentSlotIndex = INDEX_NONE;
+
+	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
 
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
 
-	return CanUnequipItem(ItemData, EquipmentSlotIndex.Key, SlotIndex, EventInfo);
+	return CanUnequipItem(ItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
 }
 
 bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
 {
-	const auto EquipmentSlotIndexA = FindEquipmentSlotIndex(FromSlot);
-	const auto EquipmentSlotIndexB = FindEquipmentSlotIndex(ToSlot);
+	int32 EquipmentSlotIndexA = INDEX_NONE;
+	int32 EquipmentSlotIndexB = INDEX_NONE;
+
+	FindEquipmentSlotIndex(FromSlot, EquipmentSlotIndexA);
+	FindEquipmentSlotIndex(ToSlot, EquipmentSlotIndexB);
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
-		if ((FromItemData.ItemName.IsNone() == false) && CanUnequipItem(FromItemData, EquipmentSlotIndexA.Key, FromSlot, EventInfo) == false) return false;
-		if ((ToItemData.ItemName.IsNone() == false) && CanEquipItem(ToItemData, EquipmentSlotIndexA.Key, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanUnequipItem(FromItemData, EquipmentSlotIndexA, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanEquipItem(ToItemData, EquipmentSlotIndexA, ToSlot, EventInfo) == false) return false;
 	}
 
 	if (EquipmentSlotIndexB != INDEX_NONE)
 	{
-		if ((ToItemData.ItemName.IsNone() == false) && CanUnequipItem(ToItemData, EquipmentSlotIndexB.Key, ToSlot, EventInfo) == false) return false;
-		if ((FromItemData.ItemName.IsNone() == false) && CanEquipItem(FromItemData, EquipmentSlotIndexB.Key, FromSlot, EventInfo) == false) return false;
+		if ((ToItemData.ItemName.IsNone() == false) && CanUnequipItem(ToItemData, EquipmentSlotIndexB, ToSlot, EventInfo) == false) return false;
+		if ((FromItemData.ItemName.IsNone() == false) && CanEquipItem(FromItemData, EquipmentSlotIndexB, FromSlot, EventInfo) == false) return false;
 	}
 
 	return true;
 }
 
-TPair<int32, FLFPEquipmentSlotData> ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex) const
+FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex, int32& EquipmentIndex) const
 {
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : FindEquipmentSlotIndex InventoryComponent is not valid"));
 
-		return TPair<int32, FLFPEquipmentSlotData>(INDEX_NONE, FLFPEquipmentSlotData());
+		return INDEX_NONE;
 	}
 
 	for (int32 EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
 	{
 		if (InventorySlotIndex == EquipmentSlotList[EquipmentSlotIndex].SlotIndex)
 		{
-			return TPair<int32, FLFPEquipmentSlotData>(EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex]);
+			EquipmentIndex = EquipmentSlotIndex;
+			
+			return EquipmentSlotList[EquipmentSlotIndex];
 		}
 	}
 
-	return TPair<int32, FLFPEquipmentSlotData>(INDEX_NONE, FLFPEquipmentSlotData());
+	return INDEX_NONE;
 }
 
 void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue)
