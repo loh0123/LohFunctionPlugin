@@ -44,7 +44,7 @@ void ULFPInventoryComponent::BeginPlay()
 
 	for (const auto& SlotName : InventorySlotNameList)
 	{
-		if (SlotName.Value.X <= 0 || SlotName.Value.Y > MaxInventorySlotAmount || SlotName.Value.X > SlotName.Value.Y)
+		if (SlotName.Value.X < 0 || SlotName.Value.Y > MaxInventorySlotAmount || SlotName.Value.X > SlotName.Value.Y)
 		{
 			UE_LOG(LogTemp, Error, TEXT("ULFPInventoryComponent : InventorySlotName (%s) Is Invalid : Please Make Sure X Is Min, Y Is Max, Y Is Smaller Than MaxInventorySlotAmount And X Is Bigger Than -1"), *SlotName.Key.ToString());
 		}
@@ -264,7 +264,7 @@ bool ULFPInventoryComponent::RemoveItem(UPARAM(ref)FLFPInventoryItemData& ItemDa
 
 		for (const auto& ItemIndex : ItemIndexList)
 		{
-			if (CanRemoveItem(InventorySlotItemList[SlotIndex], ItemIndex, EventInfo) == false)
+			if (CanRemoveItem(InventorySlotItemList[ItemIndex], ItemIndex, EventInfo) == false)
 			{
 				continue;
 			}
@@ -338,7 +338,7 @@ void ULFPInventoryComponent::ClearInventory(const FName SlotName, const FString 
 		BroadcastItemEvent(SlotIndex, OldItemData, InventorySlotItemList[SlotIndex], EventInfo);
 	}
 
-	TrimInventorySlotList(ItemIndexList.Last());
+	TrimInventorySlotList();
 
 	return;
 }
@@ -386,11 +386,10 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlotIndex, const FName Fro
 		return false;
 	}
 
-	const int32 MaxIndex = FMath::Max(SwapFromIndexList.Max(), SwapToIndexList.Max());
-
-	if (InventorySlotItemList.Num() <= MaxIndex) InventorySlotItemList.SetNum(MaxIndex + 1);
-
 	int32 CompleteAmount = 0;
+	int32 MaxAmount = 0;
+
+	const bool bMultipleSwap = SwapFromIndexList.Num() > 1 || SwapToIndexList.Num() > 1;
 
 	for (const auto& CurrentFromSlotIndex : SwapFromIndexList)
 	{
@@ -403,15 +402,19 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlotIndex, const FName Fro
 
 		for (const auto& CurrentToSlotIndex : SwapToIndexList)
 		{
+			if (InventorySlotItemList.IsValidIndex(CurrentToSlotIndex) == false) InventorySlotItemList.SetNum(CurrentToSlotIndex + 1);
+
 			if (CanSwapItem(InventorySlotItemList[CurrentFromSlotIndex], CurrentFromSlotIndex, InventorySlotItemList[CurrentToSlotIndex], CurrentToSlotIndex, EventInfo) == false)
 			{
 				continue;
 			}
 
+			MaxAmount = FMath::Max(CurrentToSlotIndex, MaxAmount);
+
 			const FLFPInventoryItemData ItemA = InventorySlotItemList[CurrentFromSlotIndex];
 			const FLFPInventoryItemData ItemB = InventorySlotItemList[CurrentToSlotIndex];
 
-			const bool bIsCompleteSwap = ProcessSwapItem(InventorySlotItemList[CurrentFromSlotIndex], CurrentFromSlotIndex, InventorySlotItemList[CurrentToSlotIndex], CurrentToSlotIndex, EventInfo);
+			const bool bIsCompleteSwap = ProcessSwapItem(InventorySlotItemList[CurrentFromSlotIndex], CurrentFromSlotIndex, InventorySlotItemList[CurrentToSlotIndex], CurrentToSlotIndex, bMultipleSwap, EventInfo);
 
 			OnSwapItem.Broadcast(ItemA, CurrentFromSlotIndex, ItemB, CurrentToSlotIndex, EventInfo);
 
@@ -427,7 +430,7 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlotIndex, const FName Fro
 		}
 	}
 
-	TrimInventorySlotList(MaxIndex);
+	TrimInventorySlotList();
 
 	return SwapFromIndexList.Num() == CompleteAmount;
 }
@@ -481,18 +484,18 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 			continue;
 		}
 
+		FLFPInventoryItemData RemoveItemData = InventorySlotItemList[CurrentFromSlotIndex];
+
 		FLFPInventoryItemData CacheItem = InventorySlotItemList[CurrentFromSlotIndex];
 
-		FLFPInventoryItemData RemoveItemData = CacheItem;
-
-		if (RemoveItem(RemoveItemData, CurrentFromSlotIndex, "All", EventInfo) == false)
+		if (RemoveItem(RemoveItemData, CurrentFromSlotIndex, FromSlotName, EventInfo) == false)
 		{
 			continue;
 		}
 
 		if (ToInventory->AddItem(CacheItem, ToSlotIndex, ToSlotName, EventInfo) == false)
 		{
-			AddItem(CacheItem, CurrentFromSlotIndex, "All", EventInfo);
+			AddItem(CacheItem, CurrentFromSlotIndex, FromSlotName, EventInfo);
 		}
 
 		CompleteAmount++;
@@ -519,16 +522,16 @@ void ULFPInventoryComponent::SortInventory(const FName SlotName, const FString E
 			return IsItemSortPriorityHigher(ItemDataA, ItemDataB, EventInfo);
 		});
 
-	TrimInventorySlotList(InventorySlotItemList.Num() - 1);
+	TrimInventorySlotList();
 
 	OnItemSortEvent.Broadcast();
 }
 
-void ULFPInventoryComponent::TrimInventorySlotList(const int32 FromSlot)
+void ULFPInventoryComponent::TrimInventorySlotList()
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 
-	if (IsInventorySlotIndexValid(FromSlot) == false || IsInventorySlotIndexValid(FromSlot + 1))
+	if (InventorySlotItemList.IsEmpty())
 	{
 		return;
 	}
@@ -653,7 +656,7 @@ bool ULFPInventoryComponent::FindItemListWithItemName(TArray<int32>& ItemIndexLi
 
 	for (int32 SlotIndex = SlotRange.X; SlotIndex <= SlotRange.Y; SlotIndex++)
 	{
-		if (InventorySlotItemList[SlotIndex].ItemName.IsEqual(ItemName) == false) continue;
+		if (GetInventorySlot(SlotIndex).ItemName.IsEqual(ItemName) == false) continue;
 		
 		ItemIndexList.Add(SlotIndex);
 

@@ -81,9 +81,9 @@ protected:
 public: // Function
 
 	/**
-	* Add / Set item to inventory
+	* Add item to inventory
 	* @param ItemData Item Data to add to inventory or equipment
-	* @param ItemIndexData Index on where the item has been added or update and what is leave of the item added
+	* @param SlotIndex Index on where the item has been added or update and what is leave of the item added
 	* @param SlotName What Slot Are Use On This Function
 	* @param EventInfo Info to pass to trigger event
 	* @return Some item has been added to inventory
@@ -97,9 +97,8 @@ public: // Function
 	/**
 	* Remove item From inventory
 	* @param ItemData Item Data that got removed from inventory or equipment
-	* @param ItemIndexData Index on where the item has been added or update and what is leave of the item removed
+	* @param SlotIndex Index on where the item has been added or update and what is leave of the item removed
 	* @param SlotName What Slot Are Use On This Function
-	* @param bForce Ignore lock item rule and can remove item
 	* @param EventInfo Info to pass to trigger event
 	* @return Some item has been Removed from inventory
 	*/
@@ -112,7 +111,6 @@ public: // Function
 	/**
 	* Remove All item From inventory
 	* @param SlotName What Slot Are Use On This Function
-	* @param bForce Ignore lock item rule and can remove item
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void ClearInventory(const FName SlotName = FName("All"), const FString EventInfo = FString("None"));
@@ -124,7 +122,7 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SwapItem(const int32 FromSlotIndex, const FName FromSlotName, const int32 ToSlotIndex, const FName ToSlotName, const FString EventInfo = FString("None"));
+		bool SwapItem(const int32 FromSlotIndex, const FName FromSlotName = FName("All"), const int32 ToSlotIndex = -1, const FName ToSlotName = FName("All"), const FString EventInfo = FString("None"));
 
 	/**
 	* Transfer Item From To Inventory
@@ -134,7 +132,7 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlotIndex, const FName FromSlotName, const int32 ToSlotIndex, const FName ToSlotName, const FString EventInfo = FString("None"));
+		bool TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlotIndex, const FName FromSlotName = FName("All"), const int32 ToSlotIndex = -1, const FName ToSlotName = FName("All"), const FString EventInfo = FString("None"));
 
 	/**
 	* Sort inventory using sort function
@@ -148,7 +146,7 @@ public: // Function
 	* @param FromSlot Trim from this index to lower index
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void TrimInventorySlotList(const int32 FromSlot);
+		void TrimInventorySlotList();
 
 
 public: // Event
@@ -189,8 +187,8 @@ public: // Event
 	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItemData& CurrentItemData, UPARAM(ref) FLFPInventoryItemData& RemoveItemData, const int32 SlotIndex, const FString& EventInfo) const { CurrentItemData = FLFPInventoryItemData::EmptyInventoryItemData; return true; }
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
-		bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const;
-	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const FString& EventInfo) const { FLFPInventoryItemData AData = ItemDataA; FLFPInventoryItemData BData = ItemDataB; ItemDataA = BData; ItemDataB = AData; return true; }
+		bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const bool bMultipleSwap, const FString& EventInfo) const;
+	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItemData& ItemDataA, const int32 SlotIndexA, UPARAM(ref) FLFPInventoryItemData& ItemDataB, const int32 SlotIndexB, const bool bMultipleSwap, const FString& EventInfo) const { const FLFPInventoryItemData AData = ItemDataA; const FLFPInventoryItemData BData = ItemDataB; ItemDataA = BData; ItemDataB = AData; return true; }
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
