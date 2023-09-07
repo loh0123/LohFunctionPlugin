@@ -126,10 +126,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool SetEquipmentSlotLock(const int32 EquipmentSlotIndex, const bool bIsSlotLock, const FString& EventInfo = "");
 
-protected:
-
-	UFUNCTION() void RunEquipOnAllSlot(const FString& EventInfo = "RunEquipOnAllSlot") const;
-
 
 public: // Inventory Event
 

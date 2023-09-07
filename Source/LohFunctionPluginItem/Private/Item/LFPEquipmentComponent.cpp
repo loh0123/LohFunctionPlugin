@@ -145,13 +145,6 @@ bool ULFPEquipmentComponent::AddEquipmentSlot(const int32 InventorySlotIndex, co
 		return false;
 	}
 
-	if (InventoryComponent->IsInventorySlotIndexValid(InventorySlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex is not valid"));
-
-		return false;
-	}
-
 	if (EquipmentSlotList.Contains(InventorySlotIndex))
 	{
 		UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : AddEquipmentSlot InventorySlotIndex is already exist"));
@@ -182,13 +175,6 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 	if (IsValid(InventoryComponent) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot InventoryComponent is not valid"));
-
-		return false;
-	}
-
-	if (InventoryComponent->IsInventorySlotItemValid(InventorySlotIndex) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : RemoveEquipmentSlot IsInventorySlotItemValid return false"));
 
 		return false;
 	}
@@ -365,24 +351,6 @@ bool ULFPEquipmentComponent::SetEquipmentSlotLock(const int32 EquipmentSlotIndex
 	return true;
 }
 
-void ULFPEquipmentComponent::RunEquipOnAllSlot(const FString& EventInfo) const
-{
-	if (IsValid(InventoryComponent) == false) return;
-
-	int32 Index = INDEX_NONE;
-
-	for (const auto& EquipmentSlot : EquipmentSlotList)
-	{
-		Index++;
-		
-		if (EquipmentSlot.bIsActive == false) continue;
-
-		if (InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex).ItemName.IsNone()) continue;
-
-		OnEquipItem.Broadcast(InventoryComponent->GetInventorySlot(EquipmentSlot.SlotIndex), Index, EquipmentSlot.SlotIndex, EventInfo);
-	}
-}
-
 void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo)
 {
 	int32 EquipmentSlotIndex = INDEX_NONE;
@@ -391,7 +359,7 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 
-	if (OldItemData != NewItemData)
+	if (OldItemData.ItemName != NewItemData.ItemName)
 	{
 		if (OldItemData.ItemName.IsNone() == false)
 		{
