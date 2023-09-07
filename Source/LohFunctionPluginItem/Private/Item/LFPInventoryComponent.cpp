@@ -150,7 +150,7 @@ bool ULFPInventoryComponent::AddItem(UPARAM(ref)FLFPInventoryItemData& ItemData,
 
 		TArray<int32> ItemIndexList;
 
-		if (FindAvailableInventorySlot(ItemIndexList, ItemData, SlotName, EventInfo) == false)
+		if (FindAvailableInventorySlot(ItemIndexList, ItemData, SlotName) == false)
 		{
 			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : AddItem FindAvailableInventorySlot return false"));
 
@@ -590,7 +590,7 @@ bool ULFPInventoryComponent::IsInventorySlotHasName(const int32 Index, const FNa
 	return (SlotRange.X >= Index && SlotRange.Y <= Index);
 }
 
-bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName, const FString EventInfo) const
+bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
@@ -610,7 +610,16 @@ bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList,
 	return IsValidOutput;
 }
 
-bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName, const FString EventInfo) const
+int32 ULFPInventoryComponent::FindInventorySlotOffsetWithName(const FName SlotName, const int32 SlotIndex) const
+{
+	if (HasInventorySlotName(SlotName) == false) return INDEX_NONE;
+
+	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+
+	return SlotIndex - SlotRange.X;
+}
+
+bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
@@ -626,7 +635,7 @@ bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, 
 	return true;
 }
 
-bool ULFPInventoryComponent::FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FName SlotName, const FString EventInfo) const
+bool ULFPInventoryComponent::FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FName SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 

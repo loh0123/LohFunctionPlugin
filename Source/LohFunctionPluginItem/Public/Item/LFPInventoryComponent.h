@@ -251,17 +251,22 @@ public: // Getter
 
 	/** 
 	* Find Empty Or Available Inventory Slot
-	* Please Override (IsInventorySlotHasTag) For Custom Behavior On Add Item
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName, const FString EventInfo = FString("None")) const;
+		bool FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName) const;
+
+	/** 
+	* Find Slot Index Within Slot Name Range
+	*/
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
+		int32 FindInventorySlotOffsetWithName(const FName SlotName, const int32 SlotIndex) const;
 
 	/** 
 	* Find Inventory Slot Using Slot Name Defined On (InventorySlotNameList) variable
 	* Suitable To Using For Getting Slot Based On Slot Type
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName, const FString EventInfo = FString("None")) const;
+		bool FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName) const;
 
 	/** 
 	* Find Items Using Gameplay Tag 
@@ -269,7 +274,7 @@ public: // Getter
 	* Please Override (IsInventorySlotHasTag) To Use This Function 
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FName SlotName, const FString EventInfo = FString("None")) const;
+		bool FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FName SlotName) const;
 
 	/** 
 	* Find Items Using Item Name 

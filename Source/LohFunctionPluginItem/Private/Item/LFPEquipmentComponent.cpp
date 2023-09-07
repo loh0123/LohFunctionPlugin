@@ -16,6 +16,7 @@ void ULFPEquipmentComponent::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, InventoryComponent, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ULFPEquipmentComponent, EquipmentSlotList, COND_None, REPNOTIFY_Always);
 }
 
 
@@ -54,33 +55,40 @@ void ULFPEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void ULFPEquipmentComponent::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
-
-	if (Ar.IsLoading())
-	{
-		RunEquipOnAllSlot();
-	}
 }
 
 void ULFPEquipmentComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 
-	if (IsValid(InventoryComponent))
-	{
-		InventoryComponent->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+	SetInventoryComponent_Internal(InventoryComponent, Component);
 
-		InventoryComponent->CheckComponentList.Remove(this);
+	return;
+}
+
+void ULFPEquipmentComponent::SetInventoryComponent_Internal(ULFPInventoryComponent* OldComponent, ULFPInventoryComponent* NewComponent)
+{
+	if (IsValid(OldComponent))
+	{
+		OldComponent->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+
+		OldComponent->CheckComponentList.Remove(this);
+
+		ClearEquipmentSlot("SetInventoryComponent");
 	}
 
-	InventoryComponent = Component;
+	InventoryComponent = NewComponent;
 
-	if (IsValid(Component))
+	if (IsValid(NewComponent))
 	{
-		InventoryComponent->OnUpdateItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+		NewComponent->OnUpdateItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
 
-		InventoryComponent->CheckComponentList.Add(this);
-		
-		RunEquipOnAllSlot();
+		NewComponent->CheckComponentList.Add(this);
+
+		for (const auto& Config : EquipmentSlotConfigList)
+		{
+			AddEquipmentSlotName(Config.SlotName, Config.bIsActive, Config.bIsLock, "SetInventoryComponent");
+		}
 	}
 
 	return;
@@ -106,7 +114,7 @@ bool ULFPEquipmentComponent::AddEquipmentSlotName(const FName InventorySlotName,
 
 	TArray<int32> SlotIndexList;
 
-	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName, EventInfo) == false)
+	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName) == false)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName FindInventorySlotWithName return false"));
 
@@ -208,6 +216,37 @@ bool ULFPEquipmentComponent::RemoveEquipmentSlot(const int32 InventorySlotIndex,
 	EquipmentSlotList.RemoveAt(EquipmentIndex);
 
 	return true;
+}
+
+void ULFPEquipmentComponent::ClearEquipmentSlot(const FString EventInfo)
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : ClearEquipmentSlot InventoryComponent is not valid"));
+
+		return;
+	}
+
+	bool bIsComplete = true;
+
+	while (EquipmentSlotList.IsEmpty() == false)
+	{
+		const int32 InvSlotIndex = EquipmentSlotList.Last().SlotIndex;
+		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(InvSlotIndex);
+
+		if (CurrentItemData.ItemName.IsNone() == false && CanUnequipItem(CurrentItemData, EquipmentSlotList.Num() - 1, InvSlotIndex, EventInfo) == false)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : ClearEquipmentSlot InventorySlotIndex Item Cant Unequip But Forced"));
+		}
+
+		OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), InvSlotIndex, EventInfo);
+
+		EquipmentSlotList.RemoveAt(EquipmentSlotList.Num() - 1, 1, false);
+	}
+
+	EquipmentSlotList.Shrink();
+
+	return;
 }
 
 bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const bool bToActiveSlotOnly, const FString EventInfo)
@@ -437,19 +476,37 @@ FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32
 
 void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue)
 {
-	if (IsValid(OldValue))
+	SetInventoryComponent_Internal(OldValue, InventoryComponent);
+}
+
+void ULFPEquipmentComponent::OnEquipmentSlotListRep_Implementation(TArray<FLFPEquipmentSlotData>& OldValue)
+{
+	if (IsValid(InventoryComponent) == false)
 	{
-		OldValue->OnUpdateItem.RemoveDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
-	
-		OldValue->CheckComponentList.Remove(this);
+		return;
 	}
 
-	if (IsValid(InventoryComponent))
+	for (const FLFPEquipmentSlotData& SlotData : OldValue)
 	{
-		InventoryComponent->OnUpdateItem.AddDynamic(this, &ULFPEquipmentComponent::OnInventoryUpdateItem);
+		if (EquipmentSlotList.Contains(SlotData))
+		{
+			continue;
+		}
 
-		InventoryComponent->CheckComponentList.Add(this);
+		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(SlotData.SlotIndex);
 
-		RunEquipOnAllSlot();
+		OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), SlotData.SlotIndex, "OnEquipmentSlotListRep");
+	}
+
+	for (const FLFPEquipmentSlotData& SlotData : EquipmentSlotList)
+	{
+		if (OldValue.Contains(SlotData))
+		{
+			continue;
+		}
+
+		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(SlotData.SlotIndex);
+
+		OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, SlotData.SlotIndex, "OnEquipmentSlotListRep");
 	}
 }

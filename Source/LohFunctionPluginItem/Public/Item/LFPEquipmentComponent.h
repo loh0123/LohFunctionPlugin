@@ -6,6 +6,25 @@
 #include "Item/LFPInventoryInterface.h"
 #include "LFPEquipmentComponent.generated.h"
 
+USTRUCT(BlueprintType)
+struct FLFPEquipmentSlotConfig
+{
+	GENERATED_BODY()
+
+public:
+
+	/** The inventory slot */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
+	FName SlotName = FName("All");
+
+	/** This slot won't send any event but still can equip or unequip */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
+	bool bIsActive = true;
+
+	/** This slot can't equip or unequip */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
+	bool bIsLock = false;
+};
 
 USTRUCT(BlueprintType)
 struct FLFPEquipmentSlotData
@@ -81,6 +100,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		void SetInventoryComponent(ULFPInventoryComponent* Component);
+		FORCEINLINE void SetInventoryComponent_Internal(ULFPInventoryComponent* OldComponent, ULFPInventoryComponent* NewComponent);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool AddEquipmentSlotName(const FName InventorySlotName, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
@@ -90,6 +110,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool RemoveEquipmentSlot(const int32 InventorySlotIndex, const FString EventInfo = "");
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
+		void ClearEquipmentSlot(const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool TryEquipItem(const int32 InventorySlotIndex, const bool bToActiveSlotOnly = false, const FString EventInfo = "");
@@ -178,6 +201,10 @@ public:
 		void OnInventoryComponentRep(ULFPInventoryComponent* OldValue);
 		virtual void OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue);
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPEquipmentComponent | Event")
+		void OnEquipmentSlotListRep(TArray<FLFPEquipmentSlotData>& OldValue);
+		virtual void OnEquipmentSlotListRep_Implementation(TArray<FLFPEquipmentSlotData>& OldValue);
+
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
@@ -185,8 +212,11 @@ public:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
+	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnEquipmentSlotListRep, Category = "LFPEquipmentComponent | Cache")
 		TArray<FLFPEquipmentSlotData> EquipmentSlotList = TArray<FLFPEquipmentSlotData>();
+
+	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
+		TArray<FLFPEquipmentSlotConfig> EquipmentSlotConfigList = TArray<FLFPEquipmentSlotConfig>();
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated, ReplicatedUsing = OnInventoryComponentRep, Category = "LFPEquipmentComponent | Cache")
 		ULFPInventoryComponent* InventoryComponent = nullptr;
