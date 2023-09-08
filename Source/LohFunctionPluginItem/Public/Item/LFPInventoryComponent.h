@@ -17,14 +17,59 @@ struct FLFPInventoryItemData
 {
 	GENERATED_BODY()
 
+public:
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FJsonObjectWrapper MetaData = FJsonObjectWrapper();
+
+protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
 		FName ItemName = FName("");
 
+public:
 
 	static const FLFPInventoryItemData EmptyInventoryItemData;
+
+public:
+
+	FORCEINLINE const FName& GetName() const
+	{
+		return ItemName;
+	}
+
+	FORCEINLINE	bool HasItem() const
+	{
+		return ItemName.IsNone() == false;
+	}
+
+	FORCEINLINE	bool IsEmpty() const
+	{
+		return ItemName.IsNone();
+	}
+
+	FORCEINLINE	bool IsItemEqual(const FLFPInventoryItemData& Other) const
+	{
+		return ItemName == Other.GetName();
+	}
+
+	FORCEINLINE	bool IsItemEqual(const FName& Other) const
+	{
+		return ItemName == Other;
+	}
+
+public:
+
+	FORCEINLINE	FLFPInventoryItemData Copy() const
+	{
+		FLFPInventoryItemData CopyData;
+
+		CopyData.ItemName = ItemName;
+
+		CopyData.MetaData.JsonObjectFromString(MetaData.JsonString);
+
+		return CopyData;
+	}
 
 	FORCEINLINE	bool operator==(const FLFPInventoryItemData& NewData) const
 	{
@@ -197,7 +242,7 @@ public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
-	virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.ItemName.IsNone(); }
+	virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.IsEmpty(); }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotHasTag(const int32& SlotIndex, const FGameplayTag& SlotTag) const;
@@ -236,10 +281,10 @@ public: // Valid Checker
 		FORCEINLINE bool IsInventorySlotIndexValid(const int32 Index) const { return InventorySlotItemList.IsValidIndex(Index); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool IsInventorySlotItemValid(const int32 Index) const { return GetInventorySlot(Index).ItemName.IsNone() == false; };
+		FORCEINLINE bool IsInventorySlotItemValid(const int32 Index) const { return GetInventorySlot(Index).HasItem(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool IsInventorySlotItemSame(const int32 IndexA, const int32 IndexB) const { return GetInventorySlot(IndexA).ItemName == GetInventorySlot(IndexB).ItemName; };
+		FORCEINLINE bool IsInventorySlotItemSame(const int32 IndexA, const int32 IndexB) const { return GetInventorySlot(IndexA).IsItemEqual(GetInventorySlot(IndexB)); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
 		FORCEINLINE bool HasInventorySlotName(const FName SlotName) const { return InventorySlotNameList.Contains(SlotName); }
@@ -248,6 +293,9 @@ public: // Valid Checker
 		FORCEINLINE bool IsInventorySlotHasName(const int32 Index, const FName SlotName) const;
 
 public: // Getter
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
+		bool HaveItemsAtSlotName(const TArray<FLFPInventoryItemData>& ItemList, const FName SlotName) const;
 
 	/** 
 	* Find Empty Or Available Inventory Slot

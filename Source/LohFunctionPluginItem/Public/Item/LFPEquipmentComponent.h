@@ -172,7 +172,7 @@ public: // Valid Checker
 		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).ItemName.IsNone() == false; };
+		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).HasItem(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FORCEINLINE bool IsEquipmentSlotActive(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsActive; };
