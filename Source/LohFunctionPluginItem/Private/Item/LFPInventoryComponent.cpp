@@ -484,9 +484,13 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 			continue;
 		}
 
-		FLFPInventoryItemData RemoveItemData = InventorySlotItemList[CurrentFromSlotIndex];
+		FLFPInventoryItemData RemoveItemData, CacheItem;
 
-		FLFPInventoryItemData CacheItem = InventorySlotItemList[CurrentFromSlotIndex];
+		RemoveItemData.ItemName = InventorySlotItemList[CurrentFromSlotIndex].ItemName;
+		RemoveItemData.MetaData.JsonObjectFromString(InventorySlotItemList[CurrentFromSlotIndex].MetaData.JsonString);
+
+		CacheItem.ItemName = InventorySlotItemList[CurrentFromSlotIndex].ItemName;
+		CacheItem.MetaData.JsonObjectFromString(InventorySlotItemList[CurrentFromSlotIndex].MetaData.JsonString);
 
 		if (RemoveItem(RemoveItemData, CurrentFromSlotIndex, FromSlotName, EventInfo) == false)
 		{
@@ -587,7 +591,7 @@ bool ULFPInventoryComponent::IsInventorySlotHasName(const int32 Index, const FNa
 
 	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	return (SlotRange.X >= Index && SlotRange.Y <= Index);
+	return (SlotRange.X <= Index && SlotRange.Y >= Index);
 }
 
 bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName) const
