@@ -78,8 +78,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			const FIntVector DataColorGridSize = VoxelContainer->GetSetting().GetPaletteGrid() + FIntVector(2);
 			const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
 
+			UTexture2D* CurrentTexture = AttributesTexture;
+
 			AttributeOutput =
-				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, DataColorSize, DataColorGridSize]
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, DataColorSize, DataColorGridSize, CurrentTexture]
 					{
 						const double TaskTime = FPlatformTime::Seconds();
 
@@ -107,6 +109,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 						if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Attribute Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
 
+						TArray<FIntVector4> Regions;
+
+						ULFPRenderLibrary::UpdateTexture2D(CurrentTexture, Result.AttributeData, Regions);
+
 						return Result;
 					}, ETaskPriority::High, EExtendedTaskPriority::Inline);
 
@@ -115,7 +121,7 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		break;
 		case 1: 
 		{
-			ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeOutput.GetResult().AttributeData);
+			//ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeOutput.GetResult().AttributeData);
 
 			Status.bIsVoxelAttributeDirty = 0;
 		}

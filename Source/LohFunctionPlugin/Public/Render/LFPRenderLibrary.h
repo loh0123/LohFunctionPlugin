@@ -24,7 +24,7 @@ public:
 		static UTexture2D* CreateTexture2D(const FIntPoint Size, const TextureFilter Filter, const bool bSRGB = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRenderLibrary")
-		static bool UpdateTexture2D(UTexture2D* Texture, const TArray<FColor>& Data);
+		static bool UpdateTexture2D(UTexture2D* Texture, const TArray<FColor>& Data, const TArray<FIntVector4>& Regions);
 
 	UFUNCTION()
 		static TArray<FVector3f> CreateVertexPosList(const FVector3f& Center, const FRotator3f& Rotation, const FVector3f& Scale);
