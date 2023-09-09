@@ -85,6 +85,7 @@ struct FLFPVoxelRendererFaceData
 	}
 
 	TArray<FInt32Rect> FaceDataList = TArray<FInt32Rect>();
+	TArray<FInt32Rect> HiddenFaceDataList = TArray<FInt32Rect>();
 };
 
 struct FLFPVoxelRendererSectionData
@@ -339,31 +340,37 @@ public:
 					);
 		
 				//UE_LOG(LogTemp, Warning, TEXT("IncludeRange is %s"), *IncludeRange.ToString());
-		
-				for (const auto& FaceData : DataList[ScanPosition.Z].FaceDataList)
-				{
-					//UE_LOG(LogTemp, Warning, TEXT("Check is %s"), *FaceData.ToString());
-		
-					if (IncludeRange.Min.X <= FaceData.Max.X && IncludeRange.Max.X >= FaceData.Min.X && IncludeRange.Min.Y <= FaceData.Max.Y && IncludeRange.Max.Y >= FaceData.Min.Y)
-						//if (FaceData.Intersect(IncludeRange))
+
+				auto ConvertFaceData = [&](const TArray<FInt32Rect>& FaceDataList)
 					{
-						FVector Min, Max;
-		
-						const float Depth = float(ScanPosition.W) + (float(PositiveList[Index])) * 0.5f;
-		
-						//const FVector2D Depth(float(ScanPosition.W) + (float(PositiveList[Index]) * -0.5f), float(ScanPosition.W) + (float(PositiveList[Index]) * 0.5f));
-		
-						Min[LookUpList[Index].X] = FaceData.Min.X - 0.5f;
-						Min[LookUpList[Index].Y] = FaceData.Min.Y - 0.5f;
-						Min[LookUpList[Index].Z] = Depth;
-		
-						Max[LookUpList[Index].X] = FaceData.Max.X + 0.5f;
-						Max[LookUpList[Index].Y] = FaceData.Max.Y + 0.5f;
-						Max[LookUpList[Index].Z] = Depth;
-		
-						ReturnList.Add(FBox(Min, Max));
-					}
-				}
+						for (const auto& FaceData : FaceDataList)
+						{
+							//UE_LOG(LogTemp, Warning, TEXT("Check is %s"), *FaceData.ToString());
+
+							if (IncludeRange.Min.X <= FaceData.Max.X && IncludeRange.Max.X >= FaceData.Min.X && IncludeRange.Min.Y <= FaceData.Max.Y && IncludeRange.Max.Y >= FaceData.Min.Y)
+								//if (FaceData.Intersect(IncludeRange))
+							{
+								FVector Min, Max;
+
+								const float Depth = float(ScanPosition.W) + (float(PositiveList[Index])) * 0.5f;
+
+								//const FVector2D Depth(float(ScanPosition.W) + (float(PositiveList[Index]) * -0.5f), float(ScanPosition.W) + (float(PositiveList[Index]) * 0.5f));
+
+								Min[LookUpList[Index].X] = FaceData.Min.X - 0.5f;
+								Min[LookUpList[Index].Y] = FaceData.Min.Y - 0.5f;
+								Min[LookUpList[Index].Z] = Depth;
+
+								Max[LookUpList[Index].X] = FaceData.Max.X + 0.5f;
+								Max[LookUpList[Index].Y] = FaceData.Max.Y + 0.5f;
+								Max[LookUpList[Index].Z] = Depth;
+
+								ReturnList.Add(FBox(Min, Max));
+							}
+						}
+					};
+
+				ConvertFaceData(DataList[ScanPosition.Z].FaceDataList);
+				ConvertFaceData(DataList[ScanPosition.Z].HiddenFaceDataList);
 			}
 		}
 	}
@@ -401,6 +408,13 @@ public:
 
 		return SectionData[SectionIndex];
 	}
+};
+
+struct FLFPVoxelAttributeThreadResult
+{
+public:
+
+	TArray<FColor> AttributeData = TArray<FColor>();
 };
 
 USTRUCT(BlueprintType)
@@ -479,7 +493,7 @@ public:
 		NextRendererMode(ELFPVoxelRendererMode::LFP_None),
 		DynamicUpdateDelay(0),
 		StaticUpdateDelay(0),
-		bIsVoxelAttributeDirty(false),
+		bIsVoxelAttributeDirty(0),
 		bIsBodyInvalid(false)
 	{}
 
@@ -502,7 +516,7 @@ public:
 public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		uint8 bIsVoxelAttributeDirty : 1;
+		uint8 bIsVoxelAttributeDirty;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
 		uint8 bIsBodyInvalid : 1;
@@ -527,11 +541,16 @@ public:
 
 public:
 
-	FORCEINLINE void MarkRendererModeDirty(const bool bIsDynamic, const bool bImmediately = true)
+	FORCEINLINE void MarkAttributeDirty()
+	{
+		bIsVoxelAttributeDirty = 2;
+	}
+
+	FORCEINLINE void MarkRendererModeDirty(const bool bIsDynamic = true)
 	{
 		NextRendererMode = bIsDynamic ? ELFPVoxelRendererMode::LFP_Dynamic : ELFPVoxelRendererMode::LFP_Static;
 
-		if (bImmediately && CurrentRendererMode < ELFPVoxelRendererMode::LFP_Render)
+		if (bIsDynamic && CurrentRendererMode == ELFPVoxelRendererMode::LFP_Static)
 		{
 			UpdateNextRenderMode();
 		}
@@ -560,7 +579,7 @@ public:
 		{
 			CurrentDynamicAmount--;
 
-			MarkRendererModeDirty(false, false);
+			MarkRendererModeDirty(false);
 		}
 
 		if (NewMode == ELFPVoxelRendererMode::LFP_Static)
@@ -582,12 +601,12 @@ public:
 
 	FORCEINLINE bool HasRenderDirty() const
 	{
-		return bIsVoxelAttributeDirty || CurrentRendererMode != ELFPVoxelRendererMode::LFP_None || NextRendererMode != ELFPVoxelRendererMode::LFP_None;
+		return bIsVoxelAttributeDirty != 0 || CurrentRendererMode != ELFPVoxelRendererMode::LFP_None || NextRendererMode != ELFPVoxelRendererMode::LFP_None;
 	}
 
 	FORCEINLINE bool CanUpdateAttribute() const
 	{
-		return bIsVoxelAttributeDirty;
+		return bIsVoxelAttributeDirty != 0;
 	}
 
 	FORCEINLINE bool DecreaseTickCounter()
@@ -745,6 +764,8 @@ protected: /** Can be override to provide custom behavir */
 private: // Variable
 
 	FLFPVoxelRendererStatus Status;
+
+	UE::Tasks::TTask<FLFPVoxelAttributeThreadResult> AttributeOutput;
 
 	UE::Tasks::TTask<TSharedPtr<FLFPVoxelRendererThreadResult>> ThreadOutput;
 

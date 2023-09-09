@@ -51,13 +51,15 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor
 		*(CPUColorData + PixelPos + 3) = Color.A;
 	}
 
-	FUpdateTextureRegion2D* Region = new FUpdateTextureRegion2D(0, 0, 0, 0, Texture->GetSizeX(), Texture->GetSizeY());
+	FUpdateTextureRegion2D* Region = new FUpdateTextureRegion2D[1];
+
+	Region[0] = FUpdateTextureRegion2D(0, 0, 0, 0, Texture->GetSizeX(), Texture->GetSizeY());
 
 	Texture->UpdateTextureRegions(0, 1, Region, Texture->GetSizeX() * BufferSize, BufferSize, CPUColorData,
-		[Region](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
+		[](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
 		{
 			delete[] SrcData;
-			delete Region;
+			delete[] Regions;
 		}
 	);
 

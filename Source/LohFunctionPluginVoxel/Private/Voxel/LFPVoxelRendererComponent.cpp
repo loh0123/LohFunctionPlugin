@@ -66,37 +66,67 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (IsValid(VoxelContainer) == false) return;
 
+	if (AttributeOutput.IsCompleted() && Status.CanUpdateAttribute() && IsValid(AttributesTexture))
+	{
+		switch (Status.bIsVoxelAttributeDirty)
+		{
+		case 2:
+		{
+			ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
+			FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
+
+			const FIntVector DataColorGridSize = VoxelContainer->GetSetting().GetPaletteGrid() + FIntVector(2);
+			const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
+
+			AttributeOutput =
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, DataColorSize, DataColorGridSize]
+					{
+						const double TaskTime = FPlatformTime::Seconds();
+
+						FLFPVoxelAttributeThreadResult Result;
+
+						Result.AttributeData.SetNum(DataColorSize);
+
+						if (IsValid(this) == false) return Result;
+
+						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+
+						for (int32 Index = 0; Index < DataColorSize; Index++)
+						{
+							const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToGridGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+							const FIntVector VoxelGridIndex = VoxelContainer->ToGridGlobalIndex(VoxelGlobalGridLocation);
+
+							const FLFPGridPaletteData& VoxelPalette = VoxelContainer->GetGridPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
+
+							TMap<FName, uint8> TagDataList;
+
+							if (VoxelGridIndex.Z >= 0) VoxelContainer->GetGridChuckRef(VoxelGridIndex.X, VoxelGridIndex.Y).GetTagDataList(VoxelGridIndex.Z, TagDataList);
+
+							Result.AttributeData[Index] = GetVoxelAttribute(VoxelPalette, TagDataList);
+						}
+
+						if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Attribute Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
+
+						return Result;
+					}, ETaskPriority::High, EExtendedTaskPriority::Inline);
+
+			Status.bIsVoxelAttributeDirty = 1;
+		}
+		break;
+		case 1: 
+		{
+			ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeOutput.GetResult().AttributeData);
+
+			Status.bIsVoxelAttributeDirty = 0;
+		}
+		break;
+		}
+	}
+
 	if (ThreadOutput.IsCompleted() == false) return;
 
 	/** Is Tick Logic Cooling Down Or Is Not Rendering */
 	if (Status.DecreaseTickCounter() == false) return;
-
-	if (Status.CanUpdateAttribute() && IsValid(AttributesTexture))
-	{
-		Status.bIsVoxelAttributeDirty = false;
-
-		const FIntVector DataColorGridSize = VoxelContainer->GetSetting().GetPaletteGrid() + FIntVector(2);
-		const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
-
-		TArray<FColor> AttributeList;
-
-		AttributeList.SetNum(DataColorSize);
-
-		ParallelFor(TEXT("ParallelFor : Voxel Renderer Attribute Update"), DataColorSize, 4, [&](const int32 Index) {
-			const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToGridGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
-			const FIntVector VoxelGridIndex = VoxelContainer->ToGridGlobalIndex(VoxelGlobalGridLocation);
-
-			const FLFPGridPaletteData& VoxelPalette = VoxelContainer->GetGridPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
-
-			TMap<FName, uint8> TagDataList;
-
-			if (VoxelGridIndex.Z >= 0) VoxelContainer->GetGridChuckRef(VoxelGridIndex.X, VoxelGridIndex.Y).GetTagDataList(VoxelGridIndex.Z, TagDataList);
-
-			AttributeList[Index] = GetVoxelAttribute(VoxelPalette, TagDataList);
-			}, EParallelForFlags::BackgroundPriority);
-
-		ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeList);
-	}
 
 	switch (Status.GetCurrentRenderMode())
 	{
@@ -105,37 +135,57 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	{
 		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
 		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
-		TArray<bool> MaterialLumenSupportList;
+
+		if (Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic)
 		{
-			MaterialLumenSupportList.Init(true, GetNumMaterials());
+			ThreadOutput =
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting]
+					{
+						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
-			for (int32 Index = 0; Index < MaterialLumenSupportList.Num(); Index++)
-			{
-				if (IsValid(GetMaterial(Index))) MaterialLumenSupportList[Index] = GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
-			}
+						if (IsValid(this) == false) return TargetThreadResult;
+
+						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+
+						GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
+
+						if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
+
+						TargetThreadResult->bIsDynamic = true;
+
+						return TargetThreadResult;
+					}, ETaskPriority::High, EExtendedTaskPriority::Inline);
 		}
+		else
+		{
+			TArray<bool> MaterialLumenSupportList;
+			{
+				MaterialLumenSupportList.Init(true, GetNumMaterials());
 
-		/** Fast Path */
-		const bool bIsDynamicPath = Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic;
-
-		ThreadOutput =
-			Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, bIsDynamicPath]
+				for (int32 Index = 0; Index < MaterialLumenSupportList.Num(); Index++)
 				{
-					TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
+					if (IsValid(GetMaterial(Index))) MaterialLumenSupportList[Index] = GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_Translucent && GetMaterial(Index)->GetMaterial()->BlendMode != EBlendMode::BLEND_TranslucentColoredTransmittance;
+				}
+			}
 
-					if (IsValid(this) == false) return TargetThreadResult;
+			TSharedPtr<FLFPVoxelRendererThreadResult> CurrentThreadResult = ThreadResult;
 
-					FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+			ThreadOutput =
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, CurrentThreadResult]
+					{
+						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = CurrentThreadResult;
 
-					GenerateBatchFaceData(CurrentContainer, TargetThreadResult, CurrentSetting);
+						if (IsValid(this) == false) return TargetThreadResult;
 
-					if (CurrentSetting.bGenerateSimpleCollisionData) GenerateSimpleCollisionData(CurrentContainer, TargetThreadResult, CurrentSetting);
-					if (CurrentSetting.bGenerateLumenData && bIsDynamicPath == false) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
+						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
 
-					TargetThreadResult->bIsDynamic = bIsDynamicPath;
+						if (CurrentSetting.bGenerateLumenData) GenerateLumenData(CurrentContainer, TargetThreadResult, CurrentSetting, MaterialLumenSupportList);
 
-					return TargetThreadResult;
-				}, ETaskPriority::High, EExtendedTaskPriority::Inline);
+						TargetThreadResult->bIsDynamic = false;
+
+						return TargetThreadResult;
+					}, ETaskPriority::High, EExtendedTaskPriority::Inline);
+		}
 
 		Status.UpdateRenderMode(ELFPVoxelRendererMode::LFP_Render);
 	}
@@ -202,6 +252,14 @@ bool ULFPVoxelRendererComponent::ReleaseRenderer()
 {
 	if (IsValid(VoxelContainer) == false) return false;
 
+	ThreadOutput.Wait();
+
+	ThreadOutput = {};
+
+	AttributeOutput.Wait();
+
+	AttributeOutput = {};
+
 	VoxelContainer->RemoveRenderChuck(RegionIndex, ChuckIndex, this);
 
 	VoxelContainer = nullptr;
@@ -230,7 +288,7 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 
 	if (VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
-		Status.MarkRendererModeDirty(GenerationSetting.StaticUpdateDelayPerComponent != 0);
+		Status.MarkRendererModeDirty();
 
 		SetComponentTickEnabled(true);
 
@@ -249,7 +307,7 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 
 	if (VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
-		Status.bIsVoxelAttributeDirty = true;
+		Status.MarkAttributeDirty();
 
 		SetComponentTickEnabled(true);
 
@@ -472,10 +530,13 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 		for (int32 I = 0; I < LoopI; I++)
 		{
 			TMap<FIntVector, FIntPoint> BatchDataMap;
+			TMap<FIntVector, FIntPoint> HiddenBatchDataMap;
 
 			FInt32Rect CurrentBatchFaceData(INDEX_NONE, INDEX_NONE);
 
 			int32 CurrentBatchMaterial = INDEX_NONE;
+
+			bool bPreHiddenFace = false;
 
 			for (int32 U = 0; U < LoopU; U++)
 			{
@@ -501,23 +562,22 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 					const FLFPGridPaletteData& SelfVoxelPalette = TargetVoxelContainer->GetGridPaletteRef(RegionIndex, ChuckIndex, CurrentIndex);
 
 					/** Check Do We Ignore Border Data And Always Fill The Face */
-					const FLFPGridPaletteData& TargetVoxelPalette = 
-						(TargetGenerationSetting.bDisableChuckFaceCulling && ChuckIndex != TargetGlobalIndex.Y) || 
-						(TargetGenerationSetting.bDisableRegionFaceCulling && RegionIndex != TargetGlobalIndex.X)
-						? 
-						FLFPGridPaletteData::EmptyData 
-						: 
-						TargetVoxelContainer->GetGridPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+					const bool bForceRender = (TargetGenerationSetting.bDisableChuckFaceCulling && ChuckIndex != TargetGlobalIndex.Y) || (TargetGenerationSetting.bDisableRegionFaceCulling && RegionIndex != TargetGlobalIndex.X);
+
+					const FLFPGridPaletteData& TargetVoxelPalette = bForceRender ? FLFPGridPaletteData::EmptyData : TargetVoxelContainer->GetGridPaletteRef(TargetGlobalIndex.X, TargetGlobalIndex.Y, TargetGlobalIndex.Z);
+
+					const bool bCurrentVisible = IsFaceVisible(SelfVoxelPalette, TargetVoxelPalette);
+					const bool bCurrentHiddenFace = bCurrentVisible == false && (ChuckIndex != TargetGlobalIndex.Y || RegionIndex != TargetGlobalIndex.X);
 
 					/*************************************************/
 
-					if (IsFaceVisible(SelfVoxelPalette, TargetVoxelPalette))
+					if (bCurrentVisible || bCurrentHiddenFace)
 					{
 						const int32 CurrentMaterialIndex = GetVoxelMaterialIndex(SelfVoxelPalette);
 
-						if (CurrentBatchFaceData.Max.X != U && CurrentBatchMaterial != INDEX_NONE)
+						if ((CurrentBatchFaceData.Max.X != U || bPreHiddenFace != bCurrentHiddenFace) && CurrentBatchMaterial != INDEX_NONE)
 						{
-							PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+							PushFaceData(bPreHiddenFace ? HiddenBatchDataMap : BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
 						}
 
 						if (CurrentBatchMaterial == CurrentMaterialIndex)
@@ -526,26 +586,26 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 						}
 						else if (CurrentBatchMaterial != INDEX_NONE)
 						{
-							PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+							PushFaceData(bPreHiddenFace ? HiddenBatchDataMap : BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
 						}
 
 						if (CurrentBatchMaterial == INDEX_NONE)
 						{
 							CurrentBatchFaceData = FInt32Rect(U, V, U, V);
 							CurrentBatchMaterial = CurrentMaterialIndex;
+							bPreHiddenFace = bCurrentHiddenFace;
 						}
 					}
 					else if (CurrentBatchMaterial != INDEX_NONE)
 					{
-						PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+						PushFaceData(bPreHiddenFace ? HiddenBatchDataMap : BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
 					}
-
 				}
 			}
 
 			if (CurrentBatchMaterial != INDEX_NONE)
 			{
-				PushFaceData(BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
+				PushFaceData(bPreHiddenFace ? HiddenBatchDataMap : BatchDataMap, CurrentBatchFaceData, CurrentBatchMaterial);
 			}
 
 			TargetThreadResult->SectionData.Reserve(MaxMaterialIndex + 1);
@@ -560,6 +620,11 @@ void ULFPVoxelRendererComponent::GenerateBatchFaceData(ULFPGridContainerComponen
 			{
 				TargetThreadResult->SectionData[BatchData.Key.Z].GetVoxelFaceData(DirectionIndex, I).FaceDataList.Add(FInt32Rect(BatchData.Value, FIntPoint(BatchData.Key.X, BatchData.Key.Y)));
 				TargetThreadResult->SectionData[BatchData.Key.Z].TriangleCount += 2;
+			}
+
+			for (const auto& BatchData : HiddenBatchDataMap)
+			{
+				TargetThreadResult->SectionData[BatchData.Key.Z].GetVoxelFaceData(DirectionIndex, I).HiddenFaceDataList.Add(FInt32Rect(BatchData.Value, FIntPoint(BatchData.Key.X, BatchData.Key.Y)));
 			}
 		}
 	}
@@ -888,7 +953,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 		{
 			const FIntVector VoxelPosition(ULFPGridLibrary::ToGridLocation(Index, CheckSize) - FIntVector(SizeHalfOffset));
 
-			const int32 MaterialIndex = GetVoxelMaterialIndex(TargetVoxelContainer->GetGridPalette(RegionIndex, ChuckIndex, ULFPGridLibrary::ToGridIndex(VoxelPosition, ContainerSetting.GetPaletteGrid())));
+			const int32 MaterialIndex = GetVoxelMaterialIndex(TargetVoxelContainer->GetGridPaletteRef(RegionIndex, ChuckIndex, ULFPGridLibrary::ToGridIndex(VoxelPosition, ContainerSetting.GetPaletteGrid())));
 
 			if (MaterialLumenSupportList.IsValidIndex(MaterialIndex) == false || MaterialLumenSupportList[MaterialIndex])
 			{
@@ -913,39 +978,52 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 			/** Generate Trace Distance */
 			{
+				//for (CurrentCacheInfo.TraceDistance = 1; CurrentCacheInfo.TraceDistance <= CurrentMaxCheckDistance; CurrentCacheInfo.TraceDistance++)
+				//{
+				//	bool bIsHit = false;
+				//
+				//	for (int32 Z = CacheLocation.Z - CurrentCacheInfo.TraceDistance; Z <= CacheLocation.Z + CurrentCacheInfo.TraceDistance; Z++)
+				//	{
+				//		for (int32 Y = CacheLocation.Y - CurrentCacheInfo.TraceDistance; Y <= CacheLocation.Y + CurrentCacheInfo.TraceDistance; Y++)
+				//		{
+				//			for (int32 X = CacheLocation.X - CurrentCacheInfo.TraceDistance; X <= CacheLocation.X + CurrentCacheInfo.TraceDistance; X++)
+				//			{
+				//				const int32 CheckGridIndex = ULFPGridLibrary::ToGridIndex(FIntVector(X, Y, Z) + FIntVector(SizeHalfOffset), CheckSize);
+				//				const int32 CheckMaterial = CheckGridIndex == INDEX_NONE ? INDEX_NONE : AccelerationInfoList[CheckGridIndex].MaterialIndex;
+				//
+				//				if (CheckMaterial != CurrentCacheInfo.MaterialIndex)
+				//				{
+				//					bIsHit = true;
+				//
+				//					break;
+				//				}
+				//
+				//				if (Z != CacheLocation.Z - CurrentCacheInfo.TraceDistance && Z != CacheLocation.Z + CurrentCacheInfo.TraceDistance && Y != CacheLocation.Y - CurrentCacheInfo.TraceDistance && Y != CacheLocation.Y + CurrentCacheInfo.TraceDistance && X == CacheLocation.X - CurrentCacheInfo.TraceDistance)
+				//				{
+				//					X = CacheLocation.X + CurrentCacheInfo.TraceDistance - 1;
+				//				}
+				//			}
+				//
+				//			if (bIsHit) break;
+				//		}
+				//
+				//		if (bIsHit) break;
+				//	}
+				//
+				//	if (bIsHit) break;
+				//}
+
 				for (CurrentCacheInfo.TraceDistance = 1; CurrentCacheInfo.TraceDistance <= CurrentMaxCheckDistance; CurrentCacheInfo.TraceDistance++)
 				{
-					bool bIsHit = false;
-
-					for (int32 Z = CacheLocation.Z - CurrentCacheInfo.TraceDistance; Z <= CacheLocation.Z + CurrentCacheInfo.TraceDistance; Z++)
+					for (int32 SectionIndex = 0; SectionIndex < TargetThreadResult->SectionData.Num(); SectionIndex++)
 					{
-						for (int32 Y = CacheLocation.Y - CurrentCacheInfo.TraceDistance; Y <= CacheLocation.Y + CurrentCacheInfo.TraceDistance; Y++)
-						{
-							for (int32 X = CacheLocation.X - CurrentCacheInfo.TraceDistance; X <= CacheLocation.X + CurrentCacheInfo.TraceDistance; X++)
-							{
-								const int32 CheckGridIndex = ULFPGridLibrary::ToGridIndex(FIntVector(X, Y, Z) + FIntVector(SizeHalfOffset), CheckSize);
-								const int32 CheckMaterial = CheckGridIndex == INDEX_NONE ? INDEX_NONE : AccelerationInfoList[CheckGridIndex].MaterialIndex;
-
-								if (CheckMaterial != CurrentCacheInfo.MaterialIndex)
-								{
-									bIsHit = true;
-
-									break;
-								}
-
-								if (Z != CacheLocation.Z - CurrentCacheInfo.TraceDistance && Z != CacheLocation.Z + CurrentCacheInfo.TraceDistance && Y != CacheLocation.Y - CurrentCacheInfo.TraceDistance && Y != CacheLocation.Y + CurrentCacheInfo.TraceDistance && X == CacheLocation.X - CurrentCacheInfo.TraceDistance)
-								{
-									X = CacheLocation.X + CurrentCacheInfo.TraceDistance - 1;
-								}
-							}
-
-							if (bIsHit) break;
-						}
-
-						if (bIsHit) break;
+						TargetThreadResult->SectionData[SectionIndex].GenerateDistanceBoxData(CacheLocation, SectionIndex == CurrentCacheInfo.MaterialIndex, CurrentCacheInfo.TraceDistance, CurrentCacheInfo.TraceBoxList);
 					}
 
-					if (bIsHit) break;
+					if (CurrentCacheInfo.TraceBoxList.IsValidIndex(0))
+					{
+						break;
+					}
 				}
 			}
 
@@ -954,10 +1032,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 			/** Generate Trace Box */
 			if (CurrentCacheInfo.TraceDistance <= CurrentMaxCheckDistance)
 			{
-				for (int32 SectionIndex = 0; SectionIndex < TargetThreadResult->SectionData.Num(); SectionIndex++)
-				{
-					TargetThreadResult->SectionData[SectionIndex].GenerateDistanceBoxData(CacheLocation, SectionIndex == CurrentCacheInfo.MaterialIndex, CurrentCacheInfo.TraceDistance, CurrentCacheInfo.TraceBoxList);
-				}
+				//for (int32 SectionIndex = 0; SectionIndex < TargetThreadResult->SectionData.Num(); SectionIndex++)
+				//{
+				//	TargetThreadResult->SectionData[SectionIndex].GenerateDistanceBoxData(CacheLocation, SectionIndex == CurrentCacheInfo.MaterialIndex, CurrentCacheInfo.TraceDistance, CurrentCacheInfo.TraceBoxList);
+				//}
 
 				for (FBox& TraceBox : CurrentCacheInfo.TraceBoxList)
 				{
