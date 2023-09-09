@@ -37,7 +37,9 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor
 
 	uint8* CPUColorData = new uint8[ArraySize];
 
+#if WITH_EDITOR
 	Texture->TemporarilyDisableStreaming();
+#endif
 
 	for (int32 Index = 0; Index < Data.Num(); Index++)
 	{
