@@ -68,34 +68,41 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (AttributeOutput.IsCompleted() && Status.CanUpdateAttribute() && IsValid(AttributesTexture))
 	{
-		switch (Status.bIsVoxelAttributeDirty)
-		{
-		case 2:
-		{
-			ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
-			FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
+		AttributeOutput =
+			Launch(UE_SOURCE_LOCATION,
+				[&,
+				CurrentContainer = VoxelContainer,
+				CurrentSetting = GenerationSetting,
+				DataColorGridSize = VoxelContainer->GetSetting().GetPaletteGrid(),
+				RegionIndexList = Status.VoxelAttributeDirtyHeightList.Array(),
+				CurrentTexture = AttributesTexture]
+				{
+					const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
 
-			const FIntVector DataColorGridSize = VoxelContainer->GetSetting().GetPaletteGrid() + FIntVector(2);
-			const int32 DataColorSize = DataColorGridSize.X * DataColorGridSize.Y * DataColorGridSize.Z;
+					const int32 BufferSize = 4;
 
-			UTexture2D* CurrentTexture = AttributesTexture;
+					const double TaskTime = FPlatformTime::Seconds();
 
-			AttributeOutput =
-				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, DataColorSize, DataColorGridSize, CurrentTexture]
+					if (IsValid(this) == false) return;
+
+					FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
+
+					const int32 RegionLength = DataColorGridSize.X * DataColorGridSize.Y;
+
+					uint8* AttributeDataList = new uint8[RegionLength * RegionIndexList.Num() * BufferSize];
+					FUpdateTextureRegion2D* RegionUpdateList = new FUpdateTextureRegion2D[RegionIndexList.Num()];
+					int32 RegionAmount = RegionIndexList.Num();
+
+					int32 CurrentPixelIndex = 0;
+
+					for (int32 ScrIndex = 0; ScrIndex < RegionIndexList.Num(); ScrIndex++)
 					{
-						const double TaskTime = FPlatformTime::Seconds();
+						const int32 StartIndex = RegionIndexList[ScrIndex] * RegionLength;
+						const int32 EndIndex = (RegionIndexList[ScrIndex] + 1) * RegionLength;
 
-						FLFPVoxelAttributeThreadResult Result;
-
-						Result.AttributeData.SetNum(DataColorSize);
-
-						if (IsValid(this) == false) return Result;
-
-						FReadScopeLock Lock(CurrentContainer->ContainerThreadLock);
-
-						for (int32 Index = 0; Index < DataColorSize; Index++)
+						for (int32 Index = StartIndex; Index < EndIndex; Index++)
 						{
-							const FIntVector VoxelGlobalGridLocation = (ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) - FIntVector(1)) + VoxelContainer->ToGridGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
+							const FIntVector VoxelGlobalGridLocation = ULFPGridLibrary::ToGridLocation(Index, DataColorGridSize) + VoxelContainer->ToGridGlobalPosition(FIntVector(RegionIndex, ChuckIndex, 0));
 							const FIntVector VoxelGridIndex = VoxelContainer->ToGridGlobalIndex(VoxelGlobalGridLocation);
 
 							const FLFPGridPaletteData& VoxelPalette = VoxelContainer->GetGridPaletteRef(VoxelGridIndex.X, VoxelGridIndex.Y, VoxelGridIndex.Z);
@@ -104,29 +111,32 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 							if (VoxelGridIndex.Z >= 0) VoxelContainer->GetGridChuckRef(VoxelGridIndex.X, VoxelGridIndex.Y).GetTagDataList(VoxelGridIndex.Z, TagDataList);
 
-							Result.AttributeData[Index] = GetVoxelAttribute(VoxelPalette, TagDataList);
+							const FColor CacheAttributeData = GetVoxelAttribute(VoxelPalette, TagDataList);
+
+							const int32 PixelPos = CurrentPixelIndex * BufferSize;
+
+							*(AttributeDataList + PixelPos) = CacheAttributeData.B;
+							*(AttributeDataList + PixelPos + 1) = CacheAttributeData.G;
+							*(AttributeDataList + PixelPos + 2) = CacheAttributeData.R;
+							*(AttributeDataList + PixelPos + 3) = CacheAttributeData.A;
+
+							CurrentPixelIndex++;
 						}
 
-						if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Attribute Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
+						const int32 TexturePosY = DataColorGridSize.Y * RegionIndexList[ScrIndex];
+						const int32 ScrPosY = DataColorGridSize.Y * ScrIndex;
 
-						TArray<FIntVector4> Regions;
+						*(RegionUpdateList + ScrIndex) = FUpdateTextureRegion2D(0, TexturePosY, 0, ScrPosY, DataColorGridSize.X, DataColorGridSize.Y);
+					}
 
-						ULFPRenderLibrary::UpdateTexture2D(CurrentTexture, Result.AttributeData, Regions);
+					ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeDataList, RegionUpdateList, RegionAmount);
 
-						return Result;
-					}, ETaskPriority::High, EExtendedTaskPriority::Inline);
+					if (GenerationSetting.bPrintGenerateTime) UE_LOG(LogTemp, Warning, TEXT("Attribute Data Time Use : %f"), (float)(FPlatformTime::Seconds() - TaskTime));
 
-			Status.bIsVoxelAttributeDirty = 1;
-		}
-		break;
-		case 1: 
-		{
-			//ULFPRenderLibrary::UpdateTexture2D(AttributesTexture, AttributeOutput.GetResult().AttributeData);
+					return;
+				}, ETaskPriority::High, EExtendedTaskPriority::Inline);
 
-			Status.bIsVoxelAttributeDirty = 0;
-		}
-		break;
-		}
+		Status.VoxelAttributeDirtyHeightList.Empty();
 	}
 
 	if (ThreadOutput.IsCompleted() == false) return;
@@ -139,13 +149,10 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	case ELFPVoxelRendererMode::LFP_Dynamic:
 	case ELFPVoxelRendererMode::LFP_Static:
 	{
-		ULFPGridContainerComponent* CurrentContainer = VoxelContainer;
-		FLFPVoxelRendererSetting CurrentSetting = GenerationSetting;
-
 		if (Status.GetCurrentRenderMode() == ELFPVoxelRendererMode::LFP_Dynamic)
 		{
 			ThreadOutput =
-				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting]
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer = VoxelContainer, CurrentSetting = GenerationSetting]
 					{
 						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = MakeShared<FLFPVoxelRendererThreadResult>();
 
@@ -174,10 +181,8 @@ void ULFPVoxelRendererComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				}
 			}
 
-			TSharedPtr<FLFPVoxelRendererThreadResult> CurrentThreadResult = ThreadResult;
-
 			ThreadOutput =
-				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer, CurrentSetting, MaterialLumenSupportList, CurrentThreadResult]
+				Launch(UE_SOURCE_LOCATION, [&, CurrentContainer = VoxelContainer, CurrentSetting = GenerationSetting, MaterialLumenSupportList, CurrentThreadResult = ThreadResult]
 					{
 						TSharedPtr<FLFPVoxelRendererThreadResult> TargetThreadResult = CurrentThreadResult;
 
@@ -244,11 +249,24 @@ bool ULFPVoxelRendererComponent::InitializeRenderer(const int32 NewRegionIndex, 
 	}
 
 	{
-		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetPaletteGrid().X + 2, (VoxelContainer->GetSetting().GetPaletteGrid().Y + 2) * (VoxelContainer->GetSetting().GetPaletteGrid().Z + 2));
+		const FIntPoint VoxelTextureSize(VoxelContainer->GetSetting().GetPaletteGrid().X, VoxelContainer->GetSetting().GetPaletteGrid().Y * VoxelContainer->GetSetting().GetPaletteGrid().Z);
 
 		AttributesTexture = ULFPRenderLibrary::CreateTexture2D(VoxelTextureSize, TF_Nearest, false);
 
 		OutDynamicMaterial = UpdateMaterialTexture();
+
+		const int32 RegionAmount = VoxelContainer->GetSetting().GetPaletteGrid().Z;
+
+		TSet<int32> UpdateRegionList;
+
+		UpdateRegionList.Reserve(RegionAmount);
+
+		for (int32 Index = 0; Index < RegionAmount; Index++)
+		{
+			UpdateRegionList.Add(Index);
+		}
+
+		Status.MarkAttributeDirty(UpdateRegionList);
 	}
 
 	return true;
@@ -302,7 +320,7 @@ void ULFPVoxelRendererComponent::UpdateMesh()
 	}
 }
 
-void ULFPVoxelRendererComponent::UpdateAttribute()
+void ULFPVoxelRendererComponent::UpdateAttribute(const TArray<int32>& DirtyIndexList)
 {
 	if (IsValid(VoxelContainer) == false)
 	{
@@ -313,7 +331,14 @@ void ULFPVoxelRendererComponent::UpdateAttribute()
 
 	if (VoxelContainer->IsChuckInitialized(RegionIndex, ChuckIndex))
 	{
-		Status.MarkAttributeDirty();
+		TSet<int32> HeightList;
+
+		for (const int32 DirtyIndex : DirtyIndexList)
+		{
+			HeightList.Add(ULFPGridLibrary::ToGridLocation(DirtyIndex, VoxelContainer->GetSetting().GetPaletteGrid()).Z);
+		}
+
+		Status.MarkAttributeDirty(HeightList);
 
 		SetComponentTickEnabled(true);
 
@@ -363,7 +388,7 @@ void ULFPVoxelRendererComponent::OnChuckUpdate(const FLFPChuckUpdateAction& Data
 {
 	if (CanUpdateMesh(Data)) UpdateMesh();
 
-	if (CanUpdateAttribute(Data)) UpdateAttribute();
+	if (CanUpdateAttribute(Data)) UpdateAttribute(Data.GridDirtyIndexList.Array());
 }
 
 bool ULFPVoxelRendererComponent::CanUpdateMesh(const FLFPChuckUpdateAction& Data) const
@@ -373,7 +398,7 @@ bool ULFPVoxelRendererComponent::CanUpdateMesh(const FLFPChuckUpdateAction& Data
 
 bool ULFPVoxelRendererComponent::CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const
 {
-	return Data.bIsGridTagDirty;
+	return Data.GridDirtyIndexList.IsEmpty() == false;
 }
 
 /**********************/
@@ -437,7 +462,6 @@ void ULFPVoxelRendererComponent::SetMaterial(int32 ElementIndex, UMaterialInterf
 	if (IsValid(VoxelContainer))
 	{
 		UpdateMesh();
-		UpdateAttribute();
 	}
 }
 

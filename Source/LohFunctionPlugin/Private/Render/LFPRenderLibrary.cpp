@@ -25,55 +25,15 @@ UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const Textu
 	return VoxelColorMap;
 }
 
-bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, const TArray<FColor>& Data, const TArray<FIntVector4>& Regions)
+bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, uint8* Data, const FUpdateTextureRegion2D* RegionList, const int32 RegionAmount)
 {
 	const int32 BufferSize = 4;
-	const int32 ArraySize = Texture->GetSizeX() * Texture->GetSizeY() * BufferSize;
-
-	if (Data.Num() != Texture->GetSizeX() * Texture->GetSizeY())
-	{
-		return false;
-	}
-
-	uint8* CPUColorData = new uint8[ArraySize];
 
 #if WITH_EDITOR
 	Texture->TemporarilyDisableStreaming();
 #endif
 
-	for (int32 Index = 0; Index < Data.Num(); Index++)
-	{
-		const FColor& Color = Data[Index];
-
-		const int32 PixelPos = Index * BufferSize;
-
-		*(CPUColorData + PixelPos) = Color.B;
-		*(CPUColorData + PixelPos + 1) = Color.G;
-		*(CPUColorData + PixelPos + 2) = Color.R;
-		*(CPUColorData + PixelPos + 3) = Color.A;
-	}
-
-	FUpdateTextureRegion2D* RegionList;
-
-	if (Regions.IsEmpty())
-	{
-		RegionList = new FUpdateTextureRegion2D[1];
-
-		RegionList[0] = FUpdateTextureRegion2D(0, 0, 0, 0, Texture->GetSizeX(), Texture->GetSizeY());
-	}
-	else
-	{
-		RegionList = new FUpdateTextureRegion2D[Regions.Num()];
-
-		for (int32 Index = 0; Index < Regions.Num(); Index++)
-		{
-			const FIntVector4& Region = Regions[Index];
-
-			RegionList[Index] = FUpdateTextureRegion2D(Region.X, Region.Y, 0, 0, Region.Z, Region.W);
-		}
-	}
-
-	Texture->UpdateTextureRegions(0, 1, RegionList, Texture->GetSizeX() * BufferSize, BufferSize, CPUColorData,
+	Texture->UpdateTextureRegions(0, RegionAmount, RegionList, Texture->GetSizeX() * BufferSize, BufferSize, Data,
 		[](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
 		{
 			delete[] SrcData;

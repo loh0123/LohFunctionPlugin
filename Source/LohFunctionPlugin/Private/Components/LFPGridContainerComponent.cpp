@@ -487,14 +487,14 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 			{
 				ChuckUpdateAction.GridChangeNameList.Add(FLFPGridNameUpdateData(ChuckData.GetIndexData(ChangeGrid.Key).Name, ChangeGrid.Value.Name));
 
-				ChuckUpdateAction.bIsGridTagDirty = true;
+				ChuckUpdateAction.GridDirtyIndexList.Add(ChangeGrid.Key);
 
 				IsDirty = true;
 			}
 
 			if (ChuckData.GetIndexData(ChangeGrid.Key).TagList != ChangeGrid.Value.TagList)
 			{
-				ChuckUpdateAction.bIsGridTagDirty = true;
+				ChuckUpdateAction.GridDirtyIndexList.Add(ChangeGrid.Key);
 
 				IsDirty = true;
 			}
@@ -508,13 +508,10 @@ bool ULFPGridContainerComponent::UpdateChuckData()
 
 		/** This change the outdate Attribute texture */
 		{
-			if (ChuckUpdate.Value.ChangeTagData.IsEmpty() == false)
-			{
-				ChuckUpdateAction.bIsGridTagDirty = true;
-			}
-
 			for (const auto& ChangeTag : ChuckUpdate.Value.ChangeTagData)
 			{
+				ChuckUpdateAction.GridDirtyIndexList.Add(ChangeTag.Key);
+
 				for (const auto& ChangeData : ChangeTag.Value.ChangeData)
 				{
 					const FLFPGridTagDataTable* TagDataRef = IsValid(TagDataTable) ? reinterpret_cast<FLFPGridTagDataTable*>(TagDataTable->FindRowUnchecked(ChangeData.Key)) : nullptr;

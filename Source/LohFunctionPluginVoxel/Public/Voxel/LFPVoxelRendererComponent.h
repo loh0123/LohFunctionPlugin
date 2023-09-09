@@ -410,13 +410,6 @@ public:
 	}
 };
 
-struct FLFPVoxelAttributeThreadResult
-{
-public:
-
-	TArray<FColor> AttributeData = TArray<FColor>();
-};
-
 USTRUCT(BlueprintType)
 struct FLFPVoxelRendererSetting
 {
@@ -493,7 +486,7 @@ public:
 		NextRendererMode(ELFPVoxelRendererMode::LFP_None),
 		DynamicUpdateDelay(0),
 		StaticUpdateDelay(0),
-		bIsVoxelAttributeDirty(0),
+		VoxelAttributeDirtyHeightList(TSet<int32>()),
 		bIsBodyInvalid(false)
 	{}
 
@@ -516,7 +509,9 @@ public:
 public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		uint8 bIsVoxelAttributeDirty;
+		TSet<int32> VoxelAttributeDirtyHeightList;
+
+public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
 		uint8 bIsBodyInvalid : 1;
@@ -541,9 +536,9 @@ public:
 
 public:
 
-	FORCEINLINE void MarkAttributeDirty()
+	FORCEINLINE void MarkAttributeDirty(const TSet<int32>& DirtyHeightIndexList)
 	{
-		bIsVoxelAttributeDirty = 2;
+		VoxelAttributeDirtyHeightList.Append(DirtyHeightIndexList);
 	}
 
 	FORCEINLINE void MarkRendererModeDirty(const bool bIsDynamic = true)
@@ -601,12 +596,12 @@ public:
 
 	FORCEINLINE bool HasRenderDirty() const
 	{
-		return bIsVoxelAttributeDirty != 0 || CurrentRendererMode != ELFPVoxelRendererMode::LFP_None || NextRendererMode != ELFPVoxelRendererMode::LFP_None;
+		return CanUpdateAttribute() || CurrentRendererMode != ELFPVoxelRendererMode::LFP_None || NextRendererMode != ELFPVoxelRendererMode::LFP_None;
 	}
 
 	FORCEINLINE bool CanUpdateAttribute() const
 	{
-		return bIsVoxelAttributeDirty != 0;
+		return VoxelAttributeDirtyHeightList.IsEmpty() == false;
 	}
 
 	FORCEINLINE bool DecreaseTickCounter()
@@ -673,7 +668,7 @@ public:
 		FORCEINLINE void UpdateMesh();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void UpdateAttribute();
+		FORCEINLINE void UpdateAttribute(const TArray<int32>& DirtyIndexList);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
 		FORCEINLINE void SetDisableFaceCulling(const bool bChuck, const bool bRegion);
@@ -765,7 +760,7 @@ private: // Variable
 
 	FLFPVoxelRendererStatus Status;
 
-	UE::Tasks::TTask<FLFPVoxelAttributeThreadResult> AttributeOutput;
+	UE::Tasks::TTask<void> AttributeOutput;
 
 	UE::Tasks::TTask<TSharedPtr<FLFPVoxelRendererThreadResult>> ThreadOutput;
 
