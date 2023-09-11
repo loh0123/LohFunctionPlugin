@@ -25,25 +25,6 @@ UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const Textu
 	return VoxelColorMap;
 }
 
-bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, uint8* Data, const FUpdateTextureRegion2D* RegionList, const int32 RegionAmount)
-{
-	const int32 BufferSize = 4;
-
-#if WITH_EDITOR
-	Texture->TemporarilyDisableStreaming();
-#endif
-
-	Texture->UpdateTextureRegions(0, RegionAmount, RegionList, Texture->GetSizeX() * BufferSize, BufferSize, Data,
-		[](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
-		{
-			delete[] SrcData;
-			delete[] Regions;
-		}
-	);
-
-	return true;
-}
-
 TArray<FVector3f> ULFPRenderLibrary::CreateVertexPosList(const FVector3f& Center, const FRotator3f& Rotation, const FVector3f& Scale)
 {
 	return {
@@ -91,4 +72,25 @@ void ULFPRenderLibrary::CreateFaceData(const TArray<FVector3f>& VertexPosList, T
 			FVector2f(MinUVOffset.X, MaxUVOffset.Y)
 		});
 	}
+}
+
+bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, uint8* Data, const FUpdateTextureRegion2D* RegionList, const int32 RegionAmount)
+{
+	if (IsValid(Texture) == false) return false;
+
+	const int32 BufferSize = 4;
+
+#if WITH_EDITOR
+	Texture->TemporarilyDisableStreaming();
+#endif
+
+	Texture->UpdateTextureRegions(0, RegionAmount, RegionList, Texture->GetSizeX() * BufferSize, BufferSize, Data,
+		[](uint8* SrcData, const FUpdateTextureRegion2D* Regions)
+		{
+			delete[] SrcData;
+			delete[] Regions;
+		}
+	);
+
+	return true;
 }

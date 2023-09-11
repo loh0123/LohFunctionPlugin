@@ -23,12 +23,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LFPRenderLibrary")
 		static UTexture2D* CreateTexture2D(const FIntPoint Size, const TextureFilter Filter, const bool bSRGB = true);
 
-		static bool UpdateTexture2D(UTexture2D* Texture, uint8* Data, const FUpdateTextureRegion2D* RegionList, const int32 RegionAmount);
-
 	UFUNCTION()
 		static TArray<FVector3f> CreateVertexPosList(const FVector3f& Center, const FRotator3f& Rotation, const FVector3f& Scale);
 
 	UFUNCTION()
 		static void CreateFaceData(const TArray<FVector3f>& VertexPosList, TArray<FVector3f>& VertexList, TArray<FVector2f>& UVList, TArray<uint32>& TriangleIndexList);
+
+public:
+
+	static bool UpdateTexture2D(UTexture2D* Texture, uint8* Data, const FUpdateTextureRegion2D* RegionList, const int32 RegionAmount);
 };
 
