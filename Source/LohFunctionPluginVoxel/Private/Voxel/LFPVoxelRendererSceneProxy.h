@@ -19,6 +19,7 @@
 #include "RayTracingDefinitions.h"
 #include "RayTracingInstance.h"
 #include "VectorUtil.h"
+#include "RenderResource.h"
 #include "DynamicMeshBuilder.h"
 #include "Voxel/LFPVoxelRendererComponent.h"
 
@@ -42,11 +43,11 @@ public:
 	{
 		if (!Resource->IsInitialized())
 		{
-			Resource->InitResource();
+			Resource->InitResource(FRHICommandListExecutor::GetImmediateCommandList());
 		}
 		else
 		{
-			Resource->UpdateRHI();
+			Resource->UpdateRHI(FRHICommandListExecutor::GetImmediateCommandList());
 		}
 	}
 
@@ -96,9 +97,9 @@ public:
 			Initializer.Segments.Add(Segment);
 
 			RayTracingGeometry.SetInitializer(Initializer);
-			RayTracingGeometry.InitResource();
+			RayTracingGeometry.InitResource(FRHICommandListExecutor::GetImmediateCommandList());
 
-			RayTracingGeometry.UpdateRHI();
+			RayTracingGeometry.UpdateRHI(FRHICommandListExecutor::GetImmediateCommandList());
 		}
 #endif
 	}
@@ -168,14 +169,19 @@ public:
 	{
 		//const double StartTime = FPlatformTime::Seconds();
 
+		EnableGPUSceneSupportFlags();
+
+		//bSupportsInstanceDataBuffer = true;
+
 		bHasDeformableMesh = false;
 		bCastDynamicShadow = true;
-		bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, GetScene().GetFeatureLevel());
 		bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 		bVerifyUsedMaterials = false;
 
 		bSupportsDistanceFieldRepresentation = RenderData.IsValid() && RenderData->DistanceFieldMeshData.IsValid();
 		bVisibleInLumenScene = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
+
+		//bIsNaniteMesh = true;
 		//bSupportsMeshCardRepresentation = RenderData.IsValid() && RenderData->LumenCardData.IsValid();
 
 		//if (Component->bOverrideDistanceFieldSelfShadowBias) DistanceFieldSelfShadowBias = Component->DistanceFieldSelfShadowBias;
@@ -210,8 +216,6 @@ public:
 				}
 			);
 		}
-
-		EnableGPUSceneSupportFlags();
 
 		bSupportsSortedTriangles = true;
 
