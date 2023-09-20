@@ -27,6 +27,7 @@ void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(ULFPInventoryComponent, InventorySlotItemList, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(ULFPInventoryComponent, SelectedSlotIndexList, COND_None, REPNOTIFY_Always);
 }
 
 
@@ -543,6 +544,73 @@ void ULFPInventoryComponent::TrimInventorySlotList()
 	InventorySlotItemList.Shrink();
 }
 
+bool ULFPInventoryComponent::SelectSlotIndex(const int32 SlotIndex, const bool bAddToList)
+{
+	if (IsInventorySlotIndexValid(SlotIndex) == false) return false;
+
+	if (bAddToList == false)
+	{
+		SelectedSlotIndexList.Empty(1);
+	}
+
+	SelectedSlotIndexList.Add(SlotIndex);
+
+	return true;
+}
+
+bool ULFPInventoryComponent::SelectSlotName(const FName SlotName, const bool bAddToList)
+{
+	if (HasInventorySlotName(SlotName) == false) return false;
+
+	if (bAddToList == false)
+	{
+		SelectedSlotIndexList.Empty();
+	}
+
+	const auto& SlotNameRange = InventorySlotNameList.FindChecked(SlotName);
+
+	for (int32 SlotIndex = SlotNameRange.X; SlotIndex <= SlotNameRange.Y; SlotIndex++)
+	{
+		SelectedSlotIndexList.Add(SlotIndex);
+	}
+
+	return true;
+}
+
+bool ULFPInventoryComponent::DeselectSlotIndex(const int32 SlotIndex)
+{
+	if (IsInventorySlotIndexValid(SlotIndex) == false) return false;
+
+	return SelectedSlotIndexList.Remove(SlotIndex) > 0;
+}
+
+bool ULFPInventoryComponent::DeselectSlotName(const FName SlotName)
+{
+	if (HasInventorySlotName(SlotName) == false) return false;
+
+	const auto& SlotNameRange = InventorySlotNameList.FindChecked(SlotName);
+
+	return SelectedSlotIndexList.RemoveAll([&](const int32 SlotIndex) 
+		{
+			return SlotNameRange.X <= SlotIndex || SlotNameRange.Y >= SlotIndex;
+		}) > 0;
+}
+
+TArray<int32> ULFPInventoryComponent::GetSelectedSlotIndexList() const
+{
+	return SelectedSlotIndexList;
+}
+
+int32 ULFPInventoryComponent::GetSelectedSlotIndex(const int32 ListIndex) const
+{
+	return SelectedSlotIndexList.IsValidIndex(ListIndex) ? SelectedSlotIndexList[ListIndex] : INDEX_NONE;
+}
+
+const FLFPInventoryItemData& ULFPInventoryComponent::GetSelectedSlotItem(const int32 ListIndex) const
+{
+	return GetInventorySlot(GetSelectedSlotIndex(ListIndex));
+}
+
 bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
 {
 	for (auto& CheckFunc : CheckComponentList)
@@ -737,4 +805,8 @@ void ULFPInventoryComponent::OnInventorySlotItemListRep_Implementation(const TAr
 			OnUpdateItem.Broadcast(OldData, GetInventorySlot(Index), Index, "");
 		}
 	}
+}
+
+void ULFPInventoryComponent::OnSelectedSlotIndexListRep_Implementation(const TArray<int32>& OldValue)
+{
 }

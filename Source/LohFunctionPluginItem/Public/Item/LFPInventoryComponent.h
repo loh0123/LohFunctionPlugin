@@ -194,6 +194,29 @@ public: // Function
 		void TrimInventorySlotList();
 
 
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool SelectSlotIndex(const int32 SlotIndex, const bool bAddToList = false);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool SelectSlotName(const FName SlotName, const bool bAddToList = false);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool DeselectSlotIndex(const int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool DeselectSlotName(const FName SlotName);
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		TArray<int32> GetSelectedSlotIndexList() const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		int32 GetSelectedSlotIndex(const int32 ListIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		const FLFPInventoryItemData& GetSelectedSlotItem(const int32 ListIndex) const;
+
+
 public: // Event
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
@@ -241,18 +264,26 @@ public: // Event
 	virtual bool IsItemSortPriorityHigher_Implementation(const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB, const FString& EventInfo) const { return false; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
-		bool IsInventorySlotAvailable(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
-	virtual bool IsInventorySlotAvailable_Implementation(const int32& SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.IsEmpty(); }
+		bool IsInventorySlotAvailable(const int32 SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
+	virtual bool IsInventorySlotAvailable_Implementation(const int32 SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.IsEmpty(); }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
-		bool IsInventorySlotHasTag(const int32& SlotIndex, const FGameplayTag& SlotTag) const;
-	virtual bool IsInventorySlotHasTag_Implementation(const int32& SlotIndex, const FGameplayTag& SlotTag) const { return false; }
+		bool IsInventorySlotHasTag(const int32 SlotIndex, const FGameplayTag& SlotTag) const;
+	virtual bool IsInventorySlotHasTag_Implementation(const int32 SlotIndex, const FGameplayTag& SlotTag) const { return false; }
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
+		bool IsInventorySlotSelected(const int32 SlotIndex) const;
+	virtual bool IsInventorySlotSelected_Implementation(const int32 SlotIndex) const { return false; }
 
 
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
 		void OnInventorySlotItemListRep(const TArray<FLFPInventoryItemData>& OldValue);
 	virtual void OnInventorySlotItemListRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Event")
+		void OnSelectedSlotIndexListRep(const TArray<int32>& OldValue);
+	virtual void OnSelectedSlotIndexListRep_Implementation(const TArray<int32>& OldValue);
 
 public: // Delegate
 
@@ -353,4 +384,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnInventorySlotItemListRep, Category = "LFPInventoryComponent | Cache")
 		TArray<FLFPInventoryItemData> InventorySlotItemList;
+
+	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnSelectedSlotIndexListRep, Category = "LFPInventoryComponent | Cache")
+		TArray<int32> SelectedSlotIndexList;
 };
