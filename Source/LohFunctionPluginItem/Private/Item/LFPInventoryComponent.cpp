@@ -596,7 +596,7 @@ bool ULFPInventoryComponent::DeselectSlotName(const FName SlotName)
 		}) > 0;
 }
 
-TArray<int32> ULFPInventoryComponent::GetSelectedSlotIndexList() const
+const TArray<int32>& ULFPInventoryComponent::GetSelectedSlotIndexList() const
 {
 	return SelectedSlotIndexList;
 }
@@ -604,6 +604,11 @@ TArray<int32> ULFPInventoryComponent::GetSelectedSlotIndexList() const
 int32 ULFPInventoryComponent::GetSelectedSlotIndex(const int32 ListIndex) const
 {
 	return SelectedSlotIndexList.IsValidIndex(ListIndex) ? SelectedSlotIndexList[ListIndex] : INDEX_NONE;
+}
+
+int32 ULFPInventoryComponent::GetSelectedSlotIndexListLength() const
+{
+	return SelectedSlotIndexList.Num();
 }
 
 const FLFPInventoryItemData& ULFPInventoryComponent::GetSelectedSlotItem(const int32 ListIndex) const

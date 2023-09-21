@@ -193,6 +193,7 @@ public: // Function
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void TrimInventorySlotList();
 
+public:
 
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
@@ -208,10 +209,13 @@ public: // Function
 		bool DeselectSlotName(const FName SlotName);
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		TArray<int32> GetSelectedSlotIndexList() const;
+		const TArray<int32>& GetSelectedSlotIndexList() const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		int32 GetSelectedSlotIndex(const int32 ListIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		int32 GetSelectedSlotIndexListLength() const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		const FLFPInventoryItemData& GetSelectedSlotItem(const int32 ListIndex) const;

@@ -16,6 +16,8 @@ void ULFPItemMutatorComponent::GetLifetimeReplicatedProps(TArray< FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(ULFPItemMutatorComponent, MutatorQueue, COND_None, REPNOTIFY_Always);
+
+	DOREPLIFETIME(ULFPItemMutatorComponent, InventoryComponent);
 }
 
 
@@ -49,6 +51,8 @@ void ULFPItemMutatorComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 bool ULFPItemMutatorComponent::SetInventoryComponent(ULFPInventoryComponent* Component)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	InventoryComponent = Component;
 
 	return IsValid(InventoryComponent);

@@ -186,7 +186,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, Savegame, ReplicatedUsing = OnMutatorQueueRep, Category = "LFPItemMutatorComponent | Cache")
 		TArray<FLFPItemMutatorQueueData> MutatorQueue;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Savegame, Category = "LFPItemMutatorComponent | Cache")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated, Category = "LFPItemMutatorComponent | Cache")
 		ULFPInventoryComponent* InventoryComponent = nullptr;
 
 };
