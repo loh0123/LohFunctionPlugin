@@ -275,16 +275,16 @@ void ULFPItemMutatorComponent::ProcessItem(FLFPItemMutatorQueueData& ItemData, c
 
 	if (bReturnConsume)
 	{
-		for (auto& ConsumeItem : ItemData.ItemConsumeList)
+		for (auto& ConsumeItemList : ItemData.ItemConsumeList)
 		{
-			InventoryComponent->AddItem(ConsumeItem, INDEX_NONE, ItemData.ItemSearchSlotName, FString("ReturnConsume"));
+			InventoryComponent->AddItemList(ConsumeItemList.ItemList, ConsumeItemList.ItemSlotName, FString("ReturnConsume"));
 		}
 	}
 	else
 	{
 		for (auto& ProduceItem : ItemData.ItemProduceList)
 		{
-			InventoryComponent->AddItem(ProduceItem, INDEX_NONE, ItemData.ItemSearchSlotName, FString("ReturnProduce"));
+			InventoryComponent->AddItemList(ProduceItem.ItemList, ProduceItem.ItemSlotName, FString("ReturnProduce"));
 		}
 	}
 
@@ -303,6 +303,15 @@ bool ULFPItemMutatorComponent::ConsumeItemFromInventory_Implementation(const FLF
 	}
 
 	auto ConsumeList = ItemMutatorQueueData.ItemConsumeList;
+	bool bIsSuccess = true;
 
-	return InventoryComponent->RemoveItemList(ConsumeList, ItemMutatorQueueData.ItemSearchSlotName);
+	for (auto& ItemList : ConsumeList)
+	{
+		if (InventoryComponent->RemoveItemList(ItemList.ItemList, ItemList.ItemSlotName) == false)
+		{
+			bIsSuccess = false;
+		}
+	}
+
+	return bIsSuccess;
 }

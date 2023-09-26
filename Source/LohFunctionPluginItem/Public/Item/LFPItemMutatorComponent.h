@@ -6,6 +6,18 @@
 #include "Item/LFPInventoryComponent.h"
 #include "LFPItemMutatorComponent.generated.h"
 
+USTRUCT(BlueprintType)
+struct FLFPItemMutatorItemData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
+		TArray<FLFPInventoryItemData> ItemList = TArray<FLFPInventoryItemData>();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
+		FName ItemSlotName = FName("All");
+};
+
 
 USTRUCT(BlueprintType)
 struct FLFPItemMutatorQueueData
@@ -16,13 +28,10 @@ struct FLFPItemMutatorQueueData
 		FName RecipeName = FName("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPInventoryItemData> ItemConsumeList = TArray<FLFPInventoryItemData>();
+		TArray<FLFPItemMutatorItemData> ItemConsumeList = TArray<FLFPItemMutatorItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		FName ItemSearchSlotName = FName("All");
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPInventoryItemData> ItemProduceList = TArray<FLFPInventoryItemData>();
+		TArray<FLFPItemMutatorItemData> ItemProduceList = TArray<FLFPItemMutatorItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		float MaxDelay = -1.0f;
