@@ -342,14 +342,14 @@ public: // Getter
 	* Find Slot Index Within Slot Name Range
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		int32 FindInventorySlotOffsetWithName(const FName SlotName, const int32 SlotIndex) const;
+		int32 FindInventorySlotIndexWithName(const FName SlotName, const int32 SlotRangeIndex) const;
 
 	/** 
 	* Find Inventory Slot Using Slot Name Defined On (InventorySlotNameList) variable
 	* Suitable To Using For Getting Slot Based On Slot Type
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName) const;
+		bool FindInventorySlotIndexListWithName(TArray<int32>& SlotList, const FName SlotName) const;
 
 	/** 
 	* Find Items Using Gameplay Tag 

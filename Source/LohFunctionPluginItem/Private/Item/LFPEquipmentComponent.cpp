@@ -114,9 +114,9 @@ bool ULFPEquipmentComponent::AddEquipmentSlotName(const FName InventorySlotName,
 
 	TArray<int32> SlotIndexList;
 
-	if (InventoryComponent->FindInventorySlotWithName(SlotIndexList, InventorySlotName) == false)
+	if (InventoryComponent->FindInventorySlotIndexListWithName(SlotIndexList, InventorySlotName) == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName FindInventorySlotWithName return false"));
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : AddEquipmentSlotName FindInventorySlotIndexListWithName return false"));
 
 		return false;
 	}

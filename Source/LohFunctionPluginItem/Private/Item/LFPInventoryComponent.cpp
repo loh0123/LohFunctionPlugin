@@ -325,9 +325,9 @@ void ULFPInventoryComponent::ClearInventory(const FName SlotName, const FString 
 
 	TArray<int32> ItemIndexList;
 
-	if (FindInventorySlotWithName(ItemIndexList, SlotName) == false)
+	if (FindInventorySlotIndexListWithName(ItemIndexList, SlotName) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : ClearInventory FindInventorySlotWithName return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : ClearInventory FindInventorySlotIndexListWithName return false"));
 
 		return;
 	}
@@ -371,9 +371,9 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlotIndex, const FName Fro
 	{
 		SwapFromIndexList.Add(FromSlotIndex);
 	}
-	else if (FindInventorySlotWithName(SwapFromIndexList, FromSlotName) == false)
+	else if (FindInventorySlotIndexListWithName(SwapFromIndexList, FromSlotName) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem From FindInventorySlotWithName return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem From FindInventorySlotIndexListWithName return false"));
 
 		return false;
 	}
@@ -382,9 +382,9 @@ bool ULFPInventoryComponent::SwapItem(const int32 FromSlotIndex, const FName Fro
 	{
 		SwapToIndexList.Add(ToSlotIndex);
 	}
-	else if (FindInventorySlotWithName(SwapToIndexList, ToSlotName) == false)
+	else if (FindInventorySlotIndexListWithName(SwapToIndexList, ToSlotName) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem To FindInventorySlotWithName return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : SwapItem To FindInventorySlotIndexListWithName return false"));
 
 		return false;
 	}
@@ -469,9 +469,9 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 	{
 		SwapFromIndexList.Add(FromSlotIndex);
 	}
-	else if (FindInventorySlotWithName(SwapFromIndexList, FromSlotName) == false)
+	else if (FindInventorySlotIndexListWithName(SwapFromIndexList, FromSlotName) == false)
 	{
-		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : TransferItem From FindInventorySlotWithName return false"));
+		UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : TransferItem From FindInventorySlotIndexListWithName return false"));
 
 		return false;
 	}
@@ -519,7 +519,9 @@ void ULFPInventoryComponent::SortInventory(const FName SlotName, const FString E
 
 	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	Sort(InventorySlotItemList.GetData() + SlotRange.X, FMath::Min(InventorySlotItemList.Num() - SlotRange.X, SlotRange.Y - SlotRange.X), [&](const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB)
+	TArrayRange<FLFPInventoryItemData> ArrayRange(InventorySlotItemList.GetData() + SlotRange.X, FMath::Min(InventorySlotItemList.Num() - SlotRange.X, SlotRange.Y - SlotRange.X));
+
+	Algo::Sort(ArrayRange, [&](const FLFPInventoryItemData& ItemDataA, const FLFPInventoryItemData& ItemDataB)
 		{
 			return IsItemSortPriorityHigher(ItemDataA, ItemDataB, EventInfo);
 		});
@@ -734,18 +736,18 @@ bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList,
 	return IsValidOutput;
 }
 
-int32 ULFPInventoryComponent::FindInventorySlotOffsetWithName(const FName SlotName, const int32 SlotIndex) const
+int32 ULFPInventoryComponent::FindInventorySlotIndexWithName(const FName SlotName, const int32 SlotRangeIndex) const
 {
 	if (HasInventorySlotName(SlotName) == false) return INDEX_NONE;
 
 	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	const int32 FinalIndex = SlotIndex - SlotRange.X;
+	const int32 FinalIndex = SlotRangeIndex + SlotRange.X;
 
 	return FinalIndex > SlotRange.Y ? INDEX_NONE : FinalIndex;
 }
 
-bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName) const
+bool ULFPInventoryComponent::FindInventorySlotIndexListWithName(TArray<int32>& SlotList, const FName SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
@@ -805,7 +807,7 @@ const FLFPInventoryItemData& ULFPInventoryComponent::GetInventorySlot(const int3
 {
 	if (HasInventorySlotName(StartSlotName) == false) return FLFPInventoryItemData::EmptyInventoryItemData;
 
-	const int32 TargetIndex = FindInventorySlotOffsetWithName(StartSlotName, Index);
+	const int32 TargetIndex = FindInventorySlotIndexWithName(StartSlotName, Index);
 
 	return IsInventorySlotIndexValid(TargetIndex) ? InventorySlotItemList[TargetIndex] : FLFPInventoryItemData::EmptyInventoryItemData;
 }
