@@ -50,6 +50,8 @@ void ULFPInventoryComponent::BeginPlay()
 			UE_LOG(LogTemp, Error, TEXT("ULFPInventoryComponent : InventorySlotName (%s) Is Invalid : Please Make Sure X Is Min, Y Is Max, Y Is Smaller Than MaxInventorySlotAmount And X Is Bigger Than -1"), *SlotName.Key.ToString());
 		}
 	}
+
+	InventorySlotNameList.Add("All", FIntPoint(0, MaxInventorySlotAmount - 1));
 }
 
 
@@ -738,7 +740,9 @@ int32 ULFPInventoryComponent::FindInventorySlotOffsetWithName(const FName SlotNa
 
 	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
-	return SlotIndex - SlotRange.X;
+	const int32 FinalIndex = SlotIndex - SlotRange.X;
+
+	return FinalIndex > SlotRange.Y ? INDEX_NONE : FinalIndex;
 }
 
 bool ULFPInventoryComponent::FindInventorySlotWithName(TArray<int32>& SlotList, const FName SlotName) const
@@ -795,6 +799,15 @@ bool ULFPInventoryComponent::FindItemListWithItemName(TArray<int32>& ItemIndexLi
 	}
 
 	return IsValidOutput;
+}
+
+const FLFPInventoryItemData& ULFPInventoryComponent::GetInventorySlot(const int32 Index, const FName StartSlotName) const
+{
+	if (HasInventorySlotName(StartSlotName) == false) return FLFPInventoryItemData::EmptyInventoryItemData;
+
+	const int32 TargetIndex = FindInventorySlotOffsetWithName(StartSlotName, Index);
+
+	return IsInventorySlotIndexValid(TargetIndex) ? InventorySlotItemList[TargetIndex] : FLFPInventoryItemData::EmptyInventoryItemData;
 }
 
 void ULFPInventoryComponent::OnInventorySlotItemListRep_Implementation(const TArray<FLFPInventoryItemData>& OldValue)

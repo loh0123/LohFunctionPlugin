@@ -367,7 +367,7 @@ public: // Getter
 		bool FindItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, const FName SlotName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		const FLFPInventoryItemData& GetInventorySlot(const int32 Index) const { return IsInventorySlotIndexValid(Index) ? InventorySlotItemList[Index] : FLFPInventoryItemData::EmptyInventoryItemData; };
+		const FLFPInventoryItemData& GetInventorySlot(const int32 Index, const FName StartSlotName = "All") const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotItemList; };
