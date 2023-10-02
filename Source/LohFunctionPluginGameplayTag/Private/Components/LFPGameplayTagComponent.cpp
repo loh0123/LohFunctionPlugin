@@ -21,7 +21,7 @@ void ULFPGameplayTagComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ULFPGameplayTagSubsystem* SubSystem = Cast<ULFPGameplayTagSubsystem>(USubsystemBlueprintLibrary::GetGameInstanceSubsystem(this, ULFPGameplayTagSubsystem::StaticClass()));
+	ULFPGameplayTagSubsystem* SubSystem = Cast<ULFPGameplayTagSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, ULFPGameplayTagSubsystem::StaticClass()));
 
 	if (SubSystem != nullptr)
 	{
@@ -33,7 +33,7 @@ void ULFPGameplayTagComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	ULFPGameplayTagSubsystem* SubSystem = Cast<ULFPGameplayTagSubsystem>(USubsystemBlueprintLibrary::GetGameInstanceSubsystem(this, ULFPGameplayTagSubsystem::StaticClass()));
+	ULFPGameplayTagSubsystem* SubSystem = Cast<ULFPGameplayTagSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, ULFPGameplayTagSubsystem::StaticClass()));
 
 	if (SubSystem != nullptr)
 	{

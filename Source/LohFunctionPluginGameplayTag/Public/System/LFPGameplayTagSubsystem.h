@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Subsystems/GameInstanceSubsystem.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "LFPGameplayTagSubsystem.generated.h"
 
 USTRUCT()
@@ -44,7 +44,7 @@ public:
  * 
  */
 UCLASS()
-class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPGameplayTagSubsystem : public UGameInstanceSubsystem
+class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPGameplayTagSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
