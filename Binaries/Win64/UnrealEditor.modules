@@ -5,6 +5,7 @@
 		"LohFunctionPlugin": "UnrealEditor-LohFunctionPlugin.dll",
 		"LohFunctionPluginEditor": "UnrealEditor-LohFunctionPluginEditor.dll",
 		"LohFunctionPluginExperience": "UnrealEditor-LohFunctionPluginExperience.dll",
+		"LohFunctionPluginGameplayTag": "UnrealEditor-LohFunctionPluginGameplayTag.dll",
 		"LohFunctionPluginItem": "UnrealEditor-LohFunctionPluginItem.dll",
 		"LohFunctionPluginVoxel": "UnrealEditor-LohFunctionPluginVoxel.dll"
 	}

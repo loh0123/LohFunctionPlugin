@@ -39,6 +39,11 @@
 			"Name": "LohFunctionPluginVoxel",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginGameplayTag",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
 		}
 	]
 }
