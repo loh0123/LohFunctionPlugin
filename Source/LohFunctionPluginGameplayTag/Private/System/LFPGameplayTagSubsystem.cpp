@@ -58,43 +58,44 @@ void ULFPGameplayTagSubsystem::UnregisterComponentByContainer(const FGameplayTag
 	return;
 }
 
-void ULFPGameplayTagSubsystem::FindComponentListByTag(TArray<UActorComponent*> ComponentList, const FGameplayTag ComponentTag) const
+void ULFPGameplayTagSubsystem::FindComponentListByTag(TArray<UActorComponent*>& ComponentList, const FGameplayTag ComponentGameplayTag, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
 {
-	if (TagContainer.HasTag(ComponentTag) == false) return;
-
-	TSet<UActorComponent*> UniqueList;
-	
-	for (const auto& Reference : ReferenceMap)
-	{
-		if (Reference.Key.MatchesTag(ComponentTag) == false) continue;
-
-		UniqueList.Reserve(UniqueList.Num() + Reference.Value.BindedObjectNum());
-
-		for (const auto& BindedObject : Reference.Value.GetBindedObjectList())
-		{
-			UniqueList.Add(BindedObject);
-		}
-	}
-
-	ComponentList.Append(UniqueList.Array());
+	FindComponentListByTags(ComponentList, ComponentGameplayTag.GetSingleTagContainer(), ComponentTagList, bHasAllTags);
 
 	return;
 }
 
-void ULFPGameplayTagSubsystem::FindComponentListByTags(TArray<UActorComponent*> ComponentList, const FGameplayTagContainer ComponentTags) const
+void ULFPGameplayTagSubsystem::FindComponentListByTags(TArray<UActorComponent*>& ComponentList, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
 {
-	if (TagContainer.HasAny(ComponentTags) == false) return;
+	if (TagContainer.HasAny(ComponentGameplayTags) == false) return;
 
 	TSet<UActorComponent*> UniqueList;
 
 	for (const auto& Reference : ReferenceMap)
 	{
-		if (Reference.Key.MatchesAny(ComponentTags) == false) continue;
+		if (Reference.Key.MatchesAny(ComponentGameplayTags) == false) continue;
 
 		UniqueList.Reserve(UniqueList.Num() + Reference.Value.BindedObjectNum());
 
 		for (const auto& BindedObject : Reference.Value.GetBindedObjectList())
 		{
+			if (ComponentTagList.IsEmpty() == false)
+			{
+				bool bIsPass = bHasAllTags;
+
+				for (const FName& ComponentCheckTag : ComponentTagList)
+				{
+					if (BindedObject->ComponentHasTag(ComponentCheckTag) == !bIsPass)
+					{
+						bIsPass = !bIsPass;
+
+						break;
+					}
+				}
+
+				if (bIsPass == false) continue;
+			}
+
 			UniqueList.Add(BindedObject);
 		}
 	}
@@ -129,4 +130,43 @@ void ULFPGameplayTagSubsystem::BroadcastGameplayTagEvent(const FGameplayTagConta
 	}
 
 	return;
+}
+
+bool ULFPGameplayTagSubsystem::HasComponentWithTag(const FGameplayTag ComponentGameplayTag, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+{
+	return HasComponentWithTags(ComponentGameplayTag.GetSingleTagContainer(), ComponentTagList, bHasAllTags);
+}
+
+bool ULFPGameplayTagSubsystem::HasComponentWithTags(const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+{
+	if (TagContainer.HasAny(ComponentGameplayTags) == false) return false;
+
+	for (const auto& Reference : ReferenceMap)
+	{
+		if (Reference.Key.MatchesAny(ComponentGameplayTags) == false) continue;
+
+		for (const auto& BindedObject : Reference.Value.GetBindedObjectList())
+		{
+			if (ComponentTagList.IsEmpty() == false)
+			{
+				bool bIsPass = bHasAllTags;
+
+				for (const FName& ComponentCheckTag : ComponentTagList)
+				{
+					if (BindedObject->ComponentHasTag(ComponentCheckTag) == !bIsPass)
+					{
+						bIsPass = !bIsPass;
+
+						break;
+					}
+				}
+
+				if (bIsPass == false) continue;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
 }
