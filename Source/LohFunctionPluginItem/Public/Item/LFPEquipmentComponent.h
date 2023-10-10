@@ -15,7 +15,7 @@ public:
 
 	/** The inventory slot */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
-	FName SlotName = FName("All");
+	FGameplayTag SlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
 
 	/** This slot won't send any event but still can equip or unequip */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
@@ -103,7 +103,7 @@ public:
 		FORCEINLINE void SetInventoryComponent_Internal(ULFPInventoryComponent* OldComponent, ULFPInventoryComponent* NewComponent);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool AddEquipmentSlotName(const FName InventorySlotName, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
+		bool AddEquipmentSlotName(const FGameplayTag InventorySlotName, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool AddEquipmentSlot(const int32 InventorySlotIndex, const bool bIsSlotActive = true, const bool bIsSlotLock = true, const FString EventInfo = "");
@@ -118,7 +118,7 @@ public:
 		bool TryEquipItem(const int32 InventorySlotIndex, const bool bToActiveSlotOnly = false, const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
-		bool TryUnequipItem(const int32 EquipmentSlotIndex, const FName Slotname = FName("All"), const FString EventInfo = "");
+		bool TryUnequipItem(const int32 EquipmentSlotIndex, const FGameplayTag SlotName, const FString EventInfo = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPEquipmentComponent | Function")
 		bool SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo = "");

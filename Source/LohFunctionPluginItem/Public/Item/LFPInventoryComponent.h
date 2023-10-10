@@ -11,7 +11,6 @@
 #include "GameplayTagContainer.h"
 #include "LFPInventoryComponent.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct FLFPInventoryItemData
 {
@@ -24,8 +23,8 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
-		FName ItemName = FName("");
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData", meta = (Categories = "Item.Identifiers"))
+		FGameplayTag ItemTag = FGameplayTag();
 
 public:
 
@@ -33,29 +32,29 @@ public:
 
 public:
 
-	FORCEINLINE const FName& GetName() const
+	FORCEINLINE const FGameplayTag& GetItemTag() const
 	{
-		return ItemName;
+		return ItemTag;
 	}
 
 	FORCEINLINE	bool HasItem() const
 	{
-		return ItemName.IsNone() == false;
+		return ItemTag.IsValid();
 	}
 
 	FORCEINLINE	bool IsEmpty() const
 	{
-		return ItemName.IsNone();
+		return ItemTag.IsValid() == false;
 	}
 
 	FORCEINLINE	bool IsItemEqual(const FLFPInventoryItemData& Other) const
 	{
-		return ItemName == Other.GetName();
+		return GetItemTag() == Other.GetItemTag();
 	}
 
-	FORCEINLINE	bool IsItemEqual(const FName& Other) const
+	FORCEINLINE	bool IsItemEqual(const FGameplayTag& Other) const
 	{
-		return ItemName == Other;
+		return GetItemTag() == Other;
 	}
 
 public:
@@ -64,7 +63,7 @@ public:
 	{
 		FLFPInventoryItemData CopyData;
 
-		CopyData.ItemName = ItemName;
+		CopyData.ItemTag = ItemTag;
 
 		CopyData.MetaData.JsonObjectFromString(MetaData.JsonString);
 
@@ -73,18 +72,18 @@ public:
 
 	FORCEINLINE	bool operator==(const FLFPInventoryItemData& NewData) const
 	{
-		return ItemName == NewData.ItemName && MetaData.JsonString == NewData.MetaData.JsonString;
+		return GetItemTag() == NewData.GetItemTag() && MetaData.JsonString == NewData.MetaData.JsonString;
 	}
 
 	FORCEINLINE	bool operator!=(const FLFPInventoryItemData& NewData) const
 	{
-		return ItemName != NewData.ItemName || MetaData.JsonString != NewData.MetaData.JsonString;
+		return GetItemTag() != NewData.GetItemTag() || MetaData.JsonString != NewData.MetaData.JsonString;
 	}
 
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPInventoryItemData& Data)
 	{
-		Ar << Data.MetaData.JsonString << Data.ItemName;
+		Ar << Data.MetaData.JsonString << Data.ItemTag;
 
 		Data.MetaData.PostSerialize(Ar);
 
@@ -133,11 +132,11 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	* @return Some item has been added to inventory
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool AddItem(UPARAM(ref) FLFPInventoryItemData& ItemData, int32 SlotIndex, FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool AddItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemDataList, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool AddItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemDataList, FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Remove item From inventory
@@ -147,18 +146,18 @@ public: // Function
 	* @param EventInfo Info to pass to trigger event
 	* @return Some item has been Removed from inventory
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(UPARAM(ref) FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool RemoveItem(UPARAM(ref) FLFPInventoryItemData& ItemData, int32 SlotIndex, FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemData, const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItemData>& ItemData, FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Remove All item From inventory
 	* @param SlotName What Slot Are Use On This Function
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void ClearInventory(const FName SlotName = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		void ClearInventory(FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Swap Item In Inventory
@@ -166,8 +165,8 @@ public: // Function
 	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SwapItem(const int32 FromSlotIndex, const FName FromSlotName = FName("All"), const int32 ToSlotIndex = -1, const FName ToSlotName = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool SwapItem(int32 FromSlotIndex, FGameplayTag FromSlotName = FGameplayTag(), int32 ToSlotIndex = -1, FGameplayTag ToSlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Transfer Item From To Inventory
@@ -176,15 +175,15 @@ public: // Function
 	* @param ToSlot To this inventory slot
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlotIndex, const FName FromSlotName = FName("All"), const int32 ToSlotIndex = -1, const FName ToSlotName = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool TransferItem(ULFPInventoryComponent* ToInventory, const int32 FromSlotIndex, FGameplayTag FromSlotName = FGameplayTag(), const int32 ToSlotIndex = -1, FGameplayTag ToSlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Sort inventory using sort function
 	* @param EventInfo Info to pass to trigger event
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void SortInventory(const FName Slotname = FName("All"), const FString EventInfo = FString("None"));
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		void SortInventory(FGameplayTag SlotName = FGameplayTag(), const FString EventInfo = FString("None"));
 
 	/**
 	* Trim inventory to make it more compact
@@ -199,14 +198,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SelectSlotIndex(const int32 SlotIndex, const bool bAddToList = false);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SelectSlotName(const FName SlotName, const bool bAddToList = false);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool SelectSlotName(const FGameplayTag SlotName, const bool bAddToList = false);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool DeselectSlotIndex(const int32 SlotIndex);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool DeselectSlotName(const FName SlotName);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool DeselectSlotName(const FGameplayTag SlotName);
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		const TArray<int32>& GetSelectedSlotIndexList() const;
@@ -271,9 +270,9 @@ public: // Event
 		bool IsInventorySlotAvailable(const int32 SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const;
 	virtual bool IsInventorySlotAvailable_Implementation(const int32 SlotIndex, const FLFPInventoryItemData& SlotItem, const FLFPInventoryItemData& ForItem) const { return SlotItem.IsEmpty(); }
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
-		bool IsInventorySlotHasTag(const int32 SlotIndex, const FGameplayTag& SlotTag) const;
-	virtual bool IsInventorySlotHasTag_Implementation(const int32 SlotIndex, const FGameplayTag& SlotTag) const { return false; }
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event", meta = (GameplayTagFilter = "Item.Categorizes"))
+		bool IsInventorySlotHasCategorize(const int32 SlotIndex, const FGameplayTag& SlotTag) const;
+	virtual bool IsInventorySlotHasCategorize_Implementation(const int32 SlotIndex, const FGameplayTag& SlotTag) const { return false; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPInventoryComponent | Event")
 		bool IsInventorySlotSelected(const int32 SlotIndex) const;
@@ -321,53 +320,53 @@ public: // Valid Checker
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
 		FORCEINLINE bool IsInventorySlotItemSame(const int32 IndexA, const int32 IndexB) const { return GetInventorySlot(IndexA).IsItemEqual(GetInventorySlot(IndexB)); };
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool HasInventorySlotName(const FName SlotName) const { return InventorySlotNameList.Contains(SlotName); }
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker", meta = (GameplayTagFilter = "Item.SlotNames"))
+		FORCEINLINE bool HasInventorySlotName(const FGameplayTag SlotName) const { return InventorySlotNameList.Contains(SlotName); }
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker")
-		FORCEINLINE bool IsInventorySlotHasName(const int32 Index, const FName SlotName) const;
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Valid Checker", meta = (GameplayTagFilter = "Item.SlotNames"))
+		FORCEINLINE bool IsInventorySlotHasName(const int32 Index, const FGameplayTag SlotName) const;
 
 public: // Getter
 
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool HaveItemsAtSlotName(const TArray<FLFPInventoryItemData>& ItemList, const FName SlotName) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool HaveItemsAtSlotName(const TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Empty Or Available Inventory Slot
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FName SlotName) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Slot Index Within Slot Name Range
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		int32 FindInventorySlotIndexWithName(const FName SlotName, const int32 SlotRangeIndex) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		int32 FindInventorySlotIndexWithName(const FGameplayTag SlotName, const int32 SlotRangeIndex) const;
 
 	/** 
 	* Find Inventory Slot Using Slot Name Defined On (InventorySlotNameList) variable
 	* Suitable To Using For Getting Slot Based On Slot Type
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindInventorySlotIndexListWithName(TArray<int32>& SlotList, const FName SlotName) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool FindInventorySlotIndexListWithName(TArray<int32>& SlotList, const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Items Using Gameplay Tag 
 	* Suitable To Using For Getting Item Based On Categorize
-	* Please Override (IsInventorySlotHasTag) To Use This Function 
+	* Please Override (IsInventorySlotHasCategorize) To Use This Function 
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindItemListWithTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FName SlotName) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.Categorizes"))
+		bool FindItemListWithCategorizeTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Items Using Item Name 
 	* Suitable To Using For Getting Multiple Same Item
 	*/
-	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter")
-		bool FindItemListWithItemName(TArray<int32>& ItemIndexList, const FName ItemName, const FName SlotName) const;
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item"))
+		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		const FLFPInventoryItemData& GetInventorySlot(const int32 Index, const FName StartSlotName = "All") const;
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		const FLFPInventoryItemData& GetInventorySlot(const int32 Index, FGameplayTag StartSlotName = FGameplayTag()) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotItemList; };
@@ -381,8 +380,8 @@ protected:
 protected:
 
 	/** Can use this to mark equipment slot and hidden slot ( It can't change runtime ) */
-	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
-		TMap<FName, FIntPoint> InventorySlotNameList = TMap<FName, FIntPoint>();
+	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting", meta = (Categories = "Item.SlotNames"))
+		TMap<FGameplayTag, FIntPoint> InventorySlotNameList = TMap<FGameplayTag, FIntPoint>();
 
 protected:
 

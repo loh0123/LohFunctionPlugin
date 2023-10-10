@@ -15,7 +15,7 @@ struct FLFPItemMutatorItemData
 		TArray<FLFPInventoryItemData> ItemList = TArray<FLFPInventoryItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		FName ItemSlotName = FName("All");
+		FGameplayTag ItemSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
 };
 
 

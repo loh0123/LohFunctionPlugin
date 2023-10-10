@@ -94,7 +94,7 @@ void ULFPEquipmentComponent::SetInventoryComponent_Internal(ULFPInventoryCompone
 	return;
 }
 
-bool ULFPEquipmentComponent::AddEquipmentSlotName(const FName InventorySlotName, const bool bIsSlotActive, const bool bIsSlotLock, const FString EventInfo)
+bool ULFPEquipmentComponent::AddEquipmentSlotName(const FGameplayTag InventorySlotName, const bool bIsSlotActive, const bool bIsSlotLock, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -257,7 +257,7 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 	{
 		if ((bToActiveSlotOnly == false) && (EquipmentSlot.bIsActive == false)) continue;
 
-		if (InventoryComponent->SwapItem(InventorySlotIndex, "All", EquipmentSlot.SlotIndex, "All", EventInfo)) return true;
+		if (InventoryComponent->SwapItem(InventorySlotIndex, FGameplayTag(), EquipmentSlot.SlotIndex, FGameplayTag(), EventInfo)) return true;
 	}
 
 	UE_LOG(LogTemp, Display, TEXT("ULFPEquipmentComponent : TryEquipItem No equipment slot available for this item"));
@@ -265,7 +265,7 @@ bool ULFPEquipmentComponent::TryEquipItem(const int32 InventorySlotIndex, const 
 	return false;
 }
 
-bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FName Slotname, const FString EventInfo)
+bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, const FGameplayTag SlotName, const FString EventInfo)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -290,7 +290,7 @@ bool ULFPEquipmentComponent::TryUnequipItem(const int32 EquipmentSlotIndex, cons
 		return false;
 	}
 
-	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, "All", INDEX_NONE, Slotname, EventInfo);
+	return InventoryComponent->SwapItem(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, FGameplayTag(), INDEX_NONE, SlotName, EventInfo);
 }
 
 bool ULFPEquipmentComponent::SetEquipmentSlotActive(const int32 EquipmentSlotIndex, const bool bIsSlotActive, const FString& EventInfo)
