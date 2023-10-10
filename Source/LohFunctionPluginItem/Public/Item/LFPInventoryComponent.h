@@ -16,6 +16,10 @@ struct FLFPInventoryItemData
 {
 	GENERATED_BODY()
 
+	FLFPInventoryItemData() {}
+
+	FLFPInventoryItemData(const FGameplayTag Tag) : ItemTag(Tag) {}
+
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPInventorySlotData")
