@@ -144,13 +144,13 @@ public: // Event
 
 	/** Check Is Slot Locked */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPEquipmentComponent | Event")
-		bool CanEquipItem(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const;
-		virtual bool CanEquipItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const { return IsEquipmentSlotLock(EquipmentSlotIndex) == false; }
+		bool CanEquipItem(const FLFPInventoryItemData& ItemData, const int32 ToEquipmentSlotIndex, const int32 ToInventorySlotIndex, const int32 FromInventorySlotIndex, const FString& EventInfo) const;
+		virtual bool CanEquipItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 ToEquipmentSlotIndex, const int32 ToInventorySlotIndex, const int32 FromInventorySlotIndex, const FString& EventInfo) const { return IsEquipmentSlotLock(ToEquipmentSlotIndex) == false; }
 
 	/** Check Is Slot Locked */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "LFPEquipmentComponent | Event")
-		bool CanUnequipItem(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const;
-		virtual bool CanUnequipItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 EquipmentSlotIndex, const int32 InventorySlotIndex, const FString& EventInfo) const { return IsEquipmentSlotLock(EquipmentSlotIndex) == false; }
+		bool CanUnequipItem(const FLFPInventoryItemData& ItemData, const int32 ToEquipmentSlotIndex, const int32 ToInventorySlotIndex, const int32 FromInventorySlotIndex, const FString& EventInfo) const;
+		virtual bool CanUnequipItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 ToEquipmentSlotIndex, const int32 ToInventorySlotIndex, const int32 FromInventorySlotIndex, const FString& EventInfo) const { return IsEquipmentSlotLock(ToEquipmentSlotIndex) == false; }
 
 
 public: // Delegate
@@ -173,7 +173,7 @@ public: // Valid Checker
 		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetEquipmentSlot(Index).HasItem(); };
+		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetInventorySlot(Index).HasItem(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FORCEINLINE bool IsEquipmentSlotActive(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsActive; };
@@ -187,7 +187,10 @@ public: // Getter
 		const TArray<FLFPEquipmentSlotData>& GetEquipmentSlotList() const { return EquipmentSlotList; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		const FLFPInventoryItemData& GetEquipmentSlot(const int32 Index) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(Index) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[Index].SlotIndex) : FLFPInventoryItemData::EmptyInventoryItemData; };
+		FLFPEquipmentSlotData GetEquipmentSlot(const int32 EquipmentSlotIndex) const { return IsEquipmentSlotIndexValid(EquipmentSlotIndex) ? EquipmentSlotList[EquipmentSlotIndex] : FLFPEquipmentSlotData(); };
+
+	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
+		const FLFPInventoryItemData& GetInventorySlot(const int32 EquipmentSlotIndex) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(EquipmentSlotIndex) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, FGameplayTag()) : FLFPInventoryItemData::EmptyInventoryItemData; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FLFPEquipmentSlotData FindEquipmentSlotIndex(const int32 InventorySlotIndex, int32& EquipmentIndex) const;
