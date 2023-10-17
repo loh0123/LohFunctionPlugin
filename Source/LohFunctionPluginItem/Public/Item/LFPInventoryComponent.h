@@ -17,9 +17,9 @@ struct FLFPInventoryItemData
 {
 	GENERATED_BODY()
 
-	FLFPInventoryItemData() {}
+	FLFPInventoryItemData() { MetaData.JsonObjectFromString("{}"); }
 
-	FLFPInventoryItemData(const FGameplayTag Tag) : ItemTag(Tag) {}
+	FLFPInventoryItemData(const FGameplayTag Tag) : ItemTag(Tag) { MetaData.JsonObjectFromString("{}"); }
 
 public:
 
@@ -91,6 +91,11 @@ public:
 		Ar << Data.MetaData.JsonString << Data.ItemTag;
 
 		Data.MetaData.PostSerialize(Ar);
+
+		if (Data.MetaData.JsonObject.IsValid() == false)
+		{
+			Data.MetaData.JsonObjectFromString("{}");
+		}
 
 		return Ar;
 	}
