@@ -51,7 +51,7 @@ void ULFPInventoryComponent::BeginPlay()
 		}
 	}
 
-	InventorySlotNameList.Add(FGameplayTag::RequestGameplayTag("Item.SlotNames.All"), FIntPoint(0, MaxInventorySlotAmount - 1));
+	InventorySlotNameList.Add(FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All, FIntPoint(0, MaxInventorySlotAmount - 1));
 }
 
 
@@ -113,7 +113,7 @@ bool ULFPInventoryComponent::AddItem(UPARAM(ref)FLFPInventoryItemData& ItemData,
 		return false;
 	}
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Inventory.SlotName.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	if (SlotIndex >= 0)
 	{
@@ -189,7 +189,7 @@ bool ULFPInventoryComponent::AddItemList(UPARAM(ref) TArray<FLFPInventoryItemDat
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Inventory.SlotName.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	bool bIsAllValid = true;
 
@@ -215,7 +215,7 @@ bool ULFPInventoryComponent::RemoveItem(UPARAM(ref)FLFPInventoryItemData& ItemDa
 		return false;
 	}
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Inventory.SlotName.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	if (SlotIndex >= 0)
 	{
@@ -247,7 +247,7 @@ bool ULFPInventoryComponent::RemoveItem(UPARAM(ref)FLFPInventoryItemData& ItemDa
 	{
 		TArray<int32> ItemIndexList;
 
-		if (FindItemListWithItemTag(ItemIndexList, ItemData.GetItemTag(), SlotName) == false)
+		if (FindItemIndexListWithItemTag(ItemIndexList, ItemData.GetItemTag(), SlotName) == false)
 		{
 			UE_LOG(LogTemp, Display, TEXT("ULFPInventoryComponent : RemoveItem FindItemListWithItemName return false"));
 
@@ -281,7 +281,7 @@ bool ULFPInventoryComponent::RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItem
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Inventory.SlotName.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	bool bIsAllValid = true;
 
@@ -300,7 +300,7 @@ void ULFPInventoryComponent::ClearInventory(FGameplayTag SlotName, const FString
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	TArray<int32> ItemIndexList;
 
@@ -313,6 +313,8 @@ void ULFPInventoryComponent::ClearInventory(FGameplayTag SlotName, const FString
 
 	for (const auto& SlotIndex : ItemIndexList)
 	{
+		if (IsInventorySlotItemValid(SlotIndex) == false) continue;
+
 		const FLFPInventoryItemData OldItemData = InventorySlotItemList[SlotIndex];
 
 		InventorySlotItemList[SlotIndex] = FLFPInventoryItemData();;
@@ -346,9 +348,9 @@ bool ULFPInventoryComponent::SwapItem(int32 FromSlotIndex, FGameplayTag FromSlot
 		return false;
 	}
 
-	if (HasInventorySlotName(FromSlotName) == false) FromSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(FromSlotName) == false) FromSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	if (HasInventorySlotName(ToSlotName) == false) ToSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(ToSlotName) == false) ToSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	if (FromSlotIndex != INDEX_NONE)
 	{
@@ -444,9 +446,9 @@ bool ULFPInventoryComponent::TransferItem(ULFPInventoryComponent* ToInventory, c
 		return false;
 	}
 
-	if (HasInventorySlotName(FromSlotName) == false) FromSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(FromSlotName) == false) FromSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	if (HasInventorySlotName(ToSlotName) == false) ToSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(ToSlotName) == false) ToSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	if (FromSlotIndex != INDEX_NONE)
 	{
@@ -491,7 +493,7 @@ void ULFPInventoryComponent::SortInventory(FGameplayTag SlotName, const FString 
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 
-	if (HasInventorySlotName(SlotName) == false) SlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
 
@@ -739,7 +741,23 @@ bool ULFPInventoryComponent::FindInventorySlotIndexListWithName(TArray<int32>& S
 	return true;
 }
 
-bool ULFPInventoryComponent::FindItemListWithCategorizeTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const
+bool ULFPInventoryComponent::FindInventorySlotListWithName(TArray<FLFPInventoryItemData>& SlotList, const FGameplayTag SlotName) const
+{
+	if (HasInventorySlotName(SlotName) == false) return false;
+
+	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+
+	SlotList.Reserve(SlotList.Num() + FMath::Min(SlotRange.Y, MaxInventorySlotAmount));
+
+	for (int32 SlotIndex = SlotRange.X; SlotIndex <= SlotRange.Y; SlotIndex++)
+	{
+		SlotList.Add(GetInventorySlot(SlotIndex, SlotName));
+	}
+
+	return true;
+}
+
+bool ULFPInventoryComponent::FindItemIndexListWithCategorizeTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
@@ -759,7 +777,7 @@ bool ULFPInventoryComponent::FindItemListWithCategorizeTag(TArray<int32>& SlotLi
 	return IsValidOutput;
 }
 
-bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const
+bool ULFPInventoryComponent::FindItemListWithCategorizeTag(TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
@@ -769,9 +787,49 @@ bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexLis
 
 	for (int32 SlotIndex = SlotRange.X; SlotIndex <= SlotRange.Y; SlotIndex++)
 	{
-		if (GetInventorySlot(SlotIndex).IsItemEqual(ItemTag) == false) continue;
-		
+		if (IsInventorySlotHasCategorize(SlotIndex, SlotTag) == false) continue;
+
+		ItemList.Add(GetInventorySlot(SlotIndex, SlotName));
+
+		IsValidOutput = true;
+	}
+
+	return IsValidOutput;
+}
+
+bool ULFPInventoryComponent::FindItemIndexListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const
+{
+	if (HasInventorySlotName(SlotName) == false) return false;
+
+	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+
+	bool IsValidOutput = false;
+
+	for (int32 SlotIndex = SlotRange.X; SlotIndex <= SlotRange.Y; SlotIndex++)
+	{
+		if (GetInventorySlot(SlotIndex, FGameplayTag()).IsItemEqual(ItemTag) == false) continue;
+
 		ItemIndexList.Add(SlotIndex);
+
+		IsValidOutput = true;
+	}
+
+	return IsValidOutput;
+}
+
+bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const
+{
+	if (HasInventorySlotName(SlotName) == false) return false;
+
+	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+
+	bool IsValidOutput = false;
+
+	for (int32 SlotIndex = SlotRange.X; SlotIndex <= SlotRange.Y; SlotIndex++)
+	{
+		if (GetInventorySlot(SlotIndex, FGameplayTag()).IsItemEqual(ItemTag) == false) continue;
+
+		ItemList.Add(GetInventorySlot(SlotIndex, SlotName));
 
 		IsValidOutput = true;
 	}
@@ -781,7 +839,7 @@ bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<int32>& ItemIndexLis
 
 const FLFPInventoryItemData& ULFPInventoryComponent::GetInventorySlot(const int32 Index, FGameplayTag StartSlotName) const
 {
-	if (HasInventorySlotName(StartSlotName) == false) StartSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	if (HasInventorySlotName(StartSlotName) == false) StartSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	const int32 TargetIndex = FindInventorySlotIndexWithName(StartSlotName, Index);
 

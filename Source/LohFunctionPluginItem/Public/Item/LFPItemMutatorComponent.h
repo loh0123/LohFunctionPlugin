@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "Item/LFPInventoryComponent.h"
+#include "LohFunctionPluginItem.h"
 #include "LFPItemMutatorComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -15,7 +16,7 @@ struct FLFPItemMutatorItemData
 		TArray<FLFPInventoryItemData> ItemList = TArray<FLFPInventoryItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		FGameplayTag ItemSlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+		FGameplayTag ItemSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 };
 
 

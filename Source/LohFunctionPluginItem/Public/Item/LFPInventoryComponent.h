@@ -9,6 +9,7 @@
 #include "Components/ActorComponent.h"
 #include "JsonObjectWrapper.h"
 #include "GameplayTagContainer.h"
+#include "LFPItemGameplayTag.h"
 #include "LFPInventoryComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -354,20 +355,30 @@ public: // Getter
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
 		bool FindInventorySlotIndexListWithName(TArray<int32>& SlotList, const FGameplayTag SlotName) const;
 
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		bool FindInventorySlotListWithName(TArray<FLFPInventoryItemData>& SlotList, const FGameplayTag SlotName) const;
+
 	/** 
 	* Find Items Using Gameplay Tag 
 	* Suitable To Using For Getting Item Based On Categorize
 	* Please Override (IsInventorySlotHasCategorize) To Use This Function 
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.Categorizes"))
-		bool FindItemListWithCategorizeTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const;
+		bool FindItemIndexListWithCategorizeTag(TArray<int32>& SlotList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.Categorizes"))
+		bool FindItemListWithCategorizeTag(TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag SlotTag, const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Items Using Item Name 
 	* Suitable To Using For Getting Multiple Same Item
 	*/
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item"))
-		bool FindItemListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const;
+		bool FindItemIndexListWithItemTag(TArray<int32>& ItemIndexList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item"))
+		bool FindItemListWithItemTag(TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag ItemTag, const FGameplayTag SlotName) const;
+
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
 		const FLFPInventoryItemData& GetInventorySlot(const int32 Index, FGameplayTag StartSlotName = FGameplayTag()) const;

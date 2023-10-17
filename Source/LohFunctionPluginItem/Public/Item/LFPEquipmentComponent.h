@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Item/LFPInventoryComponent.h"
 #include "Item/LFPInventoryInterface.h"
+#include "LFPItemGameplayTag.h"
 #include "LFPEquipmentComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -15,7 +16,7 @@ public:
 
 	/** The inventory slot */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
-	FGameplayTag SlotName = FGameplayTag::RequestGameplayTag("Item.SlotNames.All");
+	FGameplayTag SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	/** This slot won't send any event but still can equip or unequip */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
