@@ -7,18 +7,6 @@
 #include "LohFunctionPluginItem.h"
 #include "LFPItemMutatorComponent.generated.h"
 
-USTRUCT(BlueprintType)
-struct FLFPItemMutatorItemData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPInventoryItemData> ItemList = TArray<FLFPInventoryItemData>();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		FGameplayTag ItemSlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
-};
-
 
 USTRUCT(BlueprintType)
 struct FLFPItemMutatorQueueData
@@ -29,10 +17,10 @@ struct FLFPItemMutatorQueueData
 		FName RecipeName = FName("");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPItemMutatorItemData> ItemConsumeList = TArray<FLFPItemMutatorItemData>();
+		TArray<FLFPSlotedItemData> ItemConsumeList = TArray<FLFPSlotedItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
-		TArray<FLFPItemMutatorItemData> ItemProduceList = TArray<FLFPItemMutatorItemData>();
+		TArray<FLFPSlotedItemData> ItemProduceList = TArray<FLFPSlotedItemData>();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPItemMutatorQueueData")
 		float MaxDelay = -1.0f;

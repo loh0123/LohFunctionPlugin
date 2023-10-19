@@ -355,7 +355,7 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 {
 	int32 EquipmentSlotIndex = INDEX_NONE;
 
-	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
+	FindEquipmentSlotIndex(SlotIndex, FGameplayTag(), EquipmentSlotIndex);
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 
@@ -377,7 +377,7 @@ bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInvent
 {
 	int32 EquipmentSlotIndex = INDEX_NONE;
 
-	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
+	FindEquipmentSlotIndex(SlotIndex, FGameplayTag(), EquipmentSlotIndex);
 
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
@@ -389,7 +389,7 @@ bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInv
 {
 	int32 EquipmentSlotIndex = INDEX_NONE;
 
-	FindEquipmentSlotIndex(SlotIndex, EquipmentSlotIndex);
+	FindEquipmentSlotIndex(SlotIndex, FGameplayTag(), EquipmentSlotIndex);
 
 	/* Slot is not an equipment slot */
 	if (EquipmentSlotIndex == INDEX_NONE) return true;
@@ -400,10 +400,12 @@ bool ULFPEquipmentComponent::CanInventoryRemoveItem_Implementation(const FLFPInv
 bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
 {
 	int32 EquipmentSlotIndexA = INDEX_NONE;
+
+	FindEquipmentSlotIndex(FromSlot, FGameplayTag(), EquipmentSlotIndexA);
+
 	int32 EquipmentSlotIndexB = INDEX_NONE;
 
-	FindEquipmentSlotIndex(FromSlot, EquipmentSlotIndexA);
-	FindEquipmentSlotIndex(ToSlot, EquipmentSlotIndexB);
+	FindEquipmentSlotIndex(ToSlot, FGameplayTag(), EquipmentSlotIndexB);
 
 	if (EquipmentSlotIndexA != INDEX_NONE)
 	{
@@ -420,7 +422,7 @@ bool ULFPEquipmentComponent::CanInventorySwapItem_Implementation(const FLFPInven
 	return true;
 }
 
-FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex, int32& EquipmentIndex) const
+FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32 InventorySlotIndex, const FGameplayTag SlotName, int32& EquipmentSlotIndex) const
 {
 	if (IsValid(InventoryComponent) == false)
 	{
@@ -429,17 +431,35 @@ FLFPEquipmentSlotData ULFPEquipmentComponent::FindEquipmentSlotIndex(const int32
 		return INDEX_NONE;
 	}
 
-	for (int32 EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
+	for (EquipmentSlotIndex = 0; EquipmentSlotIndex < EquipmentSlotList.Num(); EquipmentSlotIndex++)
 	{
-		if (InventorySlotIndex == EquipmentSlotList[EquipmentSlotIndex].SlotIndex)
+		if (InventoryComponent->FindInventorySlotIndexWithName(SlotName, InventorySlotIndex) == EquipmentSlotList[EquipmentSlotIndex].SlotIndex)
 		{
-			EquipmentIndex = EquipmentSlotIndex;
-			
 			return EquipmentSlotList[EquipmentSlotIndex];
 		}
 	}
 
+	EquipmentSlotIndex = INDEX_NONE;
+
 	return INDEX_NONE;
+}
+
+const FLFPInventoryItemData& ULFPEquipmentComponent::FindEquipmentSlotItem(const int32 InventorySlotIndex, const FGameplayTag SlotName) const
+{
+	if (IsValid(InventoryComponent) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPEquipmentComponent : FindEquipmentSlotItem InventoryComponent is not valid"));
+
+		return FLFPInventoryItemData::EmptyInventoryItemData;
+	}
+
+	int32 EquipmentSlotIndex = INDEX_NONE;
+
+	FindEquipmentSlotIndex(InventorySlotIndex, SlotName, EquipmentSlotIndex);
+
+	if (EquipmentSlotIndex == INDEX_NONE) return FLFPInventoryItemData::EmptyInventoryItemData;
+
+	return GetInventorySlot(EquipmentSlotIndex);
 }
 
 void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventoryComponent* OldValue)
@@ -449,7 +469,7 @@ void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventor
 
 void ULFPEquipmentComponent::OnEquipmentSlotListRep_Implementation(TArray<FLFPEquipmentSlotData>& OldValue)
 {
-	if (IsValid(InventoryComponent) == false)
+	if (IsValid(InventoryComponent) == false || InventoryComponent->HasBegunPlay() == false)
 	{
 		return;
 	}

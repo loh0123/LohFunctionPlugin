@@ -277,14 +277,14 @@ void ULFPItemMutatorComponent::ProcessItem(FLFPItemMutatorQueueData& ItemData, c
 	{
 		for (auto& ConsumeItemList : ItemData.ItemConsumeList)
 		{
-			InventoryComponent->AddItemList(ConsumeItemList.ItemList, ConsumeItemList.ItemSlotName, FString("ReturnConsume"));
+			InventoryComponent->AddItemList(ConsumeItemList.ItemList, ConsumeItemList.ItemSlotName, false, FString("ReturnConsume"));
 		}
 	}
 	else
 	{
 		for (auto& ProduceItem : ItemData.ItemProduceList)
 		{
-			InventoryComponent->AddItemList(ProduceItem.ItemList, ProduceItem.ItemSlotName, FString("ReturnProduce"));
+			InventoryComponent->AddItemList(ProduceItem.ItemList, ProduceItem.ItemSlotName, false, FString("ReturnProduce"));
 		}
 	}
 

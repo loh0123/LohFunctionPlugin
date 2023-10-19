@@ -181,6 +181,12 @@ public: // Valid Checker
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
 		FORCEINLINE bool IsEquipmentSlotLock(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsLock; };
 
+	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
+		FORCEINLINE bool IsEquipmentSlotUsable(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && EquipmentSlotList[Index].bIsActive && GetInventorySlot(Index).HasItem(); };
+
+	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		FORCEINLINE bool IsInventorySlotUsable(const int32 Index, const FGameplayTag SlotName) const { int32 EquipmentSlotIndex = INDEX_NONE; FindEquipmentSlotIndex(Index, SlotName, EquipmentSlotIndex); return IsEquipmentSlotUsable(EquipmentSlotIndex); };
+
 public: // Getter
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
@@ -193,7 +199,10 @@ public: // Getter
 		const FLFPInventoryItemData& GetInventorySlot(const int32 EquipmentSlotIndex) const { return IsValid(InventoryComponent) && IsEquipmentSlotIndexValid(EquipmentSlotIndex) ? InventoryComponent->GetInventorySlot(EquipmentSlotList[EquipmentSlotIndex].SlotIndex, FGameplayTag()) : FLFPInventoryItemData::EmptyInventoryItemData; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		FLFPEquipmentSlotData FindEquipmentSlotIndex(const int32 InventorySlotIndex, int32& EquipmentIndex) const;
+		FLFPEquipmentSlotData FindEquipmentSlotIndex(const int32 InventorySlotIndex, const FGameplayTag SlotName, int32& EquipmentSlotIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
+		const FLFPInventoryItemData& FindEquipmentSlotItem(const int32 InventorySlotIndex, const FGameplayTag SlotName) const;
 
 public:
 
