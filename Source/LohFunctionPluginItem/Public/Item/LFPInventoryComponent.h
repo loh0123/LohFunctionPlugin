@@ -70,7 +70,16 @@ public:
 
 		CopyData.ItemTag = ItemTag;
 
-		CopyData.MetaData.JsonObjectFromString(MetaData.JsonString);
+		if (MetaData.JsonObject.IsValid())
+		{
+			MetaData.JsonObjectToString(CopyData.MetaData.JsonString);
+		}
+		else
+		{
+			CopyData.MetaData.JsonString = MetaData.JsonString;
+		}
+
+		CopyData.MetaData.JsonObjectFromString(CopyData.MetaData.JsonString);
 
 		return CopyData;
 	}
@@ -93,14 +102,17 @@ public:
 		return Ar;
 	}
 
-	void PostSerialize(const FArchive& Ar)
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
 	{
+		Ar << MetaData.JsonString << ItemTag;
+
 		MetaData.PostSerialize(Ar);
 
-		if (MetaData.JsonObject.IsValid() == false)
-		{
-			MetaData.JsonObjectFromString("{}");
-		}
+		if (MetaData.JsonObject.IsValid() == false) MetaData.JsonObjectFromString("{}");
+		
+		bOutSuccess = true;
+
+		return true;
 	}
 };
 
@@ -109,7 +121,7 @@ struct TStructOpsTypeTraits<FLFPInventoryItemData> : public TStructOpsTypeTraits
 {
 	enum
 	{
-		WithPostSerialize = true
+		WithNetSerializer = true
 	};
 };
 
@@ -371,7 +383,10 @@ public: // Valid Checker
 public: // Getter
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
-		bool HaveItemsAtSlotName(const TArray<FLFPInventoryItemData>& ItemList, FGameplayTag SlotName) const;
+		bool HaveItemsAtSlotName(const TArray<FLFPInventoryItemData>& ItemList, const FGameplayTag SlotName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
+		FIntPoint FindSlotNameRange(const FGameplayTag SlotName) const;
 
 	/** 
 	* Find Empty Or Available Inventory Slot
@@ -425,7 +440,7 @@ public: // Getter
 		const FLFPInventoryItemData& GetInventorySlot(const int32 Index, FGameplayTag StartSlotName = FGameplayTag()) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		const TArray<FLFPInventoryItemData>& GetInventorySlotList() const { return InventorySlotItemList; };
+		const TArray<FLFPInventoryItemData>& GetInventorySlotItemList() const { return InventorySlotItemList; };
 
 protected:
 
@@ -441,9 +456,9 @@ protected:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnInventorySlotItemListRep, Category = "LFPInventoryComponent | Cache")
+	UPROPERTY(VisibleAnywhere, Transient, Replicated, ReplicatedUsing = OnInventorySlotItemListRep, Category = "LFPInventoryComponent | Cache")
 		TArray<FLFPInventoryItemData> InventorySlotItemList;
 
-	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnSelectedSlotIndexListRep, Category = "LFPInventoryComponent | Cache")
+	UPROPERTY(VisibleAnywhere, Transient, Replicated, ReplicatedUsing = OnSelectedSlotIndexListRep, Category = "LFPInventoryComponent | Cache")
 		TArray<int32> SelectedSlotIndexList;
 };

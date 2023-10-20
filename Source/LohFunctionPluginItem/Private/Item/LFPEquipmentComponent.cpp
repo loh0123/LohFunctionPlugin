@@ -304,27 +304,14 @@ bool ULFPEquipmentComponent::SetEquipmentSlotActive(const int32 EquipmentSlotInd
 		return false;
 	}
 
-	if (EquipmentSlotList[EquipmentSlotIndex].bIsActive != bIsSlotActive)
-	{
-		const auto& EquipmentData = GetInventorySlot(EquipmentSlotIndex);
+	const auto OldData = EquipmentSlotList[EquipmentSlotIndex];
 
-		if (InventoryComponent->IsInventorySlotItemValid(EquipmentSlotList[EquipmentSlotIndex].SlotIndex))
-		{
-			if (bIsSlotActive)
-			{
-				OnEquipItem.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
-			}
-			else
-			{
-				OnUnequipItem.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
-			}
-		}
+	EquipmentSlotList[EquipmentSlotIndex].bIsActive = bIsSlotActive;
 
-		EquipmentSlotList[EquipmentSlotIndex].bIsActive = bIsSlotActive;
+	const auto NewData = EquipmentSlotList[EquipmentSlotIndex];
 
-		OnItemActiveChanged.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EquipmentSlotList[EquipmentSlotIndex].bIsActive, EventInfo);
-	}
-
+	OnEquipmentSlotUpdate(OldData, NewData, EquipmentSlotIndex, EventInfo);
+	
 	return true;
 }
 
@@ -351,11 +338,11 @@ bool ULFPEquipmentComponent::SetEquipmentSlotLock(const int32 EquipmentSlotIndex
 	return true;
 }
 
-void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo)
+void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 InventorySlotIndex, const FString& EventInfo)
 {
 	int32 EquipmentSlotIndex = INDEX_NONE;
 
-	FindEquipmentSlotIndex(SlotIndex, FGameplayTag(), EquipmentSlotIndex);
+	FindEquipmentSlotIndex(InventorySlotIndex, FGameplayTag(), EquipmentSlotIndex);
 
 	if (EquipmentSlotIndex == INDEX_NONE) return;
 
@@ -363,14 +350,32 @@ void ULFPEquipmentComponent::OnInventoryUpdateItem(const FLFPInventoryItemData& 
 	{
 		if (OldItemData.HasItem())
 		{
-			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+			OnUnequipItem.Broadcast(OldItemData, EquipmentSlotIndex, InventorySlotIndex, EventInfo);
 		}
 
 		if (NewItemData.HasItem())
 		{
-			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex, SlotIndex, EventInfo);
+			OnEquipItem.Broadcast(NewItemData, EquipmentSlotIndex, InventorySlotIndex, EventInfo);
 		}
 	}
+}
+
+void ULFPEquipmentComponent::OnEquipmentSlotUpdate(const FLFPEquipmentSlotData& OldItemData, const FLFPEquipmentSlotData& NewItemData, const int32 EquipmentSlotIndex, const FString& EventInfo) const
+{
+	if (OldItemData.SlotIndex != NewItemData.SlotIndex || OldItemData.bIsActive == NewItemData.bIsActive || IsEquipmentSlotItemValid(EquipmentSlotIndex) == false) return;
+
+	const auto& EquipmentData = GetInventorySlot(EquipmentSlotIndex);
+
+	if (NewItemData.bIsActive)
+	{
+		OnEquipItem.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
+	}
+	else
+	{
+		OnUnequipItem.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EventInfo);
+	}
+
+	OnItemActiveChanged.Broadcast(EquipmentData, EquipmentSlotIndex, EquipmentSlotList[EquipmentSlotIndex].SlotIndex, EquipmentSlotList[EquipmentSlotIndex].bIsActive, EventInfo);
 }
 
 bool ULFPEquipmentComponent::CanInventoryAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
@@ -469,32 +474,45 @@ void ULFPEquipmentComponent::OnInventoryComponentRep_Implementation(ULFPInventor
 
 void ULFPEquipmentComponent::OnEquipmentSlotListRep_Implementation(TArray<FLFPEquipmentSlotData>& OldValue)
 {
-	if (IsValid(InventoryComponent) == false || InventoryComponent->HasBegunPlay() == false)
+	if (IsValid(InventoryComponent) == false) return;
+	
+	const int32 MaxSlotIndex = FMath::Max(OldValue.Num(), EquipmentSlotList.Num());
+
+	TSet<int32> InventorySlotIndexList;
+
+	InventorySlotIndexList.Reserve(MaxSlotIndex);
+
+	for (const FLFPEquipmentSlotData& EquipmentSlotData : OldValue)
 	{
-		return;
+		InventorySlotIndexList.Add(EquipmentSlotData.SlotIndex);
 	}
 
-	for (const FLFPEquipmentSlotData& SlotData : OldValue)
+	for (const FLFPEquipmentSlotData& EquipmentSlotData : EquipmentSlotList)
 	{
-		if (EquipmentSlotList.Contains(SlotData))
-		{
-			continue;
-		}
-
-		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(SlotData.SlotIndex);
-
-		OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), SlotData.SlotIndex, "OnEquipmentSlotListRep");
+		InventorySlotIndexList.Add(EquipmentSlotData.SlotIndex);
 	}
 
-	for (const FLFPEquipmentSlotData& SlotData : EquipmentSlotList)
+	for (const auto& InventorySlotIndex : InventorySlotIndexList)
 	{
-		if (OldValue.Contains(SlotData))
+		const int32 OldIndex = OldValue.Find(InventorySlotIndex);
+		const int32 NewIndex = EquipmentSlotList.Find(InventorySlotIndex);
+
+		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(InventorySlotIndex, FGameplayTag());
+
+		/** Old Valid */
+		if (OldIndex != INDEX_NONE && NewIndex == INDEX_NONE)
 		{
-			continue;
+			OnInventoryUpdateItem(CurrentItemData, FLFPInventoryItemData(), OldIndex, "OnEquipmentSlotListRep");
 		}
-
-		const auto& CurrentItemData = InventoryComponent->GetInventorySlot(SlotData.SlotIndex);
-
-		OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, SlotData.SlotIndex, "OnEquipmentSlotListRep");
+		/** New Valid */
+			else if (OldIndex == INDEX_NONE && NewIndex != INDEX_NONE)
+		{
+		OnInventoryUpdateItem(FLFPInventoryItemData(), CurrentItemData, NewIndex, "OnEquipmentSlotListRep");
+		}
+		/** Both Valid */
+		else if (OldIndex == NewIndex && NewIndex != INDEX_NONE)
+		{
+			OnEquipmentSlotUpdate(OldValue[OldIndex], EquipmentSlotList[NewIndex], NewIndex, "OnEquipmentSlotListRep");
+		}
 	}
 }

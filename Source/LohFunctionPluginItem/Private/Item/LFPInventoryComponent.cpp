@@ -503,7 +503,7 @@ void ULFPInventoryComponent::SortInventory(FGameplayTag SlotName, const FString 
 
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotRange = FindSlotNameRange(SlotName);
 
 	TArrayRange<FLFPInventoryItemData> ArrayRange(InventorySlotItemList.GetData() + SlotRange.X, FMath::Min(InventorySlotItemList.Num() - SlotRange.X, SlotRange.Y - SlotRange.X));
 
@@ -557,7 +557,7 @@ bool ULFPInventoryComponent::SelectSlotName(const FGameplayTag SlotName, const b
 		SelectedSlotIndexList.Empty();
 	}
 
-	const auto& SlotNameRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotNameRange = FindSlotNameRange(SlotName);
 
 	for (int32 SlotIndex = SlotNameRange.X; SlotIndex <= SlotNameRange.Y; SlotIndex++)
 	{
@@ -578,7 +578,7 @@ bool ULFPInventoryComponent::DeselectSlotName(const FGameplayTag SlotName)
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
-	const auto& SlotNameRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotNameRange = FindSlotNameRange(SlotName);
 
 	return SelectedSlotIndexList.RemoveAll([&](const int32 SlotIndex) 
 		{
@@ -647,7 +647,7 @@ bool ULFPInventoryComponent::IsInventorySlotHasName(const int32 Index, const FGa
 {
 	if (HasInventorySlotName(SlotName) == false) return false;
 
-	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotRange = FindSlotNameRange(SlotName);
 
 	return (SlotRange.X <= Index && SlotRange.Y >= Index);
 }
@@ -670,7 +670,7 @@ bool ULFPInventoryComponent::HaveItemsAtSlotName(const TArray<FLFPInventoryItemD
 		CacheList.Add(Item.Copy());
 	}
 
-	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotRange = FindSlotNameRange(SlotName);
 
 	for (FLFPInventoryItemData& CacheItem : CacheList)
 	{
@@ -702,11 +702,28 @@ bool ULFPInventoryComponent::HaveItemsAtSlotName(const TArray<FLFPInventoryItemD
 	return true;
 }
 
+FIntPoint ULFPInventoryComponent::FindSlotNameRange(const FGameplayTag SlotName) const
+{
+	if (SlotName == FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All)
+	{
+		return FIntPoint(0, MaxInventorySlotAmount - 1);
+	}
+
+	auto Point = InventorySlotNameList.Find(SlotName);
+
+	if (Point == nullptr)
+	{
+		return FIntPoint();
+	}
+
+	return *Point;
+}
+
 bool ULFPInventoryComponent::FindAvailableInventorySlot(TArray<int32>& SlotList, const FLFPInventoryItemData& ForItem, FGameplayTag SlotName) const
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	bool IsValidOutput = false;
 
@@ -726,7 +743,7 @@ int32 ULFPInventoryComponent::FindInventorySlotIndexWithName(FGameplayTag SlotNa
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	const int32 FinalIndex = SlotRangeIndex + SlotRange.X;
 
@@ -737,7 +754,7 @@ bool ULFPInventoryComponent::FindInventorySlotIndexListWithName(TArray<int32>& S
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotRange = FindSlotNameRange(SlotName);
 
 	SlotList.Reserve(SlotList.Num() + FMath::Min(SlotRange.Y, MaxInventorySlotAmount));
 
@@ -753,7 +770,7 @@ bool ULFPInventoryComponent::FindInventorySlotListWithName(TArray<FLFPInventoryI
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const auto& SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const auto& SlotRange = FindSlotNameRange(SlotName);
 
 	SlotList.Reserve(SlotList.Num() + FMath::Min(SlotRange.Y, MaxInventorySlotAmount));
 
@@ -769,7 +786,7 @@ bool ULFPInventoryComponent::FindItemIndexListWithCategorizeTag(TArray<int32>& S
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	bool IsValidOutput = false;
 
@@ -789,7 +806,7 @@ bool ULFPInventoryComponent::FindItemListWithCategorizeTag(TArray<FLFPInventoryI
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	bool IsValidOutput = false;
 
@@ -809,7 +826,7 @@ bool ULFPInventoryComponent::FindItemIndexListWithItemTag(TArray<int32>& ItemInd
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	bool IsValidOutput = false;
 
@@ -829,7 +846,7 @@ bool ULFPInventoryComponent::FindItemListWithItemTag(TArray<FLFPInventoryItemDat
 {
 	if (HasInventorySlotName(SlotName) == false) SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
-	const FIntPoint SlotRange = InventorySlotNameList.FindChecked(SlotName);
+	const FIntPoint SlotRange = FindSlotNameRange(SlotName);
 
 	bool IsValidOutput = false;
 

@@ -15,7 +15,7 @@ struct FLFPEquipmentSlotConfig
 public:
 
 	/** The inventory slot */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPEquipmentSlotConfig", meta = (Categories = "Item.SlotNames"))
 	FGameplayTag SlotName = FLFPItemGameplayTag::ItemGameplayTag.SlotNames_All;
 
 	/** This slot won't send any event but still can equip or unequip */
@@ -68,7 +68,6 @@ public:
 		return SlotIndex != OtherData.SlotIndex;
 	};
 };
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnEquipmentEvent, const FLFPInventoryItemData&, ItemData, const int32, EquipmentSlotIndex, const int32, InventorySlotIndex, const FString&, EventInfo);
 
@@ -128,9 +127,11 @@ public:
 		bool SetEquipmentSlotLock(const int32 EquipmentSlotIndex, const bool bIsSlotLock, const FString& EventInfo = "");
 
 
-public: // Inventory Event
+public: // Event
 
-	UFUNCTION() void OnInventoryUpdateItem	(const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 SlotIndex, const FString& EventInfo);
+	UFUNCTION() void OnInventoryUpdateItem (const FLFPInventoryItemData& OldItemData, const FLFPInventoryItemData& NewItemData, const int32 InventorySlotIndex, const FString& EventInfo);
+
+	UFUNCTION() void OnEquipmentSlotUpdate (const FLFPEquipmentSlotData& OldItemData, const FLFPEquipmentSlotData& NewItemData, const int32 EquipmentSlotIndex, const FString& EventInfo) const;
 
 public: // Inventory Interface
 
@@ -170,22 +171,22 @@ public: // Delegate
 public: // Valid Checker
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index); };
+		FORCEINLINE bool IsEquipmentSlotIndexValid(const int32 EquipmentSlotIndex) const { return EquipmentSlotList.IsValidIndex(EquipmentSlotIndex); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && GetInventorySlot(Index).HasItem(); };
+		FORCEINLINE bool IsEquipmentSlotItemValid(const int32 EquipmentSlotIndex) const { return IsEquipmentSlotIndexValid(EquipmentSlotIndex) && GetInventorySlot(EquipmentSlotIndex).HasItem(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotActive(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsActive; };
+		FORCEINLINE bool IsEquipmentSlotActive(const int32 EquipmentSlotIndex) const { return IsEquipmentSlotIndexValid(EquipmentSlotIndex) && EquipmentSlotList[EquipmentSlotIndex].bIsActive; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotLock(const int32 Index) const { return EquipmentSlotList.IsValidIndex(Index) && EquipmentSlotList[Index].bIsLock; };
+		FORCEINLINE bool IsEquipmentSlotLock(const int32 EquipmentSlotIndex) const { return IsEquipmentSlotIndexValid(EquipmentSlotIndex) && EquipmentSlotList[EquipmentSlotIndex].bIsLock; };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter")
-		FORCEINLINE bool IsEquipmentSlotUsable(const int32 Index) const { return IsEquipmentSlotIndexValid(Index) && EquipmentSlotList[Index].bIsActive && GetInventorySlot(Index).HasItem(); };
+		FORCEINLINE bool IsEquipmentSlotUsable(const int32 EquipmentSlotIndex) const { return IsEquipmentSlotIndexValid(EquipmentSlotIndex) && EquipmentSlotList[EquipmentSlotIndex].bIsActive && GetInventorySlot(EquipmentSlotIndex).HasItem(); };
 
 	UFUNCTION(BlueprintPure, Category = "LFPEquipmentComponent | Getter", meta = (GameplayTagFilter = "Item.SlotNames"))
-		FORCEINLINE bool IsInventorySlotUsable(const int32 Index, const FGameplayTag SlotName) const { int32 EquipmentSlotIndex = INDEX_NONE; FindEquipmentSlotIndex(Index, SlotName, EquipmentSlotIndex); return IsEquipmentSlotUsable(EquipmentSlotIndex); };
+		FORCEINLINE bool IsInventorySlotUsable(const int32 InventorySlotIndex, const FGameplayTag SlotName) const { int32 EquipmentSlotIndex = INDEX_NONE; FindEquipmentSlotIndex(InventorySlotIndex, SlotName, EquipmentSlotIndex); return IsEquipmentSlotUsable(EquipmentSlotIndex); };
 
 public: // Getter
 
@@ -221,12 +222,12 @@ public:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Replicated, ReplicatedUsing = OnEquipmentSlotListRep, Category = "LFPEquipmentComponent | Cache")
+	UPROPERTY(VisibleAnywhere, Transient, Replicated, ReplicatedUsing = OnEquipmentSlotListRep, Category = "LFPEquipmentComponent | Cache")
 		TArray<FLFPEquipmentSlotData> EquipmentSlotList = TArray<FLFPEquipmentSlotData>();
+
+UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Replicated, ReplicatedUsing = OnInventoryComponentRep, Category = "LFPEquipmentComponent | Cache")
+		ULFPInventoryComponent* InventoryComponent = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPEquipmentComponent | Setting")
 		TArray<FLFPEquipmentSlotConfig> EquipmentSlotConfigList = TArray<FLFPEquipmentSlotConfig>();
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated, ReplicatedUsing = OnInventoryComponentRep, Category = "LFPEquipmentComponent | Cache")
-		ULFPInventoryComponent* InventoryComponent = nullptr;
 };
