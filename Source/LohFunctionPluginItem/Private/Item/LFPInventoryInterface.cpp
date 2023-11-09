@@ -5,17 +5,17 @@
 
 #include "Item/LFPInventoryInterface.h"
 
-bool ILFPInventoryInterface::CanInventoryAddItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+bool ILFPInventoryInterface::CanInventoryAddItem_Implementation() const
 {
     return true;
 }
 
-bool ILFPInventoryInterface::CanInventoryRemoveItem_Implementation(const FLFPInventoryItemData& ItemData, const int32 SlotIndex, const FString& EventInfo) const
+bool ILFPInventoryInterface::CanInventoryRemoveItem_Implementation() const
 {
     return true;
 }
 
-bool ILFPInventoryInterface::CanInventorySwapItem_Implementation(const FLFPInventoryItemData& FromItemData, const int32 FromSlot, const FLFPInventoryItemData& ToItemData, const int32 ToSlot, const FString& EventInfo) const
+bool ILFPInventoryInterface::CanInventorySwapItem_Implementation() const
 {
     return true;
 }
