@@ -34,3 +34,78 @@ void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	// ...
 }
+
+void ULFPInventoryComponent::AddItem(const FLFPInventoryChange& ChangeData, const FGameplayTag EventTag)
+{
+}
+
+void ULFPInventoryComponent::RemoveItem(const FLFPInventoryChange& ChangeData, const FGameplayTag EventTag)
+{
+}
+
+void ULFPInventoryComponent::SwapItem(const FLFPInventorySwap& SwapData, const FGameplayTag EventTag)
+{
+}
+
+void ULFPInventoryComponent::SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag)
+{
+}
+
+void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
+{
+}
+
+bool ULFPInventoryComponent::ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventoryIndex& InventoryIndex) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventoryIndex& InventoryIndex, const bool bPartially) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::IsSlotAvailable(const FLFPInventoryIndex& InventoryIndex) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::IsItemSortPriorityHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::IsSlotHasCatergorize(const FGameplayTagContainer Catergorizes, const int32 SlotIndex, const FGameplayTag SlotName) const
+{
+	return false;
+}
+
+FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const int32 SlotIndex, const FGameplayTag SlotName) const
+{
+	return FLFPInventoryItem();
+}
+
+bool ULFPInventoryComponent::FindItemIndexList(TArray<FLFPInventoryIndex>& ItemIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes) const
+{
+	return false;
+}
+
+bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes) const
+{
+	return false;
+}
+
+FJsonObjectWrapper ULFPInventoryComponent::ExportJson(const FGameplayTagContainer SlotNames) const
+{
+	return FJsonObjectWrapper();
+}
+
+bool ULFPInventoryComponent::ImportJson(const FJsonObjectWrapper& JsonData, const FGameplayTagContainer SlotNames)
+{
+	return false;
+}
