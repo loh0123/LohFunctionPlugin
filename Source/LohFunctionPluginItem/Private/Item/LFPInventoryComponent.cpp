@@ -130,7 +130,7 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 		SearchChangeData.SearchIndex,
 		[&](const FLFPInventoryChange& ChnageData)
 		{
-			if (CanItemUseInventoryIndex(ChnageData, OnAdd) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageData.InventoryIndex, ProcessData), OnAdd) == false)
 			{
 				return false;
 			}
@@ -173,7 +173,7 @@ bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchC
 		SearchChangeData.SearchIndex,
 		[&](const FLFPInventoryChange& ChnageData)
 		{
-			if (CanItemUseInventoryIndex(ChnageData, OnRemove) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageData.InventoryIndex, ProcessData), OnRemove) == false)
 			{
 				return false;
 			}
@@ -215,7 +215,22 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 				SearchSwapData.ToIndex,
 				[&](const FLFPInventoryChange& ChnageDataB)
 				{
-					return InventoryIndexA != ChnageDataB.InventoryIndex && CanSwapItem(FLFPInventoryChange(InventoryIndexA, ItemDataA), ChnageDataB);
+					if (InventoryIndexA == ChnageDataB.InventoryIndex)
+					{
+						return false;
+					}
+
+					if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageDataB.InventoryIndex, ItemDataA), OnSwap) == false)
+					{
+						return false;
+					}
+
+					if (CanSwapItem(FLFPInventoryChange(InventoryIndexA, ItemDataA), ChnageDataB) == false)
+					{
+						return false;
+					}
+
+					return true;
 				},
 				[&](FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB)
 				{
