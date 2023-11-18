@@ -51,16 +51,15 @@ void ULFPInventoryComponent::SendRemoveDelegateEvent_Implementation(const FLFPIn
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
-void ULFPInventoryComponent::SendSwapDelegateEvent_Implementation(const FLFPInventoryChange& NewData, const FLFPInventoryChange& OldData, const FGameplayTag& EventTag) const
+void ULFPInventoryComponent::SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
-	OnSwapItem.Broadcast(NewData, OldData, EventTag);
-	OnUpdateItem.Broadcast(NewData.InventoryIndex, NewData.ItemData, OldData.ItemData, EventTag);
-	OnUpdateItem.Broadcast(OldData.InventoryIndex, OldData.ItemData, NewData.ItemData, EventTag);
+	OnSwapItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
 bool ULFPInventoryComponent::ProcessInventoryIndex(
 	const FLFPInventorySearchIndex& SearchIndex, 
-	const TFunctionRef<bool(const FLFPInventoryChange& ChnageData)> CheckerFunction, 
+	const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> CheckerFunction, 
 	const TFunctionRef<bool(FLFPInventoryItem& ItemData, const FLFPInventoryIndex InventoryIndex)> IndexFunction, 
 	const TFunctionRef<void(const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)> EventFunction
 )
@@ -90,13 +89,55 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 	for (FLFPInventorySlot& SlotData : InventorySlot)
 	{
-		if (SlotData.SlotName.MatchesAny(SearchIndex.SlotNames) == false) continue; // Tag Not Match Any One On Search
+		if (SearchIndex.IsTagMatch(SlotData.SlotName) == false) continue; // Tag Not Match Any One On Search
+
+		if (SearchIndex.SlotIndex >= SlotData.SlotMaxIndex) continue; // Index Is Not With In Slot Allow Range
+
+		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item And Additional Index
+		int32 Index				= SearchIndex.SlotIndex <= INDEX_NONE ?						0 : SearchIndex.SlotIndex;
+		const int32 MaxIndex	= SearchIndex.SlotIndex <= INDEX_NONE ? SlotData.GetNextNum() : SearchIndex.SlotIndex;
+		//
+
+		for (Index; Index <= MaxIndex; Index++)
+		{
+			switch (ProcessIndex(Index, SlotData))
+			{
+			case 0: return true;
+			case 1: continue;
+			case 2: break;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool ULFPInventoryComponent::ProcessInventoryIndexConst(const FLFPInventorySearchIndex& SearchIndex, const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> CheckerFunction, const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> IndexFunction) const
+{
+	auto ProcessIndex = [&](const int32 Index, const FLFPInventorySlot& SlotData)
+		{
+			const FLFPInventoryIndex InventoryIndex(Index, SlotData.SlotName);
+			const FLFPInventoryChange ChangeData(InventoryIndex, SlotData.GetItemCopy(Index));
+
+			if (CheckerFunction(ChangeData) == false)
+			{
+				return 1;
+			}
+
+			if (IndexFunction(ChangeData)) return 0;
+
+			return 2;
+		};
+
+	for (const FLFPInventorySlot& SlotData : InventorySlot)
+	{
+		if (SearchIndex.IsTagMatch(SlotData.SlotName) == false) continue; // Tag Not Match Any One On Search
 
 		if (SearchIndex.SlotIndex >= SlotData.SlotMaxIndex) continue; // Index Is Not With In Slot Allow Range
 
 		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item
-		int32 Index				= SearchIndex.SlotIndex <= INDEX_NONE ?						0 : SearchIndex.SlotIndex;
-		const int32 MaxIndex	= SearchIndex.SlotIndex <= INDEX_NONE ? SlotData.GetItemNum() : SearchIndex.SlotIndex;
+		int32 Index				= SearchIndex.SlotIndex <= INDEX_NONE ?							0 : SearchIndex.SlotIndex;
+		const int32 MaxIndex	= SearchIndex.SlotIndex <= INDEX_NONE ? SlotData.GetItemNum() - 1 : SearchIndex.SlotIndex;
 		//
 
 		for (Index; Index <= MaxIndex; Index++)
@@ -128,14 +169,14 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		SearchChangeData.SearchIndex,
-		[&](const FLFPInventoryChange& ChnageData)
+		[&](const FLFPInventoryChange& ChangeData)
 		{
-			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageData.InventoryIndex, ProcessData), OnAdd) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, ProcessData), OnAdd) == false)
 			{
 				return false;
 			}
 
-			if (CanAddItem(ChnageData) == false)
+			if (CanAddItem(ChangeData) == false)
 			{
 				return false;
 			}
@@ -171,14 +212,14 @@ bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchC
 
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		SearchChangeData.SearchIndex,
-		[&](const FLFPInventoryChange& ChnageData)
+		[&](const FLFPInventoryChange& ChangeData)
 		{
-			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageData.InventoryIndex, ProcessData), OnRemove) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, ProcessData), OnRemove) == false)
 			{
 				return false;
 			}
 
-			if (CanRemoveItem(ChnageData) == false)
+			if (CanRemoveItem(ChangeData) == false)
 			{
 				return false;
 			}
@@ -205,27 +246,27 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 {
 	const bool bAllProcessSuccess = ProcessInventoryIndex(
 		SearchSwapData.TargetIndex,
-		[&](const FLFPInventoryChange& ChnageDataA)
+		[&](const FLFPInventoryChange& ChangeDataA)
 		{
-			return ChnageDataA.ItemData.IsValid();
+			return ChangeDataA.ItemData.IsValid();
 		},
 		[&](FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA)
 		{
 			const bool bSingleProcessSuccess = ProcessInventoryIndex(
 				SearchSwapData.ToIndex,
-				[&](const FLFPInventoryChange& ChnageDataB)
+				[&](const FLFPInventoryChange& ChangeDataB)
 				{
-					if (InventoryIndexA == ChnageDataB.InventoryIndex)
+					if (InventoryIndexA == ChangeDataB.InventoryIndex)
 					{
 						return false;
 					}
 
-					if (CanItemUseInventoryIndex(FLFPInventoryChange(ChnageDataB.InventoryIndex, ItemDataA), OnSwap) == false)
+					if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeDataB.InventoryIndex, ItemDataA), OnSwap) == false)
 					{
 						return false;
 					}
 
-					if (CanSwapItem(FLFPInventoryChange(InventoryIndexA, ItemDataA), ChnageDataB) == false)
+					if (CanSwapItem(FLFPInventoryChange(InventoryIndexA, ItemDataA), ChangeDataB) == false)
 					{
 						return false;
 					}
@@ -236,11 +277,11 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 				{
 					return ProcessSwapItem(ItemDataA, InventoryIndexA, ItemDataB, InventoryIndexB);
 				},
-				[&](const FLFPInventoryIndex InventoryIndexB, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)
+				[&](const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)
 				{
 					if (EventTag.IsValid()) // Don't Send Event If Tag Is Not Valid (Prevent Network Overload)
 					{
-						SendSwapDelegateEvent(FLFPInventoryChange(InventoryIndexA, OldData), FLFPInventoryChange(InventoryIndexB, NewData), EventTag);
+						SendSwapDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
 					}
 				}
 			);
@@ -249,7 +290,10 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 		},
 		[&](const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)
 		{
-			
+			if (EventTag.IsValid()) // Don't Send Event If Tag Is Not Valid (Prevent Network Overload)
+			{
+				SendSwapDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+			}
 		}
 	);
 
@@ -268,17 +312,17 @@ bool ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 
 
 
-bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryChange& ChnageData) const
+bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
 	return false;
 }
 
-bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryChange& ChnageData) const
+bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
 	return false;
 }
 
-bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryChange& ChnageDataA, const FLFPInventoryChange& ChnageDataB) const
+bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const
 {
 	return false;
 }
@@ -302,6 +346,13 @@ bool ULFPInventoryComponent::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInven
 
 
 
+FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize_Implementation(const FLFPInventoryChange& ChangeData) const
+{
+	return FGameplayTagContainer();
+}
+
+
+
 bool ULFPInventoryComponent::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB) const
 {
 	return false;
@@ -312,25 +363,83 @@ bool ULFPInventoryComponent::CanItemUseInventoryIndex_Implementation(const FLFPI
 	return false;
 }
 
-
-
-bool ULFPInventoryComponent::ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventoryIndex& InventoryIndex) const
+bool ULFPInventoryComponent::DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
 	return false;
 }
 
-bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventoryIndex& InventoryIndex, const bool bPartially) const
+
+
+bool ULFPInventoryComponent::ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventorySearchIndex& SearchIndex) const
 {
+	const bool bIsSucess = ProcessInventoryIndexConst(
+		SearchIndex,
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			return ChangeData.ItemData == ItemData.ItemTag;
+		},
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			return DoInventoryIndexContainItem(FLFPInventoryChange(ChangeData.InventoryIndex, ItemData));
+		}
+	);
+
+
+	return bIsSucess;
+}
+
+bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventorySearchIndex& SearchIndex, const bool bPartially) const
+{
+	for (const auto& ItemData : ItemDataList)
+	{
+		const bool bIsSearchComplete = ContainItem(ItemData, SearchIndex);
+
+		if (bPartially)
+		{
+			if (bIsSearchComplete) return true;
+		}
+		else if (bIsSearchComplete == false)
+		{
+			break;
+		}
+	}
+
 	return false;
 }
 
-bool ULFPInventoryComponent::IsInventoryIndexHasCatergorize(const FGameplayTagContainer Catergorizes, const FLFPInventoryIndex& InventoryIndex) const
+bool ULFPInventoryComponent::ContainCatergorize(const FGameplayTagContainer Catergorizes, const FLFPInventorySearchIndex& SearchIndex, const bool bContainAll, const bool bCombineSearch) const
 {
-	return false;
+	FGameplayTagContainer TotalCatergorizes = FGameplayTagContainer::EmptyContainer;
+
+	const bool bIsSucess = ProcessInventoryIndexConst(
+		SearchIndex,
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			return ChangeData.ItemData.IsValid();
+		},
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			if (bContainAll == false) return GetInventoryIndexCatergorize(ChangeData).HasAny(Catergorizes);
+
+			if (bCombineSearch == false) return GetInventoryIndexCatergorize(ChangeData).HasAll(Catergorizes);
+
+			TotalCatergorizes.AppendTags(GetInventoryIndexCatergorize(ChangeData));
+
+			return TotalCatergorizes.HasAll(Catergorizes);
+		}
+	);
+
+
+	return bIsSucess;
 }
 
 bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
 {
+	for (const auto& Slot : InventorySlot)
+	{
+		if (Slot.SlotName.MatchesTag(SlotName)) return true;
+	}
+
 	return false;
 }
 
@@ -338,19 +447,102 @@ bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
 
 FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const int32 SlotIndex, const FGameplayTag SlotName) const
 {
+	for (const auto& Slot : InventorySlot)
+	{
+		if (Slot.SlotName.MatchesTag(SlotName)) return Slot.GetItemCopy(SlotIndex);
+	}
+
 	return FLFPInventoryItem();
 }
 
 
 
-bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes) const
+bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes, const bool bContainAllCatergorize, const int32 MaxListItem) const
 {
-	return false;
+	if (ItemData.IsValid() == false)
+	{
+		return false;
+	}
+
+	int32 ItemCount = 0;
+
+	ProcessInventoryIndexConst(
+		FLFPInventorySearchIndex(INDEX_NONE, SlotNames),
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			// Check Catergorizes
+			if (Catergorizes.IsEmpty() == false)
+			{
+				if ((bContainAllCatergorize ? 
+						GetInventoryIndexCatergorize(ChangeData).HasAll(Catergorizes) 
+						: 
+						GetInventoryIndexCatergorize(ChangeData).HasAny(Catergorizes)
+					) == false)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		},
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			if (DoInventoryIndexContainItem(FLFPInventoryChange(ChangeData.InventoryIndex, ItemData)))
+			{
+				InventoryIndexList.Add(ChangeData.InventoryIndex);
+
+				ItemCount++;
+			}
+
+			return MaxListItem != INDEX_NONE ? MaxListItem <= ItemCount : false;
+		}
+	);
+
+	return ItemCount != 0;
 }
 
-bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes) const
+bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, const FLFPInventoryItem& ItemData, const FGameplayTagContainer SlotNames, const FGameplayTagContainer Catergorizes, const bool bContainAllCatergorize, const int32 MaxListItem) const
 {
-	return false;
+	if (ItemData.IsValid() == false)
+	{
+		return false;
+	}
+
+	int32 ItemCount = 0;
+
+	ProcessInventoryIndexConst(
+		FLFPInventorySearchIndex(INDEX_NONE, SlotNames),
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			// Check Catergorizes
+			if (Catergorizes.IsEmpty() == false)
+			{
+				if ((bContainAllCatergorize ?
+					GetInventoryIndexCatergorize(ChangeData).HasAll(Catergorizes)
+					:
+					GetInventoryIndexCatergorize(ChangeData).HasAny(Catergorizes)
+					) == false)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		},
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			if (DoInventoryIndexContainItem(FLFPInventoryChange(ChangeData.InventoryIndex, ItemData)))
+			{
+				ItemIndexList.Add(ChangeData.ItemData);
+
+				ItemCount++;
+			}
+
+			return MaxListItem != INDEX_NONE ? MaxListItem <= ItemCount : false;
+		}
+	);
+
+	return ItemCount != 0;
 }
 
 
