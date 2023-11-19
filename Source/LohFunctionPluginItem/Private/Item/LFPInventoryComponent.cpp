@@ -107,6 +107,8 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 			case 2: break;
 			}
 		}
+
+		SlotData.ClearEmptyItem();
 	}
 
 	return false;
@@ -305,43 +307,74 @@ bool ULFPInventoryComponent::SortItem(const FGameplayTag SortTag, const FGamepla
 	return false;
 }
 
-bool ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
+void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
 {
-	return false;
+	const bool bProcessSuccess = ProcessInventoryIndex(
+		FLFPInventorySearchIndex(INDEX_NONE, SlotNames),
+		[&](const FLFPInventoryChange& ChangeData)
+		{
+			return ChangeData.ItemData.IsValid();
+		},
+		[&](FLFPInventoryItem& ItemData, const FLFPInventoryIndex InventoryIndex)
+		{
+			ItemData = FLFPInventoryItem();
+
+			return false;
+		},
+		[&](const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)
+		{
+			if (EventTag.IsValid()) // Don't Send Event If Tag Is Not Valid (Prevent Network Overload)
+			{
+				SendRemoveDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+			}
+		}
+	);
+
+	return;
 }
 
 
 
 bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
-	return false;
+	return true;
 }
 
 bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
-	return false;
+	return true;
 }
 
 bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const
 {
-	return false;
+	return true;
 }
 
 
 
 bool ULFPInventoryComponent::ProcessAddItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
-	return false;
+	ItemData = ProcessData;
+
+	return true;
 }
 
 bool ULFPInventoryComponent::ProcessRemoveItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
-	return false;
+	ItemData = FLFPInventoryItem();
+
+	return true;
 }
 
 bool ULFPInventoryComponent::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA, UPARAM(ref)FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB) const
 {
-	return false;
+	FLFPInventoryItem ItemA = ItemDataA;
+	FLFPInventoryItem ItemB = ItemDataB;
+
+	ItemDataA = ItemB;
+	ItemDataB = ItemA;
+
+	return true;
 }
 
 
@@ -353,19 +386,19 @@ FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize_Imple
 
 
 
-bool ULFPInventoryComponent::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB) const
+bool ULFPInventoryComponent::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
 {
 	return false;
 }
 
 bool ULFPInventoryComponent::CanItemUseInventoryIndex_Implementation(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const
 {
-	return false;
+	return true;
 }
 
 bool ULFPInventoryComponent::DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const
 {
-	return false;
+	return GetSlotItem(ChangeData.InventoryIndex) == ChangeData.ItemData;
 }
 
 
@@ -445,11 +478,11 @@ bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
 
 
 
-FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const int32 SlotIndex, const FGameplayTag SlotName) const
+FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const
 {
 	for (const auto& Slot : InventorySlot)
 	{
-		if (Slot.SlotName.MatchesTag(SlotName)) return Slot.GetItemCopy(SlotIndex);
+		if (Slot.SlotName.MatchesTag(InventoryIndex.SlotName)) return Slot.GetItemCopy(InventoryIndex.SlotIndex);
 	}
 
 	return FLFPInventoryItem();

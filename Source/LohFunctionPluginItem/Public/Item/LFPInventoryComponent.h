@@ -252,6 +252,16 @@ public:
 
 		return ItemList[Index];
 	}
+
+	FORCEINLINE void ClearEmptyItem()
+	{
+		while (ItemList.Num() > 0 && ItemList.Last().IsValid() == false)
+		{
+			ItemList.RemoveAt(ItemList.Num() - 1, 1, false);
+		}
+
+		ItemList.Shrink();
+	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnChangeEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
@@ -331,7 +341,7 @@ public:
 		bool SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag);
+		void ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag);
 
 protected: // Modifier
 
@@ -372,8 +382,8 @@ protected: // Modifier
 public:	// Check Modifier
 
 	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB) const;
-	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB) const;
+	bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
+	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
 
 	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
 	bool CanItemUseInventoryIndex(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const;
@@ -403,7 +413,7 @@ public:
 	//	FLFPInventoryItem& GetSlotItemRef(const int32 SlotIndex, const FGameplayTag SlotName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		FLFPInventoryItem GetSlotItem(const int32 SlotIndex, const FGameplayTag SlotName) const;
+		FLFPInventoryItem GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;
 
 public:
 
