@@ -64,6 +64,8 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 	const TFunctionRef<void(const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)> EventFunction
 )
 {
+	UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Start"));
+
 	auto ProcessIndex = [&](const int32 Index, FLFPInventorySlot& SlotData)
 		{
 			const FLFPInventoryIndex InventoryIndex(Index, SlotData.SlotName);
@@ -89,14 +91,26 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 	for (FLFPInventorySlot& SlotData : InventorySlot)
 	{
-		if (SearchIndex.IsTagMatch(SlotData.SlotName) == false) continue; // Tag Not Match Any One On Search
+		if (SearchIndex.IsTagMatch(SlotData.SlotName) == false) 
+		{
+			UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Skip Index Bacause Tag : %s"), *SearchIndex.ToString());
 
-		if (SearchIndex.SlotIndex >= SlotData.SlotMaxIndex) continue; // Index Is Not With In Slot Allow Range
+			continue; // Tag Not Match Any One On Search
+		}
+
+		if (SlotData.SlotMaxIndex > INDEX_NONE && SearchIndex.SlotIndex >= SlotData.SlotMaxIndex)
+		{
+			UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Skip Index Bacause Index OverFlow : %s"), *SearchIndex.ToString());
+
+			continue; // Index Is Not With In Slot Allow Range
+		}
 
 		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item And Additional Index
 		int32 Index				= SearchIndex.SlotIndex <= INDEX_NONE ?						0 : SearchIndex.SlotIndex;
 		const int32 MaxIndex	= SearchIndex.SlotIndex <= INDEX_NONE ? SlotData.GetNextNum() : SearchIndex.SlotIndex;
 		//
+
+		UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
 
 		for (Index; Index <= MaxIndex; Index++)
 		{
@@ -109,6 +123,8 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 		}
 
 		SlotData.ClearEmptyItem();
+
+		UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex SlotData End : %s"), *SlotData.SlotName.ToString());
 	}
 
 	return false;
@@ -135,7 +151,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndexConst(const FLFPInventorySearc
 	{
 		if (SearchIndex.IsTagMatch(SlotData.SlotName) == false) continue; // Tag Not Match Any One On Search
 
-		if (SearchIndex.SlotIndex >= SlotData.SlotMaxIndex) continue; // Index Is Not With In Slot Allow Range
+		if (SlotData.SlotMaxIndex != INDEX_NONE && SearchIndex.SlotIndex >= SlotData.SlotMaxIndex) continue; // Index Is Not With In Slot Allow Range
 
 		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item
 		int32 Index				= SearchIndex.SlotIndex <= INDEX_NONE ?							0 : SearchIndex.SlotIndex;

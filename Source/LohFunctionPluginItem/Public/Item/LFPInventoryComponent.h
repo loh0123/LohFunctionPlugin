@@ -123,6 +123,8 @@ public:
 	//FORCEINLINE bool IsIndexMatch(const int32 Index) const { return SlotIndex == INDEX_NONE ? true : SlotIndex == Index; }
 
 	FORCEINLINE bool IsTagMatch(const FGameplayTag Tag) const { return SlotNames.IsEmpty() ? true : Tag.MatchesAny(SlotNames); }
+
+	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | Index = %d"), *SlotNames.ToString(), SlotIndex); }
 };
 
 USTRUCT(BlueprintType)
@@ -231,7 +233,7 @@ public:
 
 	FORCEINLINE int32 GetItemNum() const { return ItemList.Num(); }
 
-	FORCEINLINE int32 GetNextNum() const { return FMath::Min(GetItemNum(), SlotMaxIndex - 1); }
+	FORCEINLINE int32 GetNextNum() const { return SlotMaxIndex > INDEX_NONE ? FMath::Max(GetItemNum(), SlotMaxIndex - 1) : GetItemNum(); }
 
 	FORCEINLINE FLFPInventoryItem GetItemCopy(const int32 Index) const
 	{
@@ -435,6 +437,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Variable")
 		TArray<FLFPInventorySlot> InventorySlot = TArray<FLFPInventorySlot>();
-
-
 };
