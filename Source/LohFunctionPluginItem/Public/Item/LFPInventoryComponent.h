@@ -30,17 +30,9 @@ struct FLFPInventoryItem
 
 	FLFPInventoryItem() {}
 
-	FLFPInventoryItem(const FGameplayTag Tag) : ItemTag(Tag), MetaData(FJsonObjectWrapper()) {}
+	FLFPInventoryItem(const FGameplayTag Tag) : ItemTag(Tag), MetaData(TArray<FString>()) {}
 
-	FLFPInventoryItem(const FLFPInventoryItem& Other) : ItemTag(Other.ItemTag), MetaData(Other.MetaData) 
-	{ 
-		MetaData.JsonObject = MakeShared<FJsonObject>();
-
-		if (MetaData.JsonObjectFromString(MetaData.JsonString) == false)
-		{
-			MetaData.JsonString.Empty();
-		}
-	}
+	FLFPInventoryItem(const FLFPInventoryItem& Other) : ItemTag(Other.ItemTag), MetaData(Other.MetaData) {}
 
 public:
 
@@ -48,11 +40,11 @@ public:
 		FGameplayTag ItemTag = FGameplayTag();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FJsonObjectWrapper MetaData = FJsonObjectWrapper();
+		TArray<FString> MetaData = TArray<FString>();
 
 public:
 
-	FORCEINLINE bool IsValid() const { return ItemTag.IsValid() && MetaData.JsonObject.IsValid(); }
+	FORCEINLINE bool IsValid() const { return ItemTag.IsValid(); }
 
 	FORCEINLINE	bool MatchesTag(const FGameplayTag& Tag) const { return ItemTag.MatchesTag(Tag); }
 
@@ -60,45 +52,17 @@ public:
 
 	FORCEINLINE	bool operator!=(const FGameplayTag& Tag) const { return ItemTag != Tag; }
 
-	FORCEINLINE	bool operator==(const FLFPInventoryItem& Other) const { return ItemTag == Other.ItemTag && MetaData.JsonString == Other.MetaData.JsonString; }
+	FORCEINLINE	bool operator==(const FLFPInventoryItem& Other) const { return ItemTag == Other.ItemTag && MetaData == Other.MetaData; }
 
-	FORCEINLINE	bool operator!=(const FLFPInventoryItem& Other) const { return ItemTag != Other.ItemTag || MetaData.JsonString != Other.MetaData.JsonString; }
+	FORCEINLINE	bool operator!=(const FLFPInventoryItem& Other) const { return ItemTag != Other.ItemTag || MetaData != Other.MetaData; }
 
-	FORCEINLINE	FLFPInventoryItem& operator=(const FLFPInventoryItem& Other)
-	{
-		MetaData.JsonObject = MakeShared<FJsonObject>();
-
-		if (MetaData.JsonObjectFromString(MetaData.JsonString) == false)
-		{
-			MetaData.JsonString.Empty();
-		}
-
+	FORCEINLINE	FLFPInventoryItem& operator=(const FLFPInventoryItem& Other) 
+	{ 
 		ItemTag = Other.ItemTag;
+		MetaData = Other.MetaData;
 
-		return *this;
+		return *this; 
 	}
-
-	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
-	{
-		Ar << MetaData.JsonString << ItemTag;
-
-		MetaData.PostSerialize(Ar);
-
-		if (MetaData.JsonObject.IsValid() == false) MetaData.JsonObjectFromString("{}");
-
-		bOutSuccess = true;
-
-		return true;
-	}
-};
-
-template<>
-struct TStructOpsTypeTraits<FLFPInventoryItem> : public TStructOpsTypeTraitsBase2<FLFPInventoryItem>
-{
-	enum
-	{
-		WithNetSerializer = true
-	};
 };
 
 USTRUCT(BlueprintType)
@@ -153,6 +117,30 @@ public:
 	FORCEINLINE	bool operator==(const FLFPInventoryIndex& Other) const { return SlotIndex == Other.SlotIndex && SlotName == Other.SlotName; }
 	
 	FORCEINLINE	bool operator!=(const FLFPInventoryIndex& Other) const { return SlotIndex != Other.SlotIndex || SlotName != Other.SlotName; }
+
+	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | Index = %d"), *SlotName.ToString(), SlotIndex); }
+};
+
+USTRUCT()
+struct FLFPInventoryKey
+{
+	GENERATED_BODY()
+
+	FLFPInventoryKey() {}
+
+	FLFPInventoryKey(const int32 NewSlotIndex, const int32 NewSlotNameIndex) : SlotIndex(NewSlotIndex), SlotNameIndex(NewSlotNameIndex) {}
+
+public:
+
+	UPROPERTY()
+	int32 SlotIndex = INDEX_NONE;
+
+	UPROPERTY()
+	int32 SlotNameIndex = INDEX_NONE;
+
+public:
+
+	FORCEINLINE bool IsValid() const { return SlotIndex != INDEX_NONE && SlotNameIndex != INDEX_NONE; }
 };
 
 USTRUCT(BlueprintType)
@@ -237,6 +225,8 @@ public:
 
 	FORCEINLINE FLFPInventoryItem GetItemCopy(const int32 Index) const
 	{
+		check(Index > INDEX_NONE);
+
 		if (ItemList.IsValidIndex(Index) == false)
 		{
 			return FLFPInventoryItem();
@@ -247,10 +237,19 @@ public:
 
 	FORCEINLINE FLFPInventoryItem& GetItemRef(const int32 Index)
 	{
+		check(Index > INDEX_NONE);
+
 		if (ItemList.IsValidIndex(Index) == false)
 		{
 			ItemList.SetNum(Index + 1);
 		}
+
+		return ItemList[Index];
+	}
+
+	FORCEINLINE const FLFPInventoryItem& GetItemConst(const int32 Index) const
+	{
+		check(ItemList.IsValidIndex(Index));
 
 		return ItemList[Index];
 	}
@@ -317,15 +316,10 @@ public: // Internal Function
 
 	FORCEINLINE bool ProcessInventoryIndex(
 		const FLFPInventorySearchIndex& SearchIndex, 
-		const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> CheckerFunction, 
-		const TFunctionRef<bool(FLFPInventoryItem& ItemData, const FLFPInventoryIndex InventoryIndex)> IndexFunction,
-		const TFunctionRef<void(const FLFPInventoryIndex InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData)> EventFunction
-	);
-
-	FORCEINLINE bool ProcessInventoryIndexConst(
-		const FLFPInventorySearchIndex& SearchIndex,
-		const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> CheckerFunction,
-		const TFunctionRef<bool(const FLFPInventoryChange& ChangeData)> IndexFunction
+		const TFunctionRef<bool(const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)> CheckerFunction,
+		const TFunctionRef<bool(const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)> IndexFunction,
+		const TFunction<void(const FLFPInventoryChange& OldData, const FLFPInventoryKey& InventoryKey)> EventFunction = nullptr,
+		const TFunction<void(const FLFPInventoryKey& InventoryKey)> OnSlotNameEnd = nullptr
 	) const;
 
 public:
@@ -416,6 +410,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		FLFPInventoryItem GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;
+
+	UFUNCTION()
+		const FLFPInventoryItem& GetSlotItemConst(const FLFPInventoryKey& InventoryKey) const;
+
+	UFUNCTION()
+		FLFPInventoryItem& GetSlotItemRef(const FLFPInventoryKey& InventoryKey);
+
+	UFUNCTION()
+		void ClearSlotEmptyItem(const int32 SlotNameKey);
 
 public:
 
