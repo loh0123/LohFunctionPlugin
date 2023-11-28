@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Loh Zhi Kang ( loh0123@hotmail.com )
+// Copyright (c) 2023 Loh Zhi Kang ( loh0123@hotmail.com )
 //
 // Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 // or copy at http://opensource.org/licenses/MIT)
@@ -7,11 +7,17 @@
 #include "LohFunctionPlugin.h"
 #include "Misc/OutputDeviceNull.h"
 
-bool ULohFunctionPluginLibrary::CallFunctionByFunctionData(const FLFPFunctionData& FunctionData, const bool bForce)
+bool ULohFunctionPluginLibrary::ContainPoint(const FLFPIntPointList& List, const int32 Index)
 {
-	if (IsValid(FunctionData.Caller) == false)  return false;
+    return List.ContainIndex(Index);
+}
 
-	FOutputDeviceNull OutputDeviceNull;
+void ULohFunctionPluginLibrary::AddPoint(UPARAM(ref)FLFPIntPointList& List, const FIntPoint Range)
+{
+    List.Add(Range);
+}
 
-	return FunctionData.Caller->CallFunctionByNameWithArguments(*FunctionData.NameAndParam, OutputDeviceNull, nullptr, bForce);
+void ULohFunctionPluginLibrary::RemovePoint(UPARAM(ref)FLFPIntPointList& List, const FIntPoint Range)
+{
+    List.Remove(Range);
 }
