@@ -20,6 +20,7 @@ ULFPInventoryComponent::ULFPInventoryComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
+	bWantsInitializeComponent = true;
 	// ...
 }
 
@@ -30,6 +31,12 @@ void ULFPInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ULFPInventoryComponent, FunctionList);
+}
 
 // Called every frame
 void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -43,11 +50,13 @@ void ULFPInventoryComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	if (bReplicateUsingRegisteredSubObjectList == false) return;
+	check(GetOwner());
 
 	/* For Supporting Function List Object Replication */
 	for (auto& FunctionObj : FunctionList)
 	{
+		check(FunctionObj.Get()->GetOuter());
+
 		AddReplicatedSubObject(FunctionObj.Get());
 	}
 	////////////////////////////////////////////////////
@@ -56,8 +65,6 @@ void ULFPInventoryComponent::InitializeComponent()
 void ULFPInventoryComponent::UninitializeComponent()
 {
 	Super::UninitializeComponent();
-
-	if (bReplicateUsingRegisteredSubObjectList == false) return;
 
 	/* For Supporting Function List Object Replication */
 	for (auto& FunctionObj : FunctionList)
@@ -70,8 +77,6 @@ void ULFPInventoryComponent::UninitializeComponent()
 bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	if (bReplicateUsingRegisteredSubObjectList) return false;
 
 	/* For Supporting Function List Object Replication */
 	for (auto& FunctionObj : FunctionList)
@@ -389,6 +394,23 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 	);
 
 	return;
+}
+
+ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const
+{
+	if (FunctionClass == nullptr) return nullptr;
+
+	for (auto& FunctionObj : FunctionList)
+	{
+		if (IsValid(FunctionObj) == false) continue;
+
+		if (FunctionObj.GetClass() == FunctionClass.Get())
+		{
+			return FunctionObj;
+		}
+	}
+
+	return nullptr;
 }
 
 bool ULFPInventoryComponent::CanAddItem(const FLFPInventoryChange& ChangeData) const

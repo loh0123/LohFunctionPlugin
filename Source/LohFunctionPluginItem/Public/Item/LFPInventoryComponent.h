@@ -95,8 +95,13 @@ public:
 	ULFPInventoryComponent();
 
 protected:
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	//virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 public:
 	// Called every frame
@@ -168,6 +173,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag);
+
+public:
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		ULFPItemInventoryFunction* GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const;
 
 public:
 
@@ -262,6 +272,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Variable")
 		TArray<FLFPInventorySlot> InventorySlot = TArray<FLFPInventorySlot>();
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "LFPInventoryComponent | Variable")
+	UPROPERTY(EditDefaultsOnly, Instanced, Replicated, Category = "LFPInventoryComponent | Variable")
 		TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
 };

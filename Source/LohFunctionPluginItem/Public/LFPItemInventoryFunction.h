@@ -18,6 +18,14 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemInventoryFunction : public UObject
 	GENERATED_BODY()
 
 public:
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
+
+public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
 	bool CanAddItem(const ULFPInventoryComponent* InventoryComponent, const FLFPInventoryChange& ChangeData) const;
