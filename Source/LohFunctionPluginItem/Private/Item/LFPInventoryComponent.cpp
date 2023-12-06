@@ -6,6 +6,7 @@
 
 #include "Item/LFPInventoryComponent.h"
 #include "Item/LFPInventoryInterface.h"
+#include "LFPItemInventoryFunction.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LFPInventoryComponent);
@@ -121,10 +122,24 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 	return false;
 }
 
+bool ULFPInventoryComponent::ProcessInventoryFunction(const TFunctionRef<bool(const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)> RunFunction) const
+{
+	for (const auto& FunctionObj : FunctionList)
+	{
+		if (IsValid(FunctionObj) == false) continue;
+
+		if (RunFunction(FunctionObj) == false) return false;
+	}
+
+	return true;
+}
+
 
 
 bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (SearchChangeData.IsValid() == false) 
 	{
 		UE_LOG(LFPInventoryComponent, Warning, TEXT("SearchChangeData Is Not Valid On ( AddItem )"));
@@ -170,6 +185,8 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 
 bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	if (SearchChangeData.IsValid() == false)
 	{
 		UE_LOG(LFPInventoryComponent, Warning, TEXT("SearchChangeData Is Not Valid On ( RemoveItem )"));
@@ -219,6 +236,8 @@ bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchC
 
 bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapData, const FGameplayTag EventTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	const bool bAllProcessSuccess = ProcessInventoryIndex(
 		SearchSwapData.TargetIndex,
 		[&](const FLFPInventoryChange& ChangeDataA, const FLFPInventoryKey& InventoryKey)
@@ -290,11 +309,15 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 
 bool ULFPInventoryComponent::SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
 	return false;
 }
 
 void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
 {
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
+
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		FLFPInventorySearchIndex(INDEX_NONE, SlotNames),
 		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
@@ -323,55 +346,92 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 	return;
 }
 
-
-
-bool ULFPInventoryComponent::CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const
+bool ULFPInventoryComponent::CanAddItem(const FLFPInventoryChange& ChangeData) const
 {
-	return true;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanAddItem(this, ChangeData);
+		}
+	);
+
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const
+bool ULFPInventoryComponent::CanRemoveItem(const FLFPInventoryChange& ChangeData) const
 {
-	return true;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanRemoveItem(this, ChangeData);
+		}
+	);
+
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const
+bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const
 {
-	return true;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanSwapItem(this, ChangeDataA, ChangeDataB);
+		}
+	);
+
+	return bSuccess;
 }
 
-
-
-bool ULFPInventoryComponent::ProcessAddItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPInventoryComponent::ProcessAddItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
-	ItemData = ProcessData;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->ProcessAddItem(this, ItemData, ProcessData, InventoryIndex);
+		}
+	);
 
-	return true;
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::ProcessRemoveItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPInventoryComponent::ProcessRemoveItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
-	ItemData = FLFPInventoryItem();
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->ProcessRemoveItem(this, ItemData, ProcessData, InventoryIndex);
+		}
+	);
 
-	return true;
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA, UPARAM(ref)FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB) const
+bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref)FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const
 {
-	const FLFPInventoryItem ItemA = ItemDataA;
-	const FLFPInventoryItem ItemB = ItemDataB;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->ProcessSwapItem(this, ItemDataA, InventoryIndexA, ItemDataB, InventoryIndexB);
+		}
+	);
 
-	ItemDataA = ItemB;
-	ItemDataB = ItemA;
-
-	return true;
+	return bSuccess;
 }
 
-
-
-FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize_Implementation(const FLFPInventoryChange& ChangeData) const
+FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize(const FLFPInventoryChange& ChangeData) const
 {
-	return FGameplayTagContainer();
+	FGameplayTagContainer Result = FGameplayTagContainer();
+
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			Result.AppendTags(FunctionObj->GetInventoryIndexCatergorize(this, ChangeData));
+
+			return true;
+		}
+	);
+
+	return Result;
 }
 
 

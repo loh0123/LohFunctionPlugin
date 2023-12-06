@@ -2,26 +2,29 @@
 
 #include "NativeGameplayTags.h"
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Identifiers)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Categorizes)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_SlotNames)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Events)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Identifier)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Categorize)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_SlotName)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Event)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Meta)
 
 struct LOHFUNCTIONPLUGINITEM_API FLFPItemGameplayTag
 {
 	FLFPItemGameplayTag() :
-		Identifiers(FGameplayTag::RequestGameplayTag("Item.Identifiers")),
-		Categorizes(FGameplayTag::RequestGameplayTag("Item.Categorizes")),
-		SlotNames(FGameplayTag::RequestGameplayTag("Item.SlotNames")),
-		Events(FGameplayTag::RequestGameplayTag("Item.Events"))
+		Identifier(FGameplayTag::RequestGameplayTag("Item.Identifier")),
+		Categorize(FGameplayTag::RequestGameplayTag("Item.Categorize")),
+		SlotName(FGameplayTag::RequestGameplayTag("Item.SlotName")),
+		Event(FGameplayTag::RequestGameplayTag("Item.Event")),
+		Meta(FGameplayTag::RequestGameplayTag("Item.Meta"))
 	{}
 
 public:
 
-	const FGameplayTag Identifiers;
-	const FGameplayTag Categorizes;
-	const FGameplayTag SlotNames;
-	const FGameplayTag Events;
+	const FGameplayTag Identifier;
+	const FGameplayTag Categorize;
+	const FGameplayTag SlotName;
+	const FGameplayTag Event;
+	const FGameplayTag Meta;
 
 public:
 

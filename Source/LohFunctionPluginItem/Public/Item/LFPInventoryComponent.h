@@ -10,194 +10,12 @@
 #include "JsonObjectWrapper.h"
 #include "GameplayTagContainer.h"
 #include "LFPItemGameplayTag.h"
+#include "LFPItemFunctionLibrary.h"
 #include "LFPInventoryComponent.generated.h"
 
+class ULFPItemInventoryFunction;
+
 DECLARE_LOG_CATEGORY_EXTERN(LFPInventoryComponent, Log, All);
-
-
-UENUM(BlueprintType)
-enum ELFPInventoryOperation : uint8
-{
-	OnAdd		UMETA(DisplayName = "OnAdd"),
-	OnRemove	UMETA(DisplayName = "OnRemove"),
-	OnSwap      UMETA(DisplayName = "OnSwap")
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventoryItem
-{
-	GENERATED_BODY()
-
-	FLFPInventoryItem() {}
-
-	FLFPInventoryItem(const FGameplayTag Tag) : ItemTag(Tag), MetaData(TArray<FString>()) {}
-
-	FLFPInventoryItem(const FLFPInventoryItem& Other) : ItemTag(Other.ItemTag), MetaData(Other.MetaData) {}
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.Identifiers"))
-		FGameplayTag ItemTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		TArray<FString> MetaData = TArray<FString>();
-
-public:
-
-	FORCEINLINE bool IsValid() const { return ItemTag.IsValid(); }
-
-	FORCEINLINE	bool MatchesTag(const FGameplayTag& Tag) const { return ItemTag.MatchesTag(Tag); }
-
-	FORCEINLINE	bool operator==(const FGameplayTag& Tag) const { return ItemTag == Tag; }
-
-	FORCEINLINE	bool operator!=(const FGameplayTag& Tag) const { return ItemTag != Tag; }
-
-	FORCEINLINE	bool operator==(const FLFPInventoryItem& Other) const { return ItemTag == Other.ItemTag && MetaData == Other.MetaData; }
-
-	FORCEINLINE	bool operator!=(const FLFPInventoryItem& Other) const { return ItemTag != Other.ItemTag || MetaData != Other.MetaData; }
-
-	FORCEINLINE	FLFPInventoryItem& operator=(const FLFPInventoryItem& Other) 
-	{ 
-		ItemTag = Other.ItemTag;
-		MetaData = Other.MetaData;
-
-		return *this; 
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventorySearchIndex
-{
-	GENERATED_BODY()
-
-	FLFPInventorySearchIndex() {}
-
-	FLFPInventorySearchIndex(const int32 NewSlotIndex, const FGameplayTagContainer& NewSlotNames) : SlotIndex(NewSlotIndex), SlotNames(NewSlotNames) {}
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		int32 SlotIndex = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotNames"))
-		FGameplayTagContainer SlotNames = FGameplayTagContainer::EmptyContainer;
-
-public:
-
-	//FORCEINLINE bool IsIndexMatch(const int32 Index) const { return SlotIndex == INDEX_NONE ? true : SlotIndex == Index; }
-
-	FORCEINLINE bool IsTagMatch(const FGameplayTag Tag) const { return SlotNames.IsEmpty() ? true : Tag.MatchesAny(SlotNames); }
-
-	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | Index = %d"), *SlotNames.ToString(), SlotIndex); }
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventoryIndex
-{
-	GENERATED_BODY()
-
-	FLFPInventoryIndex() {}
-
-	FLFPInventoryIndex(const int32 NewSlotIndex, const FGameplayTag& NewSlotName) : SlotIndex(NewSlotIndex), SlotName(NewSlotName) {}
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		int32 SlotIndex = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotNames"))
-		FGameplayTag SlotName = FGameplayTag::EmptyTag;
-
-public:
-
-	//FORCEINLINE bool IsIndexMatch(const int32 Index) const { return SlotIndex == INDEX_NONE ? true : SlotIndex == Index; }
-
-	//FORCEINLINE bool IsTagMatch(const FGameplayTag Tag) const { return SlotName.IsValid() == false ? true : Tag.MatchesTag(SlotName); }
-
-	FORCEINLINE	bool operator==(const FLFPInventoryIndex& Other) const { return SlotIndex == Other.SlotIndex && SlotName == Other.SlotName; }
-	
-	FORCEINLINE	bool operator!=(const FLFPInventoryIndex& Other) const { return SlotIndex != Other.SlotIndex || SlotName != Other.SlotName; }
-
-	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | Index = %d"), *SlotName.ToString(), SlotIndex); }
-};
-
-USTRUCT()
-struct FLFPInventoryKey
-{
-	GENERATED_BODY()
-
-	FLFPInventoryKey() {}
-
-	FLFPInventoryKey(const int32 NewSlotIndex, const int32 NewSlotNameIndex) : SlotIndex(NewSlotIndex), SlotNameIndex(NewSlotNameIndex) {}
-
-public:
-
-	UPROPERTY()
-	int32 SlotIndex = INDEX_NONE;
-
-	UPROPERTY()
-	int32 SlotNameIndex = INDEX_NONE;
-
-public:
-
-	FORCEINLINE bool IsValid() const { return SlotIndex != INDEX_NONE && SlotNameIndex != INDEX_NONE; }
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventorySearchChange
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventorySearchIndex SearchIndex = FLFPInventorySearchIndex();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventoryItem ItemData = FLFPInventoryItem();
-
-public:
-
-	FORCEINLINE bool IsValid() const { return ItemData.IsValid(); }
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventoryChange
-{
-	GENERATED_BODY()
-
-	FLFPInventoryChange() {};
-
-	FLFPInventoryChange(const FLFPInventoryIndex& NewInventoryIndex, const FLFPInventoryItem& NewItemData) : InventoryIndex(NewInventoryIndex), ItemData(NewItemData) {};
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventoryIndex InventoryIndex = FLFPInventoryIndex();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventoryItem ItemData = FLFPInventoryItem();
-
-public:
-
-	FORCEINLINE	bool operator==(const FLFPInventoryChange& Other) const { return InventoryIndex == Other.InventoryIndex && ItemData == Other.ItemData; }
-
-	FORCEINLINE	bool operator!=(const FLFPInventoryChange& Other) const { return InventoryIndex != Other.InventoryIndex || ItemData != Other.ItemData; }
-};
-
-USTRUCT(BlueprintType)
-struct FLFPInventorySearchSwap
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventorySearchIndex TargetIndex = FLFPInventorySearchIndex();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-		FLFPInventorySearchIndex ToIndex = FLFPInventorySearchIndex();
-};
 
 USTRUCT(BlueprintType)
 struct FLFPInventorySlot
@@ -206,7 +24,7 @@ struct FLFPInventorySlot
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default, meta = (Categories = "Item.SlotNames"))
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default, meta = (Categories = "Item.SlotName"))
 		FGameplayTag SlotName = FGameplayTag::EmptyTag;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
@@ -284,7 +102,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public: // Delegate
+protected: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnChangeEvent OnUpdateItem;
@@ -298,7 +116,7 @@ public: // Delegate
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
 		FOnChangeEvent OnSwapItem;
 
-public: // Delegate Function
+protected: // Delegate Function
 
 	UFUNCTION(NetMulticast, Reliable)
 	void SendAddDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const;
@@ -312,7 +130,7 @@ public: // Delegate Function
 	void SendSwapDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const;
 	void SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const;
 
-public: // Internal Function
+protected: // Internal Function
 
 	FORCEINLINE bool ProcessInventoryIndex(
 		const FLFPInventorySearchIndex& SearchIndex, 
@@ -322,9 +140,13 @@ public: // Internal Function
 		const TFunction<void(const FLFPInventoryKey& InventoryKey)> OnSlotNameEnd = nullptr
 	) const;
 
+	FORCEINLINE bool ProcessInventoryFunction(
+		const TFunctionRef<bool(const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)> RunFunction
+	) const;
+
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
 		bool AddItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
@@ -339,41 +161,32 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		void ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag);
 
-protected: // Modifier
+public:
 
-	// Confirm Modifier
+	UFUNCTION()
+		bool CanAddItem(const FLFPInventoryChange& ChangeData) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanAddItem(const FLFPInventoryChange& ChangeData) const;
-	virtual bool CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const;
+	UFUNCTION()
+		bool CanRemoveItem(const FLFPInventoryChange& ChangeData) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanRemoveItem(const FLFPInventoryChange& ChangeData) const;
-	virtual bool CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const;
-
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanSwapItem(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const;
-	virtual bool CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const;
+	UFUNCTION()
+		bool CanSwapItem(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const;
 
 	// Process Modifier
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool ProcessAddItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	UFUNCTION()
+		bool ProcessAddItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool ProcessRemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	UFUNCTION()
+		bool ProcessRemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB) const;
-	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB) const;
+	UFUNCTION()
+		bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const;
 
 	// Catergorize Modifier
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	FGameplayTagContainer GetInventoryIndexCatergorize(const FLFPInventoryChange& ChangeData) const;
-	virtual FGameplayTagContainer GetInventoryIndexCatergorize_Implementation(const FLFPInventoryChange& ChangeData) const;
+	UFUNCTION()
+		FGameplayTagContainer GetInventoryIndexCatergorize(const FLFPInventoryChange& ChangeData) const;
 
 public:	// Check Modifier
 
@@ -440,4 +253,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Variable")
 		TArray<FLFPInventorySlot> InventorySlot = TArray<FLFPInventorySlot>();
+
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "LFPInventoryComponent | Variable")
+		TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
 };
