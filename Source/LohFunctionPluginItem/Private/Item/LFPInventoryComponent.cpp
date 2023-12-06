@@ -7,6 +7,7 @@
 #include "Item/LFPInventoryComponent.h"
 #include "Item/LFPInventoryInterface.h"
 #include "LFPItemInventoryFunction.h"
+#include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LFPInventoryComponent);
@@ -36,6 +37,50 @@ void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void ULFPInventoryComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+
+	if (bReplicateUsingRegisteredSubObjectList == false) return;
+
+	/* For Supporting Function List Object Replication */
+	for (auto& FunctionObj : FunctionList)
+	{
+		AddReplicatedSubObject(FunctionObj.Get());
+	}
+	////////////////////////////////////////////////////
+}
+
+void ULFPInventoryComponent::UninitializeComponent()
+{
+	Super::UninitializeComponent();
+
+	if (bReplicateUsingRegisteredSubObjectList == false) return;
+
+	/* For Supporting Function List Object Replication */
+	for (auto& FunctionObj : FunctionList)
+	{
+		RemoveReplicatedSubObject(FunctionObj.Get());
+	}
+	////////////////////////////////////////////////////
+}
+
+bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (bReplicateUsingRegisteredSubObjectList) return false;
+
+	/* For Supporting Function List Object Replication */
+	for (auto& FunctionObj : FunctionList)
+	{
+		Channel->ReplicateSubobject(FunctionObj.Get(), *Bunch, *RepFlags);
+	}
+	////////////////////////////////////////////////////
+
+	return true;
 }
 
 
