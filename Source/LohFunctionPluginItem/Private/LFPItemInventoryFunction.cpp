@@ -2,7 +2,6 @@
 
 
 #include "LFPItemInventoryFunction.h"
-#include "Item/LFPInventoryComponent.h"
 
 void ULFPItemInventoryFunction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

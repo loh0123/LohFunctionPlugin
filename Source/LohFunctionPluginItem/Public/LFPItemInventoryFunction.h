@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LFPItemFunctionLibrary.h"
+#include "Item/LFPInventoryComponent.h"
 #include "GameplayTagContainer.h"
 #include "LFPItemInventoryFunction.generated.h"
 
