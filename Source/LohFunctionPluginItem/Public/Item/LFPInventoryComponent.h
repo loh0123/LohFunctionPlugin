@@ -377,19 +377,16 @@ public:
 	UFUNCTION()
 		FGameplayTagContainer GetInventoryIndexCatergorize(const FLFPInventoryChange& ChangeData) const;
 
-public:	// Check Modifier
+	// Check Modifier
 
-	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
-	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
+	UFUNCTION()
+		bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
 
-	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool CanItemUseInventoryIndex(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const;
-	virtual bool CanItemUseInventoryIndex_Implementation(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const;
+	UFUNCTION()
+		bool CanItemUseInventoryIndex(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const;
 
-	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPInventoryComponent | Modifier")
-	bool DoInventoryIndexContainItem(const FLFPInventoryChange& ChangeData) const;
-	virtual bool DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const;
+	UFUNCTION()
+		bool DoInventoryIndexContainItem(const FLFPInventoryChange& ChangeData) const;
 
 public:
 
@@ -409,9 +406,6 @@ public:
 		bool IsSlotNameValid(const FGameplayTag SlotName) const;
 
 public:
-
-	//UFUNCTION()
-	//	FLFPInventoryItem& GetSlotItemRef(const int32 SlotIndex, const FGameplayTag SlotName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		FLFPInventoryItem GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;

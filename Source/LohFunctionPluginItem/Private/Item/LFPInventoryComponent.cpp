@@ -460,12 +460,13 @@ ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubc
 	return nullptr;
 }
 
+
 bool ULFPInventoryComponent::CanAddItem(const FLFPInventoryChange& ChangeData) const
 {
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanAddItem(this, ChangeData);
+			return FunctionObj->CanAddItem(ChangeData);
 		}
 	);
 
@@ -477,7 +478,7 @@ bool ULFPInventoryComponent::CanRemoveItem(const FLFPInventoryChange& ChangeData
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanRemoveItem(this, ChangeData);
+			return FunctionObj->CanRemoveItem(ChangeData);
 		}
 	);
 
@@ -489,19 +490,20 @@ bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryChange& ChangeDataA,
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanSwapItem(this, ChangeDataA, ChangeDataB);
+			return FunctionObj->CanSwapItem(ChangeDataA, ChangeDataB);
 		}
 	);
 
 	return bSuccess;
 }
 
+
 bool ULFPInventoryComponent::ProcessAddItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessAddItem(this, ItemData, ProcessData, InventoryIndex);
+			return FunctionObj->ProcessAddItem(ItemData, ProcessData, InventoryIndex);
 		}
 	);
 
@@ -513,7 +515,7 @@ bool ULFPInventoryComponent::ProcessRemoveItem(UPARAM(ref)FLFPInventoryItem& Ite
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessRemoveItem(this, ItemData, ProcessData, InventoryIndex);
+			return FunctionObj->ProcessRemoveItem(ItemData, ProcessData, InventoryIndex);
 		}
 	);
 
@@ -525,12 +527,13 @@ bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& ItemD
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessSwapItem(this, ItemDataA, InventoryIndexA, ItemDataB, InventoryIndexB);
+			return FunctionObj->ProcessSwapItem(ItemDataA, InventoryIndexA, ItemDataB, InventoryIndexB);
 		}
 	);
 
 	return bSuccess;
 }
+
 
 FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize(const FLFPInventoryChange& ChangeData) const
 {
@@ -539,7 +542,7 @@ FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize(const
 	const bool bSuccess = ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			Result.AppendTags(FunctionObj->GetInventoryIndexCatergorize(this, ChangeData));
+			Result.AppendTags(FunctionObj->GetInventoryIndexCatergorize(ChangeData));
 
 			return true;
 		}
@@ -549,20 +552,40 @@ FGameplayTagContainer ULFPInventoryComponent::GetInventoryIndexCatergorize(const
 }
 
 
-
-bool ULFPInventoryComponent::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
+bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
 {
-	return false;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
+		}
+	);
+
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::CanItemUseInventoryIndex_Implementation(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const
+bool ULFPInventoryComponent::CanItemUseInventoryIndex(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const
 {
-	return true;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanItemUseInventoryIndex(ChangeData, Operation);
+		}
+	);
+
+	return bSuccess;
 }
 
-bool ULFPInventoryComponent::DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const
+bool ULFPInventoryComponent::DoInventoryIndexContainItem(const FLFPInventoryChange& ChangeData) const
 {
-	return GetSlotItem(ChangeData.InventoryIndex) == ChangeData.ItemData;
+	const bool bSuccess = ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->DoInventoryIndexContainItem(ChangeData);
+		}
+	);
+
+	return bSuccess;
 }
 
 

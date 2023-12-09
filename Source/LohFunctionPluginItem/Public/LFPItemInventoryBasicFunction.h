@@ -31,23 +31,31 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemInventoryBasicFunction : public ULFPItem
 
 public:
 
-	virtual bool CanAddItem_Implementation(const ULFPInventoryComponent* InventoryComponent, const FLFPInventoryChange& ChangeData) const;
+	virtual bool CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
 
-	virtual bool CanRemoveItem_Implementation(const ULFPInventoryComponent* InventoryComponent, const FLFPInventoryChange& ChangeData) const;
+	virtual bool CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
 
-	virtual bool CanSwapItem_Implementation(const ULFPInventoryComponent* InventoryComponent, const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const;
+	virtual bool CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const override;
 
 	// Process Modifier
 
-	virtual bool ProcessAddItem_Implementation(const ULFPInventoryComponent* InventoryComponent, UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	virtual bool ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
-	virtual bool ProcessRemoveItem_Implementation(const ULFPInventoryComponent* InventoryComponent, UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
-	virtual bool ProcessSwapItem_Implementation(const ULFPInventoryComponent* InventoryComponent, UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const;
+	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const override;
 
 	// Catergorize Modifier
 
-	virtual FGameplayTagContainer GetInventoryIndexCatergorize_Implementation(const ULFPInventoryComponent* InventoryComponent, const FLFPInventoryChange& ChangeData) const;
+	virtual FGameplayTagContainer GetInventoryIndexCatergorize_Implementation(const FLFPInventoryChange& ChangeData) const override;
+
+	// Check Modifier
+
+	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const override;
+
+	virtual bool CanItemUseInventoryIndex_Implementation(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const override;
+
+	virtual bool DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
 
 public:
 
