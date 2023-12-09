@@ -214,16 +214,41 @@ struct FLFPInventorySearchSwap
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-	FLFPInventorySearchIndex TargetIndex = FLFPInventorySearchIndex();
+	FLFPInventorySearchIndex FromIndex = FLFPInventorySearchIndex();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
 	FLFPInventorySearchIndex ToIndex = FLFPInventorySearchIndex();
 };
 
 USTRUCT(BlueprintType)
+struct FLFPInventorySearchTransfer
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FLFPInventorySearchIndex FromIndex = FLFPInventorySearchIndex();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FLFPInventorySearchIndex ToIndex = FLFPInventorySearchIndex();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FLFPInventoryItem ItemData = FLFPInventoryItem();
+
+public:
+
+	FORCEINLINE bool IsValid() const { return ItemData.IsValid(); }
+};
+
+USTRUCT(BlueprintType)
 struct FLFPInventorySearchChange
 {
 	GENERATED_BODY()
+
+	FLFPInventorySearchChange() {};
+
+	FLFPInventorySearchChange(const FLFPInventorySearchIndex& NewSearchIndex, const FLFPInventoryItem& NewItemData) : SearchIndex(NewSearchIndex), ItemData(NewItemData) {};
 
 public:
 

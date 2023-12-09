@@ -6,6 +6,21 @@
 #include "LFPItemInventoryFunction.h"
 #include "LFPItemInventoryBasicFunction.generated.h"
 
+USTRUCT(Blueprintable)
+struct FLFPItemBasicData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		int32 MaxStack = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		FGameplayTagContainer Catergorize = FGameplayTagContainer();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		int32 MaxAttachSlots = INDEX_NONE;
+};
+
 /**
  * 
  */
@@ -37,18 +52,18 @@ public:
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasAmount = false;
+		bool bHasStack = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
 		bool bHasQuality = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasHealth = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
 		bool bHasAttachSlots = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
 		bool bHasIndexCatergorize = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
+		TObjectPtr<UDataTable> ItemDataTable = nullptr;
 	
 };

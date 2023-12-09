@@ -160,13 +160,16 @@ protected: // Internal Function
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag);
+		bool AddItem(FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag, const bool bCheckFirst = false);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool RemoveItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag);
+		bool RemoveItem(FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag, const bool bCheckFirst = false);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SwapItem(const FLFPInventorySearchSwap& SearchSwapData, const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool TransferItem(const FLFPInventorySearchTransfer& SearchTransferData, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag);
@@ -221,6 +224,9 @@ public:	// Check Modifier
 	virtual bool DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const;
 
 public:
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		bool CheckItem(const FLFPInventorySearchChange& SearchChangeData, const bool bCheckRemove) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		bool ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventorySearchIndex& SearchIndex) const;

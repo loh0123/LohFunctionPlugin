@@ -186,7 +186,7 @@ bool ULFPInventoryComponent::ProcessInventoryFunction(const TFunctionRef<bool(co
 
 
 
-bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItem(FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag, const bool bCheckFirst)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -197,13 +197,18 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 		return false;
 	}
 
-	FLFPInventoryItem ProcessData = SearchChangeData.ItemData;
+	if (bCheckFirst && CheckItem(SearchChangeData, false) == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("AddItem Check Fail"));
+
+		return false;
+	}
 
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		SearchChangeData.SearchIndex,
 		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
 		{
-			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, ProcessData), OnAdd) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, SearchChangeData.ItemData), OnAdd) == false)
 			{
 				return false;
 			}
@@ -217,7 +222,7 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 		},
 		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
 		{
-			return ProcessAddItem(GetSlotItemRef(InventoryKey), ProcessData, ChangeData.InventoryIndex);
+			return ProcessAddItem(GetSlotItemRef(InventoryKey), SearchChangeData.ItemData, ChangeData.InventoryIndex);
 		},
 		[&](const FLFPInventoryChange& OldData, const FLFPInventoryKey& InventoryKey)
 		{
@@ -233,7 +238,7 @@ bool ULFPInventoryComponent::AddItem(const FLFPInventorySearchChange& SearchChan
 	return bProcessSuccess;
 }
 
-bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItem(FLFPInventorySearchChange& SearchChangeData, const FGameplayTag EventTag, const bool bCheckFirst)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -244,13 +249,18 @@ bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchC
 		return false;
 	}
 
-	FLFPInventoryItem ProcessData = SearchChangeData.ItemData;
+	if (bCheckFirst && CheckItem(SearchChangeData, true) == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("RemoveItem Check Fail"));
+
+		return false;
+	}
 
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		SearchChangeData.SearchIndex,
 		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
 		{
-			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, ProcessData), OnRemove) == false)
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, SearchChangeData.ItemData), OnRemove) == false)
 			{
 				return false;
 			}
@@ -264,7 +274,7 @@ bool ULFPInventoryComponent::RemoveItem(const FLFPInventorySearchChange& SearchC
 		},
 		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
 		{
-			return ProcessRemoveItem(GetSlotItemRef(InventoryKey), ProcessData, ChangeData.InventoryIndex);
+			return ProcessRemoveItem(GetSlotItemRef(InventoryKey), SearchChangeData.ItemData, ChangeData.InventoryIndex);
 		},
 		[&](const FLFPInventoryChange& OldData, const FLFPInventoryKey& InventoryKey)
 		{
@@ -289,7 +299,7 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
 	const bool bAllProcessSuccess = ProcessInventoryIndex(
-		SearchSwapData.TargetIndex,
+		SearchSwapData.FromIndex,
 		[&](const FLFPInventoryChange& ChangeDataA, const FLFPInventoryKey& InventoryKey)
 		{
 			return ChangeDataA.ItemData.IsValid();
@@ -345,7 +355,7 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 
 			if (EventTag.IsValid() && OldDataA.ItemData != NewData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
 			{
-				SendRemoveDelegateEvent(OldDataA.InventoryIndex, NewData, OldDataA.ItemData, EventTag);
+				SendSwapDelegateEvent(OldDataA.InventoryIndex, NewData, OldDataA.ItemData, EventTag);
 			}
 		},
 		[&](const FLFPInventoryKey& InventoryKey)
@@ -355,6 +365,41 @@ bool ULFPInventoryComponent::SwapItem(const FLFPInventorySearchSwap& SearchSwapD
 	);
 
 	return bAllProcessSuccess;
+}
+
+bool ULFPInventoryComponent::TransferItem(const FLFPInventorySearchTransfer& SearchTransferData, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (IsValid(TargetInventoryComponent) == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("TargetInventoryComponent Is Not Valid On ( TransferItem )"));
+
+		return false;
+	}
+
+	if (SearchTransferData.IsValid() == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("SearchTransferData Is Not Valid On ( TransferItem )"));
+
+		return false;
+	}
+
+	FLFPInventorySearchChange FromChange(SearchTransferData.FromIndex, SearchTransferData.ItemData);
+	FLFPInventorySearchChange ToChange(SearchTransferData.ToIndex, SearchTransferData.ItemData);
+
+	if (CheckItem(FromChange, true) == false || TargetInventoryComponent->CheckItem(ToChange, false) == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("TransferItem Check Fail"));
+
+		return false;
+	}
+
+	RemoveItem(FromChange, EventTag);
+
+	TargetInventoryComponent->AddItem(ToChange, EventTag);
+
+	return true;
 }
 
 bool ULFPInventoryComponent::SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag)
@@ -395,6 +440,8 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 
 	return;
 }
+
+
 
 ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const
 {
@@ -519,6 +566,44 @@ bool ULFPInventoryComponent::DoInventoryIndexContainItem_Implementation(const FL
 }
 
 
+
+bool ULFPInventoryComponent::CheckItem(const FLFPInventorySearchChange& SearchChangeData, const bool bCheckRemove) const
+{
+	if (SearchChangeData.IsValid() == false)
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("SearchChangeData Is Not Valid On ( CheckItem )"));
+
+		return false;
+	}
+
+	FLFPInventoryItem CheckData = SearchChangeData.ItemData;
+
+	const bool bProcessSuccess = ProcessInventoryIndex(
+		SearchChangeData.SearchIndex,
+		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
+		{
+			if (CanItemUseInventoryIndex(FLFPInventoryChange(ChangeData.InventoryIndex, SearchChangeData.ItemData), bCheckRemove ? OnRemove : OnAdd) == false)
+			{
+				return false;
+			}
+
+			if ((bCheckRemove ? CanRemoveItem(ChangeData) : CanAddItem(ChangeData)) == false)
+			{
+				return false;
+			}
+
+			return true;
+		},
+		[&](const FLFPInventoryChange& ChangeData, const FLFPInventoryKey& InventoryKey)
+		{
+			FLFPInventoryItem CopyData = GetSlotItemConst(InventoryKey);
+
+			return bCheckRemove ? ProcessRemoveItem(CopyData, CheckData, ChangeData.InventoryIndex) : ProcessAddItem(CopyData, CheckData, ChangeData.InventoryIndex);
+		}
+	);
+
+	return bProcessSuccess;
+}
 
 bool ULFPInventoryComponent::ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventorySearchIndex& SearchIndex) const
 {
