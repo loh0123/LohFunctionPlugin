@@ -64,13 +64,13 @@ public:
 
 	FORCEINLINE	FString GetMetaData(const FGameplayTag& Tag) const { int32 ReturnIndex(MetaData.IndexOfByKey(Tag)); return ReturnIndex != INDEX_NONE ? MetaData[ReturnIndex].MetaData : FString(""); }
 
-	FORCEINLINE	void SetMetaData(const FLFPInventoryMeta& Data)
+	FORCEINLINE	void SetMetaData(const FLFPInventoryMeta& Data, const bool bUniqueOnly = false)
 	{
 		int32 ReturnIndex(MetaData.IndexOfByKey(Data.MetaTag));
 
 		if (ReturnIndex != INDEX_NONE)
 		{
-			MetaData[ReturnIndex].MetaData = Data.MetaData;
+			if (bUniqueOnly == false) MetaData[ReturnIndex].MetaData = Data.MetaData;
 		}
 		else
 		{
@@ -104,6 +104,8 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunct
 {
 	GENERATED_BODY()
 
+public:
+
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static bool HasMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
 
@@ -111,6 +113,15 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunct
 	static FString GetMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	static int32 GetMetaDataAsNumber(const FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 DefaultValue = 0);
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	static void MergeMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryItem& Other, const bool bUniqueOnly = true);
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static void SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryMeta& Data);
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	static void SetMetaDataAsNumber(UPARAM(ref) FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 Data);
 	
 };

@@ -6,19 +6,33 @@
 #include "LFPItemInventoryFunction.h"
 #include "LFPItemInventoryBasicFunction.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LFPItemInventoryBasicFunction, Log, All);
+
 USTRUCT(Blueprintable)
 struct FLFPItemBasicData : public FTableRowBase
 {
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		FGameplayTag StackTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
 		int32 MaxStack = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
-		FGameplayTagContainer Catergorize = FGameplayTagContainer();
+		FGameplayTag AttachSlotsTag = FGameplayTag();
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
 		int32 MaxAttachSlots = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		FGameplayTagContainer MatchIntTagList = FGameplayTagContainer();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		FLFPInventorySearch InventorySearch = FLFPInventorySearch();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+		FGameplayTagContainer Categorize = FGameplayTagContainer();
 };
 
 /**
@@ -31,45 +45,40 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemInventoryBasicFunction : public ULFPItem
 
 public:
 
-	virtual bool CanAddItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
+	virtual bool CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const;
 
-	virtual bool CanRemoveItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
+	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const;
 
-	virtual bool CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const override;
+	//virtual bool CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const override;
 
-	// Process Modifier
+
+	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+
+	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+
+	//// Process Modifier
 
 	virtual bool ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
 	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
-	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const override;
+	//virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const override;
 
-	// Catergorize Modifier
+	//// Catergorize Modifier
 
-	virtual FGameplayTagContainer GetInventoryIndexCatergorize_Implementation(const FLFPInventoryChange& ChangeData) const override;
+	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const;
 
-	// Check Modifier
+	virtual FLFPInventorySearch GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const;
 
-	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const override;
+	//// Check Modifier
 
-	virtual bool CanItemUseInventoryIndex_Implementation(const FLFPInventoryChange& ChangeData, const ELFPInventoryOperation Operation) const override;
+	//virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const override;
 
-	virtual bool DoInventoryIndexContainItem_Implementation(const FLFPInventoryChange& ChangeData) const override;
+protected:
 
-public:
+	FORCEINLINE const FLFPItemBasicData* GetDataTableRow(const FGameplayTag& RowTag) const;
 
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasStack = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasQuality = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasAttachSlots = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bHasIndexCatergorize = false;
+protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
 		TObjectPtr<UDataTable> ItemDataTable = nullptr;
