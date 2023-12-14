@@ -12,7 +12,7 @@ bool ULFPItemInventoryBasicFunction::CanAddItem_Implementation(const FLFPInvento
 
 	if (TableData == nullptr) return false;
 
-	return ItemData.IsValid();
+	return true;
 }
 
 bool ULFPItemInventoryBasicFunction::CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const
@@ -21,7 +21,31 @@ bool ULFPItemInventoryBasicFunction::CanRemoveItem_Implementation(const FLFPInve
 
 	if (TableData == nullptr) return false;
 
-	return ItemData.IsValid();
+	return true;
+}
+
+bool ULFPItemInventoryBasicFunction::CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const
+{
+	if (FromItem.IsValid() == false && ToItem.IsValid() == false)
+	{
+		return false;
+	}
+
+	if (FromItem.IsValid())
+	{
+		const FLFPItemBasicData* TableData = GetDataTableRow(FromItem.ItemTag);
+
+		if (TableData == nullptr) return false;
+	}
+
+	if (ToItem.IsValid())
+	{
+		const FLFPItemBasicData* TableData = GetDataTableRow(ToItem.ItemTag);
+
+		if (TableData == nullptr) return false;
+	}
+
+	return true;
 }
 
 bool ULFPItemInventoryBasicFunction::CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
@@ -73,12 +97,35 @@ bool ULFPItemInventoryBasicFunction::CanRemoveItemOnSlot_Implementation(const FL
 	return true;
 }
 
+bool ULFPItemInventoryBasicFunction::CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+{
+	if (bCheckAllowedInventorySearchOnSwap == false)
+	{
+		return true;
+	}
+
+	const FLFPItemBasicData* FromTableData = GetDataTableRow(FromItem.ItemTag);
+	const FLFPItemBasicData* ToTableData = GetDataTableRow(ToItem.ItemTag);
+
+	if (FromTableData != nullptr && ToIndex.SlotName.MatchesAny(FromTableData->AllowedInventorySearch.SlotNames) == false)
+	{
+		return false;
+	}
+
+	if (ToTableData != nullptr && FromIndex.SlotName.MatchesAny(ToTableData->AllowedInventorySearch.SlotNames) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 bool ULFPItemInventoryBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
-	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.ItemTag);
+	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
 
-	if (TableData == nullptr) return false;
+	if (TableData == nullptr) return true;
 	//////////////////////////////////////////////////
 
 	// Process Stack Function ///////////////////////
@@ -89,28 +136,30 @@ bool ULFPItemInventoryBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FL
 	const int32 NextStack =			MaxStack != INDEX_NONE ? FMath::Min(MaxStack, CurrentStack + ProcessStack)			: CurrentStack + ProcessStack;
 	const int32 NextProcessStack =	MaxStack != INDEX_NONE ? FMath::Max(0, (CurrentStack + ProcessStack) - NextStack)	: 0;
 
-	ItemData.ItemTag = ProcessData.ItemTag; // Override The Tag If Empty
+	if (ItemData.IsValid() == false)
+	{
+		ItemData = ProcessData; // Override ItemData With ProcessData ( Meta Data Include ) This Give All Meta Data That Is Not Stack Into Inventory ( Only Doing This If The Slot Is Empty )
+	}
 
-	ULFPItemFunctionLibrary::MergeMetaData(ItemData, ProcessData); // Merge Other Tag On ProcessData Together
-	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ItemData, TableData->StackTag, NextStack);
-	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ProcessData, TableData->StackTag, NextProcessStack);
+	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ItemData, TableData->StackTag, NextStack); // Set Item Stack To Correct Number
+	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ProcessData, TableData->StackTag, NextProcessStack); // Decrease Stack On Process Data
 	////////////////////////////////////////////////
 
 	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
 	if (NextProcessStack <= 0)
 	{
-		ProcessData.ItemTag = FGameplayTag::EmptyTag;
+		ProcessData = FLFPInventoryItem();
 	}
 
-	return NextProcessStack == 0;
+	return NextProcessStack <= 0;
 }
 
 bool ULFPItemInventoryBasicFunction::ProcessRemoveItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
-	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.ItemTag);
+	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
 
-	if (TableData == nullptr) return false;
+	if (TableData == nullptr) return true;
 	//////////////////////////////////////////////////
 
 	// Process Stack Function ///////////////////////
@@ -133,10 +182,22 @@ bool ULFPItemInventoryBasicFunction::ProcessRemoveItem_Implementation(UPARAM(ref
 	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
 	if (NextProcessStack <= 0)
 	{
-		ProcessData.ItemTag = FGameplayTag::EmptyTag;
+		ProcessData = FLFPInventoryItem();
 	}
 
-	return NextProcessStack == 0;
+	return NextProcessStack <= 0;
+}
+
+bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref)FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+{
+	if (FromItem.MatchesTag(ToItem.ItemTag) && CanAddItemOnSlot(ToIndex, ToItem, FromItem))
+	{
+		return ProcessAddItem(ToItem, FromItem, ToIndex);
+	}
+
+	std::swap(FromItem, ToItem);
+
+	return true;
 }
 
 FGameplayTagContainer ULFPItemInventoryBasicFunction::GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const
@@ -154,7 +215,7 @@ FLFPInventorySearch ULFPItemInventoryBasicFunction::GetItemInventorySearch_Imple
 
 	if (TableData == nullptr) return FLFPInventorySearch();
 
-	return TableData->InventorySearch;
+	return TableData->AllowedInventorySearch;
 }
 
 const FLFPItemBasicData* ULFPItemInventoryBasicFunction::GetDataTableRow(const FGameplayTag& RowTag) const

@@ -29,7 +29,7 @@ struct FLFPItemBasicData : public FTableRowBase
 		FGameplayTagContainer MatchIntTagList = FGameplayTagContainer();
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
-		FLFPInventorySearch InventorySearch = FLFPInventorySearch();
+		FLFPInventorySearch AllowedInventorySearch = FLFPInventorySearch();
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
 		FGameplayTagContainer Categorize = FGameplayTagContainer();
@@ -49,12 +49,14 @@ public:
 
 	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const;
 
-	//virtual bool CanSwapItem_Implementation(const FLFPInventoryChange& ChangeDataA, const FLFPInventoryChange& ChangeDataB) const override;
+	virtual bool CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const override;
 
 
 	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+
+	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
 
 	//// Process Modifier
 
@@ -62,7 +64,7 @@ public:
 
 	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
-	//virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const override;
+	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
 
 	//// Catergorize Modifier
 
@@ -82,5 +84,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
 		TObjectPtr<UDataTable> ItemDataTable = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
+		bool bCheckAllowedInventorySearchOnSwap = false;
 	
 };

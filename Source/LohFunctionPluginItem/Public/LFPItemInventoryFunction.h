@@ -35,9 +35,9 @@ public:
 	bool CanRemoveItem(const FLFPInventoryItem& ItemData) const;
 	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
 
-	//UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	//bool CanSwapItem(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex) const;
-	//virtual bool CanSwapItem_Implementation(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex) const { return true; }
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool CanSwapItem(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const;
+	virtual bool CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const { return true; }
 
 
 
@@ -49,9 +49,9 @@ public:
 	bool CanRemoveItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
 
-	//UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	//bool CanSwapItemOnSlot(const FLFPInventoryIndex& FromInventoryIndex, const FLFPInventoryItem& FromData, const FLFPInventoryIndex& ToInventoryIndex, const FLFPInventoryItem& ToData) const;
-	//virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryIndex& FromInventoryIndex, const FLFPInventoryItem& FromData, const FLFPInventoryIndex& ToInventoryIndex, const FLFPInventoryItem& ToData) const { return true; }
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool CanSwapItemOnSlot(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
+	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
 
 	// Process Modifier
 
@@ -63,9 +63,9 @@ public:
 	bool ProcessRemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
 
-	//UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	//bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex InventoryIndexB) const;
-	//virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref) FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const { return true; }
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
+	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
 
 	// Catergorize Modifier
 

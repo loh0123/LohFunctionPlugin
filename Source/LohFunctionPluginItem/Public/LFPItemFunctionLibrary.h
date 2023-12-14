@@ -78,6 +78,20 @@ public:
 		}
 	}
 
+	FORCEINLINE	bool RemoveMetaData(const FGameplayTag& Tag)
+	{
+		int32 ReturnIndex(MetaData.IndexOfByKey(Tag));
+
+		if (ReturnIndex != INDEX_NONE)
+		{
+			MetaData.RemoveAt(ReturnIndex);
+
+			return true;
+		}
+
+		return false;
+	}
+
 
 	FORCEINLINE	bool operator==(const FGameplayTag& Tag) const { return ItemTag == Tag; }
 

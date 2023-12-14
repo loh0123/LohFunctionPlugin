@@ -175,7 +175,7 @@ bool ULFPInventoryComponent::AddItem_Internal(const FLFPInventoryIndex& Inventor
 {
 	if (CanAddItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
 
-	auto& NewData = GetSlotItemRef(InventoryKey);
+	FLFPInventoryItem& NewData = GetSlotItemRef(InventoryKey);
 
 	const bool bSuccess = ProcessAddItem(NewData, ProcessItemData, InventoryIndex);
 
@@ -200,7 +200,7 @@ bool ULFPInventoryComponent::RemoveItem_Internal(const FLFPInventoryIndex& Inven
 {
 	if (CanRemoveItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
 
-	auto& NewData = GetSlotItemRef(InventoryKey);
+	FLFPInventoryItem& NewData = GetSlotItemRef(InventoryKey);
 
 	const bool bSuccess = ProcessRemoveItem(NewData, ProcessItemData, InventoryIndex);
 
@@ -219,6 +219,16 @@ bool ULFPInventoryComponent::RemoveItem_Internal_Check(const FLFPInventoryIndex&
 	FLFPInventoryItem TestItem = CopyItemData;
 
 	return ProcessRemoveItem(TestItem, ProcessItemData, InventoryIndex);
+}
+
+bool ULFPInventoryComponent::SwapItem_Internal(const FLFPInventoryItem& CopyFromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryKey& FromInventoryKey, const FLFPInventoryItem& CopyToItem, const FLFPInventoryIndex& ToIndex, const FLFPInventoryKey& ToInventoryKey, const FGameplayTag& EventTag)
+{
+	if (CanSwapItemOnSlot(CopyFromItem, FromIndex, CopyToItem, ToIndex) == false) return false;
+
+	FLFPInventoryItem& FromData = GetSlotItemRef(FromInventoryKey);
+	FLFPInventoryItem& ToData = GetSlotItemRef(ToInventoryKey);
+
+	return ProcessSwapItem(FromData, FromIndex, ToData, ToIndex);
 }
 
 
@@ -258,6 +268,23 @@ bool ULFPInventoryComponent::AddItemBySearch(const FLFPInventorySearch& Inventor
 		{
 			return AddItem_Internal(InventoryIndex, CopyItemData, InventoryKey, ItemData, EventTag);
 		});
+}
+
+bool ULFPInventoryComponent::AddItemListBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	bool bIsSuccess = true;
+
+	for (FLFPInventoryItem& ItemData : ItemDataList)
+	{
+		if (AddItemBySearch(InventorySearch, ItemData, EventTag) == false)
+		{
+			bIsSuccess = false;
+		}
+	}
+
+	return bIsSuccess;
 }
 
 bool ULFPInventoryComponent::AddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
@@ -312,6 +339,23 @@ bool ULFPInventoryComponent::RemoveItemBySearch(const FLFPInventorySearch& Inven
 		});
 }
 
+bool ULFPInventoryComponent::RemoveItemListBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	bool bIsSuccess = true;
+
+	for (FLFPInventoryItem& ItemData : ItemDataList)
+	{
+		if (RemoveItemBySearch(InventorySearch, ItemData, EventTag) == false)
+		{
+			bIsSuccess = false;
+		}
+	}
+
+	return bIsSuccess;
+}
+
 bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
@@ -323,6 +367,35 @@ bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& Invento
 	if (InvKey.IsValid() == false) return false;
 
 	return RemoveItem_Internal(InventoryIndex, GetSlotItemCopy(InvKey), InvKey, ItemData, EventTag);
+}
+
+bool ULFPInventoryComponent::SwapItemToIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	const FLFPInventoryKey FromInvKey = GetInventoryKey(FromIndex);
+	const FLFPInventoryKey ToInvKey = GetInventoryKey(ToIndex);
+
+	if (FromInvKey.IsValid() == false || ToInvKey.IsValid() == false) return false;
+
+	const FLFPInventoryItem CopyOfFrom = GetSlotItemCopy(FromInvKey);
+	const FLFPInventoryItem CopyOfTo = GetSlotItemCopy(ToInvKey);
+
+	if (CanSwapItem(CopyOfFrom, CopyOfTo) == false) return false;
+
+	return SwapItem_Internal(CopyOfFrom, FromIndex, FromInvKey, CopyOfTo, ToIndex, ToInvKey, EventTag);
+}
+
+bool ULFPInventoryComponent::SwapItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	return ProcessInventoryIndex(
+		ToSearch,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey)
+		{
+			return SwapItemToIndex(FromIndex, InventoryIndex, EventTag);
+		});
 }
 
 
@@ -467,6 +540,36 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 	return;
 }
 
+bool ULFPInventoryComponent::SetMetaDataIndex(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryMeta& MetaData, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	const FLFPInventoryKey InvKey = GetInventoryKey(InventoryIndex);
+
+	if (IsInventoryKeyValid(InvKey) == false || GetSlotItemConst(InvKey).IsValid() == false) return false;
+
+	GetSlotItemRef(InvKey).SetMetaData(MetaData);
+
+	// TODO Event
+
+	return true;
+}
+
+bool ULFPInventoryComponent::RemoveMetaDataByIndex(const FLFPInventoryIndex& InventoryIndex, const FGameplayTag MetaTag, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	const FLFPInventoryKey InvKey = GetInventoryKey(InventoryIndex);
+
+	if (IsInventoryKeyValid(InvKey) == false || GetSlotItemConst(InvKey).IsValid() == false) return false;
+
+	const bool bSuccess = GetSlotItemRef(InvKey).RemoveMetaData(MetaTag);
+
+	// TODO Event
+
+	return bSuccess;
+}
+
 
 
 ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const
@@ -506,6 +609,16 @@ bool ULFPInventoryComponent::CanRemoveItem(const FLFPInventoryItem& ItemData) co
 	);
 }
 
+bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanSwapItem(FromItem, ToItem);
+		}
+	);
+}
+
 //bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex) const
 //{
 //	return ProcessInventoryFunction(
@@ -536,6 +649,16 @@ bool ULFPInventoryComponent::CanRemoveItemOnSlot(const FLFPInventoryIndex& Inven
 	);
 }
 
+bool ULFPInventoryComponent::CanSwapItemOnSlot(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanSwapItemOnSlot(FromItem, FromIndex, ToItem, ToIndex);
+		}
+	);
+}
+
 //bool ULFPInventoryComponent::CanSwapItemOnSlot(const FLFPInventoryIndex& FromInventoryIndex, const FLFPInventoryItem& FromData, const FLFPInventoryIndex& ToInventoryIndex, const FLFPInventoryItem& ToData) const
 //{
 //	return ProcessInventoryFunction(
@@ -562,6 +685,16 @@ bool ULFPInventoryComponent::ProcessRemoveItem(UPARAM(ref)FLFPInventoryItem& Ite
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
 			return FunctionObj->ProcessRemoveItem(ItemData, ProcessData, InventoryIndex);
+		}
+	);
+}
+
+bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref)FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->ProcessSwapItem(FromItem, FromIndex, ToItem, ToIndex);
 		}
 	);
 }
@@ -695,6 +828,11 @@ FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const FLFPInventoryIndex& 
 	}
 
 	return FLFPInventoryItem();
+}
+
+bool ULFPInventoryComponent::IsInventoryKeyValid(const FLFPInventoryKey& InventoryKey) const
+{
+	return InventorySlot.IsValidIndex(InventoryKey.SlotNameIndex) && InventorySlot[InventoryKey.SlotNameIndex].IsItemIndexValid(InventoryKey.SlotIndex);
 }
 
 FLFPInventoryKey ULFPInventoryComponent::GetInventoryKey(const FLFPInventoryIndex& InventoryIndex) const
