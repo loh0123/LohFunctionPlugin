@@ -225,6 +225,10 @@ bool ULFPInventoryComponent::SwapItem_Internal(const FLFPInventoryItem& CopyFrom
 {
 	if (CanSwapItemOnSlot(CopyFromItem, FromIndex, CopyToItem, ToIndex) == false) return false;
 
+	// Reserve Index To Prevent Array Change After Getting Ref
+	ReserveItemIndex(FromInventoryKey);
+	ReserveItemIndex(ToInventoryKey);
+
 	FLFPInventoryItem& FromData = GetSlotItemRef(FromInventoryKey);
 	FLFPInventoryItem& ToData = GetSlotItemRef(ToInventoryKey);
 
@@ -858,6 +862,11 @@ const FLFPInventoryItem& ULFPInventoryComponent::GetSlotItemConst(const FLFPInve
 FLFPInventoryItem& ULFPInventoryComponent::GetSlotItemRef(const FLFPInventoryKey& InventoryKey)
 {
 	return InventorySlot[InventoryKey.SlotNameIndex].GetItemRef(InventoryKey.SlotIndex);
+}
+
+void ULFPInventoryComponent::ReserveItemIndex(const FLFPInventoryKey& InventoryKey)
+{
+	return InventorySlot[InventoryKey.SlotNameIndex].ReserveItemIndex(InventoryKey.SlotIndex);
 }
 
 

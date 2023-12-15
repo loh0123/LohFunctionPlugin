@@ -136,6 +136,7 @@ bool ULFPItemInventoryBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FL
 	const int32 NextStack =			MaxStack != INDEX_NONE ? FMath::Min(MaxStack, CurrentStack + ProcessStack)			: CurrentStack + ProcessStack;
 	const int32 NextProcessStack =	MaxStack != INDEX_NONE ? FMath::Max(0, (CurrentStack + ProcessStack) - NextStack)	: 0;
 
+	// Check Current Slot Is Empty
 	if (ItemData.IsValid() == false)
 	{
 		ItemData = ProcessData; // Override ItemData With ProcessData ( Meta Data Include ) This Give All Meta Data That Is Not Stack Into Inventory ( Only Doing This If The Slot Is Empty )
@@ -192,10 +193,13 @@ bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)F
 {
 	if (FromItem.MatchesTag(ToItem.ItemTag) && CanAddItemOnSlot(ToIndex, ToItem, FromItem))
 	{
-		return ProcessAddItem(ToItem, FromItem, ToIndex);
+		UE_LOG(LogTemp, Warning, TEXT("Hello 01"));
 	}
 
-	std::swap(FromItem, ToItem);
+	FLFPInventoryItem TempItem = FromItem;
+
+	FromItem = ToItem;
+	ToItem = TempItem;
 
 	return true;
 }

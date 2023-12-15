@@ -204,6 +204,18 @@ public:
 
 	FORCEINLINE bool IsItemIndexValid(const int32 Index) const { return ItemList.IsValidIndex(Index); }
 
+	FORCEINLINE void ReserveItemIndex(const int32 Index)
+	{
+		check(Index > INDEX_NONE);
+
+		if (ItemList.IsValidIndex(Index) == false)
+		{
+			ItemList.SetNum(Index + 1);
+		}
+
+		return;
+	}
+
 	FORCEINLINE int32 GetItemNum() const { return ItemList.Num(); }
 
 	FORCEINLINE int32 GetNextNum() const { return SlotMaxIndex > INDEX_NONE ? FMath::Max(GetItemNum(), SlotMaxIndex - 1) : GetItemNum(); }
@@ -224,10 +236,7 @@ public:
 	{
 		check(Index > INDEX_NONE);
 
-		if (ItemList.IsValidIndex(Index) == false)
-		{
-			ItemList.SetNum(Index + 1);
-		}
+		ReserveItemIndex(Index);
 
 		return ItemList[Index];
 	}
@@ -472,6 +481,8 @@ protected:
 	FORCEINLINE const FLFPInventoryItem& GetSlotItemConst(const FLFPInventoryKey& InventoryKey) const;
 
 	FORCEINLINE FLFPInventoryItem& GetSlotItemRef(const FLFPInventoryKey& InventoryKey);
+
+	FORCEINLINE void ReserveItemIndex(const FLFPInventoryKey& InventoryKey);
 
 	FORCEINLINE void ClearSlotEmptyItem(const int32 SlotNameKey);
 
