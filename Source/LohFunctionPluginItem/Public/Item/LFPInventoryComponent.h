@@ -25,27 +25,27 @@ DECLARE_LOG_CATEGORY_EXTERN(LFPInventoryComponent, Log, All);
 //	OnSwap      UMETA(DisplayName = "OnSwap")
 //};
 
-USTRUCT()
-struct FLFPInventoryKey
-{
-	GENERATED_BODY()
-
-	FLFPInventoryKey() {}
-
-	FLFPInventoryKey(const int32 NewSlotIndex, const int32 NewSlotNameIndex) : SlotIndex(NewSlotIndex), SlotNameIndex(NewSlotNameIndex) {}
-
-public:
-
-	UPROPERTY()
-	int32 SlotIndex = INDEX_NONE;
-
-	UPROPERTY()
-	int32 SlotNameIndex = INDEX_NONE;
-
-public:
-
-	FORCEINLINE bool IsValid() const { return SlotIndex > INDEX_NONE && SlotNameIndex > INDEX_NONE; }
-};
+//USTRUCT()
+//struct FLFPInventoryKey
+//{
+//	GENERATED_BODY()
+//
+//	FLFPInventoryKey() {}
+//
+//	FLFPInventoryKey(const int32 NewSlotIndex, const int32 NewSlotNameIndex) : SlotIndex(NewSlotIndex), SlotNameIndex(NewSlotNameIndex) {}
+//
+//public:
+//
+//	UPROPERTY()
+//	int32 SlotIndex = INDEX_NONE;
+//
+//	UPROPERTY()
+//	int32 SlotNameIndex = INDEX_NONE;
+//
+//public:
+//
+//	FORCEINLINE bool IsValid() const { return SlotIndex > INDEX_NONE && SlotNameIndex > INDEX_NONE; }
+//};
 
 USTRUCT(BlueprintType)
 struct FLFPInventorySearch
@@ -87,11 +87,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotName"))
 	FGameplayTag SlotName = FGameplayTag::EmptyTag;
 
+	UPROPERTY()
+	int32 SlotNameIndex = INDEX_NONE;
+
 public:
 
-	//FORCEINLINE bool IsIndexMatch(const int32 Index) const { return SlotIndex == INDEX_NONE ? true : SlotIndex == Index; }
-
-	//FORCEINLINE bool IsTagMatch(const FGameplayTag Tag) const { return SlotName.IsValid() == false ? true : Tag.MatchesTag(SlotName); }
+	FORCEINLINE bool IsValid() const { return SlotNameIndex > INDEX_NONE && SlotIndex > INDEX_NONE; }
 
 	FORCEINLINE	bool operator==(const FLFPInventoryIndex& Other) const { return SlotIndex == Other.SlotIndex && SlotName == Other.SlotName; }
 
@@ -259,6 +260,105 @@ public:
 	}
 };
 
+USTRUCT()
+struct FLFPInventorySlotList
+{
+	GENERATED_BODY()
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	TArray<FLFPInventorySlot> SlotList = TArray<FLFPInventorySlot>();
+
+public:
+
+	FORCEINLINE	FLFPInventoryIndex GetInventoryIndex(const int32 NewSlotIndex, const FGameplayTag& NewSlotName) const
+	{
+		FLFPInventoryIndex ReturnData(NewSlotIndex, NewSlotName);
+
+		SetSlotNameIndex(ReturnData);
+
+		return ReturnData;
+	}
+
+	FORCEINLINE	FLFPInventoryIndex UpdateInventoryIndex(const FLFPInventoryIndex& InventoryIndex) const
+	{
+		FLFPInventoryIndex ReturnData(InventoryIndex);
+
+		SetSlotNameIndex(ReturnData);
+
+		return ReturnData;
+	}
+
+	FORCEINLINE	bool SetSlotNameIndex(FLFPInventoryIndex& InventoryIndex) const
+	{
+		for (int32 Index = 0; Index < SlotList.Num(); Index++)
+		{
+			if (SlotList[Index].SlotName == InventoryIndex.SlotName)
+			{
+				InventoryIndex.SlotNameIndex = Index;
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	FORCEINLINE			FLFPInventoryItem  GetSlotItemCopy(const FLFPInventoryIndex& InventoryIndex) const
+	{
+		if (SlotList.IsValidIndex(InventoryIndex.SlotNameIndex) == false)
+		{
+			return FLFPInventoryItem();
+		}
+
+		if (InventoryIndex.SlotIndex <= INDEX_NONE)
+		{
+			return FLFPInventoryItem();
+		}
+
+		return SlotList[InventoryIndex.SlotNameIndex].GetItemCopy(InventoryIndex.SlotIndex);
+	}
+
+	FORCEINLINE const	FLFPInventoryItem& GetSlotItemConst(const FLFPInventoryIndex& InventoryIndex) const
+	{
+		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
+		check(SlotList[InventoryIndex.SlotNameIndex].IsItemIndexValid(InventoryIndex.SlotIndex));
+
+		return SlotList[InventoryIndex.SlotNameIndex].GetItemConst(InventoryIndex.SlotIndex);
+	}
+
+	FORCEINLINE			FLFPInventoryItem& GetSlotItemRef(const FLFPInventoryIndex& InventoryIndex)
+	{
+		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
+
+		return SlotList[InventoryIndex.SlotNameIndex].GetItemRef(InventoryIndex.SlotIndex);
+	}
+
+
+	FORCEINLINE void ReserveItemIndex(const FLFPInventoryIndex& InventoryIndex)
+	{
+		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
+		check(InventoryIndex.SlotIndex > INDEX_NONE);
+
+		SlotList[InventoryIndex.SlotNameIndex].ReserveItemIndex(InventoryIndex.SlotIndex);
+	}
+
+	FORCEINLINE void ClearSlotEmptyItem(const int32 SlotListIndex)
+	{
+		check(SlotList.IsValidIndex(SlotListIndex));
+
+		SlotList[SlotListIndex].ClearEmptyItem();
+	}
+
+public:
+
+	FORCEINLINE const TArray<FLFPInventorySlot>& GetSlotListConst() const
+	{
+		return SlotList;
+	}
+};
+
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnChangeEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
 
 UCLASS(Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent))
@@ -323,23 +423,23 @@ protected: // Internal Function
 
 	FORCEINLINE bool ProcessInventoryIndex(
 		const FLFPInventorySearch& InventoryCategorize,
-		const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey)> IndexFunction,
-		const TFunction<void(const FLFPInventoryKey& InventoryKey)> OnSlotNameEnd = nullptr
+		const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)> IndexFunction,
+		const TFunction<void(const int32 SlotListIndex)> OnSlotNameEnd = nullptr
 	) const;
 
 	FORCEINLINE bool ProcessInventoryFunction(
 		const TFunctionRef<bool(const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)> RunFunction
 	) const;
 
-	UFUNCTION() FORCEINLINE bool AddItem_Internal			(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+	UFUNCTION() FORCEINLINE bool AddItem_Internal			(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
-	UFUNCTION() FORCEINLINE bool AddItem_Internal_Check		(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey, FLFPInventoryItem& ProcessItemData) const;
+	UFUNCTION() FORCEINLINE bool AddItem_Internal_Check		(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData) const;
 
-	UFUNCTION() FORCEINLINE bool RemoveItem_Internal		(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+	UFUNCTION() FORCEINLINE bool RemoveItem_Internal		(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
-	UFUNCTION() FORCEINLINE bool RemoveItem_Internal_Check	(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, const FLFPInventoryKey& InventoryKey, FLFPInventoryItem& ProcessItemData) const;
+	UFUNCTION() FORCEINLINE bool RemoveItem_Internal_Check	(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData) const;
 
-	UFUNCTION() FORCEINLINE bool SwapItem_Internal			(const FLFPInventoryItem& CopyFromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryKey& FromInventoryKey, const FLFPInventoryItem& CopyToItem, const FLFPInventoryIndex& ToIndex, const FLFPInventoryKey& ToInventoryKey, const FGameplayTag& EventTag);
+	UFUNCTION() FORCEINLINE bool SwapItem_Internal			(const FLFPInventoryItem& CopyFromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& CopyToItem, const FLFPInventoryIndex& ToIndex, const FGameplayTag& EventTag);
 
 public:
 
@@ -468,23 +568,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		FLFPInventoryItem GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;
-
-protected:
-
-	FORCEINLINE bool IsInventoryKeyValid(const FLFPInventoryKey& InventoryKey) const;
-
-	FORCEINLINE FLFPInventoryKey GetInventoryKey(const FLFPInventoryIndex& InventoryIndex) const;
-
-	FORCEINLINE FLFPInventoryItem GetSlotItemCopy(const FLFPInventoryKey& InventoryKey) const;
-
-	FORCEINLINE const FLFPInventoryItem& GetSlotItemConst(const FLFPInventoryKey& InventoryKey) const;
-
-	FORCEINLINE FLFPInventoryItem& GetSlotItemRef(const FLFPInventoryKey& InventoryKey);
-
-	FORCEINLINE void ReserveItemIndex(const FLFPInventoryKey& InventoryKey);
-
-	FORCEINLINE void ClearSlotEmptyItem(const int32 SlotNameKey);
+	FORCEINLINE FLFPInventoryItem GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;
 
 public:
 
@@ -497,7 +581,7 @@ public:
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Replicated, Category = "LFPInventoryComponent | Variable")
-		TArray<FLFPInventorySlot> InventorySlot = TArray<FLFPInventorySlot>();
+		FLFPInventorySlotList InventorySlot = FLFPInventorySlotList();
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Replicated, Category = "LFPInventoryComponent | Variable")
 		TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();

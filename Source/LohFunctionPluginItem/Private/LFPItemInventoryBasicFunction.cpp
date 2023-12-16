@@ -193,7 +193,7 @@ bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)F
 {
 	if (FromItem.MatchesTag(ToItem.ItemTag) && CanAddItemOnSlot(ToIndex, ToItem, FromItem))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hello 01"));
+		return ProcessAddItem(ToItem, FromItem, ToIndex);
 	}
 
 	FLFPInventoryItem TempItem = FromItem;
