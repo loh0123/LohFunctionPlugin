@@ -77,28 +77,31 @@ struct FLFPInventoryIndex
 
 	FLFPInventoryIndex() {}
 
-	FLFPInventoryIndex(const int32 NewSlotIndex, const FGameplayTag& NewSlotName) : SlotIndex(NewSlotIndex), SlotName(NewSlotName) {}
+	FLFPInventoryIndex(const int32 NewSlotIndex, const FGameplayTag& NewSlotName) : SlotItemIndex(NewSlotIndex), SlotName(NewSlotName) {}
 
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-	int32 SlotIndex = INDEX_NONE;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotName"))
-	FGameplayTag SlotName = FGameplayTag::EmptyTag;
+	int32 SlotItemIndex = INDEX_NONE;
 
 	UPROPERTY()
-	int32 SlotNameIndex = INDEX_NONE;
+	int32 SlotListIndex = INDEX_NONE;
 
 public:
 
-	FORCEINLINE bool IsValid() const { return SlotNameIndex > INDEX_NONE && SlotIndex > INDEX_NONE; }
+	/* Use For Getting SlotListIndex */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotName"))
+	FGameplayTag SlotName = FGameplayTag::EmptyTag;
 
-	FORCEINLINE	bool operator==(const FLFPInventoryIndex& Other) const { return SlotIndex == Other.SlotIndex && SlotName == Other.SlotName; }
+public:
 
-	FORCEINLINE	bool operator!=(const FLFPInventoryIndex& Other) const { return SlotIndex != Other.SlotIndex || SlotName != Other.SlotName; }
+	FORCEINLINE bool IsValid() const { return SlotListIndex > INDEX_NONE && SlotItemIndex > INDEX_NONE; }
 
-	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | Index = %d"), *SlotName.ToString(), SlotIndex); }
+	FORCEINLINE	bool operator==(const FLFPInventoryIndex& Other) const { return SlotItemIndex == Other.SlotItemIndex && SlotName == Other.SlotName; }
+
+	FORCEINLINE	bool operator!=(const FLFPInventoryIndex& Other) const { return SlotItemIndex != Other.SlotItemIndex || SlotName != Other.SlotName; }
+
+	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("%s | ItemIndex = %d | ListIndex = %d"), *SlotName.ToString(), SlotItemIndex, SlotListIndex); }
 };
 
 //USTRUCT(BlueprintType)
@@ -272,6 +275,11 @@ protected:
 
 public:
 
+	FORCEINLINE	bool IsSlotItemValid(const FLFPInventoryIndex& InventoryIndex) const
+	{
+		return SlotList.IsValidIndex(InventoryIndex.SlotListIndex) && SlotList[InventoryIndex.SlotListIndex].IsItemIndexValid(InventoryIndex.SlotItemIndex);
+	}
+
 	FORCEINLINE	FLFPInventoryIndex GetInventoryIndex(const int32 NewSlotIndex, const FGameplayTag& NewSlotName) const
 	{
 		FLFPInventoryIndex ReturnData(NewSlotIndex, NewSlotName);
@@ -296,7 +304,7 @@ public:
 		{
 			if (SlotList[Index].SlotName == InventoryIndex.SlotName)
 			{
-				InventoryIndex.SlotNameIndex = Index;
+				InventoryIndex.SlotListIndex = Index;
 
 				return true;
 			}
@@ -307,41 +315,41 @@ public:
 
 	FORCEINLINE			FLFPInventoryItem  GetSlotItemCopy(const FLFPInventoryIndex& InventoryIndex) const
 	{
-		if (SlotList.IsValidIndex(InventoryIndex.SlotNameIndex) == false)
+		if (SlotList.IsValidIndex(InventoryIndex.SlotListIndex) == false)
 		{
 			return FLFPInventoryItem();
 		}
 
-		if (InventoryIndex.SlotIndex <= INDEX_NONE)
+		if (InventoryIndex.SlotItemIndex <= INDEX_NONE)
 		{
 			return FLFPInventoryItem();
 		}
 
-		return SlotList[InventoryIndex.SlotNameIndex].GetItemCopy(InventoryIndex.SlotIndex);
+		return SlotList[InventoryIndex.SlotListIndex].GetItemCopy(InventoryIndex.SlotItemIndex);
 	}
 
 	FORCEINLINE const	FLFPInventoryItem& GetSlotItemConst(const FLFPInventoryIndex& InventoryIndex) const
 	{
-		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
-		check(SlotList[InventoryIndex.SlotNameIndex].IsItemIndexValid(InventoryIndex.SlotIndex));
+		check(SlotList.IsValidIndex(InventoryIndex.SlotListIndex));
+		check(SlotList[InventoryIndex.SlotListIndex].IsItemIndexValid(InventoryIndex.SlotItemIndex));
 
-		return SlotList[InventoryIndex.SlotNameIndex].GetItemConst(InventoryIndex.SlotIndex);
+		return SlotList[InventoryIndex.SlotListIndex].GetItemConst(InventoryIndex.SlotItemIndex);
 	}
 
 	FORCEINLINE			FLFPInventoryItem& GetSlotItemRef(const FLFPInventoryIndex& InventoryIndex)
 	{
-		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
+		check(SlotList.IsValidIndex(InventoryIndex.SlotListIndex));
 
-		return SlotList[InventoryIndex.SlotNameIndex].GetItemRef(InventoryIndex.SlotIndex);
+		return SlotList[InventoryIndex.SlotListIndex].GetItemRef(InventoryIndex.SlotItemIndex);
 	}
 
 
 	FORCEINLINE void ReserveItemIndex(const FLFPInventoryIndex& InventoryIndex)
 	{
-		check(SlotList.IsValidIndex(InventoryIndex.SlotNameIndex));
-		check(InventoryIndex.SlotIndex > INDEX_NONE);
+		check(SlotList.IsValidIndex(InventoryIndex.SlotListIndex));
+		check(InventoryIndex.SlotItemIndex > INDEX_NONE);
 
-		SlotList[InventoryIndex.SlotNameIndex].ReserveItemIndex(InventoryIndex.SlotIndex);
+		SlotList[InventoryIndex.SlotListIndex].ReserveItemIndex(InventoryIndex.SlotItemIndex);
 	}
 
 	FORCEINLINE void ClearSlotEmptyItem(const int32 SlotListIndex)
@@ -481,8 +489,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SwapItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, const FGameplayTag EventTag);
 
-	//UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-	//	bool TransferItem(const FLFPInventorySearchIndex& FromSearchIndex, const FLFPInventorySearchIndex& ToSearchIndex, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool TransferItemToIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+		bool TransferItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
+
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
 		bool SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag);
