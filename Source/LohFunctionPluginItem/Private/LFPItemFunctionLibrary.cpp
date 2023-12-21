@@ -5,6 +5,8 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/KismetStringLibrary.h"
 
+FLFPInventoryItem FLFPInventoryItem::EmptyItem = FLFPInventoryItem();
+
 bool ULFPItemFunctionLibrary::HasMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag)
 {
 	return Item.HasMetaData(MetaTag);

@@ -33,6 +33,13 @@ struct FLFPItemBasicData : public FTableRowBase
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
 		FGameplayTagContainer Categorize = FGameplayTagContainer();
+
+public:
+
+	FORCEINLINE bool DoItemAllowOnSlot(const FGameplayTag& SlotName) const
+	{
+		return AllowedInventorySearch.IsValid() == false || SlotName.MatchesAny(AllowedInventorySearch.SlotNames);
+	}
 };
 
 /**
@@ -51,12 +58,16 @@ public:
 
 	virtual bool CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const override;
 
+	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const;
+
 
 	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
+
+	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	//// Process Modifier
 
@@ -65,6 +76,8 @@ public:
 	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
 	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
+
+	virtual bool ProcessUpdateItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
 	//// Catergorize Modifier
 

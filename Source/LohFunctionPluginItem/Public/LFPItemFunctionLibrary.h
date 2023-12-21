@@ -47,6 +47,10 @@ struct FLFPInventoryItem
 
 public:
 
+	static FLFPInventoryItem EmptyItem;
+
+public:
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.Identifier"))
 	FGameplayTag ItemTag = FGameplayTag();
 

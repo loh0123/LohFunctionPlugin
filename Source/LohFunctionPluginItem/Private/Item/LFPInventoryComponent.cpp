@@ -91,32 +91,43 @@ bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 }
 
 
+void ULFPInventoryComponent::SendAddDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+}
 
-//void ULFPInventoryComponent::SendAddDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
-//{
-//	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//}
-//
-//void ULFPInventoryComponent::SendRemoveDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
-//{
-//	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//}
-//
-//void ULFPInventoryComponent::SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
-//{
-//	OnSwapItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
-//}
+void ULFPInventoryComponent::SendRemoveDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	OnSwapItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendTransferDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	OnTransferItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendUpdateDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+}
+
 
 bool ULFPInventoryComponent::ProcessInventoryIndex(
 	const FLFPInventorySearch& InventoryCategorize,
-	const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)> IndexFunction,
+	const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex)> IndexFunction,
 	const TFunction<void(const int32 SlotListIndex)> OnSlotNameEnd
 ) const
 {
-	UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Start"));
+	UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessInventoryIndex Start"));
 
 	int32 SlotDataIndex = INDEX_NONE;
 
@@ -126,7 +137,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 		if (InventoryCategorize.IsTagMatch(SlotData.SlotName) == false)
 		{
-			UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Skip Index Bacause Tag : %s"), *InventoryCategorize.ToString());
+			UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex Skip Index Bacause Tag : %s"), *InventoryCategorize.ToString());
 
 			continue; // Tag Not Match Any One On Search
 		}
@@ -136,7 +147,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 		const int32 MaxIndex	= SlotData.GetNextNum();
 		//
 
-		UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
+		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
 
 		for (Index; Index <= MaxIndex; Index++)
 		{
@@ -144,20 +155,20 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 			if (InventoryIndex.IsValid() == false) continue;
 
-			if (IndexFunction(InventoryIndex, SlotData.GetItemCopy(Index)))
+			if (IndexFunction(InventoryIndex))
 			{
-				UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Success : %s"), *InventoryIndex.ToString());
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex Success : %s"), *InventoryIndex.ToString());
 
 				return true;
 			}
 		}
 
-		UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex SlotData End : %s"), *SlotData.SlotName.ToString());
+		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData End : %s"), *SlotData.SlotName.ToString());
 
 		OnSlotNameEnd(SlotDataIndex);
 	}
 
-	UE_LOG(LFPInventoryComponent, Log, TEXT("ProcessInventoryIndex Fail"));
+	UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessInventoryIndex Fail"));
 
 	return false;
 }
@@ -175,56 +186,54 @@ bool ULFPInventoryComponent::ProcessInventoryFunction(const TFunctionRef<bool(co
 }
 
 
-bool ULFPInventoryComponent::AddItem_Internal(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag)
+bool ULFPInventoryComponent::AddItem_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag)
 {
-	if (CanAddItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
+	if (CanAddItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
 
-	FLFPInventoryItem& NewData = InventorySlot.GetSlotItemRef(InventoryIndex);
+	FLFPInventoryItem OldItemData = InventorySlot.GetSlotItemConst(InventoryIndex);
+	FLFPInventoryItem& NewItemData = InventorySlot.GetSlotItemRef(InventoryIndex);
 
-	const bool bSuccess = ProcessAddItem(NewData, ProcessItemData, InventoryIndex);
+	const bool bSuccess = ProcessAddItem(NewItemData, ProcessItemData, InventoryIndex);
 
-	// TODO : Event
-
-	//if (EventTag.IsValid() && CopyItemData != NewData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
-	//{
-	//	SendAddDelegateEvent(InventoryIndex, NewData, CopyItemData, EventTag);
-	//}
+	if (EventTag.IsValid() && OldItemData != NewItemData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendAddDelegateEvent(InventoryIndex, NewItemData, OldItemData, EventTag);
+	}
 
 	return bSuccess;
 }
 
-bool ULFPInventoryComponent::AddItem_Internal_Check(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData) const
+bool ULFPInventoryComponent::AddItem_Internal_Check(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData) const
 {
-	if (CanAddItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
+	if (CanAddItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
 
-	FLFPInventoryItem TestItem = CopyItemData;
+	FLFPInventoryItem TestItem = InventorySlot.GetSlotItemConst(InventoryIndex);
 
 	return ProcessAddItem(TestItem, ProcessItemData, InventoryIndex);
 }
 
-bool ULFPInventoryComponent::RemoveItem_Internal(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag)
+bool ULFPInventoryComponent::RemoveItem_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag)
 {
-	if (CanRemoveItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
+	if (CanRemoveItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
 
-	FLFPInventoryItem& NewData = InventorySlot.GetSlotItemRef(InventoryIndex);
+	FLFPInventoryItem OldItemData = InventorySlot.GetSlotItemConst(InventoryIndex);
+	FLFPInventoryItem& NewItemData = InventorySlot.GetSlotItemRef(InventoryIndex);
 
-	const bool bSuccess = ProcessRemoveItem(NewData, ProcessItemData, InventoryIndex);
+	const bool bSuccess = ProcessRemoveItem(NewItemData, ProcessItemData, InventoryIndex);
 
-	// TODO : Event
-
-	//if (EventTag.IsValid() && CopyItemData != NewData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
-	//{
-	//	SendRemoveDelegateEvent(InventoryIndex, NewData, CopyItemData, EventTag);
-	//}
+	if (EventTag.IsValid() && OldItemData != NewItemData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendRemoveDelegateEvent(InventoryIndex, NewItemData, OldItemData, EventTag);
+	}
 
 	return bSuccess;
 }
 
-bool ULFPInventoryComponent::RemoveItem_Internal_Check(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData, FLFPInventoryItem& ProcessItemData) const
+bool ULFPInventoryComponent::RemoveItem_Internal_Check(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData) const
 {
-	if (CanRemoveItemOnSlot(InventoryIndex, CopyItemData, ProcessItemData) == false) return false;
+	if (CanRemoveItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
 
-	FLFPInventoryItem TestItem = CopyItemData;
+	FLFPInventoryItem TestItem = InventorySlot.GetSlotItemConst(InventoryIndex);
 
 	return ProcessRemoveItem(TestItem, ProcessItemData, InventoryIndex);
 }
@@ -242,7 +251,53 @@ bool ULFPInventoryComponent::SwapItem_Internal(const FLFPInventoryItem& CopyFrom
 
 	const bool bSuccess = ProcessSwapItem(FromData, FromIndex, ToData, ToIndex);
 
-	// TODO : Event
+	if (EventTag.IsValid() && CopyFromItem != FromData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendSwapDelegateEvent(FromIndex, FromData, CopyFromItem, EventTag);
+	}
+
+	if (EventTag.IsValid() && CopyToItem != ToData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendSwapDelegateEvent(ToIndex, ToData, CopyToItem, EventTag);
+	}
+
+	return bSuccess;
+}
+
+bool ULFPInventoryComponent::Transfer_Internal(const FLFPInventoryIndex& InventoryIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
+{
+	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
+
+	if (UpdateFromIndex.IsValid() == false) return false;
+
+	if (InventorySlot.IsSlotItemValid(UpdateFromIndex) == false) return false;
+
+	FLFPInventoryItem& RefOfFrom = InventorySlot.GetSlotItemRef(UpdateFromIndex);
+	FLFPInventoryItem CopyOfFrom = RefOfFrom;
+
+	const bool bSuccess = TargetInventoryComponent->AddItemBySearch(ToSearch, RefOfFrom, EventTag);
+
+	if (EventTag.IsValid() && CopyOfFrom != RefOfFrom) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendRemoveDelegateEvent(InventoryIndex, RefOfFrom, CopyOfFrom, EventTag);
+	}
+
+	return bSuccess;
+}
+
+bool ULFPInventoryComponent::UpdateItem_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag)
+{
+	if (CanUpdateItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
+
+	FLFPInventoryItem OldItemData = InventorySlot.GetSlotItemConst(InventoryIndex);
+	FLFPInventoryItem& NewItemData = InventorySlot.GetSlotItemRef(InventoryIndex);
+
+	const bool bSuccess = ProcessUpdateItem(NewItemData, ProcessItemData, InventoryIndex);
+
+	if (EventTag.IsValid() && OldItemData != NewItemData) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendUpdateDelegateEvent(InventoryIndex, NewItemData, OldItemData, EventTag);
+	}
 
 	return bSuccess;
 }
@@ -280,9 +335,9 @@ bool ULFPInventoryComponent::AddItemBySearch(const FLFPInventorySearch& Inventor
 
 	return ProcessInventoryIndex(
 		InventorySearch,
-		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)
+		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
-			return AddItem_Internal(InventoryIndex, CopyItemData, ItemData, EventTag);
+			return AddItem_Internal(InventoryIndex, ItemData, EventTag);
 		});
 }
 
@@ -313,7 +368,7 @@ bool ULFPInventoryComponent::AddItemByIndex(const FLFPInventoryIndex& InventoryI
 
 	if (UpdateInventoryIndex.IsValid() == false) return false;
 
-	return AddItem_Internal(UpdateInventoryIndex, InventorySlot.GetSlotItemCopy(UpdateInventoryIndex), ItemData, EventTag);
+	return AddItem_Internal(UpdateInventoryIndex, ItemData, EventTag);
 }
 
 
@@ -349,9 +404,9 @@ bool ULFPInventoryComponent::RemoveItemBySearch(const FLFPInventorySearch& Inven
 
 	return ProcessInventoryIndex(
 		InventorySearch,
-		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)
+		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
-			return RemoveItem_Internal(InventoryIndex, CopyItemData, ItemData, EventTag);
+			return RemoveItem_Internal(InventoryIndex, ItemData, EventTag);
 		});
 }
 
@@ -382,8 +437,9 @@ bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& Invento
 
 	if (UpdateInventoryIndex.IsValid() == false) return false;
 
-	return RemoveItem_Internal(UpdateInventoryIndex, InventorySlot.GetSlotItemCopy(UpdateInventoryIndex), ItemData, EventTag);
+	return RemoveItem_Internal(UpdateInventoryIndex, ItemData, EventTag);
 }
+
 
 bool ULFPInventoryComponent::SwapItemToIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag)
 {
@@ -394,8 +450,8 @@ bool ULFPInventoryComponent::SwapItemToIndex(const FLFPInventoryIndex& FromIndex
 
 	if (UpdateFromIndex.IsValid() == false || UpdateToIndex.IsValid() == false) return false;
 
-	const FLFPInventoryItem CopyOfFrom	= InventorySlot.GetSlotItemCopy(UpdateFromIndex);
-	const FLFPInventoryItem CopyOfTo	= InventorySlot.GetSlotItemCopy(UpdateToIndex);
+	const FLFPInventoryItem& CopyOfFrom	= InventorySlot.GetSlotItemConst(UpdateFromIndex);
+	const FLFPInventoryItem& CopyOfTo	= InventorySlot.GetSlotItemConst(UpdateToIndex);
 
 	if (CanSwapItem(CopyOfFrom, CopyOfTo) == false) return false;
 
@@ -408,48 +464,64 @@ bool ULFPInventoryComponent::SwapItemToSearch(const FLFPInventoryIndex& FromInde
 
 	return ProcessInventoryIndex(
 		ToSearch,
-		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)
+		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
 			return SwapItemToIndex(FromIndex, InventoryIndex, EventTag);
 		});
 }
 
+
 bool ULFPInventoryComponent::TransferItemToIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(FromIndex);
+	if (InventorySlot.UpdateInventoryIndex(ToIndex).IsValid() == false) return false;
 
-	if (UpdateFromIndex.IsValid() == false) return false;
-
-	if (InventorySlot.IsSlotItemValid(UpdateFromIndex) == false) return false;
-
-	FLFPInventoryItem& RefOfFrom = InventorySlot.GetSlotItemRef(UpdateFromIndex);
-
-	TargetInventoryComponent->AddItemByIndex(ToIndex, RefOfFrom, EventTag);
-
-	// TODO : Event
-
-	return true;
+	return Transfer_Internal(FromIndex, FLFPInventorySearch(ToIndex.SlotName.GetSingleTagContainer()), TargetInventoryComponent, EventTag);
 }
 
 bool ULFPInventoryComponent::TransferItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(FromIndex);
+	if (ToSearch.IsValid() == false) return false;
 
-	if (UpdateFromIndex.IsValid() == false) return false;
+	return Transfer_Internal(FromIndex, ToSearch, TargetInventoryComponent, EventTag);
+}
 
-	if (InventorySlot.IsSlotItemValid(UpdateFromIndex) == false) return false;
 
-	FLFPInventoryItem& RefOfFrom = InventorySlot.GetSlotItemRef(UpdateFromIndex);
+bool ULFPInventoryComponent::UpdateItem(UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	TargetInventoryComponent->AddItemBySearch(ToSearch, RefOfFrom, EventTag);
+	return UpdateItemBySearch(GetItemInventorySearch(ItemData), ItemData, EventTag);
+}
 
-	// TODO : Event
+bool ULFPInventoryComponent::UpdateItemBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	return true;
+	if (CanUpdateItem(ItemData) == false) return false;
+
+	return ProcessInventoryIndex(
+		InventorySearch,
+		[&](const FLFPInventoryIndex& InventoryIndex)
+		{
+			return UpdateItem_Internal(InventoryIndex, ItemData, EventTag);
+		});
+}
+
+bool ULFPInventoryComponent::UpdateItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
+
+	if (CanUpdateItem(ItemData) == false) return false;
+
+	const FLFPInventoryIndex UpdateInventoryIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
+
+	if (UpdateInventoryIndex.IsValid() == false) return false;
+
+	return UpdateItem_Internal(UpdateInventoryIndex, ItemData, EventTag);
 }
 
 
@@ -561,11 +633,24 @@ bool ULFPInventoryComponent::TransferItemToSearch(const FLFPInventoryIndex& From
 //	return true;
 //}
 
-bool ULFPInventoryComponent::SortItem(const FGameplayTag SortTag, const FGameplayTag EventTag)
+bool ULFPInventoryComponent::SortItem(const FLFPInventorySearch& InventorySearch, const FGameplayTag SortTag, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	return false;
+	InventorySlot.SortSlot(
+		InventorySearch,
+		[&](const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)
+		{
+			return ProcessInventoryFunction(
+				[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+				{
+					return FunctionObj->CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
+				}
+			);
+		}
+	);
+
+	return true;
 }
 
 void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
@@ -574,9 +659,9 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 
 	const bool bProcessSuccess = ProcessInventoryIndex(
 		FLFPInventorySearch(SlotNames),
-		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CopyItemData)
+		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
-			if (CopyItemData.IsValid() == false)
+			if (InventorySlot.IsSlotItemValid(InventoryIndex) == false)
 			{
 				return false;
 			}
@@ -592,36 +677,6 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 	);
 
 	return;
-}
-
-bool ULFPInventoryComponent::SetMetaDataIndex(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryMeta& MetaData, const FGameplayTag EventTag)
-{
-	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
-
-	const FLFPInventoryIndex UpdateInventoryIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
-
-	if (UpdateInventoryIndex.IsValid() == false || InventorySlot.GetSlotItemConst(UpdateInventoryIndex).IsValid() == false) return false;
-
-	InventorySlot.GetSlotItemRef(UpdateInventoryIndex).SetMetaData(MetaData);
-
-	// TODO Event
-
-	return true;
-}
-
-bool ULFPInventoryComponent::RemoveMetaDataByIndex(const FLFPInventoryIndex& InventoryIndex, const FGameplayTag MetaTag, const FGameplayTag EventTag)
-{
-	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
-
-	const FLFPInventoryIndex UpdateInventoryIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
-
-	if (UpdateInventoryIndex.IsValid() == false || InventorySlot.GetSlotItemConst(UpdateInventoryIndex).IsValid() == false) return false;
-
-	const bool bSuccess = InventorySlot.GetSlotItemRef(UpdateInventoryIndex).RemoveMetaData(MetaTag);
-
-	// TODO Event
-
-	return bSuccess;
 }
 
 
@@ -673,6 +728,16 @@ bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryItem& FromItem, cons
 	);
 }
 
+bool ULFPInventoryComponent::CanUpdateItem(const FLFPInventoryItem& ItemData) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanUpdateItem(ItemData);
+		}
+	);
+}
+
 //bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex) const
 //{
 //	return ProcessInventoryFunction(
@@ -709,6 +774,16 @@ bool ULFPInventoryComponent::CanSwapItemOnSlot(const FLFPInventoryItem& FromItem
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
 			return FunctionObj->CanSwapItemOnSlot(FromItem, FromIndex, ToItem, ToIndex);
+		}
+	);
+}
+
+bool ULFPInventoryComponent::CanUpdateItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanUpdateItemOnSlot(InventoryIndex, CurrentData, ProcessData);
 		}
 	);
 }
@@ -753,15 +828,16 @@ bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& FromI
 	);
 }
 
-//bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& ItemDataA, const FLFPInventoryIndex& InventoryIndexA, UPARAM(ref)FLFPInventoryItem& ItemDataB, const FLFPInventoryIndex& InventoryIndexB) const
-//{
-//	return ProcessInventoryFunction(
-//		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-//		{
-//			return FunctionObj->ProcessSwapItem(ItemDataA, InventoryIndexA, ItemDataB, InventoryIndexB);
-//		}
-//	);
-//}
+bool ULFPInventoryComponent::ProcessUpdateItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->ProcessUpdateItem(ItemData, ProcessData, InventoryIndex);
+		}
+	);
+}
+
 
 FGameplayTagContainer ULFPInventoryComponent::GetItemCatergorize(const FLFPInventoryItem& ItemData) const
 {
@@ -795,17 +871,17 @@ FLFPInventorySearch ULFPInventoryComponent::GetItemInventorySearch(const FLFPInv
 	return Result;
 }
 
-//bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
-//{
-//	return ProcessInventoryFunction(
-//		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-//		{
-//			return FunctionObj->CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
-//		}
-//	);
-//}
-//
-//
+bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
+		}
+	);
+}
+
+
 //bool ULFPInventoryComponent::ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventorySearch& InventorySearch) const
 //{
 //	FLFPInventoryItem ProcessData = ItemData;
@@ -880,7 +956,7 @@ FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const FLFPInventoryIndex& 
 
 	if (UpdateInventoryIndex.IsValid() == false) return FLFPInventoryItem();
 
-	return InventorySlot.GetSlotItemCopy(UpdateInventoryIndex);
+	return InventorySlot.GetSlotItemConst(UpdateInventoryIndex);
 }
 
 

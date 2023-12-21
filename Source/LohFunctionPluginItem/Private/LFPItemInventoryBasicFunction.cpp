@@ -48,6 +48,16 @@ bool ULFPItemInventoryBasicFunction::CanSwapItem_Implementation(const FLFPInvent
 	return true;
 }
 
+bool ULFPItemInventoryBasicFunction::CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const
+{
+	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.ItemTag);
+
+	if (TableData == nullptr) return false;
+
+	return true;
+}
+
+
 bool ULFPItemInventoryBasicFunction::CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Empty Or Match ProcessData Type
@@ -58,6 +68,12 @@ bool ULFPItemInventoryBasicFunction::CanAddItemOnSlot_Implementation(const FLFPI
 
 	if (TableData == nullptr) return false;
 	//////////////////////////////////////////////////
+
+	/* Check Item Allow On This Index */
+	if (TableData->DoItemAllowOnSlot(InventoryIndex.SlotName) == false)
+	{
+		return false;
+	}
 
 	/* Check Item Meta Number Match */
 	for (const FGameplayTag& MathIntTag : TableData->MatchIntTagList)
@@ -99,22 +115,46 @@ bool ULFPItemInventoryBasicFunction::CanRemoveItemOnSlot_Implementation(const FL
 
 bool ULFPItemInventoryBasicFunction::CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
 {
-	if (bCheckAllowedInventorySearchOnSwap == false)
-	{
-		return true;
-	}
-
 	const FLFPItemBasicData* FromTableData = GetDataTableRow(FromItem.ItemTag);
 	const FLFPItemBasicData* ToTableData = GetDataTableRow(ToItem.ItemTag);
 
-	if (FromTableData != nullptr && ToIndex.SlotName.MatchesAny(FromTableData->AllowedInventorySearch.SlotNames) == false)
+	if (FromTableData != nullptr && FromTableData->DoItemAllowOnSlot(ToIndex.SlotName) == false)
 	{
 		return false;
 	}
 
-	if (ToTableData != nullptr && FromIndex.SlotName.MatchesAny(ToTableData->AllowedInventorySearch.SlotNames) == false)
+	if (ToTableData != nullptr && ToTableData->DoItemAllowOnSlot(ToIndex.SlotName) == false)
 	{
 		return false;
+	}
+
+	return true;
+}
+
+bool ULFPItemInventoryBasicFunction::CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+{
+	// Ensure CurrentData Is Valid And Match ProcessData Type
+	if (CurrentData.ItemTag.IsValid() == false || CurrentData.ItemTag != ProcessData.ItemTag) return false;
+
+	// Get Table Data ///////////////////////////////
+	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
+
+	if (TableData == nullptr) return false;
+	//////////////////////////////////////////////////
+
+	/* Check Item Allow On This Index */
+	if (TableData->DoItemAllowOnSlot(InventoryIndex.SlotName) == false)
+	{
+		return false;
+	}
+
+	/* Check Item Meta Number Match */
+	for (const FGameplayTag& MathIntTag : TableData->MatchIntTagList)
+	{
+		if (ULFPItemFunctionLibrary::GetMetaDataAsNumber(CurrentData, MathIntTag) != ULFPItemFunctionLibrary::GetMetaDataAsNumber(ProcessData, MathIntTag))
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -202,6 +242,31 @@ bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)F
 	ToItem = TempItem;
 
 	return true;
+}
+
+bool ULFPItemInventoryBasicFunction::ProcessUpdateItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+{
+	// Get Table Data ///////////////////////////////
+	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
+
+	if (TableData == nullptr) return true;
+	//////////////////////////////////////////////////
+
+	const int32 CurrentStack = ULFPItemFunctionLibrary::GetMetaDataAsNumber(ItemData, TableData->StackTag, 1);
+	const int32 ProcessStack = ULFPItemFunctionLibrary::GetMetaDataAsNumber(ProcessData, TableData->StackTag, 1);
+
+	ItemData = ProcessData;
+
+	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ItemData, TableData->StackTag, CurrentStack);
+	ULFPItemFunctionLibrary::SetMetaDataAsNumber(ProcessData, TableData->StackTag, ProcessStack - 1);
+
+	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
+	if (ProcessStack - 1 <= 0)
+	{
+		ProcessData = FLFPInventoryItem();
+	}
+
+	return ProcessStack - 1 <= 0;
 }
 
 FGameplayTagContainer ULFPItemInventoryBasicFunction::GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const
