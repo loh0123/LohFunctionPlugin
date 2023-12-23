@@ -527,10 +527,10 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SortItem(const FLFPInventorySearch& InventorySearch, const FGameplayTag SortTag, const FGameplayTag EventTag);
+		bool SortItem(const FLFPInventorySearch& InventorySearch, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag);
+		void ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 public:
 

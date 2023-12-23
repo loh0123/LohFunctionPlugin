@@ -21,3 +21,8 @@ void ULohFunctionPluginLibrary::RemovePoint(UPARAM(ref)FLFPIntPointList& List, c
 {
     List.Remove(Range);
 }
+
+FGameplayTag ULohFunctionPluginLibrary::GetGameplayTagFromName(const FName TagName)
+{
+    return FGameplayTag::RequestGameplayTag(TagName, false);
+}

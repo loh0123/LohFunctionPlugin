@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LohFunctionPluginLibrary.generated.h"
 
@@ -328,6 +329,8 @@ class LOHFUNCTIONPLUGIN_API ULohFunctionPluginLibrary : public UBlueprintFunctio
 {
 	GENERATED_BODY()
 
+public:
+
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 		static bool ContainPoint(const FLFPIntPointList& List, const int32 Index);
 	
@@ -336,4 +339,8 @@ class LOHFUNCTIONPLUGIN_API ULohFunctionPluginLibrary : public UBlueprintFunctio
 	
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
 		static void RemovePoint(UPARAM(ref) FLFPIntPointList& List, const FIntPoint Range);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+		static FGameplayTag GetGameplayTagFromName(const FName TagName);
 };

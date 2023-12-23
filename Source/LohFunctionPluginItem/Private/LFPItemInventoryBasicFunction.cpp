@@ -123,7 +123,7 @@ bool ULFPItemInventoryBasicFunction::CanSwapItemOnSlot_Implementation(const FLFP
 		return false;
 	}
 
-	if (ToTableData != nullptr && ToTableData->DoItemAllowOnSlot(ToIndex.SlotName) == false)
+	if (ToTableData != nullptr && ToTableData->DoItemAllowOnSlot(FromIndex.SlotName) == false)
 	{
 		return false;
 	}

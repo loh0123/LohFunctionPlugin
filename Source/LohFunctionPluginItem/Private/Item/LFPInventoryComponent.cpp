@@ -165,7 +165,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData End : %s"), *SlotData.SlotName.ToString());
 
-		OnSlotNameEnd(SlotDataIndex);
+		if (OnSlotNameEnd) OnSlotNameEnd(SlotDataIndex);
 	}
 
 	UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessInventoryIndex Fail"));
