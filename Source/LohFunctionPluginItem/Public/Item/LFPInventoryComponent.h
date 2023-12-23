@@ -224,7 +224,7 @@ public:
 
 	FORCEINLINE int32 GetItemNum() const { return ItemList.Num(); }
 
-	FORCEINLINE int32 GetMaxNum() const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex - 1 : INT32_MAX; }
+	FORCEINLINE int32 GetMaxNum(const int32 ExtraSlot) const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex - 1 : GetItemNum() + ExtraSlot; }
 
 public: // Get Item
 
@@ -629,4 +629,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Replicated, Category = "LFPInventoryComponent | Variable")
 		TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
+
+	/* Use On Slot With -1 SlotMaxIndex To Limit Loop Num On Add / Swap */
+	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
+		int32 ExtraLoopSlot = 32;
 };

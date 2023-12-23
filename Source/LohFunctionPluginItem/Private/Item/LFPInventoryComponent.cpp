@@ -145,7 +145,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item And Additional Index
 		int32 Index				= 0;
-		const int32 MaxIndex	= bUseMaxIndex ? SlotData.GetMaxNum() : SlotData.GetItemNum();
+		const int32 MaxIndex	= bUseMaxIndex ? SlotData.GetMaxNum(ExtraLoopSlot) : SlotData.GetItemNum();
 		//
 
 		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
