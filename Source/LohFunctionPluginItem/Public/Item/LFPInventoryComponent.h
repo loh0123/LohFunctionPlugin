@@ -224,7 +224,7 @@ public:
 
 	FORCEINLINE int32 GetItemNum() const { return ItemList.Num(); }
 
-	FORCEINLINE int32 GetMaxNum() const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex - 1 : ItemList.Max(); }
+	FORCEINLINE int32 GetMaxNum() const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex - 1 : INT32_MAX; }
 
 public: // Get Item
 
