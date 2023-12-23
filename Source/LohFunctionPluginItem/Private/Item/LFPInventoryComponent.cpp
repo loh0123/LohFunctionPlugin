@@ -124,6 +124,7 @@ void ULFPInventoryComponent::SendUpdateDelegateEvent_Implementation(const FLFPIn
 bool ULFPInventoryComponent::ProcessInventoryIndex(
 	const FLFPInventorySearch& InventoryCategorize,
 	const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex)> IndexFunction,
+	const bool bUseMaxIndex,
 	const TFunction<void(const int32 SlotListIndex)> OnSlotNameEnd
 ) const
 {
@@ -144,7 +145,7 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item And Additional Index
 		int32 Index				= 0;
-		const int32 MaxIndex	= SlotData.GetNextNum();
+		const int32 MaxIndex	= bUseMaxIndex ? SlotData.GetMaxNum() : SlotData.GetItemNum();
 		//
 
 		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
@@ -338,7 +339,8 @@ bool ULFPInventoryComponent::AddItemBySearch(const FLFPInventorySearch& Inventor
 		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
 			return AddItem_Internal(InventoryIndex, ItemData, EventTag);
-		});
+		}, 
+		true);
 }
 
 bool ULFPInventoryComponent::AddItemListBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const FGameplayTag EventTag)
@@ -467,7 +469,8 @@ bool ULFPInventoryComponent::SwapItemToSearch(const FLFPInventoryIndex& FromInde
 		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
 			return SwapItemToIndex(FromIndex, InventoryIndex, EventTag);
-		});
+		},
+		true);
 }
 
 
@@ -670,6 +673,7 @@ void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotName
 
 			return false;
 		},
+		false,
 		[&](const int32 SlotListIndex)
 		{
 			InventorySlot.ClearSlotEmptyItem(SlotListIndex);
