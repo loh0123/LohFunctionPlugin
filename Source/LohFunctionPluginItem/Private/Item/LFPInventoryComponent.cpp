@@ -724,7 +724,14 @@ bool ULFPInventoryComponent::CanAddItem(const FLFPInventoryItem& ItemData) const
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanAddItem(ItemData);
+			const bool bSuccess = FunctionObj->CanAddItem(ItemData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanAddItem Fail : FunctionObj = %s | ItemData = %s"), *FunctionObj->GetName(), *ItemData.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -734,7 +741,14 @@ bool ULFPInventoryComponent::CanRemoveItem(const FLFPInventoryItem& ItemData) co
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanRemoveItem(ItemData);
+			const bool bSuccess = FunctionObj->CanRemoveItem(ItemData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanRemoveItem Fail : FunctionObj = %s | ItemData = %s"), *FunctionObj->GetName(), *ItemData.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -744,7 +758,14 @@ bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryItem& FromItem, cons
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanSwapItem(FromItem, ToItem);
+			const bool bSuccess = FunctionObj->CanSwapItem(FromItem, ToItem);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanSwapItem Fail : FunctionObj = %s | FromItem = %s | ToItem = %s"), *FunctionObj->GetName(), *FromItem.ToString(), *ToItem.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -754,27 +775,33 @@ bool ULFPInventoryComponent::CanUpdateItem(const FLFPInventoryItem& ItemData) co
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanUpdateItem(ItemData);
+			const bool bSuccess = FunctionObj->CanUpdateItem(ItemData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanUpdateItem Fail : FunctionObj = %s | ItemData = %s"), *FunctionObj->GetName(), *ItemData.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
 
-//bool ULFPInventoryComponent::CanSwapItem(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex) const
-//{
-//	return ProcessInventoryFunction(
-//		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-//		{
-//			return FunctionObj->CanSwapItem(FromIndex, ToIndex);
-//		}
-//	);
-//}
+
 
 bool ULFPInventoryComponent::CanAddItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanAddItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+			const bool bSuccess = FunctionObj->CanAddItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanAddItemOnSlot Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -784,7 +811,14 @@ bool ULFPInventoryComponent::CanRemoveItemOnSlot(const FLFPInventoryIndex& Inven
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanRemoveItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+			const bool bSuccess = FunctionObj->CanRemoveItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanRemoveItemOnSlot Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -794,7 +828,14 @@ bool ULFPInventoryComponent::CanSwapItemOnSlot(const FLFPInventoryItem& FromItem
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanSwapItemOnSlot(FromItem, FromIndex, ToItem, ToIndex);
+			const bool bSuccess = FunctionObj->CanSwapItemOnSlot(FromItem, FromIndex, ToItem, ToIndex);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanSwapItemOnSlot Fail : FunctionObj = %s | FromIndex = %s | ToIndex = %s"), *FunctionObj->GetName(), *FromIndex.ToString(), *ToIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -804,27 +845,33 @@ bool ULFPInventoryComponent::CanUpdateItemOnSlot(const FLFPInventoryIndex& Inven
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->CanUpdateItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+			const bool bSuccess = FunctionObj->CanUpdateItemOnSlot(InventoryIndex, CurrentData, ProcessData);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, Verbose, TEXT("CanUpdateItemOnSlot Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
 
-//bool ULFPInventoryComponent::CanSwapItemOnSlot(const FLFPInventoryIndex& FromInventoryIndex, const FLFPInventoryItem& FromData, const FLFPInventoryIndex& ToInventoryIndex, const FLFPInventoryItem& ToData) const
-//{
-//	return ProcessInventoryFunction(
-//		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-//		{
-//			return FunctionObj->CanSwapItemOnSlot(FromInventoryIndex, FromData, ToInventoryIndex, ToData);
-//		}
-//	);
-//}
+
 
 bool ULFPInventoryComponent::ProcessAddItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessAddItem(ItemData, ProcessData, InventoryIndex);
+			const bool bSuccess = FunctionObj->ProcessAddItem(ItemData, ProcessData, InventoryIndex);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessAddItem Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -834,7 +881,14 @@ bool ULFPInventoryComponent::ProcessRemoveItem(UPARAM(ref)FLFPInventoryItem& Ite
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessRemoveItem(ItemData, ProcessData, InventoryIndex);
+			const bool bSuccess = FunctionObj->ProcessRemoveItem(ItemData, ProcessData, InventoryIndex);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessRemoveItem Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -844,7 +898,14 @@ bool ULFPInventoryComponent::ProcessSwapItem(UPARAM(ref)FLFPInventoryItem& FromI
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessSwapItem(FromItem, FromIndex, ToItem, ToIndex);
+			const bool bSuccess = FunctionObj->ProcessSwapItem(FromItem, FromIndex, ToItem, ToIndex);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessSwapItem Fail : FunctionObj = %s | FromIndex = %s | ToIndex = %s"), *FunctionObj->GetName(), *FromIndex.ToString(), *ToIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }
@@ -854,7 +915,14 @@ bool ULFPInventoryComponent::ProcessUpdateItem(UPARAM(ref)FLFPInventoryItem& Ite
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj->ProcessUpdateItem(ItemData, ProcessData, InventoryIndex);
+			const bool bSuccess = FunctionObj->ProcessUpdateItem(ItemData, ProcessData, InventoryIndex);
+
+			if (bSuccess == false)
+			{
+				UE_LOG(LFPInventoryComponent, VeryVerbose, TEXT("ProcessUpdateItem Fail : FunctionObj = %s | InventoryIndex = %s"), *FunctionObj->GetName(), *InventoryIndex.ToString());
+			}
+
+			return bSuccess;
 		}
 	);
 }

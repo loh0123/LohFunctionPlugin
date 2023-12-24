@@ -29,6 +29,12 @@ public:
 
 public:
 
+	FORCEINLINE	FString ToString() const
+	{
+		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *MetaData);
+	}
+
+
 	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
 
 	FORCEINLINE bool operator==(const FLFPInventoryMeta& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData; }
@@ -94,6 +100,18 @@ public:
 		}
 
 		return false;
+	}
+
+	FORCEINLINE	FString ToString() const
+	{
+		FString ReturnText = ItemTag.ToString();
+
+		for (const auto& Meta : MetaData)
+		{
+			ReturnText += Meta.ToString();
+		}
+
+		return ReturnText;
 	}
 
 
