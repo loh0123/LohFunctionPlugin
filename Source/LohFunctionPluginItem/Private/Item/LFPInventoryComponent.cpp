@@ -265,9 +265,30 @@ bool ULFPInventoryComponent::SwapItem_Internal(const FLFPInventoryItem& CopyFrom
 	return bSuccess;
 }
 
-bool ULFPInventoryComponent::Transfer_Internal(const FLFPInventoryIndex& InventoryIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
+bool ULFPInventoryComponent::Transfer_Index_Internal(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
 {
-	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
+	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(FromIndex);
+
+	if (UpdateFromIndex.IsValid() == false) return false;
+
+	if (InventorySlot.IsSlotItemValid(UpdateFromIndex) == false) return false;
+
+	FLFPInventoryItem& RefOfFrom = InventorySlot.GetSlotItemRef(UpdateFromIndex);
+	FLFPInventoryItem CopyOfFrom = RefOfFrom;
+
+	const bool bSuccess = TargetInventoryComponent->AddItemByIndex(ToIndex, RefOfFrom, EventTag);
+
+	if (EventTag.IsValid() && CopyOfFrom != RefOfFrom) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
+	{
+		SendTransferDelegateEvent(UpdateFromIndex, RefOfFrom, CopyOfFrom, EventTag);
+	}
+
+	return bSuccess;
+}
+
+bool ULFPInventoryComponent::Transfer_Search_Internal(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
+{
+	const FLFPInventoryIndex UpdateFromIndex = InventorySlot.UpdateInventoryIndex(FromIndex);
 
 	if (UpdateFromIndex.IsValid() == false) return false;
 
@@ -280,7 +301,7 @@ bool ULFPInventoryComponent::Transfer_Internal(const FLFPInventoryIndex& Invento
 
 	if (EventTag.IsValid() && CopyOfFrom != RefOfFrom) // Don't Send Event If Tag Is Not Valid Or No Change (Prevent Network Overload)
 	{
-		SendRemoveDelegateEvent(InventoryIndex, RefOfFrom, CopyOfFrom, EventTag);
+		SendTransferDelegateEvent(UpdateFromIndex, RefOfFrom, CopyOfFrom, EventTag);
 	}
 
 	return bSuccess;
@@ -478,18 +499,14 @@ bool ULFPInventoryComponent::TransferItemToIndex(const FLFPInventoryIndex& FromI
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	if (InventorySlot.UpdateInventoryIndex(ToIndex).IsValid() == false) return false;
-
-	return Transfer_Internal(FromIndex, FLFPInventorySearch(ToIndex.SlotName.GetSingleTagContainer()), TargetInventoryComponent, EventTag);
+	return Transfer_Index_Internal(FromIndex, ToIndex, TargetInventoryComponent, EventTag);
 }
 
 bool ULFPInventoryComponent::TransferItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
-	if (ToSearch.IsValid() == false) return false;
-
-	return Transfer_Internal(FromIndex, ToSearch, TargetInventoryComponent, EventTag);
+	return Transfer_Search_Internal(FromIndex, ToSearch, TargetInventoryComponent, EventTag);
 }
 
 
@@ -636,7 +653,7 @@ bool ULFPInventoryComponent::UpdateItemByIndex(const FLFPInventoryIndex& Invento
 //	return true;
 //}
 
-bool ULFPInventoryComponent::SortItem(const FLFPInventorySearch& InventorySearch, const FGameplayTag SortTag, const FGameplayTag EventTag)
+bool ULFPInventoryComponent::SortItem(const FLFPInventorySearch& InventorySearch, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -656,7 +673,7 @@ bool ULFPInventoryComponent::SortItem(const FLFPInventorySearch& InventorySearch
 	return true;
 }
 
-void ULFPInventoryComponent::ClearInventory(const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
+void ULFPInventoryComponent::ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 

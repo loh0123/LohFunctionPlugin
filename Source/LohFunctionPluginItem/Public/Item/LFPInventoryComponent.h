@@ -465,7 +465,9 @@ protected: // Internal Function
 
 	UFUNCTION() FORCEINLINE bool SwapItem_Internal			(const FLFPInventoryItem& CopyFromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& CopyToItem, const FLFPInventoryIndex& ToIndex, const FGameplayTag& EventTag);
 
-	UFUNCTION() FORCEINLINE bool Transfer_Internal			(const FLFPInventoryIndex& InventoryIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
+	UFUNCTION() FORCEINLINE bool Transfer_Index_Internal	(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
+
+	UFUNCTION() FORCEINLINE bool Transfer_Search_Internal	(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, ULFPInventoryComponent* TargetInventoryComponent, const FGameplayTag EventTag);
 
 	UFUNCTION() FORCEINLINE bool UpdateItem_Internal		(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
