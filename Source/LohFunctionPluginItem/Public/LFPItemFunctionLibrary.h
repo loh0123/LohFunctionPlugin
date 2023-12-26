@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "LFPItemFunctionLibrary.generated.h"
 
 USTRUCT(BlueprintType)

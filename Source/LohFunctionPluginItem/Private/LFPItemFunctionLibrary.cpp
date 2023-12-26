@@ -3,7 +3,7 @@
 
 #include "LFPItemFunctionLibrary.h"
 #include "GameplayTagContainer.h"
-#include "Kismet/KismetStringLibrary.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 FLFPInventoryItem FLFPInventoryItem::EmptyItem = FLFPInventoryItem();
 

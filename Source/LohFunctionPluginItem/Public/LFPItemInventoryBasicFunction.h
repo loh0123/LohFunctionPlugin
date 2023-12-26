@@ -40,6 +40,21 @@ public:
 	{
 		return AllowedInventorySearch.IsValid() == false || SlotName.MatchesAny(AllowedInventorySearch.SlotNames);
 	}
+
+	FORCEINLINE bool DoItemMatch(const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+	{
+		if (CurrentData.IsValid() == false || ProcessData.IsValid() == false) return true;
+
+		for (const FGameplayTag& MathIntTag : MatchIntTagList)
+		{
+			if (ULFPItemFunctionLibrary::GetMetaData(CurrentData, MathIntTag) != ULFPItemFunctionLibrary::GetMetaData(ProcessData, MathIntTag))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 };
 
 /**
