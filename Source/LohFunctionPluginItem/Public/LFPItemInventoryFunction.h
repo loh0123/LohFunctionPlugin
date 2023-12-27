@@ -43,6 +43,10 @@ public:
 	bool CanUpdateItem(const FLFPInventoryItem& ItemData) const;
 	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool CanContainItem(const FLFPInventoryItem& ItemData) const;
+	virtual bool CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
+
 
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
@@ -61,6 +65,10 @@ public:
 	bool CanUpdateItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
 
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool CanContainItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	virtual bool CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
+
 	// Process Modifier
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
@@ -78,6 +86,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
 	bool ProcessUpdateItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 	virtual bool ProcessUpdateItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool ProcessContainItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	virtual bool ProcessContainItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
 
 	// Catergorize Modifier
 

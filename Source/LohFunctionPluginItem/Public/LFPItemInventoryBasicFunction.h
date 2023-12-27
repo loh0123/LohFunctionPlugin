@@ -112,8 +112,5 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
 		TObjectPtr<UDataTable> ItemDataTable = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting")
-		bool bCheckAllowedInventorySearchOnSwap = false;
 	
 };

@@ -61,13 +61,30 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.SlotName"))
 	FGameplayTagContainer SlotNames = FGameplayTagContainer::EmptyContainer;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FGameplayTagContainer Catergorizes = FGameplayTagContainer::EmptyContainer;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	bool bAnyCatergorizes = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	bool bPassOnEmptyIndexCatergorizes = false;
+
 public:
 
 	FORCEINLINE bool IsValid() const { return SlotNames.IsEmpty() == false; }
 
 	FORCEINLINE bool IsTagMatch(const FGameplayTag Tag) const { return SlotNames.IsEmpty() ? true : Tag.MatchesAny(SlotNames); }
 
-	FORCEINLINE FString ToString() const { return SlotNames.ToString(); }
+	FORCEINLINE bool IsCatergorizesMatch(const FGameplayTagContainer Container) const 
+	{ 
+		if (bPassOnEmptyIndexCatergorizes && Container.IsEmpty()) return true;
+		if (Catergorizes.IsEmpty()) return true; 
+
+		return bAnyCatergorizes ? Container.HasAny(Catergorizes) : Container.HasAll(Catergorizes); 
+	}
+
+	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("SlotNames = %s : Catergorizes = %s : AnyCatergorizes = %s"), *SlotNames.ToString(), *Catergorizes.ToString(), bAnyCatergorizes ? TEXT("True") : TEXT("False")); }
 
 	FORCEINLINE	FLFPInventorySearch& operator+=(const FLFPInventorySearch& Other) { SlotNames.AppendTags(Other.SlotNames); return *this; }
 };
@@ -390,6 +407,8 @@ protected: // Internal Function
 
 	UFUNCTION() FORCEINLINE bool UpdateItem_Internal		(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
+	UFUNCTION() FORCEINLINE bool ContainItem_Internal		(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData) const;
+
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
@@ -475,6 +494,9 @@ public:
 	UFUNCTION()
 	FORCEINLINE bool CanUpdateItem(const FLFPInventoryItem& ItemData) const;
 
+	UFUNCTION()
+	FORCEINLINE bool CanContainItem(const FLFPInventoryItem& ItemData) const;
+
 	// Slot Check Modifier
 
 	UFUNCTION()
@@ -488,6 +510,9 @@ public:
 
 	UFUNCTION()
 	FORCEINLINE bool CanUpdateItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+
+	UFUNCTION()
+	FORCEINLINE bool CanContainItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	// Process Modifier
 
@@ -503,7 +528,13 @@ public:
 	UFUNCTION()
 	FORCEINLINE bool ProcessUpdateItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 
+	UFUNCTION()
+	FORCEINLINE bool ProcessContainItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+
 	// Catergorize Modifier
+
+	UFUNCTION()
+	FORCEINLINE FGameplayTagContainer GetIndexCatergorize(const FLFPInventoryIndex& InventoryIndex) const;
 
 	UFUNCTION()
 	FORCEINLINE FGameplayTagContainer GetItemCatergorize(const FLFPInventoryItem& ItemData) const;
@@ -518,17 +549,16 @@ public:
 
 public:
 
-	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//	bool ContainItem(const FLFPInventoryItem& ItemData, const FLFPInventorySearch& InventorySearch) const;
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		bool ContainItem(FLFPInventoryItem ItemData, const FLFPInventorySearch& InventorySearch) const;
 
-	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//	bool ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventorySearch& InventorySearch, const bool bPartially = false) const;
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		bool ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventorySearch& InventorySearch, const bool bPartially = false) const;
 
-	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//	bool ContainItemCatergorize(const FGameplayTagContainer Catergorizes, const FLFPInventorySearch& InventorySearch, const bool bContainAll = false, const bool bCombineSearch = false) const;
+public:
 
-	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//	bool IsSlotNameValid(const FGameplayTag SlotName) const;
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		bool IsSlotNameValid(const FGameplayTag SlotName) const;
 
 public:
 
