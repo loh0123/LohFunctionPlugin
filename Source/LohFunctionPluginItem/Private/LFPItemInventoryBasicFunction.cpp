@@ -267,6 +267,11 @@ FLFPInventorySearch ULFPItemInventoryBasicFunction::GetItemInventorySearch_Imple
 	return TableData->GetAllowedInventorySearch();
 }
 
+bool ULFPItemInventoryBasicFunction::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
+{
+	return ItemDataA.IsValid() && ItemDataB.IsValid() == false;
+}
+
 const FLFPItemBasicData* ULFPItemInventoryBasicFunction::GetDataTableRow(const FGameplayTag& RowTag) const
 {
 	uint8* TableRawData = ItemDataTable->FindRowUnchecked(RowTag.GetTagName());
