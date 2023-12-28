@@ -157,6 +157,8 @@ protected:
 
 public:
 
+	FORCEINLINE bool IsItemDataValid(const int32 Index) const { return ItemList.IsValidIndex(Index) && ItemList[Index].IsValid(); }
+
 	FORCEINLINE bool IsItemIndexValid(const int32 Index) const { return ItemList.IsValidIndex(Index); }
 
 	FORCEINLINE void ReserveItemIndex(const int32 Index)
@@ -228,6 +230,11 @@ protected:
 public: // InventoryIndex
 
 	FORCEINLINE	bool IsSlotItemValid(const FLFPInventoryIndex& InventoryIndex) const
+	{
+		return SlotList.IsValidIndex(InventoryIndex.SlotListIndex) && SlotList[InventoryIndex.SlotListIndex].IsItemDataValid(InventoryIndex.SlotItemIndex);
+	}
+
+	FORCEINLINE	bool IsSlotIndexValid(const FLFPInventoryIndex& InventoryIndex) const
 	{
 		return SlotList.IsValidIndex(InventoryIndex.SlotListIndex) && SlotList[InventoryIndex.SlotListIndex].IsItemIndexValid(InventoryIndex.SlotItemIndex);
 	}
@@ -309,6 +316,7 @@ public: // Slot Operation
 			}
 
 			SlotData.SortItem(Predicate);
+			SlotData.ClearEmptyItem();
 		}
 	}
 
@@ -574,6 +582,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 		bool IsSlotNameValid(const FGameplayTag SlotName) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+		bool IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const;
 
 public:
 

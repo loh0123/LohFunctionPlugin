@@ -453,6 +453,11 @@ bool ULFPInventoryComponent::RemoveItemBySearch(const FLFPInventorySearch& Inven
 		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
 			return RemoveItem_Internal(InventoryIndex, ItemData, EventTag);
+		},
+		false,
+		[&](const int32 SlotListIndex)
+		{
+			InventorySlot.ClearSlotEmptyItem(SlotListIndex);
 		});
 }
 
@@ -483,7 +488,11 @@ bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& Invento
 
 	if (UpdateInventoryIndex.IsValid() == false) return false;
 
-	return RemoveItem_Internal(UpdateInventoryIndex, ItemData, EventTag);
+	const bool bSuccess = RemoveItem_Internal(UpdateInventoryIndex, ItemData, EventTag);
+
+	InventorySlot.ClearSlotEmptyItem(UpdateInventoryIndex.SlotListIndex);
+
+	return bSuccess;
 }
 
 
@@ -501,7 +510,12 @@ bool ULFPInventoryComponent::SwapItemToIndex(const FLFPInventoryIndex& FromIndex
 
 	if (CanSwapItem(CopyOfFrom, CopyOfTo) == false) return false;
 
-	return SwapItem_Internal(CopyOfFrom, UpdateFromIndex, CopyOfTo, UpdateToIndex, EventTag);
+	const bool bSuccess = SwapItem_Internal(CopyOfFrom, UpdateFromIndex, CopyOfTo, UpdateToIndex, EventTag);
+
+	InventorySlot.ClearSlotEmptyItem(UpdateFromIndex.SlotListIndex);
+	InventorySlot.ClearSlotEmptyItem(UpdateToIndex.SlotListIndex);
+
+	return bSuccess;
 }
 
 bool ULFPInventoryComponent::SwapItemToSearch(const FLFPInventoryIndex& FromIndex, const FLFPInventorySearch& ToSearch, const FGameplayTag EventTag)
@@ -980,6 +994,15 @@ bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
 	}
 
 	return false;
+}
+
+bool ULFPInventoryComponent::IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const
+{
+	const FLFPInventoryIndex UpdateInventoryIndex = InventorySlot.UpdateInventoryIndex(InventoryIndex);
+
+	if (UpdateInventoryIndex.IsValid() == false) return false;
+
+	return InventorySlot.IsSlotIndexValid(InventoryIndex);
 }
 
 
