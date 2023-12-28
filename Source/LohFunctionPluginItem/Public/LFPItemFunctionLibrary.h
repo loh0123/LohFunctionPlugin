@@ -72,7 +72,11 @@ public:
 
 	FORCEINLINE	bool HasMetaData(const FGameplayTag& Tag) const { return MetaData.IndexOfByKey(Tag) != INDEX_NONE; }
 
-	FORCEINLINE	FString GetMetaData(const FGameplayTag& Tag) const { int32 ReturnIndex(MetaData.IndexOfByKey(Tag)); return ReturnIndex != INDEX_NONE ? MetaData[ReturnIndex].MetaData : FString(""); }
+	FORCEINLINE	FString GetMetaData(const FGameplayTag& Tag) const 
+	{ 
+		int32 ReturnIndex(MetaData.IndexOfByKey(Tag));
+		return ReturnIndex != INDEX_NONE ? MetaData[ReturnIndex].MetaData : FString(""); 
+	}
 
 	FORCEINLINE	void SetMetaData(const FLFPInventoryMeta& Data, const bool bUniqueOnly = false)
 	{

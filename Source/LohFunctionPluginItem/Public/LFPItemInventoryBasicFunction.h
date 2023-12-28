@@ -13,39 +13,44 @@ struct FLFPItemBasicData : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+protected:
+
+	/* Use To Find Stack Meta In Item */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Stack")
 		FGameplayTag StackTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	/* Maximum Stack An Item Can Reach, Use -1 If Infinite */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Stack")
 		int32 MaxStack = INDEX_NONE;
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Attach")
 		FGameplayTag AttachSlotsTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Attach")
 		int32 MaxAttachSlots = INDEX_NONE;
+	
+	/* Check All The Meta Match Other Item ( Can't Use Parent Tag ) */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+		FGameplayTagContainer MatchMetaTagList = FGameplayTagContainer();
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
-		FGameplayTagContainer MatchIntTagList = FGameplayTagContainer();
-
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 		FLFPInventorySearch AllowedInventorySearch = FLFPInventorySearch();
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 		FGameplayTagContainer Categorize = FGameplayTagContainer();
 
 public:
 
 	FORCEINLINE bool DoItemAllowOnSlot(const FGameplayTag& SlotName) const
 	{
-		return AllowedInventorySearch.IsValid() == false || SlotName.MatchesAny(AllowedInventorySearch.SlotNames);
+		return AllowedInventorySearch.IsTagMatch(SlotName);
 	}
 
-	FORCEINLINE bool DoItemMatch(const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+	FORCEINLINE bool DoItemMetaMatch(const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 	{
 		if (CurrentData.IsValid() == false || ProcessData.IsValid() == false) return true;
 
-		for (const FGameplayTag& MathIntTag : MatchIntTagList)
+		for (const FGameplayTag& MathIntTag : MatchMetaTagList)
 		{
 			if (ULFPItemFunctionLibrary::GetMetaData(CurrentData, MathIntTag) != ULFPItemFunctionLibrary::GetMetaData(ProcessData, MathIntTag))
 			{
@@ -54,6 +59,38 @@ public:
 		}
 
 		return true;
+	}
+
+	FORCEINLINE bool DoItemReachMaxStack(const FLFPInventoryItem& CurrentData) const
+	{
+		return MaxStack != INDEX_NONE && StackTag.IsValid() && CurrentData.IsValid() && MaxStack <= ULFPItemFunctionLibrary::GetMetaDataAsNumber(CurrentData, StackTag, 1);
+	}
+
+
+	FORCEINLINE int32 GetStackAmount(const FLFPInventoryItem& CurrentData) const
+	{
+		return ULFPItemFunctionLibrary::GetMetaDataAsNumber(CurrentData, StackTag, 1);
+	}
+
+	FORCEINLINE void SetStackAmount(FLFPInventoryItem& CurrentData, const int32 NewStack) const
+	{
+		ULFPItemFunctionLibrary::SetMetaDataAsNumber(CurrentData, StackTag, FMath::Max(NewStack, 0));
+	}
+
+	FORCEINLINE int32 ClampToMaxStack(const int32 Stack) const
+	{
+		return FMath::Max(MaxStack != INDEX_NONE ? FMath::Min(MaxStack, Stack) : Stack, 0);
+	}
+
+
+	FORCEINLINE const FLFPInventorySearch& GetAllowedInventorySearch() const
+	{
+		return AllowedInventorySearch;
+	}
+
+	FORCEINLINE const FGameplayTagContainer& GetCategorize() const
+	{
+		return Categorize;
 	}
 };
 
@@ -75,6 +112,8 @@ public:
 
 	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const;
 
+	virtual bool CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const;
+
 
 	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
@@ -83,6 +122,8 @@ public:
 	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
 
 	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+
+	virtual bool CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	//// Process Modifier
 
@@ -93,6 +134,8 @@ public:
 	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
 
 	virtual bool ProcessUpdateItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
+
+	virtual bool ProcessContainItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
 	//// Catergorize Modifier
 

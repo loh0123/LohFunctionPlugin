@@ -335,9 +335,16 @@ bool ULFPInventoryComponent::ContainItem_Internal(const FLFPInventoryIndex& Inve
 {
 	if (CanContainItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
 
-	FLFPInventoryItem ItemData = InventorySlot.GetSlotItemConst(InventoryIndex);
+	return ProcessContainItem(InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData, InventoryIndex);
+}
 
-	return ProcessContainItem(ItemData, ProcessItemData, InventoryIndex);
+bool ULFPInventoryComponent::FindItem_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData) const
+{
+	if (CanContainItemOnSlot(InventoryIndex, InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData) == false) return false;
+
+	ProcessContainItem(InventorySlot.GetSlotItemConst(InventoryIndex), ProcessItemData, InventoryIndex);
+
+	return true;
 }
 
 
@@ -867,7 +874,7 @@ bool ULFPInventoryComponent::ProcessUpdateItem(UPARAM(ref)FLFPInventoryItem& Ite
 	);
 }
 
-bool ULFPInventoryComponent::ProcessContainItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPInventoryComponent::ProcessContainItem(const FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	return ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
@@ -942,8 +949,7 @@ bool ULFPInventoryComponent::ContainItem(FLFPInventoryItem ItemData, const FLFPI
 		[&](const FLFPInventoryIndex& InventoryIndex)
 		{
 			return ContainItem_Internal(InventoryIndex, ItemData);
-		},
-		true);
+		});
 }
 
 bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FLFPInventorySearch& InventorySearch, const bool bPartially) const
@@ -985,6 +991,56 @@ FLFPInventoryItem ULFPInventoryComponent::GetSlotItem(const FLFPInventoryIndex& 
 	if (UpdateInventoryIndex.IsValid() == false) return FLFPInventoryItem();
 
 	return InventorySlot.GetSlotItemConst(UpdateInventoryIndex);
+}
+
+
+
+bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, FLFPInventoryItem ItemData, const FLFPInventorySearch& InventorySearch, const int32 MaxListItem) const
+{
+	/* Find Use Same Logic As Contain Item */
+	if (CanContainItem(ItemData) == false) return false;
+
+	int32 CurrentAmount = 0;
+
+	ProcessInventoryIndex(
+		InventorySearch,
+		[&](const FLFPInventoryIndex& InventoryIndex)
+		{
+			if (FindItem_Internal(InventoryIndex, ItemData))
+			{
+				InventoryIndexList.Add(InventoryIndex);
+
+				CurrentAmount += 1;
+			}
+
+			return ItemData.IsValid() == false || (MaxListItem > 0 ? MaxListItem <= CurrentAmount : false);
+		});
+
+	return CurrentAmount > 0;
+}
+
+bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, FLFPInventoryItem ItemData, const FLFPInventorySearch& InventorySearch, const int32 MaxListItem) const
+{
+	/* Find Use Same Logic As Contain Item */
+	if (CanContainItem(ItemData) == false) return false;
+
+	int32 CurrentAmount = 0;
+
+	ProcessInventoryIndex(
+		InventorySearch,
+		[&](const FLFPInventoryIndex& InventoryIndex)
+		{
+			if (FindItem_Internal(InventoryIndex, ItemData))
+			{
+				ItemIndexList.Add(InventorySlot.GetSlotItemConst(InventoryIndex));
+
+				CurrentAmount += 1;
+			}
+
+			return ItemData.IsValid() == false || MaxListItem > 0 ? MaxListItem <= CurrentAmount : false;
+		});
+
+	return CurrentAmount > 0;
 }
 
 
