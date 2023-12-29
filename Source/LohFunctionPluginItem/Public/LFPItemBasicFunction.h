@@ -4,9 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "LFPItemInventoryFunction.h"
-#include "LFPItemInventoryBasicFunction.generated.h"
-
-DECLARE_LOG_CATEGORY_EXTERN(LFPItemInventoryBasicFunction, Log, All);
+#include "LFPItemBasicFunction.generated.h"
 
 USTRUCT(Blueprintable)
 struct FLFPItemBasicData : public FTableRowBase
@@ -98,7 +96,7 @@ public:
  * 
  */
 UCLASS(BlueprintType)
-class LOHFUNCTIONPLUGINITEM_API ULFPItemInventoryBasicFunction : public ULFPItemInventoryFunction
+class LOHFUNCTIONPLUGINITEM_API ULFPItemBasicFunction : public ULFPItemInventoryFunction
 {
 	GENERATED_BODY()
 
@@ -153,7 +151,7 @@ protected:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemInventoryBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
+	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
 		TObjectPtr<UDataTable> ItemDataTable = nullptr;
 	
 };

@@ -55,12 +55,16 @@ void ULFPInventoryComponent::InitializeComponent()
 	check(GetOwner());
 
 	/* For Supporting Function List Object Replication */
-	for (auto& FunctionObj : FunctionList)
-	{
-		check(FunctionObj.Get()->GetOuter());
+	ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			check(FunctionObj.Get()->GetOuter());
 
-		AddReplicatedSubObject(FunctionObj.Get());
-	}
+			AddReplicatedSubObject(FunctionObj.Get());
+
+			return true;
+		}
+	);
 	////////////////////////////////////////////////////
 }
 
@@ -69,10 +73,14 @@ void ULFPInventoryComponent::UninitializeComponent()
 	Super::UninitializeComponent();
 
 	/* For Supporting Function List Object Replication */
-	for (auto& FunctionObj : FunctionList)
-	{
-		RemoveReplicatedSubObject(FunctionObj.Get());
-	}
+	ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			RemoveReplicatedSubObject(FunctionObj.Get());
+
+			return true;
+		}
+	);
 	////////////////////////////////////////////////////
 }
 
@@ -81,13 +89,15 @@ bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 	Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
 	/* For Supporting Function List Object Replication */
-	for (auto& FunctionObj : FunctionList)
-	{
-		Channel->ReplicateSubobject(FunctionObj.Get(), *Bunch, *RepFlags);
-	}
-	////////////////////////////////////////////////////
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			Channel->ReplicateSubobject(FunctionObj.Get(), *Bunch, *RepFlags);
 
-	return true;
+			return true;
+		}
+	);
+	////////////////////////////////////////////////////
 }
 
 
@@ -185,7 +195,12 @@ bool ULFPInventoryComponent::ProcessInventoryFunction(const TFunctionRef<bool(co
 {
 	for (const auto& FunctionObj : FunctionList)
 	{
-		if (IsValid(FunctionObj) == false) continue;
+		if (IsValid(FunctionObj) == false)
+		{
+			UE_LOG(LFPInventoryComponent, Warning, TEXT("InitializeComponent : FunctionObj Invalids"));
+
+			continue;
+		}
 
 		if (RunFunction(FunctionObj) == false) return false;
 	}
@@ -634,17 +649,24 @@ ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubc
 {
 	if (FunctionClass == nullptr) return nullptr;
 
-	for (auto& FunctionObj : FunctionList)
-	{
-		if (IsValid(FunctionObj) == false) continue;
+	ULFPItemInventoryFunction* ReturnPtr = nullptr;
 
-		if (FunctionObj.GetClass() == FunctionClass.Get())
+	ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			return FunctionObj;
-		}
-	}
+			if (FunctionObj.GetClass() == FunctionClass.Get())
+			{
+				ReturnPtr = FunctionObj;
 
-	return nullptr;
+				/* Stop The Loop Using False */
+				return false;
+			}
+
+			return true;
+		}
+	);
+
+	return ReturnPtr;
 }
 
 

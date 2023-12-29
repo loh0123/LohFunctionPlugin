@@ -1,22 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "LFPItemInventoryBasicFunction.h"
+#include "LFPItemBasicFunction.h"
 #include "LFPItemFunctionLibrary.h"
 
-DEFINE_LOG_CATEGORY(LFPItemInventoryBasicFunction);
-
-bool ULFPItemInventoryBasicFunction::CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const
+bool ULFPItemBasicFunction::CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	return GetDataTableRow(ItemData.ItemTag) != nullptr;
 }
 
-bool ULFPItemInventoryBasicFunction::CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const
+bool ULFPItemBasicFunction::CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	return GetDataTableRow(ItemData.ItemTag) != nullptr;
 }
 
-bool ULFPItemInventoryBasicFunction::CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const
+bool ULFPItemBasicFunction::CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const
 {
 	const FLFPItemBasicData* FromTableData = GetDataTableRow(FromItem.ItemTag);
 	const FLFPItemBasicData* ToTableData = GetDataTableRow(ToItem.ItemTag);
@@ -24,18 +22,18 @@ bool ULFPItemInventoryBasicFunction::CanSwapItem_Implementation(const FLFPInvent
 	return FromTableData != nullptr || ToTableData != nullptr;
 }
 
-bool ULFPItemInventoryBasicFunction::CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const
+bool ULFPItemBasicFunction::CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	return GetDataTableRow(ItemData.ItemTag) != nullptr;
 }
 
-bool ULFPItemInventoryBasicFunction::CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const
+bool ULFPItemBasicFunction::CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	return GetDataTableRow(ItemData.ItemTag) != nullptr;
 }
 
 
-bool ULFPItemInventoryBasicFunction::CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+bool ULFPItemBasicFunction::CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Empty Or Match ProcessData Type
 	if (CurrentData.ItemTag.IsValid() && CurrentData.ItemTag != ProcessData.ItemTag) return false;
@@ -55,7 +53,7 @@ bool ULFPItemInventoryBasicFunction::CanAddItemOnSlot_Implementation(const FLFPI
 	return true;
 }
 
-bool ULFPItemInventoryBasicFunction::CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+bool ULFPItemBasicFunction::CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Valid And Match ProcessData Type
 	if (CurrentData.ItemTag.IsValid() == false || CurrentData.ItemTag != ProcessData.ItemTag) return false;
@@ -71,7 +69,7 @@ bool ULFPItemInventoryBasicFunction::CanRemoveItemOnSlot_Implementation(const FL
 	return true;
 }
 
-bool ULFPItemInventoryBasicFunction::CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+bool ULFPItemBasicFunction::CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
 {
 	const FLFPItemBasicData* FromTableData = GetDataTableRow(FromItem.ItemTag);
 	const FLFPItemBasicData* ToTableData = GetDataTableRow(ToItem.ItemTag);
@@ -83,7 +81,7 @@ bool ULFPItemInventoryBasicFunction::CanSwapItemOnSlot_Implementation(const FLFP
 	return true;
 }
 
-bool ULFPItemInventoryBasicFunction::CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+bool ULFPItemBasicFunction::CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Valid And Match ProcessData Type
 	if (CurrentData.ItemTag.IsValid() == false || CurrentData.ItemTag != ProcessData.ItemTag) return false;
@@ -99,7 +97,7 @@ bool ULFPItemInventoryBasicFunction::CanUpdateItemOnSlot_Implementation(const FL
 	return true;
 }
 
-bool ULFPItemInventoryBasicFunction::CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+bool ULFPItemBasicFunction::CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Valid And Match ProcessData Type
 	if (CurrentData.ItemTag.IsValid() == false || CurrentData.ItemTag != ProcessData.ItemTag) return false;
@@ -116,7 +114,7 @@ bool ULFPItemInventoryBasicFunction::CanContainItemOnSlot_Implementation(const F
 }
 
 
-bool ULFPItemInventoryBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPItemBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
@@ -150,7 +148,7 @@ bool ULFPItemInventoryBasicFunction::ProcessAddItem_Implementation(UPARAM(ref)FL
 	return NextProcessStack <= 0;
 }
 
-bool ULFPItemInventoryBasicFunction::ProcessRemoveItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPItemBasicFunction::ProcessRemoveItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
@@ -184,7 +182,7 @@ bool ULFPItemInventoryBasicFunction::ProcessRemoveItem_Implementation(UPARAM(ref
 	return NextProcessStack <= 0;
 }
 
-bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref)FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
+bool ULFPItemBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref)FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const
 {
 	if (FromItem.MatchesTag(ToItem.ItemTag) && CanAddItemOnSlot(ToIndex, ToItem, FromItem))
 	{
@@ -199,7 +197,7 @@ bool ULFPItemInventoryBasicFunction::ProcessSwapItem_Implementation(UPARAM(ref)F
 	return true;
 }
 
-bool ULFPItemInventoryBasicFunction::ProcessUpdateItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPItemBasicFunction::ProcessUpdateItem_Implementation(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
@@ -221,7 +219,7 @@ bool ULFPItemInventoryBasicFunction::ProcessUpdateItem_Implementation(UPARAM(ref
 	return ProcessStack - 1 <= 0;
 }
 
-bool ULFPItemInventoryBasicFunction::ProcessContainItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPItemBasicFunction::ProcessContainItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.ItemTag);
@@ -249,7 +247,7 @@ bool ULFPItemInventoryBasicFunction::ProcessContainItem_Implementation(const FLF
 }
 
 
-FGameplayTagContainer ULFPItemInventoryBasicFunction::GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const
+FGameplayTagContainer ULFPItemBasicFunction::GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.ItemTag);
 
@@ -258,7 +256,7 @@ FGameplayTagContainer ULFPItemInventoryBasicFunction::GetItemCatergorize_Impleme
 	return TableData->GetCategorize();
 }
 
-FLFPInventorySearch ULFPItemInventoryBasicFunction::GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const
+FLFPInventorySearch ULFPItemBasicFunction::GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.ItemTag);
 
@@ -267,12 +265,12 @@ FLFPInventorySearch ULFPItemInventoryBasicFunction::GetItemInventorySearch_Imple
 	return TableData->GetAllowedInventorySearch();
 }
 
-bool ULFPItemInventoryBasicFunction::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
+bool ULFPItemBasicFunction::CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
 {
 	return ItemDataA.IsValid() && ItemDataB.IsValid() == false;
 }
 
-const FLFPItemBasicData* ULFPItemInventoryBasicFunction::GetDataTableRow(const FGameplayTag& RowTag) const
+const FLFPItemBasicData* ULFPItemBasicFunction::GetDataTableRow(const FGameplayTag& RowTag) const
 {
 	uint8* TableRawData = ItemDataTable->FindRowUnchecked(RowTag.GetTagName());
 
