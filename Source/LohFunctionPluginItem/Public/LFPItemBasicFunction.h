@@ -151,7 +151,7 @@ protected:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LFPItemBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData"))
 		TObjectPtr<UDataTable> ItemDataTable = nullptr;
 	
 };
