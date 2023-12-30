@@ -26,6 +26,12 @@ public:
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
 
 public:
+
+	virtual void InitializeComponent();
+
+	virtual void UninitializeComponent() {};
+
+public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
 	bool CanAddItem(const FLFPInventoryItem& ItemData) const;
@@ -101,7 +107,11 @@ public:
 	FLFPInventorySearch GetItemInventorySearch(const FLFPInventoryItem& ItemData) const;
 	virtual FLFPInventorySearch GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const { return FLFPInventorySearch(); }
 
-	// Check Modifier
+	// Sort Modifier
+
+	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
+	bool CanSlotNameBeSort(const FGameplayTag& SlotName) const;
+	virtual bool CanSlotNameBeSort_Implementation(const FGameplayTag& SlotName) const { return false; }
 
 	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
 	bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;

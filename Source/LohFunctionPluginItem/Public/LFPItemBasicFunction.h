@@ -102,26 +102,26 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemBasicFunction : public ULFPItemInventory
 
 public:
 
-	virtual bool CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual bool CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
-	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	virtual bool CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const override;
 
-	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
-	virtual bool CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual bool CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 
-	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
-	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
-	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
+	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
 
-	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
-	virtual bool CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	virtual bool CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
 	//// Process Modifier
 
@@ -137,9 +137,9 @@ public:
 
 	//// Catergorize Modifier
 
-	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const override;
 
-	virtual FLFPInventorySearch GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const;
+	virtual FLFPInventorySearch GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	//// Check Modifier
 

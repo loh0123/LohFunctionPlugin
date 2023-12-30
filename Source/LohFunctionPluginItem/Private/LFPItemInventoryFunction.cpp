@@ -32,6 +32,11 @@ bool ULFPItemInventoryFunction::CallRemoteFunction(UFunction* Function, void* Pa
 	return false;
 }
 
+void ULFPItemInventoryFunction::InitializeComponent()
+{
+	check(GetOwner() != nullptr);
+}
+
 ULFPInventoryComponent* ULFPItemInventoryFunction::GetOwner() const
 {
 	return GetTypedOuter<ULFPInventoryComponent>();

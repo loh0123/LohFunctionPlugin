@@ -54,6 +54,8 @@ struct FLFPInventorySearch
 
 	FLFPInventorySearch() {}
 
+	FLFPInventorySearch(const FGameplayTag& NewSlotName) : SlotNames(NewSlotName.GetSingleTagContainer()) {}
+
 	FLFPInventorySearch(const FGameplayTagContainer& NewSlotNames) : SlotNames(NewSlotNames) {}
 
 	FLFPInventorySearch(
@@ -210,8 +212,7 @@ public: // List Operation
 		ItemList.Shrink();
 	}
 
-	template <class PREDICATE_CLASS>
-	FORCEINLINE void SortItem(const PREDICATE_CLASS& Predicate)
+	FORCEINLINE void SortItem(const TFunctionRef<bool(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)> Predicate)
 	{
 		ItemList.Sort(Predicate);
 	}
@@ -305,12 +306,11 @@ public: // Slot Operation
 		SlotList[SlotListIndex].ClearEmptyItem();
 	}
 
-	template <class PREDICATE_CLASS>
-	FORCEINLINE void SortSlot(const FLFPInventorySearch& InventorySearch, const PREDICATE_CLASS& Predicate)
+	FORCEINLINE void SortSlot(const FLFPInventorySearch& InventorySearch, const TFunctionRef<bool(const FGameplayTag& SlotName)> SlotFunction, const TFunctionRef<bool(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)> Predicate)
 	{
 		for (auto& SlotData : SlotList)
 		{
-			if (InventorySearch.IsTagMatch(SlotData.SlotName) == false)
+			if (InventorySearch.IsTagMatch(SlotData.SlotName) == false || SlotFunction(SlotData.SlotName) == false)
 			{
 				continue; // Tag Not Match Any One On Search
 			}
@@ -328,7 +328,7 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnChangeEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FLFPInventoryItemEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
 
 UCLASS(Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGINITEM_API ULFPInventoryComponent : public UActorComponent
@@ -360,22 +360,22 @@ public:
 
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
-protected: // Delegate
+public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnChangeEvent OnUpdateItem;
+		FLFPInventoryItemEvent OnUpdateItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnChangeEvent OnAddItem;
+		FLFPInventoryItemEvent OnAddItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnChangeEvent OnRemoveItem;
+		FLFPInventoryItemEvent OnRemoveItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnChangeEvent OnSwapItem;
+		FLFPInventoryItemEvent OnSwapItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FOnChangeEvent OnTransferItem;
+		FLFPInventoryItemEvent OnTransferItem;
 
 protected: // Delegate Function
 
@@ -399,7 +399,10 @@ protected: // Delegate Function
 	void SendUpdateDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const;
 	void SendUpdateDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const;
 
-protected: // Internal Function
+public:
+
+	/* Not Recommend, Try To Use (Find / Contain / GetSlotItem) First */
+	FORCEINLINE const FLFPInventorySlotList& GetInventorySlotList() const;
 
 	FORCEINLINE bool ProcessInventoryIndex(
 		const FLFPInventorySearch& InventoryCategorize,
@@ -407,6 +410,8 @@ protected: // Internal Function
 		const bool bUseMaxIndex = false,
 		const TFunction<void(const int32 SlotListIndex)> OnSlotNameEnd = nullptr
 	) const;
+
+protected: // Internal Function
 
 	FORCEINLINE bool ProcessInventoryFunction(
 		const TFunctionRef<bool(const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)> RunFunction
@@ -566,6 +571,9 @@ public:
 	FORCEINLINE FLFPInventorySearch GetItemInventorySearch(const FLFPInventoryItem& ItemData) const;
 
 	// Check Modifier
+
+	UFUNCTION()
+	FORCEINLINE bool CanSlotNameBeSort(const FGameplayTag& SlotName) const;
 
 	UFUNCTION()
 	FORCEINLINE bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;

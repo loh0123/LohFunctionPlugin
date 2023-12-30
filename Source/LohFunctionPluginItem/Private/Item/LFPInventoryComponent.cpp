@@ -62,6 +62,8 @@ void ULFPInventoryComponent::InitializeComponent()
 
 			AddReplicatedSubObject(FunctionObj.Get());
 
+			FunctionObj.Get()->InitializeComponent();
+
 			return true;
 		}
 	);
@@ -77,6 +79,8 @@ void ULFPInventoryComponent::UninitializeComponent()
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
 			RemoveReplicatedSubObject(FunctionObj.Get());
+
+			FunctionObj.Get()->UninitializeComponent();
 
 			return true;
 		}
@@ -130,6 +134,11 @@ void ULFPInventoryComponent::SendUpdateDelegateEvent_Implementation(const FLFPIn
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
+
+const FLFPInventorySlotList& ULFPInventoryComponent::GetInventorySlotList() const
+{
+	return InventorySlot;
+}
 
 bool ULFPInventoryComponent::ProcessInventoryIndex(
 	const FLFPInventorySearch& InventoryCategorize,
@@ -203,6 +212,13 @@ bool ULFPInventoryComponent::ProcessInventoryFunction(const TFunctionRef<bool(co
 		}
 
 		if (RunFunction(FunctionObj) == false) return false;
+	}
+
+	if (FunctionList.IsEmpty())
+	{
+		UE_LOG(LFPInventoryComponent, Warning, TEXT("ProcessInventoryFunction FunctionList Is Empty"));
+
+		return false;
 	}
 
 	return true;
@@ -603,14 +619,13 @@ bool ULFPInventoryComponent::SortItem(const FLFPInventorySearch& InventorySearch
 
 	InventorySlot.SortSlot(
 		InventorySearch,
+		[&](const FGameplayTag& SlotName)
+		{
+			return CanSlotNameBeSort(SlotName);
+		},
 		[&](const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)
 		{
-			return ProcessInventoryFunction(
-				[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-				{
-					return FunctionObj->CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
-				}
-			);
+			return CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
 		}
 	);
 
@@ -963,6 +978,16 @@ FLFPInventorySearch ULFPInventoryComponent::GetItemInventorySearch(const FLFPInv
 	);
 
 	return Result;
+}
+
+bool ULFPInventoryComponent::CanSlotNameBeSort(const FGameplayTag& SlotName) const
+{
+	return ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			return FunctionObj->CanSlotNameBeSort(SlotName);
+		}
+	);
 }
 
 bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const
