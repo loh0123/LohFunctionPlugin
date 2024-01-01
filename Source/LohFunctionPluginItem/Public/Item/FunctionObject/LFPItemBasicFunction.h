@@ -1,9 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2023-2024 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LFPItemInventoryFunction.h"
+#include "Item/FunctionObject/LFPItemInventoryFunction.h"
 #include "LFPItemBasicFunction.generated.h"
 
 USTRUCT(Blueprintable)

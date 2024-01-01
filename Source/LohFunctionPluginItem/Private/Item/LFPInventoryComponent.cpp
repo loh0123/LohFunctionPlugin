@@ -1,12 +1,11 @@
-// Copyright (c) 2023 Loh Zhi Kang ( loh0123@hotmail.com )
+// Copyright (c) 2023-2024 Loh Zhi Kang ( loh0123@hotmail.com )
 //
 // Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 // or copy at http://opensource.org/licenses/MIT)
 
 
 #include "Item/LFPInventoryComponent.h"
-#include "Item/LFPInventoryInterface.h"
-#include "LFPItemInventoryFunction.h"
+#include "Item/FunctionObject/LFPItemInventoryFunction.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
 

@@ -1,7 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2023-2024 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
 
 
-#include "LFPItemEquipmentFunction.h"
+#include "Item/FunctionObject/LFPItemEquipmentFunction.h"
 #include "Net/UnrealNetwork.h"
 
 void ULFPItemEquipmentFunction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

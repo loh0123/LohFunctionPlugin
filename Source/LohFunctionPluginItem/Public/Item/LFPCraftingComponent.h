@@ -1,21 +1,24 @@
+// Copyright (c) 2023-2024 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Item/LFPInventoryComponent.h"
-#include "Item/LFPInventoryInterface.h"
 #include "LFPItemGameplayTag.h"
-#include "LFPEquipmentComponent.generated.h"
+#include "LFPCraftingComponent.generated.h"
 
 
 UCLASS( Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGINITEM_API ULFPEquipmentComponent : public UActorComponent, public ILFPInventoryInterface
+class LOHFUNCTIONPLUGINITEM_API ULFPCraftingComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	ULFPEquipmentComponent();
+	ULFPCraftingComponent();
 
 protected:
 	// Called when the game starts

@@ -1,7 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright (c) 2023-2024 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
 
 
-#include "LFPItemBasicFunction.h"
+#include "Item/FunctionObject/LFPItemBasicFunction.h"
 #include "LFPItemFunctionLibrary.h"
 
 bool ULFPItemBasicFunction::CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const
