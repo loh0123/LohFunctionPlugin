@@ -98,6 +98,55 @@ bool ULFPItemEquipmentFunction::CanSlotNameBeSort_Implementation(const FGameplay
 	return IsEquipmentSlot(SlotName) == false;
 }
 
+void ULFPItemEquipmentFunction::SendItemLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const
+{
+	if (GetOwner() == nullptr) return;
+
+	OnItemLockChanged.Broadcast(SlotName, IsLock, EventTag);
+}
+
+void ULFPItemEquipmentFunction::SendItemActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const
+{
+	if (GetOwner() == nullptr) return;
+
+	const FLFPInventorySlotList& InventorySlotList = GetOwner()->GetInventorySlotList();
+
+	if (IsInactive)
+	{
+		GetOwner()->ProcessInventoryIndex(
+			SlotName,
+			[&](const FLFPInventoryIndex& InventoryIndex)
+			{
+				const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryIndex);
+
+				/* Skip Empty Item */
+				if (SlotItem.IsValid() == false) return false;
+
+				OnUnequipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
+
+				return false;
+			});
+	}
+	else
+	{
+		GetOwner()->ProcessInventoryIndex(
+			SlotName,
+			[&](const FLFPInventoryIndex& InventoryIndex)
+			{
+				const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryIndex);
+
+				/* Skip Empty Item */
+				if (SlotItem.IsValid() == false) return false;
+
+				OnEquipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
+
+				return false;
+			});
+	}
+
+	OnItemActiveChanged.Broadcast(SlotName, IsInactive, EventTag);
+}
+
 const FLFPItemEquipmentData* ULFPItemEquipmentFunction::GetDataTableRow(const FGameplayTag& RowTag) const
 {
 	uint8* TableRawData = ItemDataTable->FindRowUnchecked(RowTag.GetTagName());
@@ -124,19 +173,18 @@ bool ULFPItemEquipmentFunction::SetSlotNameLock(UPARAM(meta = (Categories = "Ite
 
 	if (GetOwner() == nullptr) return false;
 
-	if (IsLock)
+	if (IsLock == (LockSlotNameList.HasTag(SlotName) == false))
 	{
-		if (InactiveSlotNameList.HasTag(SlotName) == false) 
+		if (IsLock)
 		{
 			LockSlotNameList.AddTag(SlotName);
 		}
-	}
-	else
-	{
-		if (InactiveSlotNameList.HasTag(SlotName))
+		else
 		{
 			LockSlotNameList.RemoveTag(SlotName);
 		}
+
+		SendItemLockChanged(SlotName, IsLock, EventTag);
 	}
 
 	return true;
@@ -159,49 +207,18 @@ bool ULFPItemEquipmentFunction::SetSlotNameInactive(UPARAM(meta = (Categories = 
 
 	if (GetOwner() == nullptr) return false;
 
-	const FLFPInventorySlotList& InventorySlotList = GetOwner()->GetInventorySlotList();
-
-	if (IsInactive)
+	if (IsInactive == (InactiveSlotNameList.HasTag(SlotName) == false))
 	{
-		if (InactiveSlotNameList.HasTag(SlotName) == false)
+		if (IsInactive) 
 		{
 			InactiveSlotNameList.AddTag(SlotName);
-
-			GetOwner()->ProcessInventoryIndex(
-				SlotName,
-				[&](const FLFPInventoryIndex& InventoryIndex)
-				{
-					const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryIndex);
-
-					/* Skip Empty Item */
-					if (SlotItem.IsValid() == false) return false;
-
-					OnUnequipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
-
-					return false;
-				});
 		}
-	}
-	else
-	{
-		if (InactiveSlotNameList.HasTag(SlotName))
+		else
 		{
 			InactiveSlotNameList.RemoveTag(SlotName);
-
-			GetOwner()->ProcessInventoryIndex(
-				SlotName,
-				[&](const FLFPInventoryIndex& InventoryIndex)
-				{
-					const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryIndex);
-
-					/* Skip Empty Item */
-					if (SlotItem.IsValid() == false) return false;
-
-					OnEquipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
-
-					return false;
-				});
 		}
+
+		SendItemActiveChanged(SlotName, IsInactive, EventTag);
 	}
 
 	return true;

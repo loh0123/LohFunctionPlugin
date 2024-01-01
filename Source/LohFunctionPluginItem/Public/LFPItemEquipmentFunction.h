@@ -24,7 +24,7 @@ public:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FLFPEquipmentItemEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPEquipmentChangeEvent, const FGameplayTag&, SlotName, const bool, Value);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPEquipmentChangeEvent, const FGameplayTag&, SlotName, const bool, Value, const FGameplayTag&, EventTag);
 
 /**
  * 
@@ -55,6 +55,16 @@ public:
 	// Check Modifier
 
 	virtual bool CanSlotNameBeSort_Implementation(const FGameplayTag& SlotName) const override;
+
+protected:
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SendItemLockChanged(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+	void SendItemLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SendItemActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+	void SendItemActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
 
 protected:
 
@@ -101,7 +111,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Cache", Replicated, meta = (Categories = "Item.SlotName"))
 	FGameplayTagContainer LockSlotNameList = FGameplayTagContainer::EmptyContainer;
 
-	/* Slot Won't Trigger Event */
+	/* Slot Won't Trigger Event And Will Send Unequip Event To Any On SlotName */
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Cache", Replicated, meta = (Categories = "Item.SlotName"))
 	FGameplayTagContainer InactiveSlotNameList = FGameplayTagContainer::EmptyContainer;
 
@@ -114,8 +124,8 @@ public:
 	FLFPEquipmentItemEvent OnUnequipItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
-	FLFPEquipmentChangeEvent OnItemActiveChanged;
+	FLFPEquipmentChangeEvent OnItemLockChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
-	FLFPEquipmentChangeEvent OnItemLockChanged;
+	FLFPEquipmentChangeEvent OnItemActiveChanged;
 };
