@@ -30,6 +30,7 @@ public class LohFunctionPlugin : ModuleRules
 				"Engine",
 				"RenderCore",
 				"RHI",
+                "GameplayTags",
 
                 "Networking",
                 "Sockets",
@@ -46,6 +47,7 @@ public class LohFunctionPlugin : ModuleRules
 				"RenderCore",
 				"RHI",
 				"ImageWriteQueue",
+                "GameplayTags",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
