@@ -40,6 +40,8 @@ public:
     }
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPGameplayTagRefUpdate, const FGameplayTag, EventTag, UActorComponent*, Component);
+
 /**
  * 
  */
@@ -82,6 +84,14 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Get", meta = (GameplayTagFilter = "Component.Identifiers", AutoCreateRefTerm = ComponentTagList))
         bool HasComponentWithTags(const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags = false) const;
+
+public:
+
+    UPROPERTY(BlueprintAssignable, Category = Events)
+        FLFPGameplayTagRefUpdate OnRegisterComponent;
+
+    UPROPERTY(BlueprintAssignable, Category = Events)
+        FLFPGameplayTagRefUpdate OnUnregisterComponent;
 
 public:
 

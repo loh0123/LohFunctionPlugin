@@ -22,6 +22,8 @@ void ULFPGameplayTagSubsystem::RegisterComponent(const FGameplayTag Tag, UActorC
 
 	TagContainer.AddTag(Tag);
 
+	OnRegisterComponent.Broadcast(Tag, Component);
+
 	return;
 }
 
@@ -44,6 +46,8 @@ void ULFPGameplayTagSubsystem::UnregisterComponent(const FGameplayTag Tag, UActo
 	RefVar.UnbindObject(Component);
 
 	TagContainer.RemoveTag(Tag);
+
+	OnUnregisterComponent.Broadcast(Tag, Component);
 
 	return;
 }
@@ -85,7 +89,7 @@ void ULFPGameplayTagSubsystem::FindComponentListByTags(TArray<UActorComponent*>&
 
 				for (const FName& ComponentCheckTag : ComponentTagList)
 				{
-					if (BindedObject->ComponentHasTag(ComponentCheckTag) == !bIsPass)
+					if (BindedObject->ComponentHasTag(ComponentCheckTag) == (bIsPass == false))
 					{
 						bIsPass = !bIsPass;
 
