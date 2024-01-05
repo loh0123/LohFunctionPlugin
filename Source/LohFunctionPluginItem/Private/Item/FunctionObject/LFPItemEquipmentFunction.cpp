@@ -37,7 +37,7 @@ bool ULFPItemEquipmentFunction::CanAddItemOnSlot_Implementation(const FLFPInvent
 
 	if (IsSlotNameLock(InventoryIndex.SlotName)) return false;
 
-	const FLFPItemEquipmentData* TableData = GetDataTableRow(ProcessData.ItemTag);
+	const FLFPItemEquipmentData* TableData = GetDataTableRow(ProcessData.GetItemTag());
 
 	if (TableData == nullptr) return false;
 
@@ -54,7 +54,7 @@ bool ULFPItemEquipmentFunction::CanRemoveItemOnSlot_Implementation(const FLFPInv
 
 	if (IsSlotNameLock(InventoryIndex.SlotName)) return false;
 
-	const FLFPItemEquipmentData* TableData = GetDataTableRow(ProcessData.ItemTag);
+	const FLFPItemEquipmentData* TableData = GetDataTableRow(ProcessData.GetItemTag());
 
 	if (TableData == nullptr) return false;
 
@@ -71,7 +71,7 @@ bool ULFPItemEquipmentFunction::CanSwapItemOnSlot_Implementation(const FLFPInven
 	{
 		if (IsSlotNameLock(FromIndex.SlotName)) return false;
 
-		const FLFPItemEquipmentData* TableData = GetDataTableRow(FromItem.ItemTag);
+		const FLFPItemEquipmentData* TableData = GetDataTableRow(FromItem.GetItemTag());
 
 		if (TableData == nullptr) return false;
 
@@ -84,7 +84,7 @@ bool ULFPItemEquipmentFunction::CanSwapItemOnSlot_Implementation(const FLFPInven
 	{
 		if (IsSlotNameLock(ToIndex.SlotName)) return false;
 
-		const FLFPItemEquipmentData* TableData = GetDataTableRow(ToItem.ItemTag);
+		const FLFPItemEquipmentData* TableData = GetDataTableRow(ToItem.GetItemTag());
 
 		if (TableData == nullptr) return false;
 

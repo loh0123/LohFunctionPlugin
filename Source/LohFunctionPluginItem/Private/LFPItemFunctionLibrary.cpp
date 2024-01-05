@@ -25,14 +25,6 @@ int32 ULFPItemFunctionLibrary::GetMetaDataAsNumber(const FLFPInventoryItem& Item
 	return Item.HasMetaData(MetaTag) ? UKismetStringLibrary::Conv_StringToInt(Item.GetMetaData(MetaTag)) : DefaultValue;
 }
 
-void ULFPItemFunctionLibrary::MergeMetaData(UPARAM(ref)FLFPInventoryItem& Item, const FLFPInventoryItem& Other, const bool bUniqueOnly)
-{
-	for (const FLFPInventoryMeta& OtherMetaData : Other.MetaData)
-	{
-		Item.SetMetaData(OtherMetaData, bUniqueOnly);
-	}
-}
-
 void ULFPItemFunctionLibrary::SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryMeta& Data)
 {
 	Item.SetMetaData(Data);
@@ -41,4 +33,14 @@ void ULFPItemFunctionLibrary::SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, c
 void ULFPItemFunctionLibrary::SetMetaDataAsNumber(UPARAM(ref)FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 Data)
 {
 	Item.SetMetaData(FLFPInventoryMeta(MetaTag, FString::FromInt(Data)));
+}
+
+FGameplayTag ULFPItemFunctionLibrary::GetItemTag(UPARAM(ref)FLFPInventoryItem& Item)
+{
+	return Item.GetItemTag();
+}
+
+void ULFPItemFunctionLibrary::SetItemTag(UPARAM(ref)FLFPInventoryItem& Item, const FGameplayTag ItemTag)
+{
+	Item.SetItemTag(ItemTag);
 }
