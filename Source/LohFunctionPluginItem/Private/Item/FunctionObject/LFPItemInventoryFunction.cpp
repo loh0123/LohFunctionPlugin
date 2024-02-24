@@ -27,6 +27,7 @@ bool ULFPItemInventoryFunction::CallRemoteFunction(UFunction* Function, void* Pa
 
 	UActorComponent* Owner = GetTypedOuter<UActorComponent>();
 	UNetDriver* NetDriver = Owner->GetOwner()->GetNetDriver();
+
 	if (NetDriver)
 	{
 		NetDriver->ProcessRemoteFunction(Owner->GetOwner(), Function, Parms, OutParms, Stack, this);

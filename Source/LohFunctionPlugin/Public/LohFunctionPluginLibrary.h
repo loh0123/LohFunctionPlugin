@@ -331,16 +331,20 @@ class LOHFUNCTIONPLUGIN_API ULohFunctionPluginLibrary : public UBlueprintFunctio
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary | LFPIntPointList")
 		static bool ContainPoint(const FLFPIntPointList& List, const int32 Index);
 	
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIntPointList")
 		static void AddPoint(UPARAM(ref) FLFPIntPointList& List, const FIntPoint Range);
 	
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIntPointList")
 		static void RemovePoint(UPARAM(ref) FLFPIntPointList& List, const FIntPoint Range);
 
 
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Bit")
+		static TArray<uint8> GenerateBitMatrixNumberTop(const uint8 BitList);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Other")
 		static FGameplayTag GetGameplayTagFromName(const FName TagName);
 };
