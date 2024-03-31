@@ -163,6 +163,132 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FLFPCompactTagArray : public FLFPCompactIntArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPCompactTagArray() {}
+
+	FLFPCompactTagArray(const uint32 NewIndexSize) : Super(NewIndexSize) 
+	{
+		TagList.Add(FGameplayTag::EmptyTag);
+		RefList.Add(NewIndexSize);
+	}
+
+private:
+
+	UPROPERTY(SaveGame)
+	TArray<FGameplayTag> TagList = {};
+
+	UPROPERTY(SaveGame)
+	TArray<int32> OpenIndexList = {};
+
+	UPROPERTY(SaveGame)
+	TArray<int32> RefList = {};
+
+private:
+
+	/** Item Function */
+
+	FORCEINLINE int32 AddItem(const FGameplayTag& NewItem, const bool bResizeList)
+	{
+		int32 ItemIndex = TagList.Find(NewItem);
+
+		if (ItemIndex == INDEX_NONE)
+		{
+			if (OpenIndexList.IsEmpty() == false)
+			{
+				ItemIndex = OpenIndexList.Pop();
+
+				TagList[ItemIndex] = NewItem;
+			}
+			else
+			{
+				ItemIndex = TagList.Add(NewItem);
+			}
+
+			if (RefList.IsValidIndex(ItemIndex) == false) RefList.SetNum(ItemIndex + 1);
+
+			RefList[ItemIndex] += 1;
+
+			if (bResizeList) ResizeList();
+		}
+
+		return ItemIndex;
+	}
+
+	FORCEINLINE void RemoveItem(const int32 Index, const bool bResizeList)
+	{
+		check(RefList.IsValidIndex(Index));
+
+		check(RefList[Index] > 0);
+
+		RefList[Index] -= 1;
+
+		if (RefList[Index] > 0) return;
+
+		/** Sort And Push Into Open Index List */
+		OpenIndexList.HeapPush(Index);
+
+		TagList.RemoveAt(Index);
+
+		/* Remove Redundant Open Index */
+		const int32 RemoveAmount = OpenIndexList.RemoveAll([&](const int32 Item)
+			{
+				return Item >= TagList.Num();
+			}
+		);
+
+		if (RemoveAmount > 0) OpenIndexList.HeapSort();
+
+		if (bResizeList) ResizeList();
+
+		return;
+	}
+
+	/** Resize Function */
+
+	FORCEINLINE void ResizeList()
+	{
+		Resize(TagList.Num());
+
+		return;
+	}
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE const TArray<FGameplayTag>& GetItemList() const
+	{
+		return TagList;
+	}
+
+	FORCEINLINE void SetIndexItem(const int32 CompactIndex, const FGameplayTag& NewItem)
+	{
+		check(CompactIndex >= 0);
+
+		RemoveItem(GetIndexNumber(CompactIndex), true);
+
+		const int32 NewIndex = AddItem(NewItem, true);
+
+		SetIndexNumber(CompactIndex, NewIndex);
+	}
+
+	FORCEINLINE const FGameplayTag& GetIndexItem(const int32 CompactIndex) const
+	{
+		return TagList[GetIndexNumber(CompactIndex)];
+	}
+
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPCompactTagArray& Data)
+	{
+		return Ar << Data.TagList << Data.OpenIndexList << Data.RefList;
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FLFPCompactIntNameArray : public FLFPCompactIntArray
 {
 	GENERATED_USTRUCT_BODY()
@@ -339,10 +465,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIntPointList")
 		static void RemovePoint(UPARAM(ref) FLFPIntPointList& List, const FIntPoint Range);
-
-
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Bit")
-		static TArray<uint8> GenerateBitMatrixNumberTop(const uint8 BitList);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Other")
