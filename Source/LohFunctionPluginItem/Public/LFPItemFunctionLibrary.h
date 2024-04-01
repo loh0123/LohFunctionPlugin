@@ -8,40 +8,21 @@
 #include "CoreMinimal.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "GameplayTagContainer.h"
+#include "LohFunctionPluginLibrary.h"
 #include "LFPItemFunctionLibrary.generated.h"
 
 USTRUCT(BlueprintType)
-struct FLFPInventoryMeta
+struct FLFPInventoryMeta : public FLFPCompactMetaData
 {
 	GENERATED_BODY()
 
 	FLFPInventoryMeta() {}
 
-	FLFPInventoryMeta(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(FString("")) {}
+	FLFPInventoryMeta(const FGameplayTag& Tag) : Super(Tag) {}
 
-	FLFPInventoryMeta(const FGameplayTag& Tag, const FString& Data) : MetaTag(Tag), MetaData(Data) {}
+	FLFPInventoryMeta(const FGameplayTag& Tag, const FString& Data) : Super(Tag, Data) {}
 
-	FLFPInventoryMeta(const FLFPInventoryMeta& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData) {}
-
-public:
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.Meta"))
-	FGameplayTag MetaTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-	FString MetaData = FString("");
-
-public:
-
-	FORCEINLINE	FString ToString() const
-	{
-		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *MetaData);
-	}
-
-
-	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
-
-	FORCEINLINE bool operator==(const FLFPInventoryMeta& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData; }
+	FLFPInventoryMeta(const FLFPInventoryMeta& Other) : Super(Other.MetaTag, Other.MetaData) {}
 };
 
 USTRUCT(BlueprintType)

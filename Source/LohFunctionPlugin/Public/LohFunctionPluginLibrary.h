@@ -171,14 +171,14 @@ struct FLFPCompactTagArray : public FLFPCompactIntArray
 
 	FLFPCompactTagArray(const uint32 NewIndexSize) : Super(NewIndexSize) 
 	{
-		TagList.Add(FGameplayTag::EmptyTag);
+		ItemList.Add(FGameplayTag::EmptyTag);
 		RefList.Add(NewIndexSize);
 	}
 
 private:
 
 	UPROPERTY(SaveGame)
-	TArray<FGameplayTag> TagList = {};
+	TArray<FGameplayTag> ItemList = {};
 
 	UPROPERTY(SaveGame)
 	TArray<int32> OpenIndexList = {};
@@ -192,7 +192,7 @@ private:
 
 	FORCEINLINE int32 AddItem(const FGameplayTag& NewItem, const bool bResizeList)
 	{
-		int32 ItemIndex = TagList.Find(NewItem);
+		int32 ItemIndex = ItemList.Find(NewItem);
 
 		if (ItemIndex == INDEX_NONE)
 		{
@@ -200,19 +200,19 @@ private:
 			{
 				ItemIndex = OpenIndexList.Pop();
 
-				TagList[ItemIndex] = NewItem;
+				ItemList[ItemIndex] = NewItem;
 			}
 			else
 			{
-				ItemIndex = TagList.Add(NewItem);
+				ItemIndex = ItemList.Add(NewItem);
 			}
 
 			if (RefList.IsValidIndex(ItemIndex) == false) RefList.SetNum(ItemIndex + 1);
 
-			RefList[ItemIndex] += 1;
-
 			if (bResizeList) ResizeList();
 		}
+
+		RefList[ItemIndex] += 1;
 
 		return ItemIndex;
 	}
@@ -230,12 +230,12 @@ private:
 		/** Sort And Push Into Open Index List */
 		OpenIndexList.HeapPush(Index);
 
-		TagList.RemoveAt(Index);
+		ItemList.RemoveAt(Index);
 
 		/* Remove Redundant Open Index */
 		const int32 RemoveAmount = OpenIndexList.RemoveAll([&](const int32 Item)
 			{
-				return Item >= TagList.Num();
+				return Item >= ItemList.Num();
 			}
 		);
 
@@ -250,7 +250,7 @@ private:
 
 	FORCEINLINE void ResizeList()
 	{
-		Resize(TagList.Num());
+		Resize(ItemList.Num());
 
 		return;
 	}
@@ -261,7 +261,7 @@ public:
 
 	FORCEINLINE const TArray<FGameplayTag>& GetItemList() const
 	{
-		return TagList;
+		return ItemList;
 	}
 
 	FORCEINLINE void SetIndexItem(const int32 CompactIndex, const FGameplayTag& NewItem)
@@ -277,14 +277,164 @@ public:
 
 	FORCEINLINE const FGameplayTag& GetIndexItem(const int32 CompactIndex) const
 	{
-		return TagList[GetIndexNumber(CompactIndex)];
+		return ItemList[GetIndexNumber(CompactIndex)];
 	}
 
 public:
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPCompactTagArray& Data)
 	{
-		return Ar << Data.TagList << Data.OpenIndexList << Data.RefList;
+		return Ar << Data.ItemList << Data.OpenIndexList << Data.RefList;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPCompactMetaData
+{
+	GENERATED_BODY()
+
+	FLFPCompactMetaData() {}
+
+	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(FString("")) {}
+
+	FLFPCompactMetaData(const FGameplayTag& Tag, const FString& Data) : MetaTag(Tag), MetaData(Data) {}
+
+	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData) {}
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FGameplayTag MetaTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
+	FString MetaData = FString("");
+
+public:
+
+	FORCEINLINE	FString ToString() const
+	{
+		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *MetaData);
+	}
+
+	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
+
+	FORCEINLINE bool operator==(const FLFPCompactMetaData& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData; }
+
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPCompactMetaData& Data)
+	{
+		return Ar << Data.MetaTag << Data.MetaData;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPCompactMetaArray : public FLFPCompactIntArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPCompactMetaArray() {}
+
+	FLFPCompactMetaArray(const uint32 NewIndexSize) : Super(NewIndexSize)
+	{
+		ItemList.Add(FLFPCompactMetaData());
+	}
+
+private:
+
+	UPROPERTY(SaveGame)
+	TArray<FLFPCompactMetaData> ItemList = {};
+
+	UPROPERTY(SaveGame)
+	TArray<int32> OpenIndexList = {};
+
+private:
+
+	/** Item Function */
+
+	FORCEINLINE int32 AddItem(const FLFPCompactMetaData& NewItem, const bool bResizeList)
+	{
+		int32 ItemIndex = ItemList.Find(NewItem);
+
+		if (ItemIndex == INDEX_NONE)
+		{
+			if (OpenIndexList.IsEmpty() == false)
+			{
+				ItemIndex = OpenIndexList.Pop();
+
+				ItemList[ItemIndex] = NewItem;
+			}
+			else
+			{
+				ItemIndex = ItemList.Add(NewItem);
+			}
+
+			if (bResizeList) ResizeList();
+		}
+
+		return ItemIndex;
+	}
+
+	FORCEINLINE void RemoveItem(const int32 Index, const bool bResizeList)
+	{
+		/** Sort And Push Into Open Index List */
+		OpenIndexList.HeapPush(Index);
+
+		ItemList.RemoveAt(Index);
+
+		/* Remove Redundant Open Index */
+		const int32 RemoveAmount = OpenIndexList.RemoveAll([&](const int32 Item)
+			{
+				return Item >= ItemList.Num();
+			}
+		);
+
+		if (RemoveAmount > 0) OpenIndexList.HeapSort();
+
+		if (bResizeList) ResizeList();
+
+		return;
+	}
+
+	/** Resize Function */
+
+	FORCEINLINE void ResizeList()
+	{
+		Resize(ItemList.Num());
+
+		return;
+	}
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE const TArray<FLFPCompactMetaData>& GetItemList() const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE void SetIndexItem(const int32 CompactIndex, const FLFPCompactMetaData& NewItem)
+	{
+		check(CompactIndex >= 0);
+
+		RemoveItem(GetIndexNumber(CompactIndex), true);
+
+		const int32 NewIndex = AddItem(NewItem, true);
+
+		SetIndexNumber(CompactIndex, NewIndex);
+	}
+
+	FORCEINLINE const FLFPCompactMetaData& GetIndexItem(const int32 CompactIndex) const
+	{
+		return ItemList[GetIndexNumber(CompactIndex)];
+	}
+
+public:
+
+	friend FArchive& operator<<(FArchive& Ar, FLFPCompactMetaArray& Data)
+	{
+		return Ar << Data.ItemList << Data.OpenIndexList;
 	}
 };
 

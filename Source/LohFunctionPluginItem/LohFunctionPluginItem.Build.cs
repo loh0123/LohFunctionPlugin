@@ -27,9 +27,10 @@ public class LohFunctionPluginItem : ModuleRules
 			{
 				"GameplayTags",
 				"Core",
-                "JsonUtilities",
+				"JsonUtilities",
 				"CoreUObject",
 				"Engine",
+				"LohFunctionPlugin",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,11 +39,12 @@ public class LohFunctionPluginItem : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-                "GameplayTags",
-                "CoreUObject",
+				"GameplayTags",
+				"CoreUObject",
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"LohFunctionPlugin",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
