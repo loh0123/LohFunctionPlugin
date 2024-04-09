@@ -316,6 +316,62 @@ public:
 		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *MetaData);
 	}
 
+public:
+
+	FORCEINLINE	int32 GetDataAsInt() const
+	{
+		if (MetaData.Len() < 4) return -1;
+
+		uint8 BtyeList[4];
+
+		StringToBytes(MetaData, BtyeList, 4);
+
+		return *(int32*)&BtyeList;
+	}
+
+	FORCEINLINE	void SetDataAsInt(const int32 NewData)
+	{
+		uint8 BtyeList[4];
+
+		*(int32*)&BtyeList = NewData;
+
+		MetaData = BytesToString(BtyeList, 4);
+	}
+
+	FORCEINLINE	float GetDataAsFloat() const
+	{
+		if (MetaData.Len() < 4) return -1.0f;
+
+		uint8 BtyeList[4];
+
+		StringToBytes(MetaData, BtyeList, 4);
+
+		return *(float*)&BtyeList;
+	}
+
+	FORCEINLINE	void SetDataAsFloat(const float NewData)
+	{
+		uint8 BtyeList[4];
+
+		*(float*)&BtyeList = NewData;
+
+		MetaData = BytesToString(BtyeList, 4);
+	}
+
+	FORCEINLINE	bool GetDataAsBool() const
+	{
+		if (MetaData.Len() < 1) return false;
+
+		return MetaData[0] == 'Y' ? true : false;
+	}
+
+	FORCEINLINE	void SetDataAsBool(const bool NewData)
+	{
+		MetaData = NewData ? FString("Y") : FString("N");
+	}
+
+public:
+
 	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
 
 	FORCEINLINE bool operator==(const FLFPCompactMetaData& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData; }
