@@ -288,6 +288,16 @@ public:
 	}
 };
 
+UENUM(BlueprintType)
+enum class ELFPCompactMetaType : uint8 
+{
+	LFP_None	UMETA(DisplayName = "None"),
+	LFP_Int		UMETA(DisplayName = "Int"),
+	LFP_Float	UMETA(DisplayName = "Float"),
+	LFP_Boolean	UMETA(DisplayName = "Boolean"),
+	LFP_String	UMETA(DisplayName = "String"),
+};
+
 USTRUCT(BlueprintType)
 struct FLFPCompactMetaData
 {
@@ -295,11 +305,11 @@ struct FLFPCompactMetaData
 
 	FLFPCompactMetaData() {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(TArray<uint8>()) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(TArray<uint8>()), MetaType(ELFPCompactMetaType::LFP_None) {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag, const TArray<uint8>& Data) : MetaTag(Tag), MetaData(Data) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag, const TArray<uint8>& Data, const ELFPCompactMetaType Type) : MetaTag(Tag), MetaData(Data), MetaType(Type) {}
 
-	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData) {}
+	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData), MetaType(Other.MetaType) {}
 
 public:
 
@@ -310,6 +320,9 @@ private:
 
 	UPROPERTY()
 	TArray<uint8> MetaData = TArray<uint8>();
+
+	UPROPERTY()
+	ELFPCompactMetaType MetaType = ELFPCompactMetaType::LFP_None;
 
 public:
 
@@ -322,7 +335,7 @@ public:
 
 	FORCEINLINE	int32 GetDataAsInt() const
 	{
-		if (MetaData.Num() < 4) return -1;
+		if (MetaType != ELFPCompactMetaType::LFP_Int || MetaData.Num() < 4) return -1;
 
 		return *(reinterpret_cast<const int32*>(MetaData.GetData()));
 	}
@@ -332,11 +345,13 @@ public:
 		MetaData.SetNum(4);
 
 		*(reinterpret_cast<int32*>(MetaData.GetData())) = NewData;
+
+		MetaType = ELFPCompactMetaType::LFP_Int;
 	}
 
 	FORCEINLINE	float GetDataAsFloat() const
 	{
-		if (MetaData.Num() < 4) return -1.0f;
+		if (MetaType != ELFPCompactMetaType::LFP_Float || MetaData.Num() < 4) return -1.0f;
 
 		return *(reinterpret_cast<const float*>(MetaData.GetData()));
 	}
@@ -346,11 +361,13 @@ public:
 		MetaData.SetNum(4);
 
 		*(reinterpret_cast<float*>(MetaData.GetData())) = NewData;
+
+		MetaType = ELFPCompactMetaType::LFP_Float;
 	}
 
 	FORCEINLINE	bool GetDataAsBool() const
 	{
-		if (MetaData.Num() < 1) return false;
+		if (MetaType != ELFPCompactMetaType::LFP_Boolean || MetaData.Num() < 1) return false;
 
 		return MetaData[0] == uint8(1) ? true : false;
 	}
@@ -358,13 +375,26 @@ public:
 	FORCEINLINE	void SetDataAsBool(const bool NewData)
 	{
 		MetaData = { NewData ? uint8(1) : uint8(0) };
+		MetaType = ELFPCompactMetaType::LFP_Boolean;
 	}
 
 	FORCEINLINE	FString GetDataAsString() const
 	{
-		if (MetaData.Num() < 1) return FString();
+		if (MetaType == ELFPCompactMetaType::LFP_None || MetaData.Num() < 1) return FString();
 
-		return BytesToString(MetaData.GetData(), MetaData.Num());
+		switch (MetaType)
+		{
+		case ELFPCompactMetaType::LFP_Int:
+			return FString::FromInt(GetDataAsInt());
+		case ELFPCompactMetaType::LFP_Float:
+			return FString::SanitizeFloat(GetDataAsFloat());
+		case ELFPCompactMetaType::LFP_Boolean:
+			return GetDataAsBool() ? "True" : "False";
+		case ELFPCompactMetaType::LFP_String:
+			return BytesToString(MetaData.GetData(), MetaData.Num());;
+		}
+
+		return FString();
 	}
 
 	FORCEINLINE	void SetDataAsString(const FString NewData)
@@ -372,13 +402,15 @@ public:
 		MetaData.SetNum(NewData.Len());
 
 		StringToBytes(NewData, MetaData.GetData(), MetaData.Num());
+
+		MetaType = ELFPCompactMetaType::LFP_String;
 	}
 
 public:
 
 	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
 
-	FORCEINLINE bool operator==(const FLFPCompactMetaData& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData; }
+	FORCEINLINE bool operator==(const FLFPCompactMetaData& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData && MetaType == Other.MetaType; }
 
 public:
 

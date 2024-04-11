@@ -15,7 +15,7 @@ bool ULFPItemFunctionLibrary::IsMetaDataSame(const FLFPInventoryItem& ItemA, con
 	auto MetaDataA = ItemA.GetMetaData(MetaTag);
 	auto MetaDataB = ItemB.GetMetaData(MetaTag);
 
-	const FLFPInventoryMeta EmptyData;
+	const FLFPCompactMetaData EmptyData;
 
 	return (MetaDataA == nullptr ? EmptyData : *MetaDataA) == (MetaDataB == nullptr ? EmptyData : *MetaDataB);
 }
@@ -39,7 +39,7 @@ int32 ULFPItemFunctionLibrary::GetMetaDataAsNumber(const FLFPInventoryItem& Item
 	return MetaData != nullptr ? MetaData->GetDataAsInt() : DefaultValue;
 }
 
-void ULFPItemFunctionLibrary::SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryMeta& Data)
+void ULFPItemFunctionLibrary::SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPCompactMetaData& Data)
 {
 	Item.SetMetaData(Data);
 }

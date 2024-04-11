@@ -75,7 +75,7 @@ public:
 
 	FORCEINLINE void SetStackAmount(FLFPInventoryItem& CurrentData, const int32 NewStack) const
 	{
-		FLFPInventoryMeta NewData(StackTag);
+		FLFPCompactMetaData NewData(StackTag);
 
 		NewData.SetDataAsInt(NewStack);
 
