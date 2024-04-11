@@ -53,7 +53,7 @@ public:
 
 		for (const FGameplayTag& MathIntTag : MatchMetaTagList)
 		{
-			if (ULFPItemFunctionLibrary::GetMetaData(CurrentData, MathIntTag) != ULFPItemFunctionLibrary::GetMetaData(ProcessData, MathIntTag))
+			if (ULFPItemFunctionLibrary::IsMetaDataSame(CurrentData, ProcessData, MathIntTag) == false)
 			{
 				return false;
 			}
@@ -75,7 +75,11 @@ public:
 
 	FORCEINLINE void SetStackAmount(FLFPInventoryItem& CurrentData, const int32 NewStack) const
 	{
-		ULFPItemFunctionLibrary::SetMetaDataAsNumber(CurrentData, StackTag, FMath::Max(NewStack, 0));
+		FLFPInventoryMeta NewData(StackTag);
+
+		NewData.SetDataAsInt(NewStack);
+
+		ULFPItemFunctionLibrary::SetMetaData(CurrentData, NewData);
 	}
 
 	FORCEINLINE int32 ClampToMaxStack(const int32 Stack) const

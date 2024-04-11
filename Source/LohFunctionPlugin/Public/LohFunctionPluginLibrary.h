@@ -295,9 +295,9 @@ struct FLFPCompactMetaData
 
 	FLFPCompactMetaData() {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(FString("")) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(TArray<uint8>()) {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag, const FString& Data) : MetaTag(Tag), MetaData(Data) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag, const TArray<uint8>& Data) : MetaTag(Tag), MetaData(Data) {}
 
 	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData) {}
 
@@ -306,68 +306,72 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
 	FGameplayTag MetaTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-	FString MetaData = FString("");
+private:
+
+	UPROPERTY()
+	TArray<uint8> MetaData = TArray<uint8>();
 
 public:
 
 	FORCEINLINE	FString ToString() const
 	{
-		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *MetaData);
+		return FString::Printf(TEXT("| %s : %s |"), *MetaTag.ToString(), *GetDataAsString());
 	}
 
 public:
 
 	FORCEINLINE	int32 GetDataAsInt() const
 	{
-		if (MetaData.Len() < 4) return -1;
+		if (MetaData.Num() < 4) return -1;
 
-		uint8 BtyeList[4];
-
-		StringToBytes(MetaData, BtyeList, 4);
-
-		return *(int32*)&BtyeList;
+		return *(reinterpret_cast<const int32*>(MetaData.GetData()));
 	}
 
 	FORCEINLINE	void SetDataAsInt(const int32 NewData)
 	{
-		uint8 BtyeList[4];
+		MetaData.SetNum(4);
 
-		*(int32*)&BtyeList = NewData;
-
-		MetaData = BytesToString(BtyeList, 4);
+		*(reinterpret_cast<int32*>(MetaData.GetData())) = NewData;
 	}
 
 	FORCEINLINE	float GetDataAsFloat() const
 	{
-		if (MetaData.Len() < 4) return -1.0f;
+		if (MetaData.Num() < 4) return -1.0f;
 
-		uint8 BtyeList[4];
-
-		StringToBytes(MetaData, BtyeList, 4);
-
-		return *(float*)&BtyeList;
+		return *(reinterpret_cast<const float*>(MetaData.GetData()));
 	}
 
 	FORCEINLINE	void SetDataAsFloat(const float NewData)
 	{
-		uint8 BtyeList[4];
+		MetaData.SetNum(4);
 
-		*(float*)&BtyeList = NewData;
-
-		MetaData = BytesToString(BtyeList, 4);
+		*(reinterpret_cast<float*>(MetaData.GetData())) = NewData;
 	}
 
 	FORCEINLINE	bool GetDataAsBool() const
 	{
-		if (MetaData.Len() < 1) return false;
+		if (MetaData.Num() < 1) return false;
 
-		return MetaData[0] == 'Y' ? true : false;
+		return MetaData[0] == uint8(1) ? true : false;
 	}
 
 	FORCEINLINE	void SetDataAsBool(const bool NewData)
 	{
-		MetaData = NewData ? FString("Y") : FString("N");
+		MetaData = { NewData ? uint8(1) : uint8(0) };
+	}
+
+	FORCEINLINE	FString GetDataAsString() const
+	{
+		if (MetaData.Num() < 1) return FString();
+
+		return BytesToString(MetaData.GetData(), MetaData.Num());
+	}
+
+	FORCEINLINE	void SetDataAsString(const FString NewData)
+	{
+		MetaData.SetNum(NewData.Len());
+
+		StringToBytes(NewData, MetaData.GetData(), MetaData.Num());
 	}
 
 public:
@@ -675,4 +679,29 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Other")
 		static FGameplayTag GetGameplayTagFromName(const FName TagName);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static int32 GetMetaDataAsInt(UPARAM(ref) FLFPCompactMetaData& MetaData);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static void SetMetaDataAsInt(UPARAM(ref) FLFPCompactMetaData& MetaData, const int32 Value);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static float GetMetaDataAsFloat(UPARAM(ref) FLFPCompactMetaData& MetaData);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static void SetMetaDataAsFloat(UPARAM(ref) FLFPCompactMetaData& MetaData, const float Value);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static bool GetMetaDataAsBool(UPARAM(ref) FLFPCompactMetaData& MetaData);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static void SetMetaDataAsBool(UPARAM(ref) FLFPCompactMetaData& MetaData, const bool Value);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static FString GetMetaDataAsString(UPARAM(ref) FLFPCompactMetaData& MetaData);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")
+		static void SetMetaDataAsString(UPARAM(ref) FLFPCompactMetaData& MetaData, const FString Value);
 };

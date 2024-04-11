@@ -26,3 +26,43 @@ FGameplayTag ULohFunctionPluginLibrary::GetGameplayTagFromName(const FName TagNa
 {
 	return FGameplayTag::RequestGameplayTag(TagName, false);
 }
+
+int32 ULohFunctionPluginLibrary::GetMetaDataAsInt(UPARAM(ref)FLFPCompactMetaData& MetaData)
+{
+	return MetaData.GetDataAsInt();
+}
+
+void ULohFunctionPluginLibrary::SetMetaDataAsInt(UPARAM(ref)FLFPCompactMetaData& MetaData, const int32 Value)
+{
+	MetaData.SetDataAsInt(Value);
+}
+
+float ULohFunctionPluginLibrary::GetMetaDataAsFloat(UPARAM(ref)FLFPCompactMetaData& MetaData)
+{
+	return MetaData.GetDataAsFloat();
+}
+
+void ULohFunctionPluginLibrary::SetMetaDataAsFloat(UPARAM(ref)FLFPCompactMetaData& MetaData, const float Value)
+{
+	MetaData.SetDataAsFloat(Value);
+}
+
+bool ULohFunctionPluginLibrary::GetMetaDataAsBool(UPARAM(ref)FLFPCompactMetaData& MetaData)
+{
+	return MetaData.GetDataAsBool();
+}
+
+void ULohFunctionPluginLibrary::SetMetaDataAsBool(UPARAM(ref)FLFPCompactMetaData& MetaData, const bool Value)
+{
+	MetaData.SetDataAsBool(Value);
+}
+
+FString ULohFunctionPluginLibrary::GetMetaDataAsString(UPARAM(ref)FLFPCompactMetaData& MetaData)
+{
+	return MetaData.GetDataAsString();
+}
+
+void ULohFunctionPluginLibrary::SetMetaDataAsString(UPARAM(ref)FLFPCompactMetaData& MetaData, const FString Value)
+{
+	MetaData.SetDataAsString(Value);
+}

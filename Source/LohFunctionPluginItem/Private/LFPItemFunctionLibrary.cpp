@@ -10,29 +10,38 @@
 
 FLFPInventoryItem FLFPInventoryItem::EmptyItem = FLFPInventoryItem();
 
+bool ULFPItemFunctionLibrary::IsMetaDataSame(const FLFPInventoryItem& ItemA, const FLFPInventoryItem& ItemB, const FGameplayTag MetaTag)
+{
+	auto MetaDataA = ItemA.GetMetaData(MetaTag);
+	auto MetaDataB = ItemB.GetMetaData(MetaTag);
+
+	const FLFPInventoryMeta EmptyData;
+
+	return (MetaDataA == nullptr ? EmptyData : *MetaDataA) == (MetaDataB == nullptr ? EmptyData : *MetaDataB);
+}
+
 bool ULFPItemFunctionLibrary::HasMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag)
 {
 	return Item.HasMetaData(MetaTag);
 }
 
-FString ULFPItemFunctionLibrary::GetMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag)
+FString ULFPItemFunctionLibrary::GetMetaDataAsString(const FLFPInventoryItem& Item, const FGameplayTag MetaTag)
 {
-	return Item.GetMetaData(MetaTag);
+	auto MetaData = Item.GetMetaData(MetaTag);
+
+	return MetaData != nullptr ? MetaData->GetDataAsString() : FString();
 }
 
 int32 ULFPItemFunctionLibrary::GetMetaDataAsNumber(const FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 DefaultValue)
 {
-	return Item.HasMetaData(MetaTag) ? UKismetStringLibrary::Conv_StringToInt(Item.GetMetaData(MetaTag)) : DefaultValue;
+	auto MetaData = Item.GetMetaData(MetaTag);
+
+	return MetaData != nullptr ? MetaData->GetDataAsInt() : DefaultValue;
 }
 
 void ULFPItemFunctionLibrary::SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryMeta& Data)
 {
 	Item.SetMetaData(Data);
-}
-
-void ULFPItemFunctionLibrary::SetMetaDataAsNumber(UPARAM(ref)FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 Data)
-{
-	Item.SetMetaData(FLFPInventoryMeta(MetaTag, FString::FromInt(Data)));
 }
 
 FGameplayTag ULFPItemFunctionLibrary::GetItemTag(UPARAM(ref)FLFPInventoryItem& Item)

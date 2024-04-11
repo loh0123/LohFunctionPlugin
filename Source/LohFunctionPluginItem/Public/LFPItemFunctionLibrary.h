@@ -20,9 +20,7 @@ struct FLFPInventoryMeta : public FLFPCompactMetaData
 
 	FLFPInventoryMeta(const FGameplayTag& Tag) : Super(Tag) {}
 
-	FLFPInventoryMeta(const FGameplayTag& Tag, const FString& Data) : Super(Tag, Data) {}
-
-	FLFPInventoryMeta(const FLFPInventoryMeta& Other) : Super(Other.MetaTag, Other.MetaData) {}
+	FLFPInventoryMeta(const FGameplayTag& Tag, const FString& Data) : Super(Tag) { SetDataAsString(Data); }
 };
 
 USTRUCT(BlueprintType)
@@ -77,10 +75,11 @@ public:
 
 	FORCEINLINE	bool HasMetaData(const FGameplayTag& Tag) const { return MetaData.IndexOfByKey(Tag) != INDEX_NONE; }
 
-	FORCEINLINE	FString GetMetaData(const FGameplayTag& Tag) const 
+	FORCEINLINE	const FLFPInventoryMeta* GetMetaData(const FGameplayTag& Tag) const
 	{ 
 		int32 ReturnIndex(MetaData.IndexOfByKey(Tag));
-		return ReturnIndex != INDEX_NONE ? MetaData[ReturnIndex].MetaData : FString(""); 
+
+		return ReturnIndex != INDEX_NONE ? &MetaData[ReturnIndex] : nullptr;
 	}
 
 	FORCEINLINE	const TArray<FLFPInventoryMeta>& GetMetaDataList() const
@@ -94,7 +93,7 @@ public:
 
 		if (ReturnIndex != INDEX_NONE)
 		{
-			if (bUniqueOnly == false) MetaData[ReturnIndex].MetaData = Data.MetaData;
+			if (bUniqueOnly == false) MetaData[ReturnIndex] = Data;
 		}
 		else
 		{
@@ -159,19 +158,19 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunct
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	static bool IsMetaDataSame(const FLFPInventoryItem& ItemA, const FLFPInventoryItem& ItemB, const FGameplayTag MetaTag);
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static bool HasMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static FString GetMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
+	static FString GetMetaDataAsString(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static int32 GetMetaDataAsNumber(const FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 DefaultValue = 0);
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
 	static void SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPInventoryMeta& Data);
-
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static void SetMetaDataAsNumber(UPARAM(ref) FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 Data);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static FGameplayTag GetItemTag(UPARAM(ref) FLFPInventoryItem& Item);
