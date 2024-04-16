@@ -92,6 +92,20 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "LFPInstanceGridMeshData")
 		TArray<int32> InstanceGridIndexList;
+
+public:
+
+	FORCEINLINE int32 FindGridIndex(const int32 Item) const;
+
+	FORCEINLINE int32 AddInstance(const int32 GridIndex, const FTransform& InstanceTransform, bool bWorldSpace);
+
+	FORCEINLINE bool RemoveInstanceAt(const int32 GridIndex);
+
+	FORCEINLINE bool UpdateInstance(const int32 GridIndex, const FTransform& NewInstanceTransform, const bool bWorldSpace = false, const bool bMarkRenderStateDirty = false, const bool bTeleport = false);
+
+	FORCEINLINE bool SetCustomDataValue(const int32 GridIndex, const int32 CustomDataIndex, const float CustomDataValue, const bool bMarkRenderStateDirty = false);
+
+	FORCEINLINE bool SetCustomData(const int32 GridIndex, const TArray<float>& InCustomData, const bool bMarkRenderStateDirty = false);
 };
 
 UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )

@@ -6,6 +6,49 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Math/LFPGridLibrary.h"
 
+
+int32 FLFPInstanceGridMeshData::FindGridIndex(const int32 Item) const
+{
+	return InstanceGridIndexList.Find(Item);
+}
+
+int32 FLFPInstanceGridMeshData::AddInstance(const int32 GridIndex, const FTransform& InstanceTransform, bool bWorldSpace)
+{
+	InstanceGridIndexList.Add(GridIndex);
+
+	return ISMComponent->AddInstance(InstanceTransform, bWorldSpace);
+}
+
+bool FLFPInstanceGridMeshData::RemoveInstanceAt(const int32 GridIndex)
+{
+	const int32 TargetIndex = FindGridIndex(GridIndex);
+
+	InstanceGridIndexList.RemoveAt(TargetIndex);
+
+	return ISMComponent->RemoveInstance(TargetIndex);
+}
+
+bool FLFPInstanceGridMeshData::UpdateInstance(const int32 GridIndex, const FTransform& NewInstanceTransform, const bool bWorldSpace, const bool bMarkRenderStateDirty, const bool bTeleport)
+{
+	const int32 TargetIndex = FindGridIndex(GridIndex);
+
+	return ISMComponent->UpdateInstanceTransform(TargetIndex, NewInstanceTransform, bWorldSpace, bMarkRenderStateDirty, bTeleport);
+}
+
+bool FLFPInstanceGridMeshData::SetCustomDataValue(const int32 GridIndex, const int32 CustomDataIndex, const float CustomDataValue, const bool bMarkRenderStateDirty)
+{
+	const int32 TargetIndex = FindGridIndex(GridIndex);
+
+	return ISMComponent->SetCustomDataValue(TargetIndex, CustomDataIndex, CustomDataValue, bMarkRenderStateDirty);
+}
+
+bool FLFPInstanceGridMeshData::SetCustomData(const int32 GridIndex, const TArray<float>& InCustomData, const bool bMarkRenderStateDirty)
+{
+	const int32 TargetIndex = FindGridIndex(GridIndex);
+
+	return ISMComponent->SetCustomData(TargetIndex, InCustomData, bMarkRenderStateDirty);
+}
+
 // Sets default values for this component's properties
 ULFPInstanceGridComponent::ULFPInstanceGridComponent()
 {
@@ -110,7 +153,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 
 	WorldGrid->GridLocationToWorldLocation(InstanceInfo.Location, InstanceInfo.bAddHalfGap, InstanceWorldLocation, InstanceWorldRotation);
 
-	FTransform TargetTransform(InstanceWorldRotation + InstanceInfo.RotationOffset, InstanceWorldLocation + InstanceInfo.LocationOffset, InstanceInfo.Scale);
+	const FTransform TargetTransform(InstanceWorldRotation + InstanceInfo.RotationOffset, InstanceWorldLocation + InstanceInfo.LocationOffset, InstanceInfo.Scale);
 
 	///////////////////////////////////////////////
 
@@ -150,7 +193,7 @@ bool ULFPInstanceGridComponent::SetInstance(const FLFPInstanceGridInstanceInfo& 
 
 		const int32 ISMIndex = ISMData.ISMComponent->AddInstance(TargetTransform, true);
 
-		ISMData.ISMComponent->GetInstanceTransform(ISMIndex, TargetTransform);
+		//ISMData.ISMComponent->GetInstanceTransform(ISMIndex, TargetTransform);
 
 		ISMData.InstanceGridIndexList.Add(GridIndex);
 	}
@@ -214,4 +257,3 @@ bool ULFPInstanceGridComponent::SetCustomDatas(const FIntVector Location, const 
 
 	return false;
 }
-

@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "GameplayTagContainer.h"
+#include "GameplayTagsManager.h"
 #include "LohFunctionPluginLibrary.h"
 #include "LFPItemFunctionLibrary.generated.h"
 
@@ -36,7 +37,7 @@ protected:
 
 public:
 
-	FORCEINLINE bool IsValid() const { return ItemTag.IsValid(); }
+	FORCEINLINE bool IsValid() const { return ItemTag.IsValid() && UGameplayTagsManager::Get().RequestGameplayTag(ItemTag.GetTagName()).IsValid(); }
 
 	FORCEINLINE	bool MatchesTag(const FGameplayTag& Tag) const { return ItemTag.MatchesTag(Tag); }
 

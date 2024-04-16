@@ -66,3 +66,4 @@ void ULohFunctionPluginLibrary::SetMetaDataAsString(UPARAM(ref)FLFPCompactMetaDa
 {
 	MetaData.SetDataAsString(Value);
 }
+

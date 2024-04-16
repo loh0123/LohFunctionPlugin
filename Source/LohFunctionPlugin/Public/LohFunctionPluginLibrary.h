@@ -5,8 +5,10 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+
 #include "LohFunctionPluginLibrary.generated.h"
 
 USTRUCT(BlueprintType)
@@ -296,6 +298,7 @@ enum class ELFPCompactMetaType : uint8
 	LFP_Float	UMETA(DisplayName = "Float"),
 	LFP_Boolean	UMETA(DisplayName = "Boolean"),
 	LFP_String	UMETA(DisplayName = "String"),
+	//LFP_Struct	UMETA(DisplayName = "Struct"),
 };
 
 USTRUCT(BlueprintType)
@@ -404,6 +407,18 @@ public:
 		StringToBytes(NewData, MetaData.GetData(), MetaData.Num());
 
 		MetaType = ELFPCompactMetaType::LFP_String;
+	}
+
+	FORCEINLINE	const TArray<uint8>& GetData() const
+	{
+		return MetaData;
+	}
+
+	FORCEINLINE	void SetData(const TArray<uint8>& NewData)
+	{
+		MetaType = ELFPCompactMetaType::LFP_None;
+
+		MetaData = NewData;
 	}
 
 public:
