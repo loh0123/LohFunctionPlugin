@@ -104,6 +104,32 @@ public:
 	FORCEINLINE	FLFPInventorySearch& operator+=(const FLFPInventorySearch& Other) { SlotNames.AppendTags(Other.SlotNames); return *this; }
 };
 
+USTRUCT()
+struct FLFPInventoryIndex_Internal
+{
+	GENERATED_BODY()
+
+	FLFPInventoryIndex_Internal() {}
+
+	FLFPInventoryIndex_Internal(const int32 NewSlotIndex, const int32 NewSlotListIndex) : SlotItemIndex(NewSlotIndex), SlotListIndex(NewSlotListIndex) {}
+
+public:
+
+	UPROPERTY()
+	int32 SlotItemIndex = INDEX_NONE;
+
+	UPROPERTY()
+	int32 SlotListIndex = INDEX_NONE;
+
+public:
+
+	FORCEINLINE bool IsValid() const { return SlotListIndex > INDEX_NONE && SlotItemIndex > INDEX_NONE; }
+
+	FORCEINLINE	bool operator==(const FLFPInventoryIndex_Internal& Other) const { return SlotItemIndex == Other.SlotItemIndex && SlotListIndex == Other.SlotListIndex; }
+
+	FORCEINLINE	bool operator!=(const FLFPInventoryIndex_Internal& Other) const { return SlotItemIndex != Other.SlotItemIndex || SlotListIndex != Other.SlotListIndex; }
+};
+
 USTRUCT(BlueprintType)
 struct FLFPInventoryIndex
 {
@@ -256,6 +282,19 @@ public: // InventoryIndex
 		SetSlotNameIndex(ReturnData);
 
 		return ReturnData;
+	}
+
+	FORCEINLINE FLFPInventoryIndex_Internal ToInventoryIndexInternal(const FLFPInventoryIndex& InventoryIndex) const
+	{ 
+		for (int32 Index = 0; Index < SlotList.Num(); Index++)
+		{
+			if (SlotList[Index].SlotName == InventoryIndex.SlotName)
+			{
+				return FLFPInventoryIndex_Internal(InventoryIndex.SlotItemIndex, Index);
+			}
+		}
+
+		return FLFPInventoryIndex_Internal();
 	}
 
 	FORCEINLINE	bool SetSlotNameIndex(FLFPInventoryIndex& InventoryIndex) const
