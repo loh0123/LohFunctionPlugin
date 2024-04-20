@@ -62,12 +62,12 @@ public:
 protected:
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SendItemLockChanged(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
-	void SendItemLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+	void SendSlotLockChanged(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+	void SendSlotLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SendItemActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
-	void SendItemActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+	void SendSlotActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+	void SendSlotActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
 
 protected:
 
@@ -127,8 +127,8 @@ public:
 	FLFPEquipmentItemEvent OnUnequipItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
-	FLFPEquipmentChangeEvent OnItemLockChanged;
+	FLFPEquipmentChangeEvent OnSlotLockChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
-	FLFPEquipmentChangeEvent OnItemActiveChanged;
+	FLFPEquipmentChangeEvent OnSlotActiveChanged;
 };
