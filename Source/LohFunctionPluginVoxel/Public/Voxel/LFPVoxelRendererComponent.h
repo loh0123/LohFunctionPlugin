@@ -34,14 +34,14 @@ public:
 
 namespace LFPVoxelRendererConstantData
 {
-	static const TArray<FRotator> VertexRotationList =
+	static const TArray<FRotator3f> VertexRotationList =
 	{
-		FRotator(0.0f	,   0.0f, 0.0f),
-		FRotator(90.0f	,   0.0f, 0.0f),
-		FRotator(90.0f	, 270.0f, 0.0f),
-		FRotator(90.0f	, 180.0f, 0.0f),
-		FRotator(90.0f	,  90.0f, 0.0f),
-		FRotator(180.0f	,   0.0f, 0.0f),
+		FRotator3f(0.0f	,   0.0f, 0.0f),
+		FRotator3f(90.0f	,   0.0f, 0.0f),
+		FRotator3f(90.0f	, 270.0f, 0.0f),
+		FRotator3f(90.0f	, 180.0f, 0.0f),
+		FRotator3f(90.0f	,  90.0f, 0.0f),
+		FRotator3f(180.0f	,   0.0f, 0.0f),
 	};
 
 	static const TArray<FLFPVoxelRendererFaceDirection> FaceDirection = {
@@ -303,7 +303,7 @@ public:
 		}
 	}
 
-	FORCEINLINE void GenerateDistanceBoxData(const FIntVector& LocalPosition, const bool bIsInner, int32 Range, TArray<FBox>& ReturnList) const
+	FORCEINLINE void GenerateDistanceBoxData(const FIntVector& LocalPosition, const bool bIsInner, int32 Range, TArray<FBox3f>& ReturnList) const
 	{
 		const auto& LookUpList = LFPVoxelRendererConstantData::FaceLoopDirectionList;
 		const auto& PositiveList = LFPVoxelRendererConstantData::FacePositiveList;
@@ -350,7 +350,7 @@ public:
 							if (IncludeRange.Min.X <= FaceData.Max.X && IncludeRange.Max.X >= FaceData.Min.X && IncludeRange.Min.Y <= FaceData.Max.Y && IncludeRange.Max.Y >= FaceData.Min.Y)
 								//if (FaceData.Intersect(IncludeRange))
 							{
-								FVector Min, Max;
+								FVector3f Min, Max;
 
 								const float Depth = float(ScanPosition.W) + (float(PositiveList[Index])) * 0.5f;
 
@@ -364,7 +364,7 @@ public:
 								Max[LookUpList[Index].Y] = FaceData.Max.Y + 0.5f;
 								Max[LookUpList[Index].Z] = Depth;
 
-								ReturnList.Add(FBox(Min, Max));
+								ReturnList.Add(FBox3f(Min, Max));
 							}
 						}
 					};

@@ -27,6 +27,31 @@ FGameplayTag ULohFunctionPluginLibrary::GetGameplayTagFromName(const FName TagNa
 	return FGameplayTag::RequestGameplayTag(TagName, false);
 }
 
+void ULohFunctionPluginLibrary::InitializeIDArray(UPARAM(ref)FLFPCompactIDArray& List, const int32 IndexSize)
+{
+	List = FLFPCompactIDArray(IndexSize);
+}
+
+int32 ULohFunctionPluginLibrary::AssignID(UPARAM(ref)FLFPCompactIDArray& List)
+{
+	return List.Assign();
+}
+
+bool ULohFunctionPluginLibrary::SetID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index, const int32 ID)
+{
+	return List.Set(Index, ID);
+}
+
+bool ULohFunctionPluginLibrary::RemoveID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index)
+{
+	return List.Remove(Index);
+}
+
+int32 ULohFunctionPluginLibrary::GetID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index)
+{
+	return List.Get(Index);
+}
+
 int32 ULohFunctionPluginLibrary::GetMetaDataAsInt(UPARAM(ref)FLFPCompactMetaData& MetaData)
 {
 	return MetaData.GetDataAsInt();

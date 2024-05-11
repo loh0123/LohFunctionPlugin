@@ -795,38 +795,38 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	{
 		FLFPDFMipInfo() {}
 
-		FLFPDFMipInfo(const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale)
+		FLFPDFMipInfo(const FIntVector& IndirectionDimensions, const FBox3f& LocalSpaceMeshBounds, const float LocalToVolumeScale)
 		{
 			// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
-			TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
+			TexelObjectSpaceSize = LocalSpaceMeshBounds.GetSize() / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
 			DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
 
-			IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
-			VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector(DistanceField::UniqueDataBrickSize);
+			IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
+			VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector3f(DistanceField::UniqueDataBrickSize);
 			MaxDistanceForEncoding = VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
 			LocalSpaceTraceDistance = MaxDistanceForEncoding / LocalToVolumeScale;
-			DistanceFieldToVolumeScaleBias = FVector2D(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
+			DistanceFieldToVolumeScaleBias = FVector2f(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
 		}
 
-		FVector TexelObjectSpaceSize;
-		FBox DistanceFieldVolumeBounds;
+		FVector3f TexelObjectSpaceSize;
+		FBox3f DistanceFieldVolumeBounds;
 
-		FVector IndirectionVoxelSize;
-		FVector VolumeSpaceDistanceFieldVoxelSize;
+		FVector3f IndirectionVoxelSize;
+		FVector3f VolumeSpaceDistanceFieldVoxelSize;
 		float MaxDistanceForEncoding;
 		float LocalSpaceTraceDistance;
-		FVector2D DistanceFieldToVolumeScaleBias;
+		FVector2f DistanceFieldToVolumeScaleBias;
 
-		FORCEINLINE void SetSparseDistanceFieldMip(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox& LocalSpaceMeshBounds, const float LocalToVolumeScale)
+		FORCEINLINE void SetSparseDistanceFieldMip(FSparseDistanceFieldMip& DistanceMip, const FIntVector& IndirectionDimensions, const FBox3f& LocalSpaceMeshBounds, const float LocalToVolumeScale)
 		{
 			DistanceMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
 			DistanceMip.IndirectionDimensions = IndirectionDimensions;
 
 			// Account for the border voxels we added
-			const FVector VirtualUVMin = FVector(DistanceField::MeshDistanceFieldObjectBorder) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-			const FVector VirtualUVSize = FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+			const FVector3f VirtualUVMin = FVector3f(DistanceField::MeshDistanceFieldObjectBorder) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+			const FVector3f VirtualUVSize = FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
 
-			const FVector VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
+			const FVector3f VolumePositionExtent = FVector3f(LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale);
 
 			// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
 			DistanceMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
@@ -836,20 +836,20 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 	struct FLFPCacheAccelerationInfo
 	{
-		TArray<FBox> TraceBoxList = TArray<FBox>();
+		TArray<FBox3f> TraceBoxList = TArray<FBox3f>();
 		int32 TraceDistance = INDEX_NONE;
 		int32 MaterialIndex = INDEX_NONE;
 	};
 
 	struct FLFPDFBrickTask
 	{
-		FLFPDFBrickTask(const int32 InBrickLength, const FVector& InBrickVoxelSize, const int32 InBrickIndex, const FVector& InBrickSpaceLocation, const FVector& InVoxelSize, const FLFPDFMipInfo& InMipInfo, const TArray<FLFPCacheAccelerationInfo>& InAccelerationInfoList, const float InLocalToVolumeScale, const FIntVector InCheckSize, const int32 InSizeHalfOffset)
+		FLFPDFBrickTask(const int32 InBrickLength, const FVector3f& InBrickVoxelSize, const int32 InBrickIndex, const FVector3f& InBrickSpaceLocation, const FVector3f& InVoxelSize, const FLFPDFMipInfo& InMipInfo, const TArray<FLFPCacheAccelerationInfo>& InAccelerationInfoList, const float InLocalToVolumeScale, const FIntVector InCheckSize, const int32 InSizeHalfOffset)
 			: BrickLength(InBrickLength), BrickIndex(InBrickIndex), BrickSpaceLocation(InBrickSpaceLocation), BrickVoxelSize(InBrickVoxelSize), VoxelSize(InVoxelSize), MipInfo(InMipInfo), AccelerationInfoList(InAccelerationInfoList), LocalToVolumeScale(InLocalToVolumeScale), CheckSize(InCheckSize), SizeHalfOffset(InSizeHalfOffset)
 		{}
 
-		FORCEINLINE float GetDistanceToClosetSurface(const FVector& LocalLocation) const
+		FORCEINLINE float GetDistanceToClosetSurface(const FVector3f& LocalLocation) const
 		{
-			const FVector LocalSpace = LocalLocation / VoxelSize;
+			const FVector3f LocalSpace = LocalLocation / VoxelSize;
 			const FIntVector GridLocation = FIntVector(FMath::FloorToInt32(LocalSpace.X), FMath::FloorToInt32(LocalSpace.Y), FMath::FloorToInt32(LocalSpace.Z));
 			const int32 FullGridIndex = ULFPGridLibrary::ToGridIndex(GridLocation + FIntVector(SizeHalfOffset), CheckSize);
 			//const int32 GridIndex = ULFPGridLibrary::ToGridIndex(GridLocation, ContainerSetting.GetPaletteGrid());
@@ -860,11 +860,11 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 			double ClosetDistance = FMath::Square(MipInfo.LocalSpaceTraceDistance);
 			
-			//const FBox TestBox(FVector(0), ContainerSetting.GetVoxelHalfBounds() * 2);
+			//const FBox3f TestBox(FVector3f(0), ContainerSetting.GetVoxelHalfBounds() * 2);
 
 			//ClosetDistance = FMath::Min(TestBox.ComputeSquaredDistanceToPoint(LocalLocation), ClosetDistance);
 
-			for (const FBox& TraceBox : CurrentInfo.TraceBoxList)
+			for (const FBox3f& TraceBox : CurrentInfo.TraceBoxList)
 			{
 				ClosetDistance = FMath::Min(TraceBox.ComputeSquaredDistanceToPoint(LocalLocation), ClosetDistance);
 			}
@@ -883,7 +883,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 			{
 				const FIntVector DataLocation(ULFPGridLibrary::ToGridLocation(DataIndex, FIntVector(DistanceField::BrickSize)));
 
-				const FVector BrickVoxelLocation = (FVector(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
+				const FVector3f BrickVoxelLocation = (FVector3f(DataLocation) * BrickVoxelSize) + BrickSpaceLocation;
 
 				const float ClosetPoint = GetDistanceToClosetSurface(BrickVoxelLocation);
 
@@ -906,9 +906,9 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 		const int32 BrickLength;
 		const int32 BrickIndex;
-		const FVector BrickSpaceLocation;
-		const FVector BrickVoxelSize;
-		const FVector VoxelSize;
+		const FVector3f BrickSpaceLocation;
+		const FVector3f BrickVoxelSize;
+		const FVector3f VoxelSize;
 		const FLFPDFMipInfo& MipInfo;
 		const TArray<FLFPCacheAccelerationInfo>& AccelerationInfoList;
 		const float LocalToVolumeScale;
@@ -924,10 +924,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	/** Begin Data */
 	const FLFPGridPaletteContainerSetting ContainerSetting = TargetVoxelContainer->GetSetting();
 
-	const FVector VoxelSize = TargetGenerationSetting.VoxelHalfSize * 2;
-	const FVector VoxelHalfBounds = TargetGenerationSetting.VoxelHalfSize * FVector(TargetVoxelContainer->GetSetting().GetPaletteGrid());
+	const FVector3f VoxelSize = FVector3f(TargetGenerationSetting.VoxelHalfSize) * 2;
+	const FVector3f VoxelHalfBounds = FVector3f(TargetGenerationSetting.VoxelHalfSize) * FVector3f(TargetVoxelContainer->GetSetting().GetPaletteGrid());
 
-	const FVector TargetDimensions = FVector(ContainerSetting.GetPaletteGrid()) * (double(TargetGenerationSetting.LumenQuality) / 8.0);
+	const FVector3f TargetDimensions = FVector3f(ContainerSetting.GetPaletteGrid()) * (double(TargetGenerationSetting.LumenQuality) / 8.0);
 
 	const FIntVector MaxIndirectionDimensions(
 		FMath::Clamp(FMath::RoundToInt32(TargetDimensions.X), 1, int32(DistanceField::MaxIndirectionDimension)),
@@ -943,10 +943,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 	const float BoundExpand = TargetGenerationSetting.VoxelHalfSize.GetMax() * TargetGenerationSetting.LumenBoundMultipy;
 
-	const FBox LocalBounds = FBox(-VoxelHalfBounds, VoxelHalfBounds);
+	const FBox3f LocalBounds = FBox3f(-VoxelHalfBounds, VoxelHalfBounds);
 
-	const FBox LocalSpaceMeshBounds(LocalBounds.ExpandBy(
-		LocalBounds.GetSize() / FVector(MinIndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * 0.25f))
+	const FBox3f LocalSpaceMeshBounds(LocalBounds.ExpandBy(
+		LocalBounds.GetSize() / FVector3f(MinIndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * 0.25f))
 	));
 
 	const int32 BrickLength = DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize;
@@ -958,9 +958,9 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 	/* Calculate MaxCheckDistance */
 	FLFPDFMipInfo MinMipInfo(MinIndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
 
-	const FVector MinBrickOffset = MinMipInfo.DistanceFieldVolumeBounds.Min + VoxelHalfBounds;
+	const FVector3f MinBrickOffset = MinMipInfo.DistanceFieldVolumeBounds.Min + VoxelHalfBounds;
 
-	const int32 SizeHalfOffset = FMath::DivideAndRoundUp(MinBrickOffset.GetAbs(), TargetGenerationSetting.VoxelHalfSize.GetAbs() * 2).GetMax();
+	const int32 SizeHalfOffset = FMath::DivideAndRoundUp(MinBrickOffset.GetAbs(), FVector3f(TargetGenerationSetting.VoxelHalfSize.GetAbs()) * 2).GetMax();
 	const int32 SizeOffset = SizeHalfOffset * 2;
 
 	const FIntVector CheckSize(
@@ -1067,13 +1067,13 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 				//	TargetThreadResult->SectionData[SectionIndex].GenerateDistanceBoxData(CacheLocation, SectionIndex == CurrentCacheInfo.MaterialIndex, CurrentCacheInfo.TraceDistance, CurrentCacheInfo.TraceBoxList);
 				//}
 
-				for (FBox& TraceBox : CurrentCacheInfo.TraceBoxList)
+				for (FBox3f& TraceBox : CurrentCacheInfo.TraceBoxList)
 				{
-					TraceBox.Min *= TargetGenerationSetting.VoxelHalfSize * 2;
-					TraceBox.Max *= TargetGenerationSetting.VoxelHalfSize * 2;
+					TraceBox.Min *= FVector3f(TargetGenerationSetting.VoxelHalfSize) * 2;
+					TraceBox.Max *= FVector3f(TargetGenerationSetting.VoxelHalfSize) * 2;
 
-					TraceBox.Min += TargetGenerationSetting.VoxelHalfSize;
-					TraceBox.Max += TargetGenerationSetting.VoxelHalfSize;
+					TraceBox.Min += FVector3f(TargetGenerationSetting.VoxelHalfSize);
+					TraceBox.Max += FVector3f(TargetGenerationSetting.VoxelHalfSize);
 				}
 			}
 
@@ -1118,10 +1118,10 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 			MipInfo.SetSparseDistanceFieldMip(OutMip, IndirectionDimensions, LocalSpaceMeshBounds, LocalToVolumeScale);
 
-			const FVector BrickSpaceSize = MipInfo.DistanceFieldVolumeBounds.GetSize() / FVector(IndirectionDimensions);
-			const FVector BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
-			const FVector BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min + VoxelHalfBounds;
-			//const FVector BrickOffset = FVector(0.0f);
+			const FVector3f BrickSpaceSize = MipInfo.DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
+			const FVector3f BrickVoxelSize = BrickSpaceSize / DistanceField::UniqueDataBrickSize;
+			const FVector3f BrickOffset = MipInfo.DistanceFieldVolumeBounds.Min + VoxelHalfBounds;
+			//const FVector3f BrickOffset = FVector3f(0.0f);
 
 			//checkf(false, TEXT("%s"), *(MipInfo.DistanceFieldVolumeBounds.Min + ContainerSetting.GetVoxelHalfBounds()).ToString());
 
@@ -1133,7 +1133,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 			for (int32 BrickIndex = 0; BrickIndex < IndirectionDimensionsLength; BrickIndex++)
 			{
 				const FIntVector BrickLocation = (ULFPGridLibrary::ToGridLocation(BrickIndex, IndirectionDimensions));
-				const FVector BrickSpaceLocation = (FVector(BrickLocation) * BrickSpaceSize) + BrickOffset;
+				const FVector3f BrickSpaceLocation = (FVector3f(BrickLocation) * BrickSpaceSize) + BrickOffset;
 
 				//checkf((BrickSpaceLocation / (ContainerSetting.GetVoxelHalfSize() * 2)).GetMin() + SizeHalfOffset >= 0.0f, TEXT("Error Size : %s : %s : %lg : %lg"), *BrickOffset.ToString(), *MinBrickOffset.ToString(), MinBrickOffset.GetAbsMax(), ContainerSetting.GetVoxelHalfSize().GetAbsMax() * 2);
 
@@ -1266,35 +1266,35 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 		auto AddCardBuild = [&](TArray<FLumenCardBuildData>& CardBuildList, const FIntPoint& CoverIndex, const int32 DirectionIndex)
 		{
-			FBox LumenBox;
+			FBox3f LumenBox;
 
 			switch (DirectionIndex)
 			{
 			case 0: case 5:
-				LumenBox = FBox(
-					FVector(LocalBounds.Min.X, LocalBounds.Min.Y, (CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.Z * 2) - VoxelHalfBounds.Z - BoundExpand),
-					FVector(LocalBounds.Max.X, LocalBounds.Max.Y, (CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.Z * 2) - VoxelHalfBounds.Z + BoundExpand)
+				LumenBox = FBox3f(
+					FVector3f(LocalBounds.Min.X, LocalBounds.Min.Y, (CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.Z * 2) - VoxelHalfBounds.Z - BoundExpand),
+					FVector3f(LocalBounds.Max.X, LocalBounds.Max.Y, (CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.Z * 2) - VoxelHalfBounds.Z + BoundExpand)
 				);
 
-				if (DirectionIndex == 0) LumenBox = LumenBox.ShiftBy(FVector(0.0f, 0.0f, TargetGenerationSetting.VoxelHalfSize.Z) * 2.0f);
+				if (DirectionIndex == 0) LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, 0.0f, TargetGenerationSetting.VoxelHalfSize.Z) * 2.0f);
 				break;
 
 			case 1: case 3:
-				LumenBox = FBox(
-					FVector((CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.X * 2) - VoxelHalfBounds.X - BoundExpand, LocalBounds.Min.Y, LocalBounds.Min.Z),
-					FVector((CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.X * 2) - VoxelHalfBounds.X + BoundExpand, LocalBounds.Max.Y, LocalBounds.Max.Z)
+				LumenBox = FBox3f(
+					FVector3f((CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.X * 2) - VoxelHalfBounds.X - BoundExpand, LocalBounds.Min.Y, LocalBounds.Min.Z),
+					FVector3f((CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.X * 2) - VoxelHalfBounds.X + BoundExpand, LocalBounds.Max.Y, LocalBounds.Max.Z)
 				);
 
-				if (DirectionIndex == 3) LumenBox = LumenBox.ShiftBy(FVector(TargetGenerationSetting.VoxelHalfSize.X, 0.0f, 0.0f) * 2.0f);
+				if (DirectionIndex == 3) LumenBox = LumenBox.ShiftBy(FVector3f(TargetGenerationSetting.VoxelHalfSize.X, 0.0f, 0.0f) * 2.0f);
 				break;
 
 			case 2: case 4:
-				LumenBox = FBox(
-					FVector(LocalBounds.Min.X, (CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.Y * 2) - VoxelHalfBounds.Y - BoundExpand, LocalBounds.Min.Z),
-					FVector(LocalBounds.Max.X, (CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.Y * 2) - VoxelHalfBounds.Y + BoundExpand, LocalBounds.Max.Z)
+				LumenBox = FBox3f(
+					FVector3f(LocalBounds.Min.X, (CoverIndex.X * TargetGenerationSetting.VoxelHalfSize.Y * 2) - VoxelHalfBounds.Y - BoundExpand, LocalBounds.Min.Z),
+					FVector3f(LocalBounds.Max.X, (CoverIndex.Y * TargetGenerationSetting.VoxelHalfSize.Y * 2) - VoxelHalfBounds.Y + BoundExpand, LocalBounds.Max.Z)
 				);
 
-				if (DirectionIndex == 2) LumenBox = LumenBox.ShiftBy(FVector(0.0f, TargetGenerationSetting.VoxelHalfSize.Y, 0.0f) * 2.0f);
+				if (DirectionIndex == 2) LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, TargetGenerationSetting.VoxelHalfSize.Y, 0.0f) * 2.0f);
 				break;
 			}
 
@@ -1318,7 +1318,7 @@ void ULFPVoxelRendererComponent::GenerateLumenData(ULFPGridContainerComponent* T
 
 		//const double StartTime = FPlatformTime::Seconds();
 
-		TargetThreadResult->LumenCardData->MeshCardsBuildData.Bounds = LocalBounds;
+		TargetThreadResult->LumenCardData->MeshCardsBuildData.Bounds = FBox(LocalBounds);
 
 		TArray<FLumenCardBuildData>& CardBuildList = TargetThreadResult->LumenCardData->MeshCardsBuildData.CardBuildData;
 

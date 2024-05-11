@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "LFPGameplayTagSubsystem.generated.h"
+#include "LFPWorldReferenceSubsystem.generated.h"
 
 USTRUCT()
 struct FLFPGameplayTagBindData
@@ -38,6 +38,11 @@ public:
     {
         return BindedObjectList.Num();
     }
+
+    bool CanRemove() const
+    {
+        return BindedObjectList.IsEmpty();
+    }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPGameplayTagRefUpdate, const FGameplayTag, EventTag, UActorComponent*, Component);
@@ -46,9 +51,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPGameplayTagRefUpdate, const FGa
  * 
  */
 UCLASS()
-class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPGameplayTagSubsystem : public UWorldSubsystem
+class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPWorldReferenceSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
+
+public:
+
+    FORCEINLINE bool ProcessActorComponent(
+        const FGameplayTagContainer& ComponentGameplayTags, 
+        const TArray<FName>& ComponentTagList, 
+        const bool bHasAllTags,
+        const TFunctionRef<bool(UActorComponent* FoundedComponent)> OnMatchComponentFounded,
+        const TFunctionRef<bool()> OnEnd
+    ) const;
 
 public:
 
@@ -70,13 +85,13 @@ public:
         void UnregisterComponentByContainer(const FGameplayTagContainer Tags, UActorComponent* Component);
 
     UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Get", meta = (GameplayTagFilter = "Component.Identifiers", AutoCreateRefTerm = ComponentTagList))
-        void FindComponentListByTag(TArray<UActorComponent*>& ComponentList, const FGameplayTag ComponentGameplayTag, const TArray<FName>& ComponentTagList, const bool bHasAllTags = false) const;
+        bool FindComponentListByTag(TArray<UActorComponent*>& ComponentList, const FGameplayTag ComponentGameplayTag, const TArray<FName>& ComponentTagList, const bool bHasAllTags = false) const;
 
     UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Get", meta = (GameplayTagFilter = "Component.Identifiers", AutoCreateRefTerm = ComponentTagList))
-        void FindComponentListByTags(TArray<UActorComponent*>& ComponentList, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags = false) const;
+        bool FindComponentListByTags(TArray<UActorComponent*>& ComponentList, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags = false) const;
 
     UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Event", meta = (GameplayTagFilter = "Component"))
-        void BroadcastGameplayTagEvent(const FGameplayTagContainer ComponentTags, const FGameplayTag EventTag, UObject* Caller, const FString Messages) const;
+        bool BroadcastGameplayTagEvent(const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags, const FGameplayTag EventTag, UObject* Caller, const FString Messages) const;
 
 
     UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Get", meta = (GameplayTagFilter = "Component.Identifiers", AutoCreateRefTerm = ComponentTagList))

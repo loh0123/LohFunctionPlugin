@@ -20,6 +20,16 @@ struct FLFPCompactIntArray
 
 	FLFPCompactIntArray(const uint32 NewIndexSize) : IndexSize(NewIndexSize) {}
 
+	FLFPCompactIntArray(const uint32 NewIndexSize, const int32 DefaultData) : IndexSize(NewIndexSize) 
+	{
+		Resize(DefaultData);
+
+		for (int32 Index = 0; Index < int32(NewIndexSize); Index++)
+		{
+			SetIndexNumber(Index, DefaultData);
+		}
+	}
+
 private:
 
 	UPROPERTY(SaveGame)
@@ -30,9 +40,6 @@ private:
 
 	UPROPERTY(SaveGame)
 		uint32 IndexSize = 0;
-
-	UPROPERTY(SaveGame)
-		uint32 MaxSize = 0;
 
 private:
 
@@ -84,6 +91,11 @@ private:
 
 public:
 
+	FORCEINLINE bool IsInitialized() const
+	{
+		return EncodeBtye > 0;
+	}
+
 	FORCEINLINE bool IsValidIndex(const int32 Index) const
 	{
 		return Index >= 0 && Index < int32(IndexSize);
@@ -93,8 +105,6 @@ public:
 
 	FORCEINLINE void Resize(const int32 NewMaxSize)
 	{
-		if (MaxSize == NewMaxSize) return;
-
 		for (uint8 NewEncodeSize = 1; NewEncodeSize < NumBitsPerDWORD; NewEncodeSize++)
 		{
 			if (NewMaxSize <= (1 << NewEncodeSize) - 1)
@@ -112,7 +122,7 @@ public:
 
 	FORCEINLINE void SetIndexNumber(const int32 Index, const uint32 Number)
 	{
-		checkf(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0, TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
+		checkf(IsValidIndex(Index) && IsInitialized(), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
 
 		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
 		{
@@ -124,7 +134,7 @@ public:
 
 	FORCEINLINE uint32 GetIndexNumber(const int32 Index) const
 	{
-		checkf(Index >= 0 && Index < int32(IndexSize) && EncodeBtye > 0, TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
+		checkf(IsValidIndex(Index), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
 
 		uint32 OutIndex = 0;
 
@@ -150,11 +160,6 @@ public:
 		return IndexSize;
 	}
 
-	FORCEINLINE uint32 GetMaxSize() const
-	{
-		return MaxSize;
-	}
-
 public:
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPCompactIntArray& Data)
@@ -162,6 +167,170 @@ public:
 		return Ar << Data.IndexList << Data.EncodeBtye << Data.IndexSize;
 	}
 
+};
+
+USTRUCT(BlueprintType)
+struct FLFPCompactIDArray : public FLFPCompactIntArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPCompactIDArray() {}
+
+	FLFPCompactIDArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
+
+	FLFPCompactIDArray(const uint32 NewIndexSize, const int32 DefaultData) : Super(NewIndexSize, DefaultData) {}
+
+private:
+
+	UPROPERTY(SaveGame)
+	TArray<int32> OpenIDList = {};
+
+	UPROPERTY(SaveGame)
+	TArray<int32> IDRefList = {};
+
+private:
+
+	/** Resize Function */
+
+	FORCEINLINE void ResizeList(const int32 OffsetSize = 0)
+	{
+		bool bNeedSort = false;
+
+		for (int32 IDIndex = IDRefList.Num() - 1; IDIndex >= 0; --IDIndex)
+		{
+			if (IDRefList[IDIndex] == 0)
+			{
+				IDRefList.RemoveAt(IDIndex);
+
+				OpenIDList.RemoveSingle(IDIndex);
+
+				bNeedSort = true;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (bNeedSort)
+		{
+			OpenIDList.HeapSort();
+		}
+
+		Resize(IDRefList.Num() + OffsetSize);
+
+		return;
+	}
+
+public:
+
+	FORCEINLINE int32 Assign()
+	{
+		if (OpenIDList.IsEmpty() == false)
+		{
+			int32 PopID = INDEX_NONE;
+
+			OpenIDList.HeapPop(PopID);
+
+			check(IDRefList.IsValidIndex(PopID));
+
+			IDRefList[PopID] += 1;
+
+			return PopID;
+		}
+
+		ResizeList(1);
+
+		return IDRefList.Add(0);
+	}
+
+	FORCEINLINE bool Set(const int32 Index, const int32 ID)
+	{
+		if (IsValidIndex(Index) == false || IDRefList.IsValidIndex(ID) == false)
+		{
+			return false;
+		}
+
+		// Remove the ID on current index
+		Remove(Index);
+
+		int32& IDRef = IDRefList[ID];
+
+		if (IDRef == 0)
+		{
+			const int32 IDIndex = OpenIDList.Find(ID);
+
+			// Error IDRef is empty but not in open array
+			check(IDIndex != INDEX_NONE);
+
+			OpenIDList.HeapRemoveAt(IDIndex);
+		}
+
+		IDRef += 1;
+
+		SetIndexNumber(Index, ID + 1);
+
+		return true;
+	}
+
+	FORCEINLINE bool Remove(const int32 Index)
+	{
+		if (IsValidIndex(Index) == false || IsInitialized() == false)
+		{
+			return false;
+		}
+
+		int32 CorrectID = INDEX_NONE;
+		{
+			const uint32 RemoveID = GetIndexNumber(Index);
+
+			// ID is not valid
+			if (RemoveID == 0)
+			{
+				return false;
+			}
+
+			CorrectID = RemoveID - 1;
+		}
+
+		int32& IDRef = IDRefList[CorrectID];
+
+		IDRef -= 1;
+
+		SetIndexNumber(Index, 0);
+
+		// Check ID Is Not Smaller Than Index NONE
+		check(IDRef >= 0);
+
+		if (IDRef == 0)
+		{
+			OpenIDList.HeapPush(IDRef);
+		}
+
+		ResizeList();
+
+		return true;
+	}
+
+	FORCEINLINE int32 Get(const int32 Index) const
+	{
+		if (IsValidIndex(Index) == false || IsInitialized() == false)
+		{
+			return INDEX_NONE;
+		}
+
+		return GetIndexNumber(Index) - 1;
+	}
+
+	FORCEINLINE int32 Num() const
+	{
+		if (IsInitialized() == false)
+		{
+			return 0;
+		}
+
+		return IDRefList.Num();
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -280,13 +449,6 @@ public:
 	FORCEINLINE const FGameplayTag& GetIndexItem(const int32 CompactIndex) const
 	{
 		return ItemList[GetIndexNumber(CompactIndex)];
-	}
-
-public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPCompactTagArray& Data)
-	{
-		return Ar << Data.ItemList << Data.OpenIndexList << Data.RefList;
 	}
 };
 
@@ -426,13 +588,6 @@ public:
 	FORCEINLINE bool operator==(const FGameplayTag& Tag) const { return MetaTag == Tag; }
 
 	FORCEINLINE bool operator==(const FLFPCompactMetaData& Other) const { return MetaTag == Other.MetaTag && MetaData == Other.MetaData && MetaType == Other.MetaType; }
-
-public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPCompactMetaData& Data)
-	{
-		return Ar << Data.MetaTag << Data.MetaData;
-	}
 };
 
 USTRUCT(BlueprintType)
@@ -535,13 +690,6 @@ public:
 	FORCEINLINE const FLFPCompactMetaData& GetIndexItem(const int32 CompactIndex) const
 	{
 		return ItemList[GetIndexNumber(CompactIndex)];
-	}
-
-public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPCompactMetaArray& Data)
-	{
-		return Ar << Data.ItemList << Data.OpenIndexList;
 	}
 };
 
@@ -726,6 +874,23 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | Other")
 		static FGameplayTag GetGameplayTagFromName(const FName TagName);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
+		static void InitializeIDArray(UPARAM(ref) FLFPCompactIDArray& List, const int32 IndexSize);
+
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
+		static int32 AssignID(UPARAM(ref) FLFPCompactIDArray& List);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
+		static bool SetID(UPARAM(ref) FLFPCompactIDArray& List, const int32 Index, const int32 ID);
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
+		static bool RemoveID(UPARAM(ref) FLFPCompactIDArray& List, const int32 Index);
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
+		static int32 GetID(UPARAM(ref) FLFPCompactIDArray& List, const int32 Index);
 
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactMetaData")

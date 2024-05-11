@@ -5,20 +5,20 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
-#include "LFPGameplayTagComponent.generated.h"
+#include "LFPTagReferenceComponent.generated.h"
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPGameplayTagEvent, const FGameplayTag, EventTag, UObject*, Caller, const FString&, Messages);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPGameplayTagComponent : public UActorComponent
+class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPTagReferenceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	ULFPGameplayTagComponent();
+	ULFPTagReferenceComponent();
 
 protected:
 	// Called when the game starts

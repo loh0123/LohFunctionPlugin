@@ -8,6 +8,10 @@
 #include "Engine/DataTable.h"
 #include "LFPGridContainerComponentV2.generated.h"
 
+/**
+* This Component Is Use To Store Grid Data (IE : Tag, MetaData)
+*/
+
 USTRUCT( BlueprintType )
 struct FLFPGridContainerSetting
 {
@@ -90,9 +94,9 @@ struct FLFPGridPaletteDataV2
 
 	FLFPGridPaletteDataV2() {}
 
-	FLFPGridPaletteDataV2(const FLFPGridPaletteDataV2& Other) : Name(Other.Name), RefCounter(1) {  }
+	FLFPGridPaletteDataV2(const FLFPGridPaletteDataV2& Other) : Name(Other.Name) {  }
 
-	FLFPGridPaletteDataV2(const FName& NewName) : Name(NewName), RefCounter(1) {  }
+	FLFPGridPaletteDataV2(const FName& NewName) : Name(NewName) {  }
 
 public:
 
@@ -103,11 +107,6 @@ public:
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
 		FName Name = FName();
 
-private:
-
-	UPROPERTY(SaveGame)
-		uint32 RefCounter = 0;
-
 public:
 
 	FORCEINLINE bool IsNone() const
@@ -115,36 +114,7 @@ public:
 		return Name.IsNone();
 	}
 
-	FORCEINLINE bool CanRemove() const
-	{
-		return RefCounter == 0;
-	}
-
-	FORCEINLINE void AddRef(const int32 NewRef = 1)
-	{
-		check(NewRef > 0);
-
-		RefCounter += NewRef;
-	}
-
-	FORCEINLINE void RemoveRef(const int32 OldRef = 1)
-	{
-		check(OldRef > 0);
-
-		if (RefCounter > 0)
-		{
-			RefCounter -= OldRef;
-
-			if (RefCounter < 0) RefCounter = 0;
-		}
-	}
-
 public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPGridPaletteDataV2& Data)
-	{
-		return Ar << Data.Name << Data.RefCounter;
-	}
 
 	FORCEINLINE bool operator==(const FLFPGridPaletteDataV2& Other) const
 	{
@@ -172,10 +142,7 @@ private:
 		TArray<FLFPGridPaletteDataV2> PaletteList = {};
 
 	UPROPERTY(SaveGame)
-		TArray<int32> OpenPaletteList = {};
-
-	UPROPERTY(SaveGame)
-		FLFPCompactIntArray IndexList = FLFPCompactIntArray();
+		FLFPCompactIDArray IDList = FLFPCompactIDArray();
 
 private:
 
@@ -186,75 +153,23 @@ private:
 		return PaletteList.Find(PaletteName);
 	}
 
-	FORCEINLINE int32 FindOrAddPaletteIndex(const FLFPGridPaletteDataV2& NewGridPalette, const bool bIncreaseCounter, const bool bResizePalette)
+	FORCEINLINE int32 FindOrAddPaletteIndex(const FLFPGridPaletteDataV2& NewGridPalette)
 	{
 		int32 PaletteIndex = PaletteList.Find(NewGridPalette);
 
 		if (PaletteIndex == INDEX_NONE)
 		{
-			if (OpenPaletteList.IsEmpty() == false) 
-			{
-				PaletteIndex = OpenPaletteList.Pop();
+			const int32 AssignID = IDList.Assign();
 
-				PaletteList[PaletteIndex] = NewGridPalette;
-			}
-			else
+			if (PaletteList.Num() < AssignID + 1)
 			{
-				PaletteIndex = PaletteList.Add(NewGridPalette);
+				PaletteList.SetNum(AssignID + 1);
 			}
 
-			if (bResizePalette) ResizePalette();
-		}
-		else if (bIncreaseCounter)
-		{
-			PaletteList[PaletteIndex].AddRef();
+			PaletteList[AssignID] = NewGridPalette;
 		}
 
 		return PaletteIndex;
-	}
-
-	FORCEINLINE void RemovePalette(const int32 PaletteIndex, const bool bResizePalette)
-	{
-		check(PaletteList[PaletteIndex].CanRemove() == false);
-
-		PaletteList[PaletteIndex].RemoveRef();
-
-		if (PaletteList[PaletteIndex].CanRemove() == false) return;
-
-		/** Sort And Push Into Open Index List */
-		if (OpenPaletteList.Num() > 0)
-		{
-			for (int32 Index = OpenPaletteList.Num() - 1; Index >= 0; Index--)
-			{
-				if (OpenPaletteList[Index] < PaletteIndex) continue;
-
-				OpenPaletteList.EmplaceAt(Index, PaletteIndex);
-
-				break;
-			}
-		}
-		else
-		{
-			OpenPaletteList.Emplace(PaletteIndex);
-		}
-
-		for (int32 Index = PaletteList.Num() - 1; Index >= 0; --Index)
-		{
-			if (PaletteList[Index].CanRemove())
-			{
-				PaletteList.RemoveAt(Index);
-
-				OpenPaletteList.Remove(Index);
-
-				continue;
-			}
-
-			break;
-		}
-
-		if (bResizePalette) ResizePalette();
-
-		return;
 	}
 
 	/** Resize Function */
@@ -263,7 +178,7 @@ private:
 	{
 		check(IsInitialized());
 
-		IndexList.Resize(PaletteList.Num());
+		PaletteList.SetNum(IDList.Num());
 
 		return;
 	}
@@ -281,14 +196,9 @@ public:
 
 	FORCEINLINE void InitChuckData(const FLFPGridPaletteDataV2& GridPalette, const uint32 NewIndexSize)
 	{
-		OpenPaletteList.Empty();
-
 		PaletteList.Init(GridPalette, 1);
-		PaletteList[0].AddRef(NewIndexSize - 1);
 
-		IndexList = FLFPCompactIntArray(NewIndexSize);
-
-		ResizePalette();
+		IDList = FLFPCompactIDArray(NewIndexSize, 1);
 	}
 
 	/** Read / Write Function */
@@ -300,18 +210,18 @@ public:
 
 	FORCEINLINE int32 GetPaletteIndex(const int32 GridIndex) const
 	{
-		return IndexList.GetIndexNumber(GridIndex);
+		return IDList.GetIndexNumber(GridIndex);
 	}
 
 	FORCEINLINE void SetIndexData(const int32 GridIndex, const FLFPGridPaletteDataV2& NewData)
 	{
 		check(GridIndex >= 0);
 
-		RemovePalette(GetPaletteIndex(GridIndex), false);
+		const int32 NewIndex = FindOrAddPaletteIndex(NewData);
 
-		const int32 NewIndex = FindOrAddPaletteIndex(NewData, true, true);
+		IDList.Set(GridIndex, NewIndex);
 
-		IndexList.SetIndexNumber(GridIndex, NewIndex);
+		ResizePalette();
 	}
 
 	FORCEINLINE const FLFPGridPaletteDataV2& GetIndexData(const int32 GridIndex) const
@@ -321,14 +231,7 @@ public:
 
 	FORCEINLINE int32 GetIndexSize() const
 	{
-		return IndexList.GetIndexSize();
-	}
-
-public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPGridChuckDataV2& Data)
-	{
-		return Ar << Data.PaletteList << Data.OpenPaletteList << Data.IndexList;
+		return IDList.GetIndexSize();
 	}
 
 };
@@ -353,13 +256,6 @@ public:
 	FORCEINLINE void InitRegionData(const int32 ChuckLength)
 	{
 		ChuckData.Init(FLFPGridChuckDataV2(), ChuckLength);
-	}
-
-public:
-
-	friend FArchive& operator<<(FArchive& Ar, FLFPGridRegionDataV2& Data)
-	{
-		return Ar << Data.ChuckData;
 	}
 };
 
