@@ -20,15 +20,7 @@ struct FLFPCompactIntArray
 
 	FLFPCompactIntArray(const uint32 NewIndexSize) : IndexSize(NewIndexSize) {}
 
-	FLFPCompactIntArray(const uint32 NewIndexSize, const int32 DefaultData) : IndexSize(NewIndexSize) 
-	{
-		Resize(DefaultData);
-
-		for (int32 Index = 0; Index < int32(NewIndexSize); Index++)
-		{
-			SetIndexNumber(Index, DefaultData);
-		}
-	}
+	FLFPCompactIntArray(const uint32 NewIndexSize, const uint32 NewMinSize) : IndexSize(NewIndexSize), MinSize(NewMinSize) {}
 
 private:
 
@@ -40,6 +32,9 @@ private:
 
 	UPROPERTY(SaveGame)
 		uint32 IndexSize = 0;
+
+	UPROPERTY(SaveGame)
+		uint32 MinSize = 0;
 
 private:
 
@@ -61,9 +56,25 @@ private:
 		);
 	}
 
-	FORCEINLINE void ResizeBitArray(const uint32 NewSize)
+	FORCEINLINE void ResizeBitArray(uint32 NewSize)
 	{
+		check(NewSize >= 0);
+
+		if (NewSize > 0)
+		{
+			NewSize = FMath::Max(NewSize, MinSize);
+		}
+
 		if (NewSize == EncodeBtye) return;
+
+		if (NewSize == 0)
+		{
+			IndexList.Empty();
+
+			EncodeBtye = NewSize;
+
+			return;
+		}
 
 		const TArray<uint32> OldGridIndexList = IndexList;
 
@@ -178,7 +189,7 @@ struct FLFPCompactIDArray : public FLFPCompactIntArray
 
 	FLFPCompactIDArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
 
-	FLFPCompactIDArray(const uint32 NewIndexSize, const int32 DefaultData) : Super(NewIndexSize, DefaultData) {}
+	FLFPCompactIDArray(const uint32 NewIndexSize, const uint32 NewMinSize) : Super(NewIndexSize, NewMinSize) {}
 
 private:
 
@@ -192,7 +203,7 @@ protected:
 
 	/** Resize Function */
 
-	FORCEINLINE void ResizeID(const int32 OffsetSize = 0)
+	FORCEINLINE void ResizeID()
 	{
 		bool bNeedSort = false;
 
@@ -217,14 +228,14 @@ protected:
 			OpenIDList.HeapSort();
 		}
 
-		Resize(IDRefList.Num() + OffsetSize);
+		Resize(IDRefList.Num());
 
 		return;
 	}
 
 public:
 
-	FORCEINLINE int32 AssignID()
+	FORCEINLINE int32 AssignID(const bool bResize = true)
 	{
 		if (OpenIDList.IsEmpty() == false)
 		{
@@ -239,9 +250,14 @@ public:
 			return PopID;
 		}
 
-		ResizeID(1);
+		const int32 NewID = IDRefList.Add(0);;
 
-		return IDRefList.Add(0);
+		if (bResize)
+		{
+			ResizeID();
+		}
+
+		return NewID;
 	}
 
 	FORCEINLINE bool SetID(const int32 Index, const int32 ID)
@@ -342,18 +358,20 @@ struct FLFPCompactTagArray : public FLFPCompactIDArray
 
 	FLFPCompactTagArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
 
-	FLFPCompactTagArray(const uint32 NewIndexSize, const FGameplayTag& StartTag) : Super(NewIndexSize) 
+	FLFPCompactTagArray(const uint32 NewIndexSize, const uint32 NewMinSize, const FGameplayTag& StartTag) : Super(NewIndexSize, NewMinSize)
 	{
 		if (StartTag.IsValid() == false)
 		{
 			return;
 		}
 
+		const int32 AssignedID = AssignID();
+
 		ItemList.Add(StartTag);
 
 		for (int32 Index = 0; Index < int32(NewIndexSize); Index++)
 		{
-			SetID(Index, 1);
+			SetID(Index, AssignedID);
 		}
 	}
 
@@ -624,7 +642,7 @@ struct FLFPCompactMetaArray : public FLFPCompactIDArray
 
 	FLFPCompactMetaArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
 
-	FLFPCompactMetaArray(const uint32 NewIndexSize, const bool bTagCompactMode) : Super(NewIndexSize), bCompactTag(bTagCompactMode) {}
+	FLFPCompactMetaArray(const uint32 NewIndexSize, const uint32 NewMinSize, const bool bTagCompactMode) : Super(NewIndexSize, NewMinSize), bCompactTag(bTagCompactMode) {}
 
 private:
 

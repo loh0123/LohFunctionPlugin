@@ -118,9 +118,9 @@ public:
 
 	FORCEINLINE void InitChuckData(const uint32 NewIndexSize, const FGameplayTag& StartTag)
 	{
-		TagList = FLFPCompactTagArray(NewIndexSize, StartTag);
+		TagList = FLFPCompactTagArray(NewIndexSize, 4, StartTag);
 
-		MetaList = FLFPCompactMetaArray(NewIndexSize);
+		MetaList = FLFPCompactMetaArray(NewIndexSize, 4, false);
 	}
 
 	FORCEINLINE void SetIndexTag(const int32 PaletteIndex, const FGameplayTag& NewTag)
