@@ -34,22 +34,22 @@ void ULohFunctionPluginLibrary::InitializeIDArray(UPARAM(ref)FLFPCompactIDArray&
 
 int32 ULohFunctionPluginLibrary::AssignID(UPARAM(ref)FLFPCompactIDArray& List)
 {
-	return List.Assign();
+	return List.AssignID();
 }
 
 bool ULohFunctionPluginLibrary::SetID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index, const int32 ID)
 {
-	return List.Set(Index, ID);
+	return List.SetID(Index, ID);
 }
 
 bool ULohFunctionPluginLibrary::RemoveID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index)
 {
-	return List.Remove(Index);
+	return List.RemoveID(Index);
 }
 
 int32 ULohFunctionPluginLibrary::GetID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index)
 {
-	return List.Get(Index);
+	return List.GetID(Index);
 }
 
 int32 ULohFunctionPluginLibrary::GetMetaDataAsInt(UPARAM(ref)FLFPCompactMetaData& MetaData)

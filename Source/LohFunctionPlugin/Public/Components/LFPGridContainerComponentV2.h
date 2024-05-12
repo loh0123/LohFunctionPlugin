@@ -88,100 +88,17 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridPaletteDataV2
-{
-	GENERATED_BODY()
-
-	FLFPGridPaletteDataV2() {}
-
-	FLFPGridPaletteDataV2(const FLFPGridPaletteDataV2& Other) : Name(Other.Name) {  }
-
-	FLFPGridPaletteDataV2(const FName& NewName) : Name(NewName) {  }
-
-public:
-
-	static FLFPGridPaletteDataV2 EmptyData;
-
-public:
-
-	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
-		FName Name = FName();
-
-public:
-
-	FORCEINLINE bool IsNone() const
-	{
-		return Name.IsNone();
-	}
-
-public:
-
-	FORCEINLINE bool operator==(const FLFPGridPaletteDataV2& Other) const
-	{
-		return Name == Other.Name;
-	}
-
-	FORCEINLINE bool operator!=(const FLFPGridPaletteDataV2& Other) const
-	{
-		return Name != Other.Name;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FLFPGridChuckDataV2
 {
 	GENERATED_BODY()
 
-public:
-
-	static FLFPGridChuckDataV2 EmptyData;
-
 private:
 
 	UPROPERTY(SaveGame)
-		TArray<FLFPGridPaletteDataV2> PaletteList = {};
+		FLFPCompactTagArray TagList = FLFPCompactTagArray();
 
 	UPROPERTY(SaveGame)
-		FLFPCompactIDArray IDList = FLFPCompactIDArray();
-
-private:
-
-	/** Palette Function */
-
-	FORCEINLINE int32 FindPaletteIndex(const FName& PaletteName) const
-	{
-		return PaletteList.Find(PaletteName);
-	}
-
-	FORCEINLINE int32 FindOrAddPaletteIndex(const FLFPGridPaletteDataV2& NewGridPalette)
-	{
-		int32 PaletteIndex = PaletteList.Find(NewGridPalette);
-
-		if (PaletteIndex == INDEX_NONE)
-		{
-			const int32 AssignID = IDList.Assign();
-
-			if (PaletteList.Num() < AssignID + 1)
-			{
-				PaletteList.SetNum(AssignID + 1);
-			}
-
-			PaletteList[AssignID] = NewGridPalette;
-		}
-
-		return PaletteIndex;
-	}
-
-	/** Resize Function */
-
-	FORCEINLINE void ResizePalette()
-	{
-		check(IsInitialized());
-
-		PaletteList.SetNum(IDList.Num());
-
-		return;
-	}
+		FLFPCompactMetaArray MetaList = FLFPCompactMetaArray();
 
 public:
 
@@ -189,51 +106,45 @@ public:
 
 	FORCEINLINE bool IsInitialized() const
 	{
-		return PaletteList.IsEmpty() == false;
+		return TagList.IsInitialized() && MetaList.IsInitialized();
 	}
 
 	/** Init Function */
 
-	FORCEINLINE void InitChuckData(const FLFPGridPaletteDataV2& GridPalette, const uint32 NewIndexSize)
+	FORCEINLINE void InitChuckData(const uint32 NewIndexSize, const FGameplayTag& StartTag)
 	{
-		PaletteList.Init(GridPalette, 1);
+		TagList = FLFPCompactTagArray(NewIndexSize, StartTag);
 
-		IDList = FLFPCompactIDArray(NewIndexSize, 1);
+		MetaList = FLFPCompactMetaArray(NewIndexSize);
 	}
 
-	/** Read / Write Function */
-
-	FORCEINLINE const TArray<FLFPGridPaletteDataV2>& GetPaletteList() const
-	{
-		return PaletteList;
-	}
-
-	FORCEINLINE int32 GetPaletteIndex(const int32 GridIndex) const
-	{
-		return IDList.GetIndexNumber(GridIndex);
-	}
-
-	FORCEINLINE void SetIndexData(const int32 GridIndex, const FLFPGridPaletteDataV2& NewData)
+	FORCEINLINE void SetIndexTag(const int32 GridIndex, const FGameplayTag& NewTag)
 	{
 		check(GridIndex >= 0);
 
-		const int32 NewIndex = FindOrAddPaletteIndex(NewData);
-
-		IDList.Set(GridIndex, NewIndex);
-
-		ResizePalette();
+		TagList.AddItem(GridIndex, NewTag);
 	}
 
-	FORCEINLINE const FLFPGridPaletteDataV2& GetIndexData(const int32 GridIndex) const
+	FORCEINLINE void SetIndexMeta(const int32 GridIndex, const FLFPCompactMetaData& NewMeta)
 	{
-		return PaletteList[GetPaletteIndex(GridIndex)];
+		check(GridIndex >= 0);
+
+		MetaList.AddItem(GridIndex, NewMeta);
 	}
 
-	FORCEINLINE int32 GetIndexSize() const
+	FORCEINLINE FGameplayTag GetIndexTag(const int32 GridIndex)
 	{
-		return IDList.GetIndexSize();
+		check(GridIndex >= 0);
+
+		return TagList.GetItem(GridIndex);
 	}
 
+	FORCEINLINE const FLFPCompactMetaData* GetIndexMeta(const int32 GridIndex)
+	{
+		check(GridIndex >= 0);
+
+		return MetaList.GetItem(GridIndex);
+	}
 };
 
 USTRUCT(BlueprintType)
