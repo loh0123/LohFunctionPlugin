@@ -381,43 +381,42 @@ public:
 	{
 		check(IsValidIndex(CompactIndex));
 
-		RemoveID(CompactIndex);
-
-		ResizeArray();
+		if (RemoveID(CompactIndex))
+		{
+			ResizeArray();
+		}
 	}
 
 	FORCEINLINE void AddItem(const int32 CompactIndex, const FGameplayTag& NewItem)
 	{
 		check(IsValidIndex(CompactIndex));
 
-		const int32 ID = GetID(CompactIndex);
-
-		if (ID != INDEX_NONE)
+		if (NewItem.IsValid() == false)
 		{
-			ItemList[ID] = NewItem;
+			RemoveItem(CompactIndex);
+
+			return;
 		}
-		else
+
+		const int32 FindedID = ItemList.IndexOfByKey(NewItem);
+
+		if (FindedID != INDEX_NONE)
 		{
-			const int32 FindedID = ItemList.IndexOfByKey(NewItem);
+			SetID(CompactIndex, FindedID);
 
-			if (FindedID != INDEX_NONE)
-			{
-				SetID(CompactIndex, FindedID);
-			}
-			else
-			{
-				const int32 NewID = AssignID();
-
-				if (ItemList.Num() <= NewID)
-				{
-					ItemList.SetNum(NewID + 1);
-				}
-
-				ItemList[NewID] = NewItem;
-
-				SetID(CompactIndex, NewID);
-			}
+			return;
 		}
+
+		const int32 NewID = AssignID();
+
+		if (ItemList.Num() <= NewID)
+		{
+			ItemList.SetNum(NewID + 1);
+		}
+
+		ItemList[NewID] = NewItem;
+
+		SetID(CompactIndex, NewID);
 	}
 
 	FORCEINLINE const TArray<FGameplayTag>& GetItemList() const
@@ -654,57 +653,62 @@ public:
 	{
 		check(IsValidIndex(CompactIndex));
 
-		if (bCompactTag == false)
+		const int32 ID = GetID(CompactIndex);
+
+		if (RemoveID(CompactIndex))
 		{
-			const int32 ID = GetID(CompactIndex);
-
-			if (ID == INDEX_NONE)
-			{
-				return;
-			}
-
 			ItemList[ID] = FLFPCompactMetaData();
+
+			ResizeArray();
 		}
-
-		RemoveID(CompactIndex);
-
-		ResizeArray();
 	}
 
 	FORCEINLINE void AddItem(const int32 CompactIndex, const FLFPCompactMetaData& NewItem)
 	{
 		check(IsValidIndex(CompactIndex));
 
-		const int32 ID = GetID(CompactIndex);
-		
-		if (ID != INDEX_NONE)
+		if (NewItem.MetaTag.IsValid() == false)
 		{
-			ItemList[ID] = NewItem;
+			RemoveItem(CompactIndex);
+
+			return;
 		}
-		else
+
+		if (bCompactTag)
 		{
-			const int32 FindedID = bCompactTag ? ItemList.IndexOfByKey(NewItem.MetaTag) : INDEX_NONE;
+			const int32 FindedID = ItemList.IndexOfByKey(NewItem.MetaTag);
 
 			if (FindedID != INDEX_NONE)
 			{
 				ItemList[FindedID] = NewItem;
 
 				SetID(CompactIndex, FindedID);
-			}
-			else
-			{
-				const int32 NewID = AssignID();
 
-				if (ItemList.Num() <= NewID)
-				{
-					ItemList.SetNum(NewID + 1);
-				}
-
-				ItemList[NewID] = NewItem;
-
-				SetID(CompactIndex, NewID);
+				return;
 			}
 		}
+		else
+		{
+			const int32 ID = GetID(CompactIndex);
+
+			if (ID != INDEX_NONE)
+			{
+				ItemList[ID] = NewItem;
+
+				return;
+			}
+		}
+
+		const int32 NewID = AssignID();
+
+		if (ItemList.Num() <= NewID)
+		{
+			ItemList.SetNum(NewID + 1);
+		}
+
+		ItemList[NewID] = NewItem;
+
+		SetID(CompactIndex, NewID);
 	}
 
 	FORCEINLINE const TArray<FLFPCompactMetaData>& GetItemList() const

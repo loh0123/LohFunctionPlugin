@@ -109,6 +109,11 @@ public:
 		return TagList.IsInitialized() && MetaList.IsInitialized();
 	}
 
+	FORCEINLINE bool IsValidIndex(const int32 PaletteInde) const
+	{
+		return TagList.IsValidIndex(PaletteInde) && MetaList.IsValidIndex(PaletteInde);
+	}
+
 	/** Init Function */
 
 	FORCEINLINE void InitChuckData(const uint32 NewIndexSize, const FGameplayTag& StartTag)
@@ -118,32 +123,32 @@ public:
 		MetaList = FLFPCompactMetaArray(NewIndexSize);
 	}
 
-	FORCEINLINE void SetIndexTag(const int32 GridIndex, const FGameplayTag& NewTag)
+	FORCEINLINE void SetIndexTag(const int32 PaletteIndex, const FGameplayTag& NewTag)
 	{
-		check(GridIndex >= 0);
+		check(IsValidIndex(PaletteIndex));
 
-		TagList.AddItem(GridIndex, NewTag);
+		TagList.AddItem(PaletteIndex, NewTag);
 	}
 
-	FORCEINLINE void SetIndexMeta(const int32 GridIndex, const FLFPCompactMetaData& NewMeta)
+	FORCEINLINE void SetIndexMeta(const int32 PaletteIndex, const FLFPCompactMetaData& NewMeta)
 	{
-		check(GridIndex >= 0);
+		check(IsValidIndex(PaletteIndex));
 
-		MetaList.AddItem(GridIndex, NewMeta);
+		MetaList.AddItem(PaletteIndex, NewMeta);
 	}
 
-	FORCEINLINE FGameplayTag GetIndexTag(const int32 GridIndex)
+	FORCEINLINE FGameplayTag GetIndexTag(const int32 PaletteIndex) const
 	{
-		check(GridIndex >= 0);
+		check(IsValidIndex(PaletteIndex));
 
-		return TagList.GetItem(GridIndex);
+		return TagList.GetItem(PaletteIndex);
 	}
 
-	FORCEINLINE const FLFPCompactMetaData* GetIndexMeta(const int32 GridIndex)
+	FORCEINLINE const FLFPCompactMetaData* GetIndexMeta(const int32 PaletteIndex) const
 	{
-		check(GridIndex >= 0);
+		check(IsValidIndex(PaletteIndex));
 
-		return MetaList.GetItem(GridIndex);
+		return MetaList.GetItem(PaletteIndex);
 	}
 };
 
@@ -152,7 +157,7 @@ struct FLFPGridRegionDataV2
 {
 	GENERATED_BODY()
 
-public:
+protected:
 
 	UPROPERTY(SaveGame)
 		TArray<FLFPGridChuckDataV2> ChuckData = {};
@@ -167,6 +172,45 @@ public:
 	FORCEINLINE void InitRegionData(const int32 ChuckLength)
 	{
 		ChuckData.Init(FLFPGridChuckDataV2(), ChuckLength);
+	}
+
+	FORCEINLINE FLFPGridChuckDataV2* GetChuck(const int32 ChuckIndex)
+	{
+		if (ChuckData.IsValidIndex(ChuckIndex))
+		{
+			return &ChuckData[ChuckIndex];
+		}
+
+		return nullptr;
+	}
+
+	FORCEINLINE bool IsChuckValidIndex(const int32 ChuckIndex) const
+	{
+		return ChuckData.IsValidIndex(ChuckIndex);
+	}
+
+	FORCEINLINE const FLFPGridChuckDataV2* GetChuck(const int32 ChuckIndex) const
+	{
+		if (ChuckData.IsValidIndex(ChuckIndex))
+		{
+			return &ChuckData[ChuckIndex];
+		}
+
+		return nullptr;
+	}
+
+	FORCEINLINE FLFPGridChuckDataV2& GetChuckChecked(const int32 ChuckIndex)
+	{
+		check(ChuckData.IsValidIndex(ChuckIndex));
+
+		return ChuckData[ChuckIndex];
+	}
+
+	FORCEINLINE const FLFPGridChuckDataV2& GetChuckChecked(const int32 ChuckIndex) const
+	{
+		check(ChuckData.IsValidIndex(ChuckIndex));
+
+		return ChuckData[ChuckIndex];
 	}
 };
 
@@ -193,4 +237,48 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+public: /** Checker */
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
+	FORCEINLINE bool IsRegionPositionValid(const int32 RegionIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
+	FORCEINLINE bool IsRegionInitialized(const int32 RegionIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
+	FORCEINLINE bool IsChuckPositionValid(const int32 RegionIndex, const int32 ChuckIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
+	FORCEINLINE bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
+	FORCEINLINE bool IsPalettePositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
+	FORCEINLINE bool SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
+	FORCEINLINE bool SetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FLFPCompactMetaData& Data);
+
+public: /** Getter */
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
+	FORCEINLINE FGameplayTag GetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
+	FORCEINLINE FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+
+protected: // Initialize Data
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting")
+	FLFPGridContainerSetting Setting;
+
+protected:  // Runtime Data
+
+	/** This store the chuck */
+	UPROPERTY(SaveGame)
+	TArray<FLFPGridRegionDataV2> RegionDataList;
 };
