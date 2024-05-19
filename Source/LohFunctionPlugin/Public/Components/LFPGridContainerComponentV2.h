@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "LohFunctionPluginLibrary.h"
-#include "Engine/DataTable.h"
 #include "LFPGridContainerComponentV2.generated.h"
 
 /**

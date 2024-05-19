@@ -1,12 +1,6 @@
 // Copyright by Loh Zhi Kang
 
 #include "Components/LFPGridContainerComponentV2.h"
-#include "./Math/LFPGridLibrary.h"
-#include "Serialization/ArchiveProxy.h"
-#include "Serialization/NameAsStringProxyArchive.h"
-#include "Serialization/ArchiveSaveCompressedProxy.h"
-#include "Serialization/ArchiveLoadCompressedProxy.h"
-#include "UObject/ReflectedTypeAccessors.h"
 
 
 // Sets default values for this component's properties
@@ -68,6 +62,8 @@ bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const
 	if (IsRegionInitialized(RegionIndex) == false)
 	{
 		RegionDataList[RegionIndex].InitRegionData(Setting.GetChuckLength());
+
+		OnGridContainerRegionInitialized.Broadcast(RegionIndex);
 	}
 
 	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false)
@@ -78,6 +74,8 @@ bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const
 	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false || bOverride)
 	{
 		RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).InitChuckData(Setting.GetPaletteLength(), StartTag);
+
+		OnGridContainerChuckInitialized.Broadcast(RegionIndex, ChuckIndex);
 
 		return true;
 	}
