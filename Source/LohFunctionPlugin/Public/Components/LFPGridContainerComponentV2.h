@@ -66,7 +66,7 @@ public:
 		return ChuckLength;
 	}
 
-	FORCEINLINE int32 GetGridLength() const
+	FORCEINLINE int32 GetPaletteLength() const
 	{
 		return PaletteLength;
 	}
@@ -94,11 +94,17 @@ struct FLFPGridChuckDataV2
 
 private:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		FLFPCompactTagArray TagList = FLFPCompactTagArray();
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		FLFPCompactMetaArray MetaList = FLFPCompactMetaArray();
+
+	UPROPERTY()
+		FLFPMetaArray ChuckMetaList = FLFPMetaArray();
+
+	UPROPERTY()
+		uint64 WriteCount = 0;
 
 public:
 
@@ -121,6 +127,8 @@ public:
 		TagList = FLFPCompactTagArray(NewIndexSize, 4, StartTag);
 
 		MetaList = FLFPCompactMetaArray(NewIndexSize, 4, false);
+
+		WriteCount++;
 	}
 
 	FORCEINLINE void SetIndexTag(const int32 PaletteIndex, const FGameplayTag& NewTag)
@@ -128,6 +136,15 @@ public:
 		check(IsValidIndex(PaletteIndex));
 
 		TagList.AddItem(PaletteIndex, NewTag);
+
+		WriteCount++;
+	}
+
+	FORCEINLINE bool SetIndexTagList(const TArray<int32>& PaletteIndexList, const FGameplayTag& NewTag)
+	{
+		WriteCount++;
+
+		return TagList.AddItemList(PaletteIndexList, NewTag);
 	}
 
 	FORCEINLINE void SetIndexMeta(const int32 PaletteIndex, const FLFPCompactMetaData& NewMeta)
@@ -135,6 +152,13 @@ public:
 		check(IsValidIndex(PaletteIndex));
 
 		MetaList.AddItem(PaletteIndex, NewMeta);
+
+		WriteCount++;
+	}
+
+	FORCEINLINE void SetChuckMeta(const FLFPCompactMetaData& NewMeta)
+	{
+		ChuckMetaList.SetItem(NewMeta);
 	}
 
 	FORCEINLINE FGameplayTag GetIndexTag(const int32 PaletteIndex) const
@@ -144,12 +168,23 @@ public:
 		return TagList.GetItem(PaletteIndex);
 	}
 
+	FORCEINLINE uint64 GetWriteCount() const
+	{
+		return WriteCount;
+	}
+
 	FORCEINLINE const FLFPCompactMetaData* GetIndexMeta(const int32 PaletteIndex) const
 	{
 		check(IsValidIndex(PaletteIndex));
 
 		return MetaList.GetItem(PaletteIndex);
 	}
+
+	FORCEINLINE const FLFPCompactMetaData* GetChuckMeta(const FGameplayTag& MetaTag) const
+	{
+		return ChuckMetaList.GetItemConst(MetaTag);
+	}
+
 };
 
 USTRUCT(BlueprintType)
@@ -159,7 +194,7 @@ struct FLFPGridRegionDataV2
 
 protected:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		TArray<FLFPGridChuckDataV2> ChuckData = {};
 
 public:
@@ -220,6 +255,9 @@ struct FLFPChuckUpdateActionV2
 	GENERATED_BODY()
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGridContainerV2ChuckInitialized, const int32, RegionIndex, const int32, ChuckIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridContainerV2RegionInitialized, const int32, RegionIndex);
+
 
 UCLASS( Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin) )
 class LOHFUNCTIONPLUGIN_API ULFPGridContainerComponentV2 : public UActorComponent
@@ -255,10 +293,16 @@ public: /** Checker */
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
 	FORCEINLINE bool IsPalettePositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
-public:
+public: /** Setter */
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
+	FORCEINLINE bool InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 	FORCEINLINE bool SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
+	FORCEINLINE bool SetPaletteTagList(const int32 RegionIndex, const int32 ChuckIndex, const TArray<int32>& PaletteIndexList, const FGameplayTag Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 	FORCEINLINE bool SetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FLFPCompactMetaData& Data);
@@ -270,6 +314,14 @@ public: /** Getter */
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 	FORCEINLINE FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+
+public: /** Delegate */
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
+	FOnGridContainerV2ChuckInitialized OnGridContainerChuckInitialized;
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
+	FOnGridContainerV2RegionInitialized OnGridContainerRegionInitialized;
 
 protected: // Initialize Data
 

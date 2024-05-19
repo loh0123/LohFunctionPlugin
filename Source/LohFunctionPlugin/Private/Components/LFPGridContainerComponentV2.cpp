@@ -58,6 +58,33 @@ bool ULFPGridContainerComponentV2::IsPalettePositionValid(const int32 RegionInde
 	return IsChuckInitialized(RegionIndex, ChuckIndex) && RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).IsValidIndex(PaletteIndex);
 }
 
+bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride)
+{
+	if (IsRegionPositionValid(RegionIndex) == false)
+	{
+		return false;
+	}
+
+	if (IsRegionInitialized(RegionIndex) == false)
+	{
+		RegionDataList[RegionIndex].InitRegionData(Setting.GetChuckLength());
+	}
+
+	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false)
+	{
+		return false;
+	}
+
+	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false || bOverride)
+	{
+		RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).InitChuckData(Setting.GetPaletteLength(), StartTag);
+
+		return true;
+	}
+
+	return false;
+}
+
 bool ULFPGridContainerComponentV2::SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag)
 {
 	if (IsPalettePositionValid(RegionIndex, ChuckIndex, PaletteIndex) == false)
@@ -66,6 +93,23 @@ bool ULFPGridContainerComponentV2::SetPaletteTag(const int32 RegionIndex, const 
 	}
 
 	RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).SetIndexTag(PaletteIndex, Tag);
+
+	return true;
+}
+
+bool ULFPGridContainerComponentV2::SetPaletteTagList(const int32 RegionIndex, const int32 ChuckIndex, const TArray<int32>& PaletteIndexList, const FGameplayTag Tag)
+{
+	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false)
+	{
+		return false;
+	}
+
+	if (RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).SetIndexTagList(PaletteIndexList, Tag) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPGridContainerComponentV2 : %s : SetPaletteTagList Has Invalid Index "), *GetOwner()->GetName());
+
+		return false;
+	}
 
 	return true;
 }

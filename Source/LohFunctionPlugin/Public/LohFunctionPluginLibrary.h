@@ -24,16 +24,16 @@ struct FLFPCompactIntArray
 
 private:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		TArray<uint32> IndexList = TArray<uint32>();
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		uint32 EncodeBtye = 0;
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		uint32 IndexSize = 0;
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 		uint32 MinSize = 0;
 
 private:
@@ -193,10 +193,10 @@ struct FLFPCompactIDArray : public FLFPCompactIntArray
 
 private:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	TArray<int32> OpenIDList = {};
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	TArray<int32> IDRefList = {};
 
 protected:
@@ -245,8 +245,6 @@ public:
 
 			check(IDRefList.IsValidIndex(PopID));
 
-			IDRefList[PopID] += 1;
-
 			return PopID;
 		}
 
@@ -268,7 +266,7 @@ public:
 		}
 
 		// Remove the ID on current index
-		RemoveID(Index);
+		const bool bRemovedID = RemoveID(Index, false);
 
 		int32& IDRef = IDRefList[ID];
 
@@ -286,10 +284,15 @@ public:
 
 		SetIndexNumber(Index, ID + 1);
 
+		if (bRemovedID)
+		{
+			ResizeID();
+		}
+
 		return true;
 	}
 
-	FORCEINLINE bool RemoveID(const int32 Index)
+	FORCEINLINE bool RemoveID(const int32 Index, const bool bResize = true)
 	{
 		if (IsValidIndex(Index) == false || IsInitialized() == false)
 		{
@@ -323,7 +326,10 @@ public:
 			OpenIDList.HeapPush(IDRef);
 		}
 
-		ResizeID();
+		if (bResize)
+		{
+			ResizeID();
+		}
 
 		return true;
 	}
@@ -377,7 +383,7 @@ struct FLFPCompactTagArray : public FLFPCompactIDArray
 
 private:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	TArray<FGameplayTag> ItemList = {};
 
 protected:
@@ -389,6 +395,24 @@ protected:
 		ItemList.SetNum(IDLength());
 
 		return;
+	}
+
+	FORCEINLINE int32 FindOrAddItemIndex(const FGameplayTag& Item)
+	{
+		const int32 FindedID = ItemList.IndexOfByKey(Item);
+
+		if (FindedID != INDEX_NONE)
+		{
+			return FindedID;
+		}
+
+		const int32 NewID = AssignID();
+
+		ItemList.SetNum(NewID + 1);
+
+		ItemList[NewID] = Item;
+
+		return NewID;
 	}
 
 public:
@@ -416,25 +440,55 @@ public:
 			return;
 		}
 
-		const int32 FindedID = ItemList.IndexOfByKey(NewItem);
+		SetID(CompactIndex, FindOrAddItemIndex(NewItem));
+	}
 
-		if (FindedID != INDEX_NONE)
+	FORCEINLINE bool AddItemList(const TArray<int32>& CompactIndexList, const FGameplayTag& NewItem)
+	{
+		bool bAllValid = true;
+
+		if (NewItem.IsValid() == false)
 		{
-			SetID(CompactIndex, FindedID);
+			for (const int32& CompactIndex : CompactIndexList)
+			{
+				if (IsValidIndex(CompactIndex) == false)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("FLFPCompactTagArray : AddItemList Has Invalid CompactIndex (%d)"), CompactIndex);
 
-			return;
+					bAllValid = false;
+
+					continue;
+				}
+
+				RemoveItem(CompactIndex);
+			}
+
+			return bAllValid;
 		}
 
-		const int32 NewID = AssignID();
+		int32 ItemIndex = INDEX_NONE;
 
-		if (ItemList.Num() <= NewID)
+		for (const int32& CompactIndex : CompactIndexList)
 		{
-			ItemList.SetNum(NewID + 1);
+			if (IsValidIndex(CompactIndex) == false)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FLFPCompactTagArray : AddItemList Has Invalid CompactIndex (%d)"), CompactIndex);
+
+				bAllValid = false;
+
+				continue;
+			}
+
+			// Only Assign Item Index If Need
+			if (ItemIndex == INDEX_NONE)
+			{
+				ItemIndex = FindOrAddItemIndex(NewItem);;
+			}
+
+			SetID(CompactIndex, ItemIndex);
 		}
 
-		ItemList[NewID] = NewItem;
-
-		SetID(CompactIndex, NewID);
+		return bAllValid;
 	}
 
 	FORCEINLINE const TArray<FGameplayTag>& GetItemList() const
@@ -501,6 +555,11 @@ public:
 		MetaType = ELFPCompactMetaType::LFP_None;
 
 		MetaData.Empty();
+	}
+
+	FORCEINLINE	bool HasData() const
+	{
+		return MetaType != ELFPCompactMetaType::LFP_None;
 	}
 
 	FORCEINLINE	int32 GetDataAsInt() const
@@ -583,9 +642,16 @@ public:
 
 	FORCEINLINE	void SetData(const TArray<uint8>& NewData)
 	{
-		MetaType = ELFPCompactMetaType::LFP_Custom;
+		if (NewData.IsEmpty())
+		{
+			ClearData();
+		}
+		else
+		{
+			MetaType = ELFPCompactMetaType::LFP_Custom;
 
-		MetaData = NewData;
+			MetaData = NewData;
+		}
 	}
 
 	template <typename T>
@@ -646,10 +712,10 @@ struct FLFPCompactMetaArray : public FLFPCompactIDArray
 
 private:
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	TArray<FLFPCompactMetaData> ItemList = {};
 
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	bool bCompactTag = false;
 
 protected:
@@ -739,6 +805,59 @@ public:
 		const int32 ID = GetID(CompactIndex);
 
 		return ID != INDEX_NONE ? &ItemList[ID] : nullptr;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPMetaArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPMetaArray() {}
+
+private:
+
+	UPROPERTY()
+	TArray<FLFPCompactMetaData> ItemList = {};
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE void SetItem(const FLFPCompactMetaData& NewItem)
+	{
+		const int32 ItemIndex = ItemList.IndexOfByKey(NewItem.MetaTag);
+
+		if (ItemIndex != INDEX_NONE)
+		{
+			if (NewItem.HasData())
+			{
+				ItemList[ItemIndex] = NewItem;
+			}
+			else
+			{
+				ItemList.RemoveAtSwap(ItemIndex);
+			}
+		}
+		else if (NewItem.HasData())
+		{
+			ItemList.Add(NewItem);
+		}
+	}
+
+	FORCEINLINE const TArray<FLFPCompactMetaData>& GetItemList() const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE const FLFPCompactMetaData* GetItemConst(const FGameplayTag& ItemTag) const
+	{
+		return ItemList.FindByKey(ItemTag);
+	}
+
+	FORCEINLINE FLFPCompactMetaData* GetItem(const FGameplayTag& ItemTag)
+	{
+		return ItemList.FindByKey(ItemTag);
 	}
 };
 
