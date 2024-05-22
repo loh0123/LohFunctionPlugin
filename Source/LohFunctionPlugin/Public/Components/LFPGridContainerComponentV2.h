@@ -6,6 +6,9 @@
 #include "LohFunctionPluginLibrary.h"
 #include "LFPGridContainerComponentV2.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LFPGridContainerComponentV2, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LFPGridChuckDataV2, Log, All);
+
 /**
 * This Component Is Use To Store Grid Data (IE : Tag, MetaData)
 */
@@ -52,6 +55,11 @@ public:
 		RegionLength = RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z;
 		ChuckLength = ChuckGridSize.X * ChuckGridSize.Y * ChuckGridSize.Z;
 		PaletteLength = PaletteGridSize.X * PaletteGridSize.Y * PaletteGridSize.Z;
+	}
+
+	FORCEINLINE bool IsValid() const
+	{
+		return GetRegionLength() > 0 && GetChuckLength() > 0 && GetPaletteLength() > 0;
 	}
 
 	FORCEINLINE int32 GetRegionLength() const
@@ -127,6 +135,8 @@ public:
 		MetaList = FLFPCompactMetaArray(NewIndexSize, 4, false);
 
 		WriteCount++;
+
+		UE_LOG(LFPGridChuckDataV2, Log, TEXT("FLFPGridChuckDataV2 : InitChuckData Allocated IndexSize = %d With StartTag = %s"), TagList.GetIndexSize(), *StartTag.ToString());
 	}
 
 	FORCEINLINE void SetIndexTag(const int32 PaletteIndex, const FGameplayTag& NewTag)
@@ -292,6 +302,9 @@ public: /** Checker */
 	FORCEINLINE bool IsPalettePositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
 public: /** Setter */
+
+	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
+	FORCEINLINE void ReinitializeRegion();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
 	FORCEINLINE bool InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride = true);

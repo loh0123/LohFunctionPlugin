@@ -10,6 +10,10 @@
 
 #include "LohFunctionPluginLibrary.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LFPCompactIDArray, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LFPCompactTagArray, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LFPCompactMetaArray, Log, All);
+
 USTRUCT(BlueprintType)
 struct FLFPCompactIntArray
 {
@@ -232,49 +236,27 @@ protected:
 		return;
 	}
 
-public:
+private:
 
-	FORCEINLINE int32 AssignID(const bool bResize = true)
+	FORCEINLINE bool SetID_Internal(const int32 Index, const int32 ID, const bool bCheckOpenID = true)
 	{
-		if (OpenIDList.IsEmpty() == false)
+		if (IsValidIndex(Index) == false)
 		{
-			int32 PopID = INDEX_NONE;
+			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : SetID_Internal Index Invalid : Index = %d, IndexSize = %d"), Index, GetIndexSize());
 
-			OpenIDList.HeapPop(PopID);
-
-			check(IDRefList.IsValidIndex(PopID));
-
-			return PopID;
-		}
-
-		const int32 NewID = IDRefList.Add(0);;
-
-		if (bResize)
-		{
-			ResizeID();
-		}
-
-		return NewID;
-	}
-
-	FORCEINLINE bool SetID(const int32 Index, const int32 ID)
-	{
-		if (IsValidIndex(Index) == false || IDRefList.IsValidIndex(ID) == false)
-		{
 			return false;
 		}
 
 		// Remove the ID on current index
-		const bool bRemovedID = RemoveID(Index, false);
+		RemoveID(Index, false);
 
 		int32& IDRef = IDRefList[ID];
 
-		if (IDRef == 0)
+		if (IDRef == 0 && bCheckOpenID)
 		{
 			const int32 IDIndex = OpenIDList.Find(ID);
 
-			// Error IDRef is empty but not in open array
-			check(IDIndex != INDEX_NONE);
+			check(IDIndex == INDEX_NONE);
 
 			OpenIDList.HeapRemoveAt(IDIndex);
 		}
@@ -283,10 +265,96 @@ public:
 
 		SetIndexNumber(Index, ID + 1);
 
-		if (bRemovedID)
+		return true;
+	}
+
+	FORCEINLINE int32 AssignID_Internal()
+	{
+		int32 NewID = INDEX_NONE;
+
+		if (OpenIDList.IsEmpty() == false)
+		{
+			OpenIDList.HeapPop(NewID);
+		}
+		else
+		{
+			NewID = IDRefList.Add(0);
+		}
+
+		check(IDRefList.IsValidIndex(NewID));
+
+		Resize(IDRefList.Num());
+
+		return NewID;
+	}
+
+public:
+
+	/* Set Index List To Use New ID */
+	FORCEINLINE int32 AssignID(const TArray<int32>& NewIndexList)
+	{
+		const int32 NewID = AssignID_Internal();
+
+		int32& IDRef = IDRefList[NewID];
+
+		for (const int32 Index : NewIndexList)
+		{
+			SetID_Internal(Index, NewID, false);
+		}
+
+		ResizeID();
+
+		return NewID;
+	}
+
+	FORCEINLINE int32 AssignArray()
+	{
+		const int32 NewID = AssignID_Internal();
+
+		int32& IDRef = IDRefList[NewID];
+
+		for (int32 Index = 0; Index < int32(GetIndexSize()); Index++)
+		{
+			SetID_Internal(Index, NewID, false);
+		}
+
+		ResizeID();
+
+		return NewID;
+	}
+
+	FORCEINLINE bool SetID(const int32 Index, const int32 ID)
+	{
+		if (IsValidIndex(Index) == false || IDRefList.IsValidIndex(ID) == false)
+		{
+			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : SetID Index Invalid : Index = %d, IndexSize = %d, IDRefList Num = %d"), Index, GetIndexSize(), IDRefList.Num());
+
+			return false;
+		}
+
+		if (SetID_Internal(Index, ID))
 		{
 			ResizeID();
 		}
+
+		return true;
+	}
+
+	FORCEINLINE bool SetIDList(const TArray<int32>& NewIndexList, const int32 ID)
+	{
+		if (IDRefList.IsValidIndex(ID) == false)
+		{
+			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : SetIDList ID Invalid : ID = %d, IDRefList Num = %d"), ID, IDRefList.Num());
+
+			return false;
+		}
+
+		for (const int32 Index : NewIndexList)
+		{
+			SetID_Internal(Index, ID);
+		}
+
+		ResizeID();
 
 		return true;
 	}
@@ -295,6 +363,8 @@ public:
 	{
 		if (IsValidIndex(Index) == false || IsInitialized() == false)
 		{
+			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : RemoveID Index Invalid : Index = %d, IndexSize = %d, IsInitialized = %s"), Index, GetIndexSize(), (IsInitialized() ? TEXT("true") : TEXT("false")));
+
 			return false;
 		}
 
@@ -370,14 +440,9 @@ struct FLFPCompactTagArray : public FLFPCompactIDArray
 			return;
 		}
 
-		const int32 AssignedID = AssignID();
-
 		ItemList.Add(StartTag);
 
-		for (int32 Index = 0; Index < int32(NewIndexSize); Index++)
-		{
-			SetID(Index, AssignedID);
-		}
+		AssignArray();
 	}
 
 private:
@@ -396,22 +461,24 @@ protected:
 		return;
 	}
 
-	FORCEINLINE int32 FindOrAddItemIndex(const FGameplayTag& Item)
+	FORCEINLINE int32 SetIndexListToItem(const TArray<int32>& NewIndexList, const FGameplayTag& Item)
 	{
-		const int32 FindedID = ItemList.IndexOfByKey(Item);
+		int32 ItemID = ItemList.IndexOfByKey(Item);
 
-		if (FindedID != INDEX_NONE)
+		if (ItemID == INDEX_NONE)
 		{
-			return FindedID;
+			const int32 NewID = AssignID(NewIndexList);
+
+			ItemList.SetNum(NewID + 1);
+
+			ItemList[NewID] = Item;
+
+			return ItemID;
 		}
 
-		const int32 NewID = AssignID();
+		SetIDList(NewIndexList, ItemID);
 
-		ItemList.SetNum(NewID + 1);
-
-		ItemList[NewID] = Item;
-
-		return NewID;
+		return ItemID;
 	}
 
 public:
@@ -420,7 +487,12 @@ public:
 
 	FORCEINLINE void RemoveItem(const int32 CompactIndex)
 	{
-		check(IsValidIndex(CompactIndex));
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactTagArray, Warning, TEXT("FLFPCompactTagArray : RemoveItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
 
 		if (RemoveID(CompactIndex))
 		{
@@ -430,7 +502,12 @@ public:
 
 	FORCEINLINE void AddItem(const int32 CompactIndex, const FGameplayTag& NewItem)
 	{
-		check(IsValidIndex(CompactIndex));
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactTagArray, Warning, TEXT("FLFPCompactTagArray : AddItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
 
 		if (NewItem.IsValid() == false)
 		{
@@ -439,7 +516,7 @@ public:
 			return;
 		}
 
-		SetID(CompactIndex, FindOrAddItemIndex(NewItem));
+		SetIndexListToItem({ CompactIndex }, NewItem);
 	}
 
 	FORCEINLINE bool AddItemList(const TArray<int32>& CompactIndexList, const FGameplayTag& NewItem)
@@ -452,7 +529,7 @@ public:
 			{
 				if (IsValidIndex(CompactIndex) == false)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("FLFPCompactTagArray : AddItemList Has Invalid CompactIndex (%d)"), CompactIndex);
+					UE_LOG(LFPCompactTagArray, Warning, TEXT("FLFPCompactTagArray : AddItemList Has Invalid CompactIndex (%d)"), CompactIndex);
 
 					bAllValid = false;
 
@@ -465,27 +542,7 @@ public:
 			return bAllValid;
 		}
 
-		int32 ItemIndex = INDEX_NONE;
-
-		for (const int32& CompactIndex : CompactIndexList)
-		{
-			if (IsValidIndex(CompactIndex) == false)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("FLFPCompactTagArray : AddItemList Has Invalid CompactIndex (%d)"), CompactIndex);
-
-				bAllValid = false;
-
-				continue;
-			}
-
-			// Only Assign Item Index If Need
-			if (ItemIndex == INDEX_NONE)
-			{
-				ItemIndex = FindOrAddItemIndex(NewItem);;
-			}
-
-			SetID(CompactIndex, ItemIndex);
-		}
+		SetIndexListToItem(CompactIndexList, NewItem);
 
 		return bAllValid;
 	}
@@ -734,7 +791,12 @@ public:
 
 	FORCEINLINE void RemoveItem(const int32 CompactIndex)
 	{
-		check(IsValidIndex(CompactIndex));
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactMetaArray, Warning, TEXT("FLFPCompactMetaArray : RemoveItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
 
 		const int32 ID = GetID(CompactIndex);
 
@@ -748,7 +810,12 @@ public:
 
 	FORCEINLINE void AddItem(const int32 CompactIndex, const FLFPCompactMetaData& NewItem)
 	{
-		check(IsValidIndex(CompactIndex));
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactMetaArray, Warning, TEXT("FLFPCompactMetaArray : AddItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
 
 		if (NewItem.MetaTag.IsValid() == false)
 		{
@@ -782,7 +849,7 @@ public:
 			}
 		}
 
-		const int32 NewID = AssignID();
+		const int32 NewID = AssignID({ CompactIndex });
 
 		if (ItemList.Num() <= NewID)
 		{
@@ -790,8 +857,6 @@ public:
 		}
 
 		ItemList[NewID] = NewItem;
-
-		SetID(CompactIndex, NewID);
 	}
 
 	FORCEINLINE const TArray<FLFPCompactMetaData>& GetItemList() const
@@ -1048,7 +1113,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
-		static int32 AssignID(UPARAM(ref) FLFPCompactIDArray& List);
+		static int32 AssignID(UPARAM(ref) FLFPCompactIDArray& List, const TArray<int32>& NewIndexList);
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPCompactIDArray")
 		static bool SetID(UPARAM(ref) FLFPCompactIDArray& List, const int32 Index, const int32 ID);

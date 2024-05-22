@@ -2,6 +2,8 @@
 
 #include "Components/LFPGridContainerComponentV2.h"
 
+DEFINE_LOG_CATEGORY(LFPGridContainerComponentV2);
+DEFINE_LOG_CATEGORY(LFPGridChuckDataV2);
 
 // Sets default values for this component's properties
 ULFPGridContainerComponentV2::ULFPGridContainerComponentV2()
@@ -18,6 +20,10 @@ ULFPGridContainerComponentV2::ULFPGridContainerComponentV2()
 void ULFPGridContainerComponentV2::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Setting.InitSetting();
+
+	ReinitializeRegion();
 }
 
 
@@ -52,6 +58,18 @@ bool ULFPGridContainerComponentV2::IsPalettePositionValid(const int32 RegionInde
 	return IsChuckInitialized(RegionIndex, ChuckIndex) && RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).IsValidIndex(PaletteIndex);
 }
 
+void ULFPGridContainerComponentV2::ReinitializeRegion()
+{
+	if (Setting.IsValid() == false)
+	{
+		UE_LOG(LFPGridContainerComponentV2, Warning, TEXT("Setting Is Invalid"));
+
+		return;
+	}
+
+	RegionDataList.SetNum(Setting.GetRegionLength());
+}
+
 bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride)
 {
 	if (IsRegionPositionValid(RegionIndex) == false)
@@ -61,6 +79,8 @@ bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const
 
 	if (IsRegionInitialized(RegionIndex) == false)
 	{
+		UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Region %d"), RegionIndex);
+
 		RegionDataList[RegionIndex].InitRegionData(Setting.GetChuckLength());
 
 		OnGridContainerRegionInitialized.Broadcast(RegionIndex);
@@ -73,6 +93,8 @@ bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const
 
 	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false || bOverride)
 	{
+		UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Chuck %d On Region %d"), ChuckIndex, RegionIndex);
+
 		RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).InitChuckData(Setting.GetPaletteLength(), StartTag);
 
 		OnGridContainerChuckInitialized.Broadcast(RegionIndex, ChuckIndex);

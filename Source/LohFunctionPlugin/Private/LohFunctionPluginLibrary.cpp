@@ -7,6 +7,10 @@
 #include "LohFunctionPlugin.h"
 #include "Misc/OutputDeviceNull.h"
 
+DEFINE_LOG_CATEGORY(LFPCompactIDArray);
+DEFINE_LOG_CATEGORY(LFPCompactTagArray);
+DEFINE_LOG_CATEGORY(LFPCompactMetaArray);
+
 bool ULohFunctionPluginLibrary::ContainPoint(const FLFPIntPointList& List, const int32 Index)
 {
 	return List.ContainIndex(Index);
@@ -32,9 +36,9 @@ void ULohFunctionPluginLibrary::InitializeIDArray(UPARAM(ref)FLFPCompactIDArray&
 	List = FLFPCompactIDArray(IndexSize);
 }
 
-int32 ULohFunctionPluginLibrary::AssignID(UPARAM(ref)FLFPCompactIDArray& List)
+int32 ULohFunctionPluginLibrary::AssignID(UPARAM(ref)FLFPCompactIDArray& List, const TArray<int32>& NewIndexList)
 {
-	return List.AssignID();
+	return List.AssignID(NewIndexList);
 }
 
 bool ULohFunctionPluginLibrary::SetID(UPARAM(ref)FLFPCompactIDArray& List, const int32 Index, const int32 ID)
