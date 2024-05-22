@@ -261,6 +261,36 @@ USTRUCT(BlueprintType)
 struct FLFPChuckUpdateActionV2
 {
 	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	FGameplayTag InitializeTag = FGameplayTag();
+
+	UPROPERTY() 
+	TMap<int32, FGameplayTag> TagChangeList = TMap<int32, FGameplayTag>();
+
+	UPROPERTY() 
+	TMap<int32, FLFPMetaArray> DataChangeList = TMap<int32, FLFPMetaArray>();
+
+public:
+
+	FORCEINLINE void SetInitializeTag(const FGameplayTag& Tag)
+	{
+		InitializeTag = Tag;
+	}
+
+	FORCEINLINE void AddTagChange(const int32 Index, const FGameplayTag& Tag)
+	{
+		TagChangeList.Add(Index, Tag);
+	}
+
+	FORCEINLINE void AddDataChange(const int32 Index, const FLFPCompactMetaData& Data)
+	{
+		FLFPMetaArray& MetaArray = DataChangeList.FindOrAdd(Index);
+
+		MetaArray.SetItem(Data);
+	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGridContainerV2ChuckInitialized, const int32, RegionIndex, const int32, ChuckIndex);
@@ -283,6 +313,10 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+protected:
+
+	FORCEINLINE bool UpdateChuckData();
 
 public: /** Checker */
 
@@ -326,7 +360,14 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 	FORCEINLINE FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
+public: /** Read and write Thread lock */
+
+	FRWLock ContainerThreadLock;
+
 public: /** Delegate */
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
+	FOnGridContainerV2ChuckInitialized OnGridContainerChuckUpdated;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
 	FOnGridContainerV2ChuckInitialized OnGridContainerChuckInitialized;
@@ -342,6 +383,10 @@ protected: // Initialize Data
 protected:  // Runtime Data
 
 	/** This store the chuck */
-	UPROPERTY(SaveGame)
+	UPROPERTY()
 	TArray<FLFPGridRegionDataV2> RegionDataList;
+
+	/** This store future chuck event data to send */
+	UPROPERTY()
+	TMap<FIntPoint, FLFPChuckUpdateActionV2> ChuckUpdateStateList;
 };

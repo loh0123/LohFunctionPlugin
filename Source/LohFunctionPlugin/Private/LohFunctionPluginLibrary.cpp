@@ -7,6 +7,7 @@
 #include "LohFunctionPlugin.h"
 #include "Misc/OutputDeviceNull.h"
 
+DEFINE_LOG_CATEGORY(LFPCompactIntArray);
 DEFINE_LOG_CATEGORY(LFPCompactIDArray);
 DEFINE_LOG_CATEGORY(LFPCompactTagArray);
 DEFINE_LOG_CATEGORY(LFPCompactMetaArray);

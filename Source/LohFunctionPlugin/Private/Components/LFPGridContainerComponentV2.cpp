@@ -31,6 +31,75 @@ void ULFPGridContainerComponentV2::BeginPlay()
 void ULFPGridContainerComponentV2::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (UpdateChuckData() == false) return;
+
+	SetComponentTickEnabled(false);
+}
+
+bool ULFPGridContainerComponentV2::UpdateChuckData()
+{
+	if (ChuckUpdateStateList.IsEmpty()) return true;
+
+	if (ContainerThreadLock.TryWriteLock() == false) return false;
+
+	for (const auto& ChuckUpdate : ChuckUpdateStateList)
+	{
+		/** Check Is Valid */
+		if (IsRegionPositionValid(ChuckUpdate.Key.X) == false) 
+		{
+			UE_LOG(LFPGridContainerComponentV2, Warning, TEXT("UpdateChuckData Region Index Invalid %s"), *ChuckUpdate.Key.ToString());
+
+			continue;
+		}
+
+		/** Region Initialization */
+		if (IsRegionInitialized(ChuckUpdate.Key.X) == false)
+		{
+			UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : UpdateChuckData Allocating Region %d"), ChuckUpdate.Key.X);
+
+			RegionDataList[ChuckUpdate.Key.X].InitRegionData(Setting.GetChuckLength());
+
+			OnGridContainerRegionInitialized.Broadcast(ChuckUpdate.Key.X);
+		}
+
+		/** Check Is Valid */
+		if (IsChuckPositionValid(ChuckUpdate.Key.X, ChuckUpdate.Key.Y) == false)
+		{
+			UE_LOG(LFPGridContainerComponentV2, Warning, TEXT("UpdateChuckData Chuck Index Invalid %s"), *ChuckUpdate.Key.ToString());
+
+			continue;
+		}
+
+		/** Chuck Initialization */
+		if (IsChuckInitialized(ChuckUpdate.Key.X, ChuckUpdate.Key.Y) == false)
+		{
+			UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : UpdateChuckData Allocating Chuck %d On Region %d"), ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
+
+			RegionDataList[ChuckUpdate.Key.X].GetChuckChecked(ChuckUpdate.Key.Y).InitChuckData(Setting.GetPaletteLength(), ChuckUpdate.Value.InitializeTag);
+
+			OnGridContainerChuckInitialized.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
+		}
+
+		for (const auto& TagChangeData : ChuckUpdate.Value.TagChangeList)
+		{
+			RegionDataList[ChuckUpdate.Key.X].GetChuck(ChuckUpdate.Key.Y)->SetIndexTag(TagChangeData.Key, TagChangeData.Value);
+		}
+
+		for (const auto& DataChange : ChuckUpdate.Value.DataChangeList)
+		{
+			for (const auto& MetaChangeData : DataChange.Value.GetItemList())
+			{
+				RegionDataList[ChuckUpdate.Key.X].GetChuck(ChuckUpdate.Key.Y)->SetIndexMeta(DataChange.Key, MetaChangeData);
+			}
+		}
+
+		OnGridContainerChuckUpdated.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
+	}
+
+	ContainerThreadLock.WriteUnlock();
+
+	return true;
 }
 
 bool ULFPGridContainerComponentV2::IsRegionPositionValid(const int32 RegionIndex) const
@@ -67,7 +136,11 @@ void ULFPGridContainerComponentV2::ReinitializeRegion()
 		return;
 	}
 
+	ContainerThreadLock.WriteLock();
+
 	RegionDataList.SetNum(Setting.GetRegionLength());
+
+	ContainerThreadLock.WriteUnlock();
 }
 
 bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride)
@@ -77,32 +150,40 @@ bool ULFPGridContainerComponentV2::InitializeData(const int32 RegionIndex, const
 		return false;
 	}
 
-	if (IsRegionInitialized(RegionIndex) == false)
-	{
-		UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Region %d"), RegionIndex);
+	auto& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex));
 
-		RegionDataList[RegionIndex].InitRegionData(Setting.GetChuckLength());
+	ChuckUpdateData.SetInitializeTag(StartTag);
 
-		OnGridContainerRegionInitialized.Broadcast(RegionIndex);
-	}
+	SetComponentTickEnabled(true);
 
-	if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false)
-	{
-		return false;
-	}
+	//if (IsRegionInitialized(RegionIndex) == false)
+	//{
+	//	UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Region %d"), RegionIndex);
 
-	if (IsChuckInitialized(RegionIndex, ChuckIndex) == false || bOverride)
-	{
-		UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Chuck %d On Region %d"), ChuckIndex, RegionIndex);
+	//	RegionDataList[RegionIndex].InitRegionData(Setting.GetChuckLength());
 
-		RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).InitChuckData(Setting.GetPaletteLength(), StartTag);
+	//	OnGridContainerRegionInitialized.Broadcast(RegionIndex);
+	//}
 
-		OnGridContainerChuckInitialized.Broadcast(RegionIndex, ChuckIndex);
+	//if (IsChuckPositionValid(RegionIndex, ChuckIndex) == false)
+	//{
+	//	return false;
+	//}
 
-		return true;
-	}
+	//if (IsChuckInitialized(RegionIndex, ChuckIndex) == false || bOverride)
+	//{
+	//	UE_LOG(LFPGridContainerComponentV2, Log, TEXT("ULFPGridContainerComponentV2 : InitializeData Allocating Chuck %d On Region %d"), ChuckIndex, RegionIndex);
 
-	return false;
+	//	RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).InitChuckData(Setting.GetPaletteLength(), StartTag);
+
+	//	OnGridContainerChuckInitialized.Broadcast(RegionIndex, ChuckIndex);
+
+	//	return true;
+	//}
+
+	//return false;
+
+	return true;
 }
 
 bool ULFPGridContainerComponentV2::SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag)
@@ -112,7 +193,11 @@ bool ULFPGridContainerComponentV2::SetPaletteTag(const int32 RegionIndex, const 
 		return false;
 	}
 
-	RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).SetIndexTag(PaletteIndex, Tag);
+	auto& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex));
+
+	ChuckUpdateData.AddTagChange(PaletteIndex, Tag);
+
+	SetComponentTickEnabled(true);
 
 	return true;
 }
@@ -124,14 +209,22 @@ bool ULFPGridContainerComponentV2::SetPaletteTagList(const int32 RegionIndex, co
 		return false;
 	}
 
-	if (RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).SetIndexTagList(PaletteIndexList, Tag) == false)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ULFPGridContainerComponentV2 : %s : SetPaletteTagList Has Invalid Index "), *GetOwner()->GetName());
+	bool bAllValid = true;
 
-		return false;
+	for (const int32& PalleteIndex : PaletteIndexList)
+	{
+		if (SetPaletteTag(RegionIndex, ChuckIndex, PalleteIndex, Tag) == false)
+		{
+			bAllValid = false;
+		}
 	}
 
-	return true;
+	if (bAllValid == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULFPGridContainerComponentV2 : %s : SetPaletteTagList Has Invalid Index "), *GetOwner()->GetName());
+	}
+
+	return bAllValid;
 }
 
 bool ULFPGridContainerComponentV2::SetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FLFPCompactMetaData& Data)
@@ -141,7 +234,11 @@ bool ULFPGridContainerComponentV2::SetPaletteData(const int32 RegionIndex, const
 		return false;
 	}
 
-	RegionDataList[RegionIndex].GetChuckChecked(ChuckIndex).SetIndexMeta(PaletteIndex, Data);
+	auto& ChuckUpdateData = ChuckUpdateStateList.FindOrAdd(FIntPoint(RegionIndex, ChuckIndex));
+
+	ChuckUpdateData.AddDataChange(PaletteIndex, Data);
+
+	SetComponentTickEnabled(true);
 
 	return true;
 }

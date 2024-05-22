@@ -10,6 +10,7 @@
 
 #include "LohFunctionPluginLibrary.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LFPCompactIntArray, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LFPCompactIDArray, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LFPCompactTagArray, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LFPCompactMetaArray, Log, All);
@@ -63,6 +64,8 @@ private:
 	{
 		check(NewSize >= 0);
 
+		UE_LOG(LFPCompactIntArray, Log, TEXT("FLFPCompactIntArray : Resize Bit To %d"), NewSize);
+
 		if (NewSize > 0)
 		{
 			NewSize = FMath::Max(NewSize, MinSize);
@@ -105,9 +108,14 @@ private:
 
 public:
 
-	FORCEINLINE bool IsInitialized() const
+	FORCEINLINE bool HasData() const
 	{
 		return EncodeBtye > 0 && IndexSize > 0;
+	}
+
+	FORCEINLINE bool IsInitialized() const
+	{
+		return IndexSize > 0;
 	}
 
 	FORCEINLINE bool IsValidIndex(const int32 Index) const
@@ -136,7 +144,7 @@ public:
 
 	FORCEINLINE void SetIndexNumber(const int32 Index, const uint32 Number)
 	{
-		checkf(IsValidIndex(Index) && IsInitialized(), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
+		checkf(IsValidIndex(Index) && HasData(), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
 
 		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
 		{
@@ -361,9 +369,9 @@ public:
 
 	FORCEINLINE bool RemoveID(const int32 Index, const bool bResize = true)
 	{
-		if (IsValidIndex(Index) == false || IsInitialized() == false)
+		if (IsValidIndex(Index) == false || HasData() == false)
 		{
-			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : RemoveID Index Invalid : Index = %d, IndexSize = %d, IsInitialized = %s"), Index, GetIndexSize(), (IsInitialized() ? TEXT("true") : TEXT("false")));
+			UE_LOG(LFPCompactIDArray, Warning, TEXT("FLFPCompactIDArray : RemoveID Index Invalid : Index = %d, IndexSize = %d, IsInitialized = %s"), Index, GetIndexSize(), (HasData() ? TEXT("true") : TEXT("false")));
 
 			return false;
 		}
@@ -405,7 +413,7 @@ public:
 
 	FORCEINLINE int32 GetID(const int32 Index) const
 	{
-		if (IsValidIndex(Index) == false || IsInitialized() == false)
+		if (IsValidIndex(Index) == false || HasData() == false)
 		{
 			return INDEX_NONE;
 		}
@@ -415,7 +423,7 @@ public:
 
 	FORCEINLINE int32 IDLength() const
 	{
-		if (IsInitialized() == false)
+		if (HasData() == false)
 		{
 			return 0;
 		}
