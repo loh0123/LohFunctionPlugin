@@ -24,7 +24,7 @@ struct FLFPCompactIntArray
 
 	FLFPCompactIntArray(const uint32 NewIndexSize) : IndexSize(NewIndexSize) {}
 
-	FLFPCompactIntArray(const uint32 NewIndexSize, const uint32 NewMinSize) : IndexSize(NewIndexSize), MinSize(NewMinSize) {}
+	FLFPCompactIntArray(const uint32 NewIndexSize, const uint32 NewMinSize) : IndexSize(NewIndexSize), MinBitSize(NewMinSize) {}
 
 private:
 
@@ -32,13 +32,13 @@ private:
 		TArray<uint32> IndexList = TArray<uint32>();
 
 	UPROPERTY()
-		uint32 EncodeBtye = 0;
-
-	UPROPERTY()
 		uint32 IndexSize = 0;
 
 	UPROPERTY()
-		uint32 MinSize = 0;
+		uint8 EncodeBit = 0;
+
+	UPROPERTY()
+		uint8 MinBitSize = 0;
 
 private:
 
@@ -60,7 +60,7 @@ private:
 		);
 	}
 
-	FORCEINLINE void ResizeBitArray(uint32 NewSize)
+	FORCEINLINE void ResizeBitArray(uint8 NewSize)
 	{
 		check(NewSize >= 0);
 
@@ -68,25 +68,25 @@ private:
 
 		if (NewSize > 0)
 		{
-			NewSize = FMath::Max(NewSize, MinSize);
+			NewSize = FMath::Max(NewSize, MinBitSize);
 		}
 
-		if (NewSize == EncodeBtye) return;
+		if (NewSize == EncodeBit) return;
 
 		if (NewSize == 0)
 		{
 			IndexList.Empty();
 
-			EncodeBtye = NewSize;
+			EncodeBit = NewSize;
 
 			return;
 		}
 
 		const TArray<uint32> OldGridIndexList = IndexList;
 
-		const uint32 OldSize = EncodeBtye;
+		const uint8 OldSize = EncodeBit;
 
-		EncodeBtye = NewSize;
+		EncodeBit = NewSize;
 
 		const int32 ChuckBitSize = FMath::DivideAndRoundUp(IndexSize, uint32(32));
 
@@ -96,10 +96,10 @@ private:
 
 		for (uint32 GridIndex = 0; GridIndex < IndexSize; GridIndex++)
 		{
-			for (uint32 EncodeIndex = 0; EncodeIndex < OldSize; EncodeIndex++)
+			for (uint8 EncodeIndex = 0; EncodeIndex < OldSize; EncodeIndex++)
 			{
 				const int32 OldBitIndex = int32((GridIndex * OldSize) + EncodeIndex);
-				const int32 NewBitIndex = int32((GridIndex * EncodeBtye) + EncodeIndex);
+				const int32 NewBitIndex = int32((GridIndex * EncodeBit) + EncodeIndex);
 
 				GetIndexRef(IndexList, NewBitIndex) = GetIndexConstRef(OldGridIndexList, OldBitIndex);
 			}
@@ -110,7 +110,7 @@ public:
 
 	FORCEINLINE bool HasData() const
 	{
-		return EncodeBtye > 0 && IndexSize > 0;
+		return EncodeBit > 0 && IndexSize > 0;
 	}
 
 	FORCEINLINE bool IsInitialized() const
@@ -144,11 +144,11 @@ public:
 
 	FORCEINLINE void SetIndexNumber(const int32 Index, const uint32 Number)
 	{
-		checkf(IsValidIndex(Index) && HasData(), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
+		checkf(IsValidIndex(Index) && HasData(), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBit);
 
-		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
+		for (uint8 EncodeIndex = 0; EncodeIndex < EncodeBit; EncodeIndex++)
 		{
-			const int32 BitIndex = (Index * EncodeBtye) + EncodeIndex;
+			const int32 BitIndex = (Index * EncodeBit) + EncodeIndex;
 
 			GetIndexRef(IndexList, BitIndex) = FConstBitReference(Number, 1 << EncodeIndex);
 		}
@@ -156,13 +156,13 @@ public:
 
 	FORCEINLINE uint32 GetIndexNumber(const int32 Index) const
 	{
-		checkf(IsValidIndex(Index), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBtye);
+		checkf(IsValidIndex(Index), TEXT("Index : %d, EncodeBtye : %u"), Index, EncodeBit);
 
 		uint32 OutIndex = 0;
 
-		for (uint32 EncodeIndex = 0; EncodeIndex < EncodeBtye; EncodeIndex++)
+		for (uint8 EncodeIndex = 0; EncodeIndex < EncodeBit; EncodeIndex++)
 		{
-			const int32 BitIndex = (Index * EncodeBtye) + EncodeIndex;
+			const int32 BitIndex = (Index * EncodeBit) + EncodeIndex;
 
 			FBitReference(OutIndex, 1 << EncodeIndex) = GetIndexConstRef(IndexList, BitIndex);
 		}
@@ -172,9 +172,9 @@ public:
 
 	/** Debug Function */
 
-	FORCEINLINE uint32 GetEncodeLength() const
+	FORCEINLINE uint8 GetEncodeLength() const
 	{
-		return EncodeBtye;
+		return EncodeBit;
 	}
 
 	FORCEINLINE uint32 GetIndexSize() const
@@ -186,7 +186,7 @@ public:
 
 	friend FArchive& operator<<(FArchive& Ar, FLFPCompactIntArray& Data)
 	{
-		return Ar << Data.IndexList << Data.EncodeBtye << Data.IndexSize;
+		return Ar << Data.IndexList << Data.EncodeBit << Data.IndexSize;
 	}
 
 };
@@ -586,11 +586,11 @@ struct FLFPCompactMetaData
 
 	FLFPCompactMetaData() {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaData(TArray<uint8>()), MetaType(ELFPCompactMetaType::LFP_None) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag) : MetaTag(Tag), MetaType(ELFPCompactMetaType::LFP_None), MetaData(TArray<uint8>()) {}
 
-	FLFPCompactMetaData(const FGameplayTag& Tag, const TArray<uint8>& Data, const ELFPCompactMetaType Type) : MetaTag(Tag), MetaData(Data), MetaType(Type) {}
+	FLFPCompactMetaData(const FGameplayTag& Tag, const TArray<uint8>& Data, const ELFPCompactMetaType Type) : MetaTag(Tag), MetaType(Type), MetaData(Data) {}
 
-	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaData(Other.MetaData), MetaType(Other.MetaType) {}
+	FLFPCompactMetaData(const FLFPCompactMetaData& Other) : MetaTag(Other.MetaTag), MetaType(Other.MetaType), MetaData(Other.MetaData) {}
 
 public:
 
@@ -600,10 +600,10 @@ public:
 private:
 
 	UPROPERTY()
-	TArray<uint8> MetaData = TArray<uint8>();
+	ELFPCompactMetaType MetaType = ELFPCompactMetaType::LFP_None;
 
 	UPROPERTY()
-	ELFPCompactMetaType MetaType = ELFPCompactMetaType::LFP_None;
+	TArray<uint8> MetaData = TArray<uint8>();
 
 public:
 
@@ -772,15 +772,12 @@ struct FLFPCompactMetaArray : public FLFPCompactIDArray
 
 	FLFPCompactMetaArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
 
-	FLFPCompactMetaArray(const uint32 NewIndexSize, const uint32 NewMinSize, const bool bTagCompactMode) : Super(NewIndexSize, NewMinSize), bCompactTag(bTagCompactMode) {}
+	FLFPCompactMetaArray(const uint32 NewIndexSize, const uint32 NewMinSize) : Super(NewIndexSize, NewMinSize) {}
 
 private:
 
 	UPROPERTY()
 	TArray<FLFPCompactMetaData> ItemList = {};
-
-	UPROPERTY()
-	bool bCompactTag = false;
 
 protected:
 
@@ -832,32 +829,116 @@ public:
 			return;
 		}
 
-		if (bCompactTag)
+		const int32 FindedID = ItemList.IndexOfByKey(NewItem.MetaTag);
+
+		if (FindedID != INDEX_NONE)
 		{
-			const int32 FindedID = ItemList.IndexOfByKey(NewItem.MetaTag);
+			ItemList[FindedID] = NewItem;
 
-			if (FindedID != INDEX_NONE)
-			{
-				ItemList[FindedID] = NewItem;
+			SetID(CompactIndex, FindedID);
 
-				SetID(CompactIndex, FindedID);
-
-				return;
-			}
-		}
-		else
-		{
-			const int32 ID = GetID(CompactIndex);
-
-			if (ID != INDEX_NONE)
-			{
-				ItemList[ID] = NewItem;
-
-				return;
-			}
+			return;
 		}
 
 		const int32 NewID = AssignID({ CompactIndex });
+
+		if (ItemList.Num() <= NewID)
+		{
+			ItemList.SetNum(NewID + 1);
+		}
+
+		ItemList[NewID] = NewItem;
+	}
+
+	FORCEINLINE const TArray<FLFPCompactMetaData>& GetItemList() const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE const FLFPCompactMetaData* GetItem(const int32 CompactIndex) const
+	{
+		const int32 ID = GetID(CompactIndex);
+
+		return ID != INDEX_NONE ? &ItemList[ID] : nullptr;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FLFPCompactUniqueMetaArray : public FLFPCompactIDArray
+{
+	GENERATED_USTRUCT_BODY()
+
+	FLFPCompactUniqueMetaArray() {}
+
+	FLFPCompactUniqueMetaArray(const uint32 NewIndexSize) : Super(NewIndexSize) {}
+
+	FLFPCompactUniqueMetaArray(const uint32 NewIndexSize, const uint32 NewMinSize) : Super(NewIndexSize, NewMinSize) {}
+
+private:
+
+	UPROPERTY()
+	TArray<FLFPCompactMetaData> ItemList = {};
+
+protected:
+
+	/** Resize Function */
+
+	FORCEINLINE void ResizeArray()
+	{
+		ItemList.SetNum(IDLength());
+
+		return;
+	}
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE void RemoveItem(const int32 CompactIndex)
+	{
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactMetaArray, Warning, TEXT("FLFPCompactUniqueMetaArray : RemoveItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
+
+		const int32 ID = GetID(CompactIndex);
+
+		if (RemoveID(CompactIndex))
+		{
+			ItemList[ID] = FLFPCompactMetaData();
+
+			ResizeArray();
+		}
+	}
+
+	FORCEINLINE void AddItem(const int32 CompactIndex, const FLFPCompactMetaData& NewItem)
+	{
+		if (IsValidIndex(CompactIndex) == false)
+		{
+			UE_LOG(LFPCompactMetaArray, Warning, TEXT("FLFPCompactUniqueMetaArray : AddItem Has Invalid CompactIndex (%d)"), CompactIndex);
+
+			return;
+		}
+
+		if (NewItem.MetaTag.IsValid() == false)
+		{
+			RemoveItem(CompactIndex);
+
+			return;
+		}
+
+		int32 NewID = GetID(CompactIndex);
+
+		if (NewID != INDEX_NONE)
+		{
+			ItemList[NewID] = NewItem;
+
+			return;
+		}
+
+		NewID = AssignID({ CompactIndex });
 
 		if (ItemList.Num() <= NewID)
 		{
@@ -886,6 +967,8 @@ struct FLFPMetaArray
 	GENERATED_USTRUCT_BODY()
 
 	FLFPMetaArray() {}
+
+	FLFPMetaArray(const int32 NewIndexSize) { ItemList.SetNum(NewIndexSize); }
 
 private:
 

@@ -53,6 +53,8 @@ public:
 
 	FORCEINLINE bool IsValid() const;
 
+	FORCEINLINE void GetInstanceIndexList(TArray<int32>& ResultList) const;
+
 	FORCEINLINE FPrimitiveInstanceId FindInstanceID(const int32 Item) const;
 
 	FORCEINLINE FPrimitiveInstanceId AddInstance(const int32 InstanceIndex, const FTransform& InstanceTransform, bool bWorldSpace);
@@ -95,29 +97,32 @@ public:
 	
 public: /* Function For External Blueprint Or C++ To Use */
 
-	UFUNCTION(BlueprintPure, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintPure, Category = "LFPInstanceIDComponent | Getter")
 		FORCEINLINE bool IsMeshIndexValid(const int32 MeshIndex) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPInstanceIDComponent | Function")
-		FORCEINLINE int32 GetInstanceIndexOccupation(const int32 InstanceIndex) const;
+	UFUNCTION(BlueprintPure, Category = "LFPInstanceIDComponent | Getter")
+		FORCEINLINE int32 GetMeshIndexByInstance(const int32 InstanceIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPInstanceIDComponent | Getter")
+		FORCEINLINE TArray<int32> GetInstanceIndexListByMesh(const int32 MeshIndex) const;
 
 
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Initializer")
 		FORCEINLINE int32 RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM);
 
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Initializer")
 		FORCEINLINE int32 RegisterInstanceStaticMeshComponentList(TArray<UInstancedStaticMeshComponent*> ISMList);
 	
 	/** Set Instance Type On This Grid Location (Use -1 To Remove) */
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Setter")
 		FORCEINLINE bool SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo);
 	
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Setter")
 		FORCEINLINE bool SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList);
 	
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Setter")
 		FORCEINLINE bool SetCustomData(const int32 InstanceIndex, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty = false);
 
-	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Function")
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Setter")
 		FORCEINLINE bool SetCustomDatas(const int32 InstanceIndex, const TArray<float>& DataList, const bool bMarkRenderStateDirty = false);
 };

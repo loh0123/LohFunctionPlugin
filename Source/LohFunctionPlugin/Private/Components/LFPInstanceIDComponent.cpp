@@ -12,6 +12,11 @@ bool FLFPInstanceGridMeshData::IsValid() const
 	return ISMComponent.operator bool();
 }
 
+void FLFPInstanceGridMeshData::GetInstanceIndexList(TArray<int32>& ResultList) const
+{
+	InstanceIDList.GetKeys(ResultList);
+}
+
 FPrimitiveInstanceId FLFPInstanceGridMeshData::FindInstanceID(const int32 Item) const
 {
 	const auto ID = InstanceIDList.Find(Item);
@@ -131,7 +136,7 @@ bool ULFPInstanceIDComponent::IsMeshIndexValid(const int32 MeshIndex) const
 	return MeshList.IsValidIndex(MeshIndex) && MeshList[MeshIndex].IsValid();
 }
 
-int32 ULFPInstanceIDComponent::GetInstanceIndexOccupation(const int32 InstanceIndex) const
+int32 ULFPInstanceIDComponent::GetMeshIndexByInstance(const int32 InstanceIndex) const
 {
 	for (int32 MeshIndex = 0; MeshIndex < MeshList.Num(); MeshIndex++)
 	{
@@ -144,6 +149,20 @@ int32 ULFPInstanceIDComponent::GetInstanceIndexOccupation(const int32 InstanceIn
 	}
 
 	return INDEX_NONE;
+}
+
+TArray<int32> ULFPInstanceIDComponent::GetInstanceIndexListByMesh(const int32 MeshIndex) const
+{
+	TArray<int32> ResultList;
+
+	if (IsMeshIndexValid(MeshIndex) == false)
+	{
+		return ResultList;
+	}
+
+	MeshList[MeshIndex].GetInstanceIndexList(ResultList);
+
+	return ResultList;
 }
 
 int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM)
@@ -180,7 +199,7 @@ bool ULFPInstanceIDComponent::SetInstance(const FLFPInstanceGridInstanceInfo& In
 		return false;
 	}
 
-	const int32 OccupationID = GetInstanceIndexOccupation(InstanceInfo.InstanceIndex);
+	const int32 OccupationID = GetMeshIndexByInstance(InstanceInfo.InstanceIndex);
 
 	/* Find The Prev Data Is Valid And Remove Or Update It */
 	if (OccupationID != INDEX_NONE)
@@ -225,7 +244,7 @@ bool ULFPInstanceIDComponent::SetInstances(const TArray<FLFPInstanceGridInstance
 
 bool ULFPInstanceIDComponent::SetCustomData(const int32 InstanceIndex, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty)
 {
-	const int32 MeshIndex = GetInstanceIndexOccupation(InstanceIndex);
+	const int32 MeshIndex = GetMeshIndexByInstance(InstanceIndex);
 
 	if (IsMeshIndexValid(MeshIndex) == false)
 	{
@@ -237,7 +256,7 @@ bool ULFPInstanceIDComponent::SetCustomData(const int32 InstanceIndex, const int
 
 bool ULFPInstanceIDComponent::SetCustomDatas(const int32 InstanceIndex, const TArray<float>& DataList, const bool bMarkRenderStateDirty)
 {
-	const int32 MeshIndex = GetInstanceIndexOccupation(InstanceIndex);
+	const int32 MeshIndex = GetMeshIndexByInstance(InstanceIndex);
 
 	if (IsMeshIndexValid(MeshIndex) == false)
 	{

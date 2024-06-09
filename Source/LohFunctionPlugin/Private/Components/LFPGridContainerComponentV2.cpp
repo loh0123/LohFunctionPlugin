@@ -81,9 +81,13 @@ bool ULFPGridContainerComponentV2::UpdateChuckData()
 			OnGridContainerChuckInitialized.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
 		}
 
+		TMap<FIntPoint, TSet<int32>> UpdatedMapKey = TMap<FIntPoint, TSet<int32>>();
+
 		for (const auto& TagChangeData : ChuckUpdate.Value.TagChangeList)
 		{
 			RegionDataList[ChuckUpdate.Key.X].GetChuck(ChuckUpdate.Key.Y)->SetIndexTag(TagChangeData.Key, TagChangeData.Value);
+
+			UpdatedMapKey.FindOrAdd(FIntPoint(ChuckUpdate.Key.X, ChuckUpdate.Key.Y)).Add(TagChangeData.Key);
 		}
 
 		for (const auto& DataChange : ChuckUpdate.Value.DataChangeList)
@@ -91,10 +95,17 @@ bool ULFPGridContainerComponentV2::UpdateChuckData()
 			for (const auto& MetaChangeData : DataChange.Value.GetItemList())
 			{
 				RegionDataList[ChuckUpdate.Key.X].GetChuck(ChuckUpdate.Key.Y)->SetIndexMeta(DataChange.Key, MetaChangeData);
+
+				UpdatedMapKey.FindOrAdd(FIntPoint(ChuckUpdate.Key.X, ChuckUpdate.Key.Y)).Add(DataChange.Key);
 			}
 		}
 
 		OnGridContainerChuckUpdated.Broadcast(ChuckUpdate.Key.X, ChuckUpdate.Key.Y);
+
+		for (const auto& UpdatedKey : UpdatedMapKey)
+		{
+			OnGridContainerPalleteUpdated.Broadcast(UpdatedKey.Key.X, UpdatedKey.Key.Y, UpdatedKey.Value);
+		}
 	}
 
 	ContainerThreadLock.WriteUnlock();

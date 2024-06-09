@@ -104,7 +104,7 @@ private:
 		FLFPCompactTagArray TagList = FLFPCompactTagArray();
 
 	UPROPERTY()
-		FLFPCompactMetaArray MetaList = FLFPCompactMetaArray();
+		FLFPCompactUniqueMetaArray MetaList = FLFPCompactUniqueMetaArray();
 
 	UPROPERTY()
 		FLFPMetaArray ChuckMetaList = FLFPMetaArray();
@@ -132,7 +132,7 @@ public:
 	{
 		TagList = FLFPCompactTagArray(NewIndexSize, 4, StartTag);
 
-		MetaList = FLFPCompactMetaArray(NewIndexSize, 4, false);
+		MetaList = FLFPCompactUniqueMetaArray(NewIndexSize, 4);
 
 		WriteCount++;
 
@@ -293,6 +293,7 @@ public:
 	}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGridContainerPalleteDataUpdated, const int32, RegionIndex, const int32, ChuckIndex, const TSet<int32>&, PaletteIndexList);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGridContainerV2ChuckInitialized, const int32, RegionIndex, const int32, ChuckIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridContainerV2RegionInitialized, const int32, RegionIndex);
 
@@ -365,6 +366,9 @@ public: /** Read and write Thread lock */
 	FRWLock ContainerThreadLock;
 
 public: /** Delegate */
+
+	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
+	FOnGridContainerPalleteDataUpdated OnGridContainerPalleteUpdated;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
 	FOnGridContainerV2ChuckInitialized OnGridContainerChuckUpdated;
