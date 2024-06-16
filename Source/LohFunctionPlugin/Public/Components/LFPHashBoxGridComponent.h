@@ -57,9 +57,9 @@ FORCEINLINE uint32 GetTypeHash(const FLFHashBoxGridKey& Thing)
 	return Hash;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHashBoxGridPointUpdate, const FGameplayTag&, HashKey, const FLFHashBoxGridKey&, HashValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHashBoxGridPointUpdate, const FLFHashBoxGridKey&, HashValue);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPHashBoxGridComponent : public USceneComponent
 {
 	GENERATED_BODY()
@@ -87,8 +87,8 @@ public:
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
-	bool GetGridOccupation(const FIntVector& GridPosition, const FIntVector& LocalPosition, const FGameplayTag& HashKey) const;
-	virtual bool GetGridOccupation_Implementation(const FIntVector& GridPosition, const FIntVector& LocalPosition, const FGameplayTag& HashKey) const { return false; }
+	bool GetGridOccupation(const FIntVector& GridPosition, const FIntVector& LocalPosition, const FGameplayTag& CurrentGridTag) const;
+	virtual bool GetGridOccupation_Implementation(const FIntVector& GridPosition, const FIntVector& LocalPosition, const FGameplayTag& CurrentGridTag) const { return false; }
 
 	UFUNCTION(BlueprintNativeEvent)
 	FGameplayTag GetGridTag(const FIntVector& GridPosition) const;
@@ -103,7 +103,4 @@ protected: // Initialize Data
 
 	UPROPERTY(EditAnywhere, Category = "LFPHashBoxGridComponent | Setting")
 		FIntVector GridSize = FIntVector(0);
-
-	UPROPERTY(EditAnywhere, Category = "LFPHashBoxGridComponent | Setting")
-		TMap<FGameplayTag, FIntVector> HashPointMap = TMap<FGameplayTag, FIntVector>();
 };

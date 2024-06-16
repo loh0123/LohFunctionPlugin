@@ -361,6 +361,14 @@ public: /** Getter */
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
 	FORCEINLINE FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
+public: /** Positon */
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Positon")
+	FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Positon")
+	FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
+
 public: /** Read and write Thread lock */
 
 	FRWLock ContainerThreadLock;

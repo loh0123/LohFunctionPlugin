@@ -44,30 +44,75 @@ void ULFPHashBoxGridComponent::UpdateGridIndex(const int32 GridIndex)
 		return;
 	}
 
-	const FIntVector LoopHashList[] =
-	{
-		FIntVector(0,0,0),
-		FIntVector(1,0,0),
-		FIntVector(0,1,0),
-		FIntVector(1,1,0),
-		FIntVector(0,0,1),
-		FIntVector(1,0,1),
-		FIntVector(0,1,1),
-		FIntVector(1,1,1)
-	};
+	bool CheckList[27] = {};
 
 	FLFHashBoxGridKey HashKey = FLFHashBoxGridKey();
 
 	HashKey.ObjectTag = GetGridTag(GridPosition);
 
-	for (const auto& HashPointData : HashPointMap)
+	if (GetGridOccupation(GridPosition, FIntVector(0), HashKey.ObjectTag))
 	{
-		for (int32 Index = 0; Index < 8; Index++)
+		for (int32 Index = 0; Index < 27; Index++)
 		{
-			HashKey.SetConnectOccupation(Index, GetGridOccupation(GridPosition + HashPointData.Value + LoopHashList[Index], HashPointData.Value + LoopHashList[Index], HashPointData.Key));
+			const FIntVector LocalCheckPostion = ULFPGridLibrary::ToGridLocation(Index, FIntVector(3)) - FIntVector(1);
+
+			CheckList[Index] = GetGridOccupation(GridPosition + LocalCheckPostion, LocalCheckPostion, HashKey.ObjectTag);
 		}
 
-		OnHashBoxGridPointUpdate.Broadcast(HashPointData.Key, HashKey);
+		/* Edge Check */
+		for (int32 Index = 0; Index < 27; Index++)
+		{
+			const FIntVector LocalCheckPostion = ULFPGridLibrary::ToGridLocation(Index, FIntVector(3)) - FIntVector(1);
+
+			if (CheckList[Index] == false)
+			{
+				continue;
+			}
+
+			int32 DifferenceIndex = 0;
+
+			for (int32 VectorIndex = 0; VectorIndex < 3; VectorIndex++)
+			{
+				if (LocalCheckPostion[VectorIndex] != 0)
+				{
+					DifferenceIndex++;
+				}
+			}
+
+			if (DifferenceIndex > 1)
+			{
+				for (int32 VectorIndex = 0; VectorIndex < 3; VectorIndex++)
+				{
+					if (LocalCheckPostion[VectorIndex] != 0)
+					{
+						FIntVector CopyPos = LocalCheckPostion;
+
+						CopyPos[VectorIndex] = 0;
+
+						if (CheckList[ULFPGridLibrary::ToGridIndex(CopyPos + FIntVector(1), FIntVector(3))] == false)
+						{
+							CheckList[Index] = false;
+
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (int32 HashPoint = 0; HashPoint < 8; HashPoint++)
+	{
+		const FIntVector LocalHashPoint = ULFPGridLibrary::ToGridLocation(HashPoint, FIntVector(2));
+
+		for (int32 Index = 0; Index < 8; Index++)
+		{
+			const FIntVector LocalCheckPostion = ULFPGridLibrary::ToGridLocation(Index, FIntVector(2));
+
+			HashKey.SetConnectOccupation(Index, CheckList[ULFPGridLibrary::ToGridIndex(LocalHashPoint  + LocalCheckPostion, FIntVector(3))]);
+		}
+
+		OnHashBoxGridPointUpdate.Broadcast(HashKey);
 	}
 }
 
