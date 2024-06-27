@@ -26,6 +26,16 @@ public:
 
 public:
 
+	FORCEINLINE bool GetConnectOccupation(const int32 Index) const
+	{
+		if (Index < 0 || Index > 7)
+		{
+			return false;
+		}
+
+		return (ConnectID & (1 << (Index & (8 - 1)))) != 0;
+	}
+
 	FORCEINLINE void SetConnectOccupation(const int32 Index, const bool bNewValue)
 	{
 		if (Index < 0 || Index > 7)
@@ -35,12 +45,44 @@ public:
 
 		if (bNewValue)
 		{
-			ConnectID |= 1 << (Index & (NumBitsPerDWORD - 1));
+			ConnectID |= 1 << (Index & (8 - 1));
 		}
 		else
 		{
-			ConnectID &= ~(1 << (Index & (NumBitsPerDWORD - 1)));
+			ConnectID &= ~(1 << (Index & (8 - 1)));
 		}
+	}
+
+public:
+
+	FORCEINLINE FLFHashBoxGridKey RotateIDByZ(const int32 Amount = 1) const
+	{
+		FLFHashBoxGridKey ReturnValue = FLFHashBoxGridKey(ConnectID, ObjectTag);
+
+		const FIntPoint SwapList[6] =
+		{
+			FIntPoint(0,1),
+			FIntPoint(1,3),
+			FIntPoint(3,2),
+			FIntPoint(4,5),
+			FIntPoint(5,7),
+			FIntPoint(7,6)
+		};
+
+		for (int32 LoopCount = 0; LoopCount < Amount; LoopCount++)
+		{
+			for (int32 Index = 0; Index < 6; Index++)
+			{
+				const FIntPoint& SwapParm = SwapList[Index];
+
+				const bool TempBool = ReturnValue.GetConnectOccupation(SwapParm.X);
+
+				ReturnValue.SetConnectOccupation(SwapParm.X, ReturnValue.GetConnectOccupation(SwapParm.Y));
+				ReturnValue.SetConnectOccupation(SwapParm.Y, TempBool);
+			}
+		}
+
+		return ReturnValue;
 	}
 
 public:

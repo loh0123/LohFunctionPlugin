@@ -25,8 +25,9 @@ public class LohFunctionPluginMarching : ModuleRules
 				"Core", 
 				"CoreUObject", 
 				"Engine", 
-				"GameplayTags" 
-			}
+				"GameplayTags",
+				"LohFunctionPlugin"
+            }
 			);
 
 		PrivateDependencyModuleNames.AddRange(
@@ -35,8 +36,9 @@ public class LohFunctionPluginMarching : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
-				"GameplayTags"
-			}
+				"GameplayTags",
+                "LohFunctionPlugin"
+            }
 			);
 
 			DynamicallyLoadedModuleNames.AddRange(

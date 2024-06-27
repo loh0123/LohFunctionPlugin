@@ -21,20 +21,16 @@ void ULFPMarchingPartAsset::GeneratePartKey()
 {
 	if (PartKeyList.IsEmpty()) return;
 
-	const FLFPMarchingPartKey TargetKey = PartKeyList.Array()[0];
+	FLFHashBoxGridKey TargetKey = PartKeyList.Array()[0];
 
-	const auto BtyeArray = ULohFunctionPluginMarchingLibrary::GenerateBitMatrixNumberTop(TargetKey.ConnectID);
+	PartKeyList.Empty();
 
-	TArray<FLFPMarchingPartKey> Result;
-
-	for (const uint8 Btye : BtyeArray)
+	for (int32 Index = 0; Index < 4; Index++)
 	{
-		Result.Add(FLFPMarchingPartKey(Btye, TargetKey.ObjectTag));
+		PartKeyList.Add(TargetKey);
+
+		TargetKey = TargetKey.RotateIDByZ();
 	}
-
-	PartKeyList.Empty(4);
-
-	PartKeyList.Append(Result);
 
 	return;
 }

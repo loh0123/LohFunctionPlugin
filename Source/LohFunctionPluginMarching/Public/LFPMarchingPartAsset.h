@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "GameplayTagContainer.h"
-#include "LohFunctionPluginMarchingLibrary.h"
+
+#include <LohFunctionPlugin/Public/Components/LFPHashBoxGridComponent.h>
 #include "LFPMarchingPartAsset.generated.h"
 
 UCLASS(Blueprintable)
@@ -33,6 +33,6 @@ protected:
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPMarchingPartAsset | Setting")
-		TSet<FLFPMarchingPartKey> PartKeyList = TSet<FLFPMarchingPartKey>();
+		TSet<FLFHashBoxGridKey> PartKeyList = TSet<FLFHashBoxGridKey>();
 
 };
