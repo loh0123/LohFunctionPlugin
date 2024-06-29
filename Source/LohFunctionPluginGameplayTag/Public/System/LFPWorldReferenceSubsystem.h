@@ -5,18 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "GameplayTagsManager.h"
 #include "LFPWorldReferenceSubsystem.generated.h"
-
-USTRUCT()
-struct FLFPGameplayTagChildData
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY()
-		TSet<FGameplayTag> ChildList = TSet<FGameplayTag>();
-};
 
 USTRUCT()
 struct FLFPGameplayTagBindData
@@ -27,6 +17,11 @@ private:
 
 	UPROPERTY()
 		TArray<TObjectPtr<UActorComponent>> BindedObjectList = TArray<TObjectPtr<UActorComponent>>();
+
+public:
+
+	UPROPERTY()
+		TSet<FGameplayTag> ChildTagList = TSet<FGameplayTag>();
 
 public:
 
@@ -52,7 +47,7 @@ public:
 
 	bool CanRemove() const
 	{
-		return BindedObjectList.IsEmpty();
+		return BindedObjectList.IsEmpty() && ChildTagList.IsEmpty();
 	}
 };
 
@@ -126,7 +121,4 @@ public:
 
 	UPROPERTY()
 		TMap<FGameplayTag, FLFPGameplayTagBindData> ReferenceMap = TMap<FGameplayTag, FLFPGameplayTagBindData>();
-
-	UPROPERTY() 
-		TMap<FGameplayTag, FLFPGameplayTagChildData> TagParentMap = TMap<FGameplayTag, FLFPGameplayTagChildData>();
 };

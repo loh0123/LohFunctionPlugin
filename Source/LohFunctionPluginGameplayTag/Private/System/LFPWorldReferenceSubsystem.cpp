@@ -3,12 +3,12 @@
 
 #include "System/LFPWorldReferenceSubsystem.h"
 #include "Components/LFPTagReferenceComponent.h"
-#include "GameplayTagsManager.h"
 
 bool ULFPWorldReferenceSubsystem::ProcessActorComponent(const FGameplayTagContainer& ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags, const TFunctionRef<bool(UActorComponent* FoundedComponent)> OnMatchComponentFounded, const TFunctionRef<bool()> OnEnd) const
 {
-	TArray<FGameplayTag> FoundComponentTagList;
+	TArray<TObjectPtr<UActorComponent>> FoundComponentList;
 
+	/* Find Component On ReferenceMap And Cache It */
 	for (TArray<FGameplayTag> SearchTagList = ComponentGameplayTags.GetGameplayTagArray(); SearchTagList.IsEmpty() == false;)
 	{
 		const TArray<FGameplayTag> OldSearchlist = SearchTagList;
@@ -17,43 +17,38 @@ bool ULFPWorldReferenceSubsystem::ProcessActorComponent(const FGameplayTagContai
 
 		for (const auto& SearchTag : OldSearchlist)
 		{
-			if (ReferenceMap.Contains(SearchTag))
+			if (auto ReferenceData = ReferenceMap.Find(SearchTag); ReferenceData != nullptr)
 			{
-				FoundComponentTagList.Add(SearchTag);
-			}
+				FoundComponentList.Append(ReferenceData->GetBindedObjectList());
 
-			if (TagParentMap.Contains(SearchTag))
-			{
-				SearchTagList.Append(TagParentMap.FindChecked(SearchTag).ChildList.Array());
+				SearchTagList.Append(ReferenceData->ChildTagList.Array());
 			}
 		}
 	}
 
-	for (const auto& FoundComponentTag : FoundComponentTagList)
+	/* Loop All Found Component And Check Tag Name Match */
+	for (const auto& FoundComponent : FoundComponentList)
 	{
-		for (const auto& BindedObject : ReferenceMap.FindChecked(FoundComponentTag).GetBindedObjectList())
+		if (ComponentTagList.IsEmpty() == false)
 		{
-			if (ComponentTagList.IsEmpty() == false)
-			{
-				bool bIsPass = bHasAllTags;
+			bool bIsPass = bHasAllTags;
 
-				for (const FName& ComponentCheckTag : ComponentTagList)
+			for (const FName& ComponentCheckTag : ComponentTagList)
+			{
+				if (FoundComponent->ComponentHasTag(ComponentCheckTag) == !bIsPass)
 				{
-					if (BindedObject->ComponentHasTag(ComponentCheckTag) == !bIsPass)
-					{
-						bIsPass = !bIsPass;
+					bIsPass = !bIsPass;
 
-						break;
-					}
+					break;
 				}
-
-				if (bIsPass == false) continue;
 			}
 
-			if (OnMatchComponentFounded(BindedObject))
-			{
-				return OnEnd();
-			}
+			if (bIsPass == false) continue;
+		}
+
+		if (OnMatchComponentFounded(FoundComponent))
+		{
+			return OnEnd();
 		}
 	}
 
@@ -72,22 +67,32 @@ void ULFPWorldReferenceSubsystem::Deinitialize()
 
 void ULFPWorldReferenceSubsystem::RegisterComponent(const FGameplayTag Tag, UActorComponent* Component)
 {
-	if (ReferenceMap.Contains(Tag) == false)
+	if (IsValid(Component) == false)
 	{
-		for (FGameplayTag ChildTag = Tag; ChildTag.IsValid();)
-		{
-			const FGameplayTag ParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(ChildTag);
-
-			if (ParentTag.IsValid())
-			{
-				TagParentMap.FindOrAdd(ParentTag).ChildList.Add(ChildTag);
-			}
-
-			ChildTag = ParentTag;
-		}
+		return;
 	}
 
-	ReferenceMap.FindOrAdd(Tag).BindObject(Component);
+	if (auto ReferenceData = ReferenceMap.Find(Tag); ReferenceData != nullptr)
+	{
+		ReferenceData->BindObject(Component);
+	}
+	else
+	{
+		/* Add Child First And Bind Object */
+		ReferenceMap.Add(Tag).BindObject(Component);
+
+		/* Try Extract Parent Tag If Any */
+		if (TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags(Tag, ParentTagList))
+		{
+			FGameplayTag ChildTag = Tag;
+
+			/* Add All Parent And Link It Together */
+			for (const FGameplayTag& ParentTag : ParentTagList)
+			{
+				ReferenceMap.FindOrAdd(ParentTag).ChildTagList.Add(ChildTag);
+			}
+		}
+	}
 
 	OnRegisterComponent.Broadcast(Tag, Component);
 
@@ -106,37 +111,30 @@ void ULFPWorldReferenceSubsystem::RegisterComponentByContainer(const FGameplayTa
 
 void ULFPWorldReferenceSubsystem::UnregisterComponent(const FGameplayTag Tag, UActorComponent* Component)
 {
-	if (ReferenceMap.Contains(Tag) == false) return;
-	
-	FLFPGameplayTagBindData& RefVar = ReferenceMap.FindChecked(Tag);
-
-	RefVar.UnbindObject(Component);
-
-	if (RefVar.CanRemove())
+	if (IsValid(Component) == false)
 	{
-		ReferenceMap.Remove(Tag);
+		return;
+	}
 
-		for (FGameplayTag ChildTag = Tag; ChildTag.IsValid();)
+	if (ReferenceMap.Contains(Tag) == false)
+	{
+		return;
+	}
+
+	/* First Unbind Object On The Tag */
+	ReferenceMap.FindChecked(Tag).UnbindObject(Component);
+
+	/* Remove The Tag And It Parent Until It Can't Be Remove Or No Parent Left */
+	if (TArray<FGameplayTag> RemoveTagList = { Tag }; UGameplayTagsManager::Get().ExtractParentTags(Tag, RemoveTagList))
+	{
+		for (const FGameplayTag& RemoveTag : RemoveTagList)
 		{
-			const FGameplayTag ParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(ChildTag);
-
-			if (ParentTag.IsValid() && TagParentMap.Contains(ParentTag))
+			if (ReferenceMap.FindChecked(RemoveTag).CanRemove() == false)
 			{
-				auto& ParentTagData = TagParentMap.FindChecked(ParentTag);
-
-				ParentTagData.ChildList.Remove(ChildTag);
-
-				if (ParentTagData.ChildList.IsEmpty())
-				{
-					TagParentMap.Remove(ParentTag);
-				}
-				else
-				{
-					break;
-				}
+				break;
 			}
 
-			ChildTag = ParentTag;
+			ReferenceMap.Remove(RemoveTag);
 		}
 	}
 
@@ -249,3 +247,5 @@ bool ULFPWorldReferenceSubsystem::HasComponentWithTags(const FGameplayTagContain
 {
 	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags, [&](UActorComponent* FoundedComponent) { return true; }, [&]() { return true; });
 }
+
+
