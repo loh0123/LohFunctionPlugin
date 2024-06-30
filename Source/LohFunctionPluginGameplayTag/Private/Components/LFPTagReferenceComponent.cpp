@@ -25,7 +25,7 @@ void ULFPTagReferenceComponent::BeginPlay()
 
 	if (SubSystem != nullptr)
 	{
-		SubSystem->RegisterComponentByContainer(ComponentGameplayTags, this);
+		SubSystem->RegisterComponent(this);
 	}
 }
 
@@ -37,7 +37,7 @@ void ULFPTagReferenceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 	if (SubSystem != nullptr)
 	{
-		SubSystem->UnregisterComponentByContainer(ComponentGameplayTags, this);
+		SubSystem->UnregisterComponent(this);
 	}
 }
 
@@ -58,5 +58,20 @@ void ULFPTagReferenceComponent::BroadcastEvent(const FGameplayTag EventTag, UObj
 	}
 
 	return;
+}
+
+const FGameplayTagContainer& ULFPTagReferenceComponent::GetCategoryGameplayTags() const
+{
+	return CategoryGameplayTags;
+}
+
+const FGameplayTagContainer& ULFPTagReferenceComponent::GetComponentGameplayTags() const
+{
+	return ComponentGameplayTags;
+}
+
+bool ULFPTagReferenceComponent::MatchComponentGameplayTags(const FGameplayTagContainer& TagToMatch, const bool bMatchAll) const
+{
+	return bMatchAll ? ComponentGameplayTags.HasAll(TagToMatch) : ComponentGameplayTags.HasAny(TagToMatch);
 }
 

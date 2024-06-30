@@ -32,19 +32,36 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "LFPTagReferenceComponent|Getter")
+		const FGameplayTagContainer& GetCategoryGameplayTags() const;
+
+	UFUNCTION(BlueprintCallable, Category = "LFPTagReferenceComponent|Getter")
+		const FGameplayTagContainer& GetComponentGameplayTags() const;
+
+public:
+
 	UFUNCTION()
 		void BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const FString& Messages) const;
 
-public:
+	UFUNCTION()
+		bool MatchComponentGameplayTags(const FGameplayTagContainer& TagToMatch, const bool bMatchAll) const;
+
+protected:
 
 	UPROPERTY(BlueprintAssignable, Category = Events)
 		FLFPGameplayTagEvent OnGameplayTagEvent;
 
-public:
+protected:
 
+	/* Group component together and can be find by parent tag */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Tags, meta = (Categories = "Component.Category"))
+		FGameplayTagContainer CategoryGameplayTags = FGameplayTagContainer();
+
+	/* Identify the component inside the category  */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category=Tags, meta=(Categories="Component.Identifiers"))
 		FGameplayTagContainer ComponentGameplayTags = FGameplayTagContainer();
 
+	/* Filter event send out by subsystem ( will not receive any event if left empty ) */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category=Tags, meta=(Categories="Component.Events"))
 		FGameplayTagContainer EventGameplayTags = FGameplayTagContainer();
 };

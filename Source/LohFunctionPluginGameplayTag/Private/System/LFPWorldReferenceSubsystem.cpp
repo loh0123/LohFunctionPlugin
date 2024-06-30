@@ -2,14 +2,15 @@
 
 
 #include "System/LFPWorldReferenceSubsystem.h"
+#include "GameplayTagsManager.h"
 #include "Components/LFPTagReferenceComponent.h"
 
-bool ULFPWorldReferenceSubsystem::ProcessActorComponent(const FGameplayTagContainer& ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags, const TFunctionRef<bool(UActorComponent* FoundedComponent)> OnMatchComponentFounded, const TFunctionRef<bool()> OnEnd) const
+bool ULFPWorldReferenceSubsystem::ProcessActorComponent(const FGameplayTagContainer& CategoryGameplayTags, const FGameplayTagContainer& ComponentGameplayTags, const bool bHasAllTags, const TFunctionRef<bool(ULFPTagReferenceComponent* FoundedComponent)> OnMatchComponentFounded, const TFunctionRef<bool()> OnEnd) const
 {
-	TArray<TObjectPtr<UActorComponent>> FoundComponentList;
+	TArray<TObjectPtr<ULFPTagReferenceComponent>> FoundComponentList;
 
 	/* Find Component On ReferenceMap And Cache It */
-	for (TArray<FGameplayTag> SearchTagList = ComponentGameplayTags.GetGameplayTagArray(); SearchTagList.IsEmpty() == false;)
+	for (TArray<FGameplayTag> SearchTagList = CategoryGameplayTags.GetGameplayTagArray(); SearchTagList.IsEmpty() == false;)
 	{
 		const TArray<FGameplayTag> OldSearchlist = SearchTagList;
 
@@ -29,21 +30,12 @@ bool ULFPWorldReferenceSubsystem::ProcessActorComponent(const FGameplayTagContai
 	/* Loop All Found Component And Check Tag Name Match */
 	for (const auto& FoundComponent : FoundComponentList)
 	{
-		if (ComponentTagList.IsEmpty() == false)
+		if (ComponentGameplayTags.IsEmpty() == false)
 		{
-			bool bIsPass = bHasAllTags;
-
-			for (const FName& ComponentCheckTag : ComponentTagList)
+			if (FoundComponent->MatchComponentGameplayTags(ComponentGameplayTags, bHasAllTags) == false) 
 			{
-				if (FoundComponent->ComponentHasTag(ComponentCheckTag) == !bIsPass)
-				{
-					bIsPass = !bIsPass;
-
-					break;
-				}
+				continue;
 			}
-
-			if (bIsPass == false) continue;
 		}
 
 		if (OnMatchComponentFounded(FoundComponent))
@@ -65,100 +57,85 @@ void ULFPWorldReferenceSubsystem::Deinitialize()
 	
 }
 
-void ULFPWorldReferenceSubsystem::RegisterComponent(const FGameplayTag Tag, UActorComponent* Component)
+void ULFPWorldReferenceSubsystem::RegisterComponent(ULFPTagReferenceComponent* Component)
 {
 	if (IsValid(Component) == false)
 	{
 		return;
 	}
 
-	if (auto ReferenceData = ReferenceMap.Find(Tag); ReferenceData != nullptr)
+	for (const auto& CategoryTag : Component->GetCategoryGameplayTags())
 	{
-		ReferenceData->BindObject(Component);
-	}
-	else
-	{
-		/* Add Child First And Bind Object */
-		ReferenceMap.Add(Tag).BindObject(Component);
-
-		/* Try Extract Parent Tag If Any */
-		if (TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags(Tag, ParentTagList))
+		if (auto ReferenceData = ReferenceMap.Find(CategoryTag); ReferenceData != nullptr)
 		{
-			FGameplayTag ChildTag = Tag;
+			ReferenceData->BindObject(Component);
+		}
+		else
+		{
+			/* Add Child First And Bind Object */
+			ReferenceMap.Add(CategoryTag).BindObject(Component);
 
-			/* Add All Parent And Link It Together */
-			for (const FGameplayTag& ParentTag : ParentTagList)
+			/* Try Extract Parent Tag If Any */
+			if (TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags(CategoryTag, ParentTagList))
 			{
-				ReferenceMap.FindOrAdd(ParentTag).ChildTagList.Add(ChildTag);
+				FGameplayTag ChildTag = CategoryTag;
+
+				/* Add All Parent And Link It Together */
+				for (const FGameplayTag& ParentTag : ParentTagList)
+				{
+					ReferenceMap.FindOrAdd(ParentTag).ChildTagList.Add(ChildTag);
+				}
 			}
 		}
 	}
 
-	OnRegisterComponent.Broadcast(Tag, Component);
+	OnRegisterComponent.Broadcast(Component);
 
 	return;
 }
 
-void ULFPWorldReferenceSubsystem::RegisterComponentByContainer(const FGameplayTagContainer Tags, UActorComponent* Component)
-{
-	for (const auto& Tag : Tags)
-	{
-		RegisterComponent(Tag, Component);
-	}
-
-	return;
-}
-
-void ULFPWorldReferenceSubsystem::UnregisterComponent(const FGameplayTag Tag, UActorComponent* Component)
+void ULFPWorldReferenceSubsystem::UnregisterComponent(ULFPTagReferenceComponent* Component)
 {
 	if (IsValid(Component) == false)
 	{
 		return;
 	}
 
-	if (ReferenceMap.Contains(Tag) == false)
+	for (const auto& CategoryTag : Component->GetCategoryGameplayTags())
 	{
-		return;
-	}
-
-	/* First Unbind Object On The Tag */
-	ReferenceMap.FindChecked(Tag).UnbindObject(Component);
-
-	/* Remove The Tag And It Parent Until It Can't Be Remove Or No Parent Left */
-	if (TArray<FGameplayTag> RemoveTagList = { Tag }; UGameplayTagsManager::Get().ExtractParentTags(Tag, RemoveTagList))
-	{
-		for (const FGameplayTag& RemoveTag : RemoveTagList)
+		if (ReferenceMap.Contains(CategoryTag) == false)
 		{
-			if (ReferenceMap.FindChecked(RemoveTag).CanRemove() == false)
-			{
-				break;
-			}
+			continue;
+		}
 
-			ReferenceMap.Remove(RemoveTag);
+		/* First Unbind Object On The Tag */
+		ReferenceMap.FindChecked(CategoryTag).UnbindObject(Component);
+
+		/* Remove The Tag And It Parent Until It Can't Be Remove Or No Parent Left */
+		if (TArray<FGameplayTag> RemoveTagList = { CategoryTag }; UGameplayTagsManager::Get().ExtractParentTags(CategoryTag, RemoveTagList))
+		{
+			for (const FGameplayTag& RemoveTag : RemoveTagList)
+			{
+				if (ReferenceMap.FindChecked(RemoveTag).CanRemove() == false)
+				{
+					break;
+				}
+
+				ReferenceMap.Remove(RemoveTag);
+			}
 		}
 	}
 
-	OnUnregisterComponent.Broadcast(Tag, Component);
+	OnUnregisterComponent.Broadcast(Component);
 
 	return;
 }
-
-void ULFPWorldReferenceSubsystem::UnregisterComponentByContainer(const FGameplayTagContainer Tags, UActorComponent* Component)
-{
-	for (const auto& Tag : Tags)
-	{
-		UnregisterComponent(Tag, Component);
-	}
-
-	return;
-}
-
-bool ULFPWorldReferenceSubsystem::FindComponentListByTagList(TArray<UActorComponent*>& ComponentList, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+bool ULFPWorldReferenceSubsystem::FindComponentListByTagList(TArray<ULFPTagReferenceComponent*>& ComponentList, const FGameplayTagContainer CategoryGameplayTags, const FGameplayTagContainer ComponentGameplayTags, const bool bHasAllTags) const
 {
 	bool bHasFound = false;
 
-	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags,
-		[&](UActorComponent* FoundedComponent) 
+	return ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+		[&](ULFPTagReferenceComponent* FoundedComponent)
 		{ 
 			ComponentList.Add(FoundedComponent); 
 			bHasFound = true; 
@@ -171,11 +148,11 @@ bool ULFPWorldReferenceSubsystem::FindComponentListByTagList(TArray<UActorCompon
 	);
 }
 
-bool ULFPWorldReferenceSubsystem::FindActorListByTagList(TArray<AActor*>& ActorList, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+bool ULFPWorldReferenceSubsystem::FindActorListByTagList(TArray<AActor*>& ActorList, const FGameplayTagContainer CategoryGameplayTags, const FGameplayTagContainer ComponentGameplayTags, const bool bHasAllTags) const
 {
 	bool bHasFound = false;
 
-	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags,
+	return ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()))
@@ -193,11 +170,11 @@ bool ULFPWorldReferenceSubsystem::FindActorListByTagList(TArray<AActor*>& ActorL
 	);
 }
 
-bool ULFPWorldReferenceSubsystem::FindActorListByInterface(TArray<AActor*>& ActorList, const TSubclassOf<UInterface> Interface, const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+bool ULFPWorldReferenceSubsystem::FindActorListByInterface(TArray<AActor*>& ActorList, const TSubclassOf<UInterface> Interface, const FGameplayTagContainer CategoryGameplayTags, const FGameplayTagContainer ComponentGameplayTags, const bool bHasAllTags) const
 {
 	bool bHasFound = false;
 
-	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags,
+	return ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()) && FoundedComponent->GetOwner()->GetClass()->ImplementsInterface(Interface))
@@ -215,11 +192,11 @@ bool ULFPWorldReferenceSubsystem::FindActorListByInterface(TArray<AActor*>& Acto
 	);
 }
 
-bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags, const FGameplayTag EventTag, UObject* Caller, const FString Messages) const
+bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(const FGameplayTagContainer CategoryGameplayTags, const FGameplayTagContainer ComponentGameplayTags, const bool bHasAllTags, const FGameplayTag EventTag, UObject* Caller, const FString Messages) const
 {
 	bool bHasFound = false;
 
-	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags,
+	return ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
 		[&](UActorComponent* FoundedComponent)
 		{
 			const ULFPTagReferenceComponent* TagComponent = Cast<ULFPTagReferenceComponent>(FoundedComponent);
@@ -238,14 +215,11 @@ bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(const FGameplayTagCo
 	);
 }
 
-bool ULFPWorldReferenceSubsystem::HasComponentWithTag(const FGameplayTag ComponentGameplayTag, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
+bool ULFPWorldReferenceSubsystem::HasComponentWithTags(const FGameplayTagContainer CategoryGameplayTags, const FGameplayTagContainer ComponentGameplayTags, const bool bHasAllTags) const
 {
-	return HasComponentWithTags(ComponentGameplayTag.GetSingleTagContainer(), ComponentTagList, bHasAllTags);
-}
+	bool bHasFound = false;
 
-bool ULFPWorldReferenceSubsystem::HasComponentWithTags(const FGameplayTagContainer ComponentGameplayTags, const TArray<FName>& ComponentTagList, const bool bHasAllTags) const
-{
-	return ProcessActorComponent(ComponentGameplayTags, ComponentTagList, bHasAllTags, [&](UActorComponent* FoundedComponent) { return true; }, [&]() { return true; });
+	return ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags, [&](UActorComponent* FoundedComponent) { bHasFound = true; return true; }, [&]() { return bHasFound; });
 }
 
 
