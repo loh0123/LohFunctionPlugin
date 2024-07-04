@@ -41,7 +41,7 @@
 			"LoadingPhase": "PreLoadingScreen"
 		},
 		{
-			"Name": "LohFunctionPluginGameplayTag",
+			"Name": "LohFunctionPluginInfomation",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
 		},

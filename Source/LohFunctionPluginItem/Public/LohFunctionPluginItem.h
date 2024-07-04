@@ -3,6 +3,14 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
+#include "NativeGameplayTags.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Identifier)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Categorize)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_SlotName)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Event)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Meta)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Sort)
 
 class FLohFunctionPluginItemModule : public IModuleInterface
 {

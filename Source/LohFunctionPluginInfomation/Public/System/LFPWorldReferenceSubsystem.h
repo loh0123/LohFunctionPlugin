@@ -57,7 +57,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPGameplayTagComponentUpdate, UAct
  * 
  */
 UCLASS()
-class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPWorldReferenceSubsystem : public UWorldSubsystem
+class LOHFUNCTIONPLUGININFOMATION_API ULFPWorldReferenceSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -65,8 +65,7 @@ private:
 
 	FORCEINLINE void ProcessActorComponent(
 		const FGameplayTagContainer& CategoryGameplayTags, 
-		const FGameplayTagContainer& ComponentGameplayTags,
-		const bool bHasAllTags,
+		const FGameplayTagQuery& ComponentGameplayTagsQuery,
 		const TFunctionRef<bool(ULFPTagReferenceComponent* FoundedComponent)> OnMatchComponentFounded
 	) const;
 
@@ -87,73 +86,65 @@ public:
 
 	// Getter //
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool FindComponentListByTagList(
 			TArray<ULFPTagReferenceComponent*>& ComponentList, 
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags, 
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags, 
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool FindComponentListByName(
 			TArray<ULFPTagReferenceComponent*>& ComponentList, 
 			const FName NameTag,
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool FindActorListByTagList(
 			TArray<AActor*>& ActorList, 
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool FindActorListByName(
 			TArray<AActor*>& ActorList,
 			const FName NameTag,
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Getter", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool FindActorListByInterface(
 			TArray<AActor*>& ActorList, 
 			const TSubclassOf<UInterface> Interface, 
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
 	// Checker //
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Checker", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Checker", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool HasComponentWithTags(
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Checker", meta = (AutoCreateRefTerm = ComponentTagList))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Checker", meta = (AutoCreateRefTerm = ComponentTagList))
 		bool HasActorWithTags(
 			const FName NameTag,
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags = false
+			const FGameplayTagQuery ComponentGameplayTagsQuery
 		) const;
 
 	// Event //
 
-	UFUNCTION(BlueprintCallable, Category = "LFPGameplayTagSubsystem|Event")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "LFPGameplayTagSubsystem|Event")
 		bool BroadcastGameplayTagEvent(
 			UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-			UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-			const bool bHasAllTags,
+			const FGameplayTagQuery ComponentGameplayTagsQuery,
 			const FGameplayTag EventTag,
 			UObject* Caller,
 			const FString Messages

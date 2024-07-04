@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPGameplayTagEvent, const FGame
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGINGAMEPLAYTAG_API ULFPTagReferenceComponent : public UActorComponent
+class LOHFUNCTIONPLUGININFOMATION_API ULFPTagReferenceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -42,9 +42,6 @@ public:
 
 	UFUNCTION()
 		void BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const FString& Messages) const;
-
-	UFUNCTION()
-		bool MatchComponentGameplayTags(const FGameplayTagContainer& TagToMatch, const bool bMatchAll) const;
 
 protected:
 

@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "LohFunctionPluginGameplayTag.h"
+#include "LohFunctionPluginInfomationModule.h"
 
 #define LOCTEXT_NAMESPACE "FLohFunctionPluginGameplayTagModule"
 
@@ -24,4 +24,4 @@ void FLohFunctionPluginGameplayTagModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FLohFunctionPluginGameplayTagModule, LohFunctionPluginGameplayTag)
+IMPLEMENT_MODULE(FLohFunctionPluginGameplayTagModule, LohFunctionPluginInfomation)

@@ -9,7 +9,6 @@
 #include "Components/ActorComponent.h"
 #include "JsonObjectWrapper.h"
 #include "GameplayTagContainer.h"
-#include "LFPItemGameplayTag.h"
 #include "LFPItemFunctionLibrary.h"
 #include "LFPInventoryComponent.generated.h"
 

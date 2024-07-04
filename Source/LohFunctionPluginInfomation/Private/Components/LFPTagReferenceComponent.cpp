@@ -70,8 +70,3 @@ const FGameplayTagContainer& ULFPTagReferenceComponent::GetComponentGameplayTags
 	return ComponentGameplayTags;
 }
 
-bool ULFPTagReferenceComponent::MatchComponentGameplayTags(const FGameplayTagContainer& TagToMatch, const bool bMatchAll) const
-{
-	return bMatchAll ? ComponentGameplayTags.HasAll(TagToMatch) : ComponentGameplayTags.HasAny(TagToMatch);
-}
-

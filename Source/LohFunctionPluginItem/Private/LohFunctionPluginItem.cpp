@@ -4,6 +4,13 @@
 
 #define LOCTEXT_NAMESPACE "FLohFunctionPluginItemModule"
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Identifier, "Item.Identifier")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Categorize, "Item.Categorize")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_SlotName, "Item.SlotName")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Event, "Item.Event")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Meta, "Item.Meta")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Sort, "Item.Sort")
+
 void FLohFunctionPluginItemModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module

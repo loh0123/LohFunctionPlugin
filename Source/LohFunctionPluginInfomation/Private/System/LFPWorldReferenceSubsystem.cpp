@@ -7,8 +7,7 @@
 
 void ULFPWorldReferenceSubsystem::ProcessActorComponent(
 	const FGameplayTagContainer& CategoryGameplayTags, 
-	const FGameplayTagContainer& ComponentGameplayTags, 
-	const bool bHasAllTags, 
+	const FGameplayTagQuery& ComponentGameplayTagsQuery,
 	const TFunctionRef<bool(ULFPTagReferenceComponent* FoundedComponent)> OnMatchComponentFounded
 ) const
 {
@@ -27,9 +26,9 @@ void ULFPWorldReferenceSubsystem::ProcessActorComponent(
 				/* Loop All Found Component And Check Tag Name Match */
 				for (const auto& FoundComponent : ReferenceData->GetBindedObjectList())
 				{
-					if (ComponentGameplayTags.IsEmpty() == false)
+					if (ComponentGameplayTagsQuery.IsEmpty() == false)
 					{
-						if (FoundComponent->MatchComponentGameplayTags(ComponentGameplayTags, bHasAllTags) == false)
+						if (FoundComponent->GetComponentGameplayTags().MatchesQuery(ComponentGameplayTagsQuery) == false)
 						{
 							continue;
 						}
@@ -136,13 +135,12 @@ void ULFPWorldReferenceSubsystem::UnregisterComponent(ULFPTagReferenceComponent*
 bool ULFPWorldReferenceSubsystem::FindComponentListByTagList(
 	TArray<ULFPTagReferenceComponent*>& ComponentList, 
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	const int32 OldAmount = ComponentList.Num();
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](ULFPTagReferenceComponent* FoundedComponent)
 		{ 
 			ComponentList.Add(FoundedComponent); 
@@ -158,13 +156,12 @@ bool ULFPWorldReferenceSubsystem::FindComponentListByName(
 	TArray<ULFPTagReferenceComponent*>& ComponentList, 
 	const FName NameTag,
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	const int32 OldAmount = ComponentList.Num();
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](ULFPTagReferenceComponent* FoundedComponent)
 		{
 			if (FoundedComponent->ComponentHasTag(NameTag))
@@ -182,13 +179,12 @@ bool ULFPWorldReferenceSubsystem::FindComponentListByName(
 bool ULFPWorldReferenceSubsystem::FindActorListByTagList(
 	TArray<AActor*>& ActorList, 
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	const int32 OldAmount = ActorList.Num();
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()))
@@ -207,13 +203,12 @@ bool ULFPWorldReferenceSubsystem::FindActorListByName(
 	TArray<AActor*>& ActorList, 
 	const FName NameTag, 
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	const int32 OldAmount = ActorList.Num();
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()) && FoundedComponent->GetOwner()->ActorHasTag(NameTag))
@@ -232,13 +227,12 @@ bool ULFPWorldReferenceSubsystem::FindActorListByInterface(
 	TArray<AActor*>& ActorList, 
 	const TSubclassOf<UInterface> Interface, 
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	const int32 OldAmount = ActorList.Num();
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()) && FoundedComponent->GetOwner()->GetClass()->ImplementsInterface(Interface))
@@ -255,13 +249,12 @@ bool ULFPWorldReferenceSubsystem::FindActorListByInterface(
 
 bool ULFPWorldReferenceSubsystem::HasComponentWithTags(
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	bool bHasFound = false;
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags, 
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery, 
 		[&](UActorComponent* FoundedComponent) 
 		{ 
 			bHasFound = true; 
@@ -276,13 +269,12 @@ bool ULFPWorldReferenceSubsystem::HasComponentWithTags(
 bool ULFPWorldReferenceSubsystem::HasActorWithTags(
 	const FName NameTag,
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags
+	const FGameplayTagQuery ComponentGameplayTagsQuery
 ) const
 {
 	bool bHasFound = false;
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](UActorComponent* FoundedComponent)
 		{
 			if (IsValid(FoundedComponent->GetOwner()) && FoundedComponent->GetOwner()->ActorHasTag(NameTag))
@@ -301,8 +293,7 @@ bool ULFPWorldReferenceSubsystem::HasActorWithTags(
 
 bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(
 	UPARAM(meta = (Categories = "Component.Category")) const FGameplayTagContainer CategoryGameplayTags,
-	UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer ComponentGameplayTags,
-	const bool bHasAllTags,
+	const FGameplayTagQuery ComponentGameplayTagsQuery,
 	const FGameplayTag EventTag,
 	UObject* Caller,
 	const FString Messages
@@ -310,7 +301,7 @@ bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(
 {
 	bool bHasFound = false;
 
-	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTags, bHasAllTags,
+	ProcessActorComponent(CategoryGameplayTags, ComponentGameplayTagsQuery,
 		[&](UActorComponent* FoundedComponent)
 		{
 			const ULFPTagReferenceComponent* TagComponent = Cast<ULFPTagReferenceComponent>(FoundedComponent);

@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class LohFunctionPluginGameplayTag : ModuleRules
+public class LohFunctionPluginInfomation : ModuleRules
 {
-	public LohFunctionPluginGameplayTag(ReadOnlyTargetRules Target) : base(Target)
+	public LohFunctionPluginInfomation(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
