@@ -638,7 +638,9 @@ bool ULFPInventoryComponent::TransferItemToSearch(const FLFPInventoryIndex& From
 
 bool ULFPInventoryComponent::ExchangeItemBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref)FLFPInventoryItem& GiveItemData, const FGameplayTag EventTag)
 {
-	if (CanRemoveItemBySearch(TakeInventorySearch, TakeItemData) == false)
+	FLFPInventoryItem CheckItem = TakeItemData;
+
+	if (CanRemoveItemBySearch(TakeInventorySearch, CheckItem) == false)
 	{
 		return false;
 	}
@@ -653,7 +655,9 @@ bool ULFPInventoryComponent::ExchangeItemBySearch(const FLFPInventorySearch& Tak
 
 bool ULFPInventoryComponent::ExchangeItemListBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& TakeItemDataList, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag)
 {
-	if (CanRemoveItemListBySearch(TakeInventorySearch, TakeItemDataList) == false)
+	TArray<FLFPInventoryItem> CheckItemList = TakeItemDataList;
+
+	if (CanRemoveItemListBySearch(TakeInventorySearch, CheckItemList) == false)
 	{
 		return false;
 	}
