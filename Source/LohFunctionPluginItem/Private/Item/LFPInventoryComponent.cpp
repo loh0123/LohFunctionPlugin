@@ -649,6 +649,10 @@ bool ULFPInventoryComponent::ExchangeItemBySearch(const FLFPInventorySearch& Tak
 	{
 		return AddItemBySearch(GiveInventorySearch, GiveItemData, EventTag);
 	}
+	else
+	{
+		UE_LOG(LFPInventoryComponent, Error, TEXT("ExchangeItemBySearch Fail : RemoveItemBySearch Suppose To Be Success"));
+	}
 
 	return false;
 }
@@ -665,6 +669,10 @@ bool ULFPInventoryComponent::ExchangeItemListBySearch(const FLFPInventorySearch&
 	if (RemoveItemListBySearch(TakeInventorySearch, TakeItemDataList, EventTag))
 	{
 		return AddItemListBySearch(GiveInventorySearch, GiveItemDataList, EventTag);
+	}
+	else
+	{
+		UE_LOG(LFPInventoryComponent, Error, TEXT("ExchangeItemListBySearch Fail : RemoveItemListBySearch Suppose To Be Success"));
 	}
 
 	return false;
