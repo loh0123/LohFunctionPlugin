@@ -104,31 +104,81 @@ bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 }
 
 
-void ULFPInventoryComponent::SendAddDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+
+void ULFPInventoryComponent::SendAddDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+
+	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+
+	CLIENT_SendAddDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendRemoveDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+
+	OnRemoveItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+
+	CLIENT_SendRemoveDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendSwapDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+
+	OnSwapItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+
+	CLIENT_SendSwapDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendTransferDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+
+	OnTransferItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+
+	CLIENT_SendTransferDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::SendUpdateDelegateEvent(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+{
+	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+
+	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+
+	CLIENT_SendUpdateDelegateEvent(InventoryIndex, NewData, OldData, EventTag);
+}
+
+void ULFPInventoryComponent::CLIENT_SendAddDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
 	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
-void ULFPInventoryComponent::SendRemoveDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+void ULFPInventoryComponent::CLIENT_SendRemoveDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
-	OnAddItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+	OnRemoveItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
-void ULFPInventoryComponent::SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+void ULFPInventoryComponent::CLIENT_SendSwapDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
 	OnSwapItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
-void ULFPInventoryComponent::SendTransferDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+void ULFPInventoryComponent::CLIENT_SendTransferDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
 	OnTransferItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
 
-void ULFPInventoryComponent::SendUpdateDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
+void ULFPInventoryComponent::CLIENT_SendUpdateDelegateEvent_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag) const
 {
 	OnUpdateItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
 }
@@ -586,6 +636,36 @@ bool ULFPInventoryComponent::TransferItemToSearch(const FLFPInventoryIndex& From
 	return Transfer_Search_Internal(FromIndex, ToSearch, TargetInventoryComponent, EventTag);
 }
 
+bool ULFPInventoryComponent::ExchangeItemBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref)FLFPInventoryItem& GiveItemData, const FGameplayTag EventTag)
+{
+	if (CanRemoveItemBySearch(TakeInventorySearch, TakeItemData) == false)
+	{
+		return false;
+	}
+
+	if (RemoveItemBySearch(TakeInventorySearch, TakeItemData, EventTag))
+	{
+		return AddItemBySearch(GiveInventorySearch, GiveItemData, EventTag);
+	}
+
+	return false;
+}
+
+bool ULFPInventoryComponent::ExchangeItemListBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& TakeItemDataList, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag)
+{
+	if (CanRemoveItemListBySearch(TakeInventorySearch, TakeItemDataList) == false)
+	{
+		return false;
+	}
+
+	if (RemoveItemListBySearch(TakeInventorySearch, TakeItemDataList, EventTag))
+	{
+		return AddItemListBySearch(GiveInventorySearch, GiveItemDataList, EventTag);
+	}
+
+	return false;
+}
+
 
 bool ULFPInventoryComponent::UpdateItem(UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
 {
@@ -1005,6 +1085,76 @@ bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& Item
 	);
 }
 
+bool ULFPInventoryComponent::CanAddItemBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)FLFPInventoryItem& ItemData) const
+{
+	if (CanAddItem(ItemData) == false) return false;
+
+	return ProcessInventoryIndex(
+		InventorySearch,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
+		{
+			return AddItem_Internal_Check(InventoryIndex, ItemData);
+		},
+		true);
+}
+
+bool ULFPInventoryComponent::CanAddItemListBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList) const
+{
+	bool bIsSuccess = true;
+
+	for (FLFPInventoryItem& ItemData : ItemDataList)
+	{
+		if (CanAddItemBySearch(InventorySearch, ItemData) == false)
+		{
+			bIsSuccess = false;
+		}
+	}
+
+	return bIsSuccess;
+}
+
+bool ULFPInventoryComponent::CanAddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData) const
+{
+	if (CanAddItem(ItemData) == false) return false;
+
+	return AddItem_Internal_Check(InventoryIndex, ItemData);
+}
+
+bool ULFPInventoryComponent::CanRemoveItemBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)FLFPInventoryItem& ItemData) const
+{
+	if (CanRemoveItem(ItemData) == false) return false;
+
+	return ProcessInventoryIndex(
+		InventorySearch,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
+		{
+			return RemoveItem_Internal_Check(InventoryIndex, ItemData);
+		},
+		true);
+}
+
+bool ULFPInventoryComponent::CanRemoveItemListBySearch(const FLFPInventorySearch& InventorySearch, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList) const
+{
+	bool bIsSuccess = true;
+
+	for (FLFPInventoryItem& ItemData : ItemDataList)
+	{
+		if (CanRemoveItemBySearch(InventorySearch, ItemData) == false)
+		{
+			bIsSuccess = false;
+		}
+	}
+
+	return bIsSuccess;
+}
+
+bool ULFPInventoryComponent::CanRemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData) const
+{
+	if (CanRemoveItem(ItemData) == false) return false;
+
+	return RemoveItem_Internal_Check(InventoryIndex, ItemData);
+}
+
 
 bool ULFPInventoryComponent::ContainItem(FLFPInventoryItem ItemData, const FLFPInventorySearch& InventorySearch) const
 {
@@ -1117,5 +1267,3 @@ bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemInd
 
 	return CurrentAmount > 0;
 }
-
-
