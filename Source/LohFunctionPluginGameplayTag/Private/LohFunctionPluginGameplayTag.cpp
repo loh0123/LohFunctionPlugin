@@ -5,6 +5,7 @@
 #define LOCTEXT_NAMESPACE "FLohFunctionPluginGameplayTagModule"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Component, "Component");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Component_Category, "Component.Category");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Component_Identifiers, "Component.Identifiers");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Component_Events, "Component.Events");
 
