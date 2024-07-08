@@ -20,14 +20,14 @@ void ULFPItemEquipmentFunction::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	GetOwner()->OnUpdateItem.AddDynamic(this, &ULFPItemEquipmentFunction::OnInventoryUpdateItem);
+	GetOwner()->OnItemChange.AddDynamic(this, &ULFPItemEquipmentFunction::OnInventoryUpdateItem);
 }
 
 void ULFPItemEquipmentFunction::UninitializeComponent()
 {
 	Super::UninitializeComponent();
 
-	GetOwner()->OnUpdateItem.RemoveDynamic(this, &ULFPItemEquipmentFunction::OnInventoryUpdateItem);
+	GetOwner()->OnItemChange.RemoveDynamic(this, &ULFPItemEquipmentFunction::OnInventoryUpdateItem);
 }
 
 bool ULFPItemEquipmentFunction::CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
@@ -117,7 +117,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged_Implementation(const FGame
 	if (IsInactive)
 	{
 		GetOwner()->ProcessInventoryIndex(
-			SlotName,
+			SlotName.GetSingleTagContainer(),
 			[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
 			{
 				const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryInternalIndex);
@@ -125,7 +125,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged_Implementation(const FGame
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnUnequipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
+				OnUnequipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
@@ -133,7 +133,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged_Implementation(const FGame
 	else
 	{
 		GetOwner()->ProcessInventoryIndex(
-			SlotName,
+			SlotName.GetSingleTagContainer(),
 			[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
 			{
 				const auto& SlotItem = InventorySlotList.GetSlotItemConst(InventoryInternalIndex);
@@ -141,7 +141,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged_Implementation(const FGame
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnEquipItem.Broadcast(InventoryIndex, SlotItem, SlotItem, EventTag);
+				OnEquipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
@@ -252,21 +252,21 @@ bool ULFPItemEquipmentFunction::IsSlotNameInactive(const FGameplayTag Slot) cons
 	return Slot.MatchesAny(InactiveSlotNameList);
 }
 
-void ULFPItemEquipmentFunction::OnInventoryUpdateItem(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag)
+void ULFPItemEquipmentFunction::OnInventoryUpdateItem(const FLFPInventoryItemOperationData& ItemOperationData)
 {
 	/* Skip Slot Name Because Not Process By This Module */
-	if (IsEquipmentSlot(InventoryIndex.SlotName) == false) return;
+	if (IsEquipmentSlot(ItemOperationData.InventoryIndex.SlotName) == false) return;
 
 	/* Slot Name Don't Trigger Event */
-	if (IsSlotNameInactive(InventoryIndex.SlotName)) return;
+	if (IsSlotNameInactive(ItemOperationData.InventoryIndex.SlotName)) return;
 
-	if (OldData.IsValid())
+	if (ItemOperationData.OldData.IsValid())
 	{
-		OnUnequipItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+		OnUnequipItem.Broadcast(ItemOperationData);
 	}
 
-	if (NewData.IsValid())
+	if (ItemOperationData.NewData.IsValid())
 	{
-		OnEquipItem.Broadcast(InventoryIndex, NewData, OldData, EventTag);
+		OnEquipItem.Broadcast(ItemOperationData);
 	}
 }

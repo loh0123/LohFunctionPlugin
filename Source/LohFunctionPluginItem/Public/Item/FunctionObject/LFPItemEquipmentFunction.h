@@ -25,7 +25,7 @@ public:
 	FORCEINLINE bool IsInventoryIndexAllowed(const FLFPInventoryIndex& InventoryIndex) const { return AllowedInventoryIndex.Contains(InventoryIndex); }
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FLFPEquipmentItemEvent, const FLFPInventoryIndex&, InventoryIndex, const FLFPInventoryItem&, NewData, const FLFPInventoryItem&, OldData, const FGameplayTag&, EventTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPEquipmentItemEvent, const FLFPInventoryItemOperationData&, ItemOperationData);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPEquipmentChangeEvent, const FGameplayTag&, SlotName, const bool, Value, const FGameplayTag&, EventTag);
 
@@ -100,7 +100,7 @@ public:
 
 public: // Event
 
-	UFUNCTION() void OnInventoryUpdateItem(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& NewData, const FLFPInventoryItem& OldData, const FGameplayTag& EventTag);
+	UFUNCTION() void OnInventoryUpdateItem(const FLFPInventoryItemOperationData& ItemOperationData);
 
 protected:
 

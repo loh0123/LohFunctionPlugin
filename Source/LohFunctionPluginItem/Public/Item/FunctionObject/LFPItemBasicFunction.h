@@ -35,7 +35,7 @@ protected:
 		FGameplayTagContainer MatchMetaTagList = FGameplayTagContainer();
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
-		FLFPInventorySearch AllowedInventorySearch = FLFPInventorySearch();
+		FGameplayTagContainer AllowedInventorySlotNameList = FGameplayTagContainer();
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 		FGameplayTagContainer Categorize = FGameplayTagContainer();
@@ -44,7 +44,7 @@ public:
 
 	FORCEINLINE bool DoItemAllowOnSlot(const FGameplayTag& SlotName) const
 	{
-		return AllowedInventorySearch.IsTagMatch(SlotName);
+		return SlotName.MatchesAny(AllowedInventorySlotNameList);
 	}
 
 	FORCEINLINE bool DoItemMetaMatch(const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
@@ -88,9 +88,9 @@ public:
 	}
 
 
-	FORCEINLINE const FLFPInventorySearch& GetAllowedInventorySearch() const
+	FORCEINLINE const FGameplayTagContainer& GetAllowInventorySlotNameList() const
 	{
-		return AllowedInventorySearch;
+		return AllowedInventorySlotNameList;
 	}
 
 	FORCEINLINE const FGameplayTagContainer& GetCategorize() const
@@ -113,8 +113,6 @@ public:
 
 	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
-	virtual bool CanSwapItem_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryItem& ToItem) const override;
-
 	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	virtual bool CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const override;
@@ -125,6 +123,8 @@ public:
 	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
 	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
+
+	virtual bool CanMergeItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
 
 	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const override;
 
@@ -138,6 +138,8 @@ public:
 
 	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
 
+	virtual bool ProcessMergeItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const override;
+
 	virtual bool ProcessUpdateItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
 	virtual bool ProcessContainItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
@@ -146,7 +148,7 @@ public:
 
 	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const override;
 
-	virtual FLFPInventorySearch GetItemInventorySearch_Implementation(const FLFPInventoryItem& ItemData) const override;
+	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	//// Check Modifier
 
