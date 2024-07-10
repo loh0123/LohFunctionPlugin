@@ -22,7 +22,7 @@ bool ULFPItemBasicFunction::CanUpdateItem_Implementation(const FLFPInventoryItem
 	return GetDataTableRow(ItemData.GetItemTag()) != nullptr;
 }
 
-bool ULFPItemBasicFunction::CanContainItem_Implementation(const FLFPInventoryItem& ItemData) const
+bool ULFPItemBasicFunction::CanFindItem_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	return GetDataTableRow(ItemData.GetItemTag()) != nullptr;
 }
@@ -96,7 +96,7 @@ bool ULFPItemBasicFunction::CanUpdateItemOnSlot_Implementation(const FLFPInvento
 	return true;
 }
 
-bool ULFPItemBasicFunction::CanContainItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
+bool ULFPItemBasicFunction::CanFindItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const
 {
 	// Ensure CurrentData Is Valid And Match ProcessData Type
 	if (CurrentData.GetItemTag().IsValid() == false || CurrentData.GetItemTag() != ProcessData.GetItemTag()) return false;
@@ -218,7 +218,7 @@ bool ULFPItemBasicFunction::ProcessUpdateItem_Implementation(UPARAM(ref)FLFPInve
 	return ProcessStack - 1 <= 0;
 }
 
-bool ULFPItemBasicFunction::ProcessContainItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
+bool ULFPItemBasicFunction::ProcessFindItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref)FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicData* TableData = GetDataTableRow(ProcessData.GetItemTag());

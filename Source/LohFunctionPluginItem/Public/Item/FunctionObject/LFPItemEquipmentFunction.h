@@ -18,11 +18,11 @@ struct FLFPItemEquipmentData : public FTableRowBase
 protected:
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Stack")
-	TArray<FLFPInventoryIndex> AllowedInventoryIndex = TArray<FLFPInventoryIndex>();
+	TArray<FLFPInventoryIndex> AllowInventoryIndex = TArray<FLFPInventoryIndex>();
 
 public:
 
-	FORCEINLINE bool IsInventoryIndexAllowed(const FLFPInventoryIndex& InventoryIndex) const { return AllowedInventoryIndex.Contains(InventoryIndex); }
+	FORCEINLINE bool IsInventoryIndexAllow(const FLFPInventoryIndex& InventoryIndex) const { return AllowInventoryIndex.Contains(InventoryIndex); }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPEquipmentItemEvent, const FLFPInventoryItemOperationData&, ItemOperationData);

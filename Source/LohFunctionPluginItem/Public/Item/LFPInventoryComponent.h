@@ -62,8 +62,8 @@ struct FLFPInventorySearch
 		const FGameplayTagContainer& NewCatergorizes,
 		const bool NewAnyCatergorizes,
 		const bool NewPassOnEmptyIndexCatergorizes
-	) 
-		: 
+	)
+		:
 		SlotNames(NewSlotNames),
 		Catergorizes(NewCatergorizes),
 		bAnyCatergorizes(NewAnyCatergorizes),
@@ -90,12 +90,12 @@ public:
 
 	FORCEINLINE bool IsTagMatch(const FGameplayTag& Tag) const { return SlotNames.IsEmpty() ? true : Tag.MatchesAny(SlotNames); }
 
-	FORCEINLINE bool IsCatergorizesMatch(const FGameplayTagContainer& Container) const 
-	{ 
+	FORCEINLINE bool IsCatergorizesMatch(const FGameplayTagContainer& Container) const
+	{
 		if (bPassOnEmptyIndexCatergorizes && Container.IsEmpty()) return true;
-		if (Catergorizes.IsEmpty()) return true; 
+		if (Catergorizes.IsEmpty()) return true;
 
-		return bAnyCatergorizes ? Container.HasAny(Catergorizes) : Container.HasAll(Catergorizes); 
+		return bAnyCatergorizes ? Container.HasAny(Catergorizes) : Container.HasAll(Catergorizes);
 	}
 
 	FORCEINLINE FString ToString() const { return FString::Printf(TEXT("SlotNames = %s : Catergorizes = %s : AnyCatergorizes = %s"), *SlotNames.ToString(), *Catergorizes.ToString(), bAnyCatergorizes ? TEXT("True") : TEXT("False")); }
@@ -182,15 +182,15 @@ struct FLFPInventorySlot
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default, meta = (Categories = "Item.SlotName"))
-		FGameplayTag SlotName = FGameplayTag::EmptyTag;
+	FGameplayTag SlotName = FGameplayTag::EmptyTag;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
-		int32 SlotMaxIndex = INDEX_NONE;
+	int32 SlotMaxIndex = INDEX_NONE;
 
 protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Default)
-		TArray<FLFPInventoryItem> ItemList = TArray<FLFPInventoryItem>();
+	TArray<FLFPInventoryItem> ItemList = TArray<FLFPInventoryItem>();
 
 public:
 
@@ -509,7 +509,7 @@ public:
 public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
-		FLFPInventoryItemEvent OnItemChange;
+	FLFPInventoryItemEvent OnItemChange;
 
 private: // Delegate Function
 
@@ -546,7 +546,6 @@ public:
 	FORCEINLINE bool ProcessSingleItemOperation(
 		const FGameplayTagContainer& InventorySlotNameList,
 		FLFPInventoryItem& ItemData,
-		const TFunctionRef<bool(const FLFPInventoryItem& ItemData)>& CheckerFunction,
 		const TFunctionRef<bool(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InternalIndex, FLFPInventoryItem& ItemData)>& IndexFunction,
 		const bool bUseMaxIndex = false
 	) const;
@@ -557,128 +556,144 @@ protected: // Internal Function
 		const TFunctionRef<bool(const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)> RunFunction
 	) const;
 
-	UFUNCTION() 
-	FORCEINLINE bool AddItem_Internal			(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+	UFUNCTION()
+	FORCEINLINE bool AddItem_Index_Uncheck_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
 	UFUNCTION()
-	FORCEINLINE bool AddItemList_Internal		(const FGameplayTagContainer InventorySlotNameList, TArray<FLFPInventoryItem>& ItemDataList, const bool bStopOnFail, const FGameplayTag EventTag);
-
-	UFUNCTION() 
-	FORCEINLINE bool RemoveItem_Internal		(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+	FORCEINLINE bool AddItem_SlotName_Internal(const FGameplayTagContainer& InventorySlotNameList, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
 	UFUNCTION()
-	FORCEINLINE bool RemoveItemList_Internal	(const FGameplayTagContainer InventorySlotNameList, TArray<FLFPInventoryItem>& ItemDataList, const bool bStopOnFail, const FGameplayTag EventTag);
-
-	UFUNCTION() 
-	FORCEINLINE bool SwapItem_Internal			(const FLFPInventoryInternalIndex& FromIndex, const FLFPInventoryInternalIndex& ToIndex, const FGameplayTag& EventTag);
-
-	UFUNCTION() 
-	FORCEINLINE bool MergeItem_Index_Internal	(const FLFPInventoryInternalIndex& FromIndex, const FLFPInventoryInternalIndex& ToIndex, const FGameplayTag& EventTag);
+	FORCEINLINE bool AddItemList_SlotName_Internal(const FGameplayTagContainer& InventorySlotNameList, TArray<FLFPInventoryItem>& ItemDataList, const bool bStopOnFail, const FGameplayTag& EventTag);
 
 	UFUNCTION()
-	FORCEINLINE bool MergeItem_SlotName_Internal(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer& ToSlotNameList, const FGameplayTag EventTag);
+	FORCEINLINE bool RemoveItem_Index_Uncheck_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
-	UFUNCTION() 
-	FORCEINLINE bool Transfer_Index_Internal	(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag);
+	UFUNCTION()
+	FORCEINLINE bool RemoveItem_SlotName_Internal(const FGameplayTagContainer& InventorySlotNameList, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
 
-	UFUNCTION() 
-	FORCEINLINE bool Transfer_SlotName_Internal(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer& ToSlotNameList, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag);
+	UFUNCTION()
+	FORCEINLINE bool RemoveItemList_SlotName_Internal(const FGameplayTagContainer& InventorySlotNameList, TArray<FLFPInventoryItem>& ItemDataList, const bool bStopOnFail, const FGameplayTag& EventTag);
 
-	UFUNCTION() 
-	FORCEINLINE bool UpdateItem_Internal		(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+	UFUNCTION()
+	FORCEINLINE bool SwapItem_Index_Internal(const FLFPInventoryInternalIndex& FromIndex, const FLFPInventoryInternalIndex& ToIndex, const FGameplayTag& EventTag);
 
-	UFUNCTION() 
-	FORCEINLINE bool ContainItem_Internal		(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex, FLFPInventoryItem& ProcessItemData) const;
+	UFUNCTION()
+	FORCEINLINE bool MergeItem_Index_Internal(const FLFPInventoryInternalIndex& FromIndex, const FLFPInventoryInternalIndex& ToIndex, const FGameplayTag& EventTag);
 
-	UFUNCTION() 
-	FORCEINLINE bool FindItem_Internal			(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex, FLFPInventoryItem& ProcessItemData) const;
+	UFUNCTION()
+	FORCEINLINE bool MergeItem_SlotName_Internal(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer& ToSlotNameList, const FGameplayTag& EventTag);
+
+	UFUNCTION()
+	FORCEINLINE bool Transfer_Index_Internal(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag& EventTag);
+
+	UFUNCTION()
+	FORCEINLINE bool Transfer_SlotName_Internal(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer& ToSlotNameList, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag& EventTag);
+
+	UFUNCTION()
+	FORCEINLINE bool UpdateItem_Index_Uncheck_Internal(const FLFPInventoryIndex& InventoryIndex, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+
+	UFUNCTION()
+	FORCEINLINE bool UpdateItem_SlotName_Internal(const FGameplayTagContainer& InventorySlotNameList, FLFPInventoryItem& ProcessItemData, const FGameplayTag& EventTag);
+
+	UFUNCTION()
+	FORCEINLINE bool ContainItem_Index_Internal(const FLFPInventoryInternalIndex& InventoryInternalIndex, FLFPInventoryItem& ProcessItemData) const;
+
+	UFUNCTION()
+	FORCEINLINE bool FindItem_Index_Internal(const FLFPInventoryInternalIndex& InventoryInternalIndex, FLFPInventoryItem& ProcessItemData) const;
+
+
+	UFUNCTION()
+	FORCEINLINE void ApplyInventoryPendingChange();
+
+	UFUNCTION()
+	FORCEINLINE void ClearInventoryPendingChange();
 
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool AddItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, const FGameplayTag EventTag);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool AddItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItemBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool AddItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItemListBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, const FGameplayTag EventTag);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool AddItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool AddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool RemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool RemoveItemBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool RemoveItemListBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool RemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool SwapItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool MergeItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool MergeItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, const FGameplayTag EventTag);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool TransferItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool TransferItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag);
-
-	/**
-	* Merge
-	* Exchange
-	* Trade
-	*/
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool ExchangeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref) FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool ExchangeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag);
-
-
-	//UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-	//	bool TradeItemBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref) FLFPInventoryItem& TakeItemData, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref) FLFPInventoryItem& GiveItemData, ULFPInventoryComponent* TakeInventoryComponent, const FGameplayTag EventTag);
-
-	//UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-	//	bool TradeItemListBySearch(const FLFPInventorySearch& TakeInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& TakeItemDataList, const FLFPInventorySearch& GiveInventorySearch, UPARAM(ref) TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* TakeInventoryComponent, const FGameplayTag EventTag);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function", meta = (GameplayTagFilter = "Item.Event"))
-		bool UpdateItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const FGameplayTag EventTag);
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool AddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		bool SortItem(const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+	bool RemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
-		void ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+	bool RemoveItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool RemoveItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool RemoveItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool RemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool SwapItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool MergeItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool MergeItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool TransferItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* GiveInventoryComponent, const bool bMustFullyTransfer, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool TransferItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, ULFPInventoryComponent* GiveInventoryComponent, const bool bMustFullyTransfer, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool ExchangeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref) FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool ExchangeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& GiveItemDataList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool TradeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref) FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool TradeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool UpdateItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool UpdateItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool UpdateItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	bool SortItem(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "LFPInventoryComponent | Function")
+	void ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		ULFPItemInventoryFunction* GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const;
+	ULFPItemInventoryFunction* GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const;
 
 public:
 
@@ -694,7 +709,7 @@ public:
 	FORCEINLINE bool CanUpdateItem(const FLFPInventoryItem& ItemData) const;
 
 	UFUNCTION()
-	FORCEINLINE bool CanContainItem(const FLFPInventoryItem& ItemData) const;
+	FORCEINLINE bool CanFindItem(const FLFPInventoryItem& ItemData) const;
 
 	// Slot Check Modifier
 
@@ -717,7 +732,7 @@ public:
 	FORCEINLINE bool CanUpdateItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	UFUNCTION()
-	FORCEINLINE bool CanContainItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
+	FORCEINLINE bool CanFindItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
 
 	// Process Modifier
 
@@ -737,7 +752,7 @@ public:
 	FORCEINLINE bool ProcessUpdateItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 
 	UFUNCTION()
-	FORCEINLINE bool ProcessContainItem(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
+	FORCEINLINE bool ProcessFindItem(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 
 	// Catergorize Modifier
 
@@ -761,20 +776,20 @@ public:
 public:
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//bool CanAddItemBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData) const;
+	//bool CanAddItemBySlotName(UPARAM(meta=(Categories="Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData) const;
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//bool CanAddItemListBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList) const;
+	//bool CanAddItemListBySlotName(UPARAM(meta=(Categories="Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList) const;
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 	//bool CanAddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData) const;
 
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//bool CanRemoveItemBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData) const;
+	//bool CanRemoveItemBySlotName(UPARAM(meta=(Categories="Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData) const;
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	//bool CanRemoveItemListBySlotName(const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList) const;
+	//bool CanRemoveItemListBySlotName(UPARAM(meta=(Categories="Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList) const;
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 	//bool CanRemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData) const;
@@ -782,18 +797,18 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		bool ContainItem(FLFPInventoryItem ItemData, const FGameplayTagContainer InventorySlotNameList) const;
+	bool ContainItem(FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		bool ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, const FGameplayTagContainer InventorySlotNameList, const bool bPartially = false) const;
+	bool ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const bool bPartially = false) const;
 
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		bool IsSlotNameValid(const FGameplayTag SlotName) const;
+	bool IsSlotNameValid(const FGameplayTag SlotName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-		bool IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const;
+	bool IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const;
 
 public:
 
@@ -803,20 +818,20 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
-		bool FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, FLFPInventoryItem ItemData, const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem = -1) const;
-	
+	bool FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem = -1) const;
+
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
-		bool FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, FLFPInventoryItem ItemData, const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem = -1) const;
+	bool FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem = -1) const;
 
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Replicated, Category = "LFPInventoryComponent | Variable")
-		FLFPInventorySlotList InventorySlot = FLFPInventorySlotList();
+	FLFPInventorySlotList InventorySlot = FLFPInventorySlotList();
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Replicated, Category = "LFPInventoryComponent | Variable")
-		TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
+	TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
 
 	/* Use On Slot With -1 SlotMaxIndex To Limit Loop Num On Add / Swap */
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
-		int32 ExtraLoopSlot = 32;
+	int32 ExtraLoopSlot = 32;
 };
