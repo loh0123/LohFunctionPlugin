@@ -196,7 +196,7 @@ public:
 
 	FORCEINLINE bool IsItemDataValid(const int32 Index) const { return ItemList.IsValidIndex(Index) && ItemList[Index].IsValid(); }
 
-	FORCEINLINE bool IsItemIndexValid(const int32 Index) const { return ItemList.IsValidIndex(Index); }
+	FORCEINLINE bool IsItemIndexValid(const int32 Index) const { return SlotMaxIndex > 0 ? Index >= 0 && Index < SlotMaxIndex : Index >= 0; }
 
 	FORCEINLINE void ReserveItemIndex(const int32 Index)
 	{
@@ -339,10 +339,17 @@ public: // InventoryIndex
 	{
 		for (int32 Index = 0; Index < SlotList.Num(); Index++)
 		{
-			if (SlotList[Index].SlotName == InventoryIndex.SlotName)
+			if (SlotList[Index].SlotName != InventoryIndex.SlotName)
 			{
-				return FLFPInventoryInternalIndex(InventoryIndex.SlotItemIndex, Index, InventoryIndex.SlotName);
+				continue;
 			}
+
+			if (SlotList[Index].IsItemIndexValid(InventoryIndex.SlotItemIndex) == false)
+			{
+				continue;
+			}
+
+			return FLFPInventoryInternalIndex(InventoryIndex.SlotItemIndex, Index, InventoryIndex.SlotName);
 		}
 
 		return FLFPInventoryInternalIndex();
@@ -808,7 +815,7 @@ public:
 	bool IsSlotNameValid(const FGameplayTag SlotName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
-	bool IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const;
+	bool IsInventoryIndexValid(const FLFPInventoryIndex& InventoryIndex) const;
 
 public:
 

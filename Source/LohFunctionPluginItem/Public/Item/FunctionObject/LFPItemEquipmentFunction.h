@@ -25,6 +25,33 @@ public:
 	FORCEINLINE bool IsInventoryIndexAllow(const FLFPInventoryIndex& InventoryIndex) const { return AllowInventoryIndex.Contains(InventoryIndex); }
 };
 
+USTRUCT(Blueprintable)
+struct FLFPItemEquipmentSelector
+{
+	GENERATED_BODY()
+
+protected:
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default, meta = (Categories = "Item.SlotName"))
+	FGameplayTag EquipmentSlotName = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Default)
+	int32 CurrentSelection = INDEX_NONE;
+
+public:
+
+	FORCEINLINE FLFPInventoryIndex GetInventoryIndex() const { return FLFPInventoryIndex(CurrentSelection, EquipmentSlotName); } const
+
+	FORCEINLINE FGameplayTag GetEquipmentSlotName() const { return EquipmentSlotName; } const
+
+	FORCEINLINE bool IsEquipmentSlotNameMatch(const FGameplayTag& Tag) const { return Tag.MatchesTag(EquipmentSlotName); }
+
+	FORCEINLINE int32 GetCurrentSelection() const { return CurrentSelection; }
+
+	FORCEINLINE int32 SetCurrentSelection(const int32 NewCurrentSelection) { CurrentSelection = NewCurrentSelection; return CurrentSelection; }
+};
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPEquipmentItemEvent, const FLFPInventoryItemOperationData&, ItemOperationData);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPEquipmentChangeEvent, const FGameplayTag&, SlotName, const bool, Value, const FGameplayTag&, EventTag);
@@ -59,19 +86,39 @@ public:
 
 	virtual bool CanSlotNameBeSort_Implementation(const FGameplayTag& SlotName) const override;
 
-protected:
+private: // Delegate Function
 
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION()
+	void SendSelectorDelegateEvent(const FGameplayTag& SlotName, const int32 OldIndex, const int32 NewIndex, const FGameplayTag& EventTag) const;
+
+	UFUNCTION()
 	void SendSlotLockChanged(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
-	void SendSlotLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+
+	UFUNCTION()
+	void SendSlotActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+
+private: // Delegate Network Function
+
+	UFUNCTION(Client, Reliable)
+	void CLIENT_SendSelectorDelegateEvent(const FGameplayTag& SlotName, const int32 OldIndex, const int32 NewIndex, const FGameplayTag& EventTag) const;
+	void CLIENT_SendSelectorDelegateEvent_Implementation(const FGameplayTag& SlotName, const int32 OldIndex, const int32 NewIndex, const FGameplayTag& EventTag) const;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SendSlotActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
-	void SendSlotActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+	void CLIENT_SendSlotLockChanged(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+	void CLIENT_SendSlotLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void CLIENT_SendSlotActiveChanged(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
+	void CLIENT_SendSlotActiveChanged_Implementation(const FGameplayTag& SlotName, const bool IsInactive, const FGameplayTag& EventTag) const;
 
 protected:
 
 	FORCEINLINE const FLFPItemEquipmentData* GetDataTableRow(const FGameplayTag& RowTag) const;
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "LFPItemBasicFunction | Function")
+	bool SelectIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag);
 
 public:
 
@@ -89,13 +136,19 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.Event"))
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function")
+	FORCEINLINE bool IsIndexSelected(const FLFPInventoryIndex& InventoryIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.SlotName"))
+	FORCEINLINE bool IsSelectorSlot(const FGameplayTag Slot) const;
+
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.SlotName"))
 	FORCEINLINE bool IsEquipmentSlot(const FGameplayTag Slot) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.Event"))
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.SlotName"))
 	FORCEINLINE bool IsSlotNameLock(const FGameplayTag Slot) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.Event"))
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.SlotName"))
 	FORCEINLINE bool IsSlotNameInactive(const FGameplayTag Slot) const;
 
 public: // Event
@@ -106,6 +159,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LFPItemBasicFunction | Setting", meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemEquipmentData"))
 	TObjectPtr<UDataTable> ItemDataTable = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Setting", Replicated)
+	TArray<FLFPItemEquipmentSelector> SelectorList = TArray<FLFPItemEquipmentSelector>();
 
 	UPROPERTY(EditDefaultsOnly, Category = "LFPItemBasicFunction | Setting", meta = (Categories = "Item.SlotName"))
 	FGameplayTagContainer EquipmentSlotNameList = FGameplayTagContainer::EmptyContainer;

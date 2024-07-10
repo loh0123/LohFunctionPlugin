@@ -1543,7 +1543,7 @@ bool ULFPInventoryComponent::IsSlotNameValid(const FGameplayTag SlotName) const
 	return false;
 }
 
-bool ULFPInventoryComponent::IsInventoryIndexReserved(const FLFPInventoryIndex& InventoryIndex) const
+bool ULFPInventoryComponent::IsInventoryIndexValid(const FLFPInventoryIndex& InventoryIndex) const
 {
 	const FLFPInventoryInternalIndex InventoryInternalIndex((InventorySlot.ToInventoryIndexInternal(InventoryIndex)));
 
