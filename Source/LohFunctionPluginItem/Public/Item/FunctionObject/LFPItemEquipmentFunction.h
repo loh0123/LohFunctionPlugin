@@ -18,11 +18,26 @@ struct FLFPItemEquipmentData : public FTableRowBase
 protected:
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default|Stack")
-	TArray<FLFPInventoryIndex> AllowInventoryIndex = TArray<FLFPInventoryIndex>();
+	TArray<FLFPInventoryIndex> AllowInventoryIndexList = TArray<FLFPInventoryIndex>();
 
 public:
 
-	FORCEINLINE bool IsInventoryIndexAllow(const FLFPInventoryIndex& InventoryIndex) const { return AllowInventoryIndex.Contains(InventoryIndex); }
+	FORCEINLINE bool IsInventoryIndexAllow(const FLFPInventoryIndex& InventoryIndex) const 
+	{ 
+		return AllowInventoryIndexList.ContainsByPredicate(
+			[&](const FLFPInventoryIndex& AllowInventoryIndex)
+			{
+				return 
+					AllowInventoryIndex.SlotName == InventoryIndex.SlotName 
+					&& 
+					(
+						AllowInventoryIndex.SlotItemIndex < 0 
+						|| 
+						AllowInventoryIndex.SlotItemIndex == InventoryIndex.SlotItemIndex
+					);
+			}
+		);
+	}
 };
 
 USTRUCT(Blueprintable)
@@ -55,6 +70,8 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPEquipmentItemEvent, const FLFPInventoryItemOperationData&, ItemOperationData);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPEquipmentChangeEvent, const FGameplayTag&, SlotName, const bool, Value, const FGameplayTag&, EventTag);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FLFPEquipmentSelectorEvent, const FGameplayTag&, SlotName, const int32, OldSelectedIndex, const int32, NewSelectedIndex, const FGameplayTag&, EventTag);
 
 /**
  * 
@@ -151,6 +168,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function", meta = (GameplayTagFilter = "Item.SlotName"))
 	FORCEINLINE bool IsSlotNameInactive(const FGameplayTag Slot) const;
 
+public:
+
+	UFUNCTION(BlueprintPure, Category = "LFPItemBasicFunction | Function")
+	FORCEINLINE int32 GetSelectedIndex(const FGameplayTag Slot) const;
+
 public: // Event
 
 	UFUNCTION() void OnInventoryUpdateItem(const FLFPInventoryItemOperationData& ItemOperationData);
@@ -181,6 +203,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
 	FLFPEquipmentItemEvent OnUnequipItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
+	FLFPEquipmentSelectorEvent OnSlotSelectionChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPEquipmentComponent | Delegate")
 	FLFPEquipmentChangeEvent OnSlotLockChanged;

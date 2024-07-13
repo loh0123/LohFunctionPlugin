@@ -136,6 +136,8 @@ void ULFPItemEquipmentFunction::SendSelectorDelegateEvent(const FGameplayTag& Sl
 		);
 	}
 
+	OnSlotSelectionChanged.Broadcast(SlotName, OldIndex, NewIndex, EventTag);
+
 	CLIENT_SendSelectorDelegateEvent(SlotName, OldIndex, NewIndex, EventTag);
 }
 
@@ -218,6 +220,8 @@ void ULFPItemEquipmentFunction::CLIENT_SendSelectorDelegateEvent_Implementation(
 			)
 		);
 	}
+
+	OnSlotSelectionChanged.Broadcast(SlotName, OldIndex, NewIndex, EventTag);
 }
 
 void ULFPItemEquipmentFunction::CLIENT_SendSlotLockChanged_Implementation(const FGameplayTag& SlotName, const bool IsLock, const FGameplayTag& EventTag) const
@@ -380,14 +384,14 @@ void ULFPItemEquipmentFunction::SetSlotNameListInactive(UPARAM(meta = (Categorie
 
 bool ULFPItemEquipmentFunction::IsIndexSelected(const FLFPInventoryIndex& InventoryIndex) const
 {
-	const auto SelectorPtr = SelectorList.FindByPredicate([&](const FLFPItemEquipmentSelector& Selector) {return Selector.IsEquipmentSlotNameMatch(InventoryIndex.SlotName); });
+	const int32 SelectedIndex = GetSelectedIndex(InventoryIndex.SlotName);
 
-	if (SelectorPtr == nullptr)
+	if (SelectedIndex == INDEX_NONE)
 	{
 		return false;
 	}
 
-	return SelectorPtr->GetCurrentSelection() == InventoryIndex.SlotItemIndex;
+	return SelectedIndex == InventoryIndex.SlotItemIndex;
 }
 
 bool ULFPItemEquipmentFunction::IsSelectorSlot(const FGameplayTag Slot) const
@@ -408,6 +412,23 @@ bool ULFPItemEquipmentFunction::IsSlotNameLock(const FGameplayTag Slot) const
 bool ULFPItemEquipmentFunction::IsSlotNameInactive(const FGameplayTag Slot) const
 {
 	return Slot.MatchesAny(InactiveSlotNameList);
+}
+
+int32 ULFPItemEquipmentFunction::GetSelectedIndex(const FGameplayTag Slot) const
+{
+	const auto SelectorPtr = SelectorList.FindByPredicate(
+		[&](const FLFPItemEquipmentSelector& Selector) 
+		{
+			return Selector.IsEquipmentSlotNameMatch(Slot); 
+		}
+	);
+
+	if (SelectorPtr == nullptr)
+	{
+		return INDEX_NONE;
+	}
+
+	return SelectorPtr->GetCurrentSelection();
 }
 
 void ULFPItemEquipmentFunction::OnInventoryUpdateItem(const FLFPInventoryItemOperationData& ItemOperationData)
