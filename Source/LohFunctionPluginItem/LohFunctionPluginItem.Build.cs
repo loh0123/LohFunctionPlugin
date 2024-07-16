@@ -27,7 +27,6 @@ public class LohFunctionPluginItem : ModuleRules
 			{
 				"GameplayTags",
 				"Core",
-				"JsonUtilities",
 				"CoreUObject",
 				"Engine",
 				"LohFunctionPlugin",
