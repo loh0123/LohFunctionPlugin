@@ -108,11 +108,11 @@ public:
 	bool ProcessFindItem(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
 	virtual bool ProcessFindItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
 
-	// Catergorize Modifier
+	// Categorize Modifier
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	FGameplayTagContainer GetItemCatergorize(const FLFPInventoryItem& ItemData) const;
-	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const { return FGameplayTagContainer(); }
+	FGameplayTagContainer GetItemCategorize(const FLFPInventoryItem& ItemData) const;
+	virtual FGameplayTagContainer GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const { return FGameplayTagContainer(); }
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
 	FGameplayTagContainer GetItemAllowSlotNameList(const FLFPInventoryItem& ItemData) const;

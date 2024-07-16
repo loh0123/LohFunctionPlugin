@@ -157,9 +157,9 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 
 			if (InventoryInternalIndex.IsValid() == false) continue;
 
-			//if (InventoryCategorize.IsCatergorizesMatch(GetIndexCatergorize(InventoryInternalIndex)) == false)
+			//if (InventoryCategorize.IsCategorizesMatch(GetIndexCategorize(InventoryInternalIndex)) == false)
 			//{
-			//	UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex Skip Index Bacause Catergorizes Not Match : %s"), *InventoryCategorize.ToString());
+			//	UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex Skip Index Bacause Categorizes Not Match : %s"), *InventoryCategorize.ToString());
 
 			//	continue; // Tag Not Match Any One On Search
 			//}
@@ -1370,19 +1370,19 @@ bool ULFPInventoryComponent::ProcessFindItem(const FLFPInventoryItem& ItemData, 
 }
 
 
-FGameplayTagContainer ULFPInventoryComponent::GetIndexCatergorize(const FLFPInventoryInternalIndex& InventoryIndex) const
+FGameplayTagContainer ULFPInventoryComponent::GetIndexCategorize(const FLFPInventoryInternalIndex& InventoryIndex) const
 {
-	return GetItemCatergorize(InventorySlot.GetSlotItemConst(InventoryIndex));
+	return GetItemCategorize(InventorySlot.GetSlotItemConst(InventoryIndex));
 }
 
-FGameplayTagContainer ULFPInventoryComponent::GetItemCatergorize(const FLFPInventoryItem& ItemData) const
+FGameplayTagContainer ULFPInventoryComponent::GetItemCategorize(const FLFPInventoryItem& ItemData) const
 {
 	FGameplayTagContainer Result = FGameplayTagContainer();
 
 	ProcessInventoryFunction(
 		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
 		{
-			Result.AppendTags(FunctionObj->GetItemCatergorize(ItemData));
+			Result.AppendTags(FunctionObj->GetItemCategorize(ItemData));
 
 			return true;
 		}
@@ -1498,7 +1498,7 @@ bool ULFPInventoryComponent::CanItemSortHigherThan(const FLFPInventoryItem& Item
 //}
 
 
-bool ULFPInventoryComponent::ContainItem(FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList) const
+bool ULFPInventoryComponent::ContainItemBySlotName(FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList) const
 {
 	if (CanFindItem(ItemData) == false) return false;
 
@@ -1513,11 +1513,11 @@ bool ULFPInventoryComponent::ContainItem(FLFPInventoryItem ItemData, UPARAM(meta
 	);
 }
 
-bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& ItemDataList, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const bool bPartially) const
+bool ULFPInventoryComponent::ContainItemListBySlotName(const TArray<FLFPInventoryItem>& ItemDataList, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const bool bPartially) const
 {
 	for (const auto& ItemData : ItemDataList)
 	{
-		const bool bIsSearchComplete = ContainItem(ItemData, InventorySlotNameList);
+		const bool bIsSearchComplete = ContainItemBySlotName(ItemData, InventorySlotNameList);
 
 		if (bPartially)
 		{
@@ -1530,6 +1530,24 @@ bool ULFPInventoryComponent::ContainItemList(const TArray<FLFPInventoryItem>& It
 	}
 
 	return true;
+}
+
+bool ULFPInventoryComponent::ContainCategorize(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Categorize"))const FGameplayTagContainer CategorizeList, int32 Amount) const
+{
+	if (Amount <= 0) return false;
+
+	return ProcessInventoryIndex(
+		InventorySlotNameList,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
+		{
+			if (GetItemCategorize(InventorySlot.GetSlotItemConst(InventoryInternalIndex)).HasAny(CategorizeList))
+			{
+				Amount -= 1;
+			}
+
+			return Amount <= 0;
+		}
+	);
 }
 
 
@@ -1565,11 +1583,11 @@ const FLFPInventoryItem& ULFPInventoryComponent::GetSlotItem(const FLFPInventory
 
 
 
-bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& InventoryIndexList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem) const
+bool ULFPInventoryComponent::FindInventoryIndexListBySlotName(TArray<FLFPInventoryIndex>& InventoryIndexList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem) const
 {
 	if (CanFindItem(ItemData) == false) return false;
 
-	int32 CurrentAmount = 0;
+	const int32 CurrentAmount = InventoryIndexList.Num();
 
 	const bool bIsSuccess = ProcessSingleItemOperation(
 		InventorySlotNameList,
@@ -1579,8 +1597,6 @@ bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& 
 			if (FindItem_Index_Internal(InventoryInternalIndex, TargetItemData))
 			{
 				InventoryIndexList.Add(InventoryIndex);
-
-				CurrentAmount += 1;
 			}
 
 			return ItemData.IsValid() == false || (MaxListItem > 0 ? MaxListItem <= CurrentAmount : false);
@@ -1588,14 +1604,14 @@ bool ULFPInventoryComponent::FindInventoryIndexList(TArray<FLFPInventoryIndex>& 
 		false
 	);
 
-	return CurrentAmount > 0;
+	return InventoryIndexList.Num() > CurrentAmount;
 }
 
-bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemIndexList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem) const
+bool ULFPInventoryComponent::FindItemDataListBySlotName(TArray<FLFPInventoryItem>& ItemDataList, FLFPInventoryItem ItemData, UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, const int32 MaxListItem) const
 {
 	if (CanFindItem(ItemData) == false) return false;
 
-	int32 CurrentAmount = 0;
+	const int32 CurrentAmount = ItemDataList.Num();
 
 	const bool bIsSuccess = ProcessSingleItemOperation(
 		InventorySlotNameList,
@@ -1604,9 +1620,7 @@ bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemInd
 		{
 			if (FindItem_Index_Internal(InventoryInternalIndex, TargetItemData))
 			{
-				ItemIndexList.Add(InventorySlot.GetSlotItemConst(InventoryInternalIndex));
-
-				CurrentAmount += 1;
+				ItemDataList.Add(InventorySlot.GetSlotItemConst(InventoryInternalIndex));
 			}
 
 			return ItemData.IsValid() == false || (MaxListItem > 0 ? MaxListItem <= CurrentAmount : false);
@@ -1614,5 +1628,45 @@ bool ULFPInventoryComponent::FindItemDataList(TArray<FLFPInventoryItem>& ItemInd
 		false
 	);
 
-	return CurrentAmount > 0;
+	return ItemDataList.Num() > CurrentAmount;
+}
+
+bool ULFPInventoryComponent::FindInventoryIndexListByCategorize(TArray<FLFPInventoryIndex>& InventoryIndexList, UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Categorize"))const FGameplayTagContainer CategorizeList, const int32 MaxListItem) const
+{
+	const int32 CurrentAmount = InventoryIndexList.Num();
+
+	const bool bIsSuccess = ProcessInventoryIndex(
+		InventorySlotNameList,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
+		{
+			if (GetItemCategorize(InventorySlot.GetSlotItemConst(InventoryInternalIndex)).HasAny(CategorizeList))
+			{
+				InventoryIndexList.Add(InventoryIndex);
+			}
+
+			return MaxListItem > 0 && InventoryIndexList.Num() - CurrentAmount >= MaxListItem;
+		}
+	);
+
+	return InventoryIndexList.Num() > CurrentAmount;
+}
+
+bool ULFPInventoryComponent::FindItemDataListByCategorize(TArray<FLFPInventoryItem>& ItemDataList, UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Categorize"))const FGameplayTagContainer CategorizeList, const int32 MaxListItem) const
+{
+	const int32 CurrentAmount = ItemDataList.Num();
+
+	const bool bIsSuccess = ProcessInventoryIndex(
+		InventorySlotNameList,
+		[&](const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryInternalIndex& InventoryInternalIndex)
+		{
+			if (GetItemCategorize(InventorySlot.GetSlotItemConst(InventoryInternalIndex)).HasAny(CategorizeList))
+			{
+				ItemDataList.Add(InventorySlot.GetSlotItemConst(InventoryInternalIndex));
+			}
+
+			return MaxListItem > 0 && ItemDataList.Num() - CurrentAmount >= MaxListItem;
+		}
+	);
+
+	return ItemDataList.Num() > CurrentAmount;
 }

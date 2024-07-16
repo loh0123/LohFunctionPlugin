@@ -246,7 +246,7 @@ bool ULFPItemBasicFunction::ProcessFindItem_Implementation(const FLFPInventoryIt
 }
 
 
-FGameplayTagContainer ULFPItemBasicFunction::GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const
+FGameplayTagContainer ULFPItemBasicFunction::GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.GetItemTag());
 

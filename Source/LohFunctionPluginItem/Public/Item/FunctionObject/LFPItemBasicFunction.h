@@ -144,9 +144,9 @@ public:
 
 	virtual bool ProcessFindItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const override;
 
-	//// Catergorize Modifier
+	//// Categorize Modifier
 
-	virtual FGameplayTagContainer GetItemCatergorize_Implementation(const FLFPInventoryItem& ItemData) const override;
+	virtual FGameplayTagContainer GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const override;
 
