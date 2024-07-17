@@ -36,6 +36,11 @@ bool ULFPItemInventoryFunction::CallRemoteFunction(UFunction* Function, void* Pa
 	return false;
 }
 
+bool ULFPItemInventoryFunction::IsSupportedForNetworking() const
+{
+	return true;
+}
+
 void ULFPItemInventoryFunction::InitializeComponent()
 {
 	check(GetOwner() != nullptr);

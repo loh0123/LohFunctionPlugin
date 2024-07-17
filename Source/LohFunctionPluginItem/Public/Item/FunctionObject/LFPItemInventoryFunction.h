@@ -27,6 +27,8 @@ public:
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
+	
+	virtual bool IsSupportedForNetworking() const override;
 
 public:
 
