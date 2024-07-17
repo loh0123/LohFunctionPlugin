@@ -89,6 +89,13 @@ void ULFPInventoryComponent::UninitializeComponent()
 
 bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
+#if SUBOBJECT_TRANSITION_VALIDATION
+	if (UActorChannel::CanIgnoreDeprecatedReplicateSubObjects())
+	{
+		return false;
+	}
+#endif
+
 	Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
 	/* For Supporting Function List Object Replication */
