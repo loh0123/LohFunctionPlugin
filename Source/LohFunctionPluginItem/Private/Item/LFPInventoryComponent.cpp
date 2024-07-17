@@ -18,8 +18,6 @@ ULFPInventoryComponent::ULFPInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	bWantsInitializeComponent = true;
 	// ...
 }
 
@@ -28,30 +26,6 @@ ULFPInventoryComponent::ULFPInventoryComponent()
 void ULFPInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ULFPInventoryComponent, InventorySlot);
-
-	DOREPLIFETIME(ULFPInventoryComponent, FunctionList);
-}
-
-// Called every frame
-void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-
-void ULFPInventoryComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-
-	check(GetOwner());
 
 	/* For Supporting Function List Object Replication */
 	ProcessInventoryFunction(
@@ -69,9 +43,9 @@ void ULFPInventoryComponent::InitializeComponent()
 	////////////////////////////////////////////////////
 }
 
-void ULFPInventoryComponent::UninitializeComponent()
+void ULFPInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::UninitializeComponent();
+	Super::EndPlay(EndPlayReason);
 
 	/* For Supporting Function List Object Replication */
 	ProcessInventoryFunction(
@@ -85,6 +59,23 @@ void ULFPInventoryComponent::UninitializeComponent()
 		}
 	);
 	////////////////////////////////////////////////////
+}
+
+void ULFPInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ULFPInventoryComponent, InventorySlot);
+
+	DOREPLIFETIME(ULFPInventoryComponent, FunctionList);
+}
+
+// Called every frame
+void ULFPInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// ...
 }
 
 bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
