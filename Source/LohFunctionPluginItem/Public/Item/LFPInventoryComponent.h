@@ -480,7 +480,7 @@ public:
 
 public: // Delegate
 
-	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Delegate")
+	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Events")
 	FLFPInventoryItemEvent OnItemChange;
 
 private: // Delegate Function
