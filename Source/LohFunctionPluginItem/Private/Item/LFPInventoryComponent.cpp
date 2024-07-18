@@ -28,18 +28,21 @@ void ULFPInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 
 	/* For Supporting Function List Object Replication */
-	ProcessInventoryFunction(
-		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-		{
-			check(FunctionObj.Get()->GetOuter());
+	if (GetIsReplicated())
+	{
+		ProcessInventoryFunction(
+			[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+			{
+				check(FunctionObj.Get()->GetOuter());
 
-			AddReplicatedSubObject(FunctionObj.Get());
+				AddReplicatedSubObject(FunctionObj.Get());
 
-			FunctionObj.Get()->InitializeComponent();
+				FunctionObj.Get()->InitializeComponent();
 
-			return true;
-		}
-	);
+				return true;
+			}
+		);
+	}
 	////////////////////////////////////////////////////
 }
 
@@ -48,16 +51,19 @@ void ULFPInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	/* For Supporting Function List Object Replication */
-	ProcessInventoryFunction(
-		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
-		{
-			RemoveReplicatedSubObject(FunctionObj.Get());
+	if (GetIsReplicated())
+	{
+		ProcessInventoryFunction(
+			[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+			{
+				RemoveReplicatedSubObject(FunctionObj.Get());
 
-			FunctionObj.Get()->UninitializeComponent();
+				FunctionObj.Get()->UninitializeComponent();
 
-			return true;
-		}
-	);
+				return true;
+			}
+		);
+	}
 	////////////////////////////////////////////////////
 }
 
