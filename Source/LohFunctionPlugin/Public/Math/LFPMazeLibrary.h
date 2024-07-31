@@ -20,7 +20,7 @@ enum class EMazeCellType : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FLFPMazeData
+struct LOHFUNCTIONPLUGIN_API FLFPMazeData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -35,7 +35,7 @@ struct FLFPMazeData
 };
 
 USTRUCT(BlueprintType)
-struct FLFPMazeStartData
+struct LOHFUNCTIONPLUGIN_API FLFPMazeStartData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -57,7 +57,7 @@ struct FLFPMazeStartData
 };
 
 USTRUCT(BlueprintType)
-struct FLFPMazeTable
+struct LOHFUNCTIONPLUGIN_API FLFPMazeTable
 {
 	GENERATED_USTRUCT_BODY()
 

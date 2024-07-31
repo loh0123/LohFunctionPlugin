@@ -16,7 +16,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LFPCompactTagArray, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LFPCompactMetaArray, Log, All);
 
 USTRUCT(BlueprintType)
-struct FLFPCompactIntArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactIntArray
 {
 	GENERATED_BODY()
 
@@ -192,7 +192,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactIDArray : public FLFPCompactIntArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactIDArray : public FLFPCompactIntArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -433,7 +433,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactTagArray : public FLFPCompactIDArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactTagArray : public FLFPCompactIDArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -580,7 +580,7 @@ enum class ELFPCompactMetaType : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactMetaData
+struct LOHFUNCTIONPLUGIN_API FLFPCompactMetaData
 {
 	GENERATED_BODY()
 
@@ -764,7 +764,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactMetaArray : public FLFPCompactIDArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactMetaArray : public FLFPCompactIDArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -864,7 +864,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactUniqueMetaArray : public FLFPCompactIDArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactUniqueMetaArray : public FLFPCompactIDArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -962,7 +962,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPMetaArray
+struct LOHFUNCTIONPLUGIN_API FLFPMetaArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -1017,7 +1017,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPCompactIntNameArray : public FLFPCompactIntArray
+struct LOHFUNCTIONPLUGIN_API FLFPCompactIntNameArray : public FLFPCompactIntArray
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -1046,7 +1046,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPIntPointList
+struct LOHFUNCTIONPLUGIN_API FLFPIntPointList
 {
 	GENERATED_BODY()
 

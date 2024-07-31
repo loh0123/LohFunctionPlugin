@@ -17,7 +17,7 @@ class ULFPItemInventoryFunction;
 DECLARE_LOG_CATEGORY_EXTERN(LFPInventoryComponent, Log, All);
 
 USTRUCT(BlueprintType)
-struct FLFPInventorySearch
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventorySearch
 {
 	GENERATED_BODY()
 
@@ -74,7 +74,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPInventoryIndex
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryIndex
 {
 	GENERATED_BODY()
 
@@ -103,7 +103,7 @@ public:
 };
 
 USTRUCT()
-struct FLFPInventoryInternalIndex
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryInternalIndex
 {
 	GENERATED_BODY()
 
@@ -145,7 +145,7 @@ FORCEINLINE uint32 GetTypeHash(const FLFPInventoryInternalIndex& Thing)
 
 
 USTRUCT(BlueprintType)
-struct FLFPInventorySlot
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventorySlot
 {
 	GENERATED_BODY()
 
@@ -245,7 +245,7 @@ enum class ELFPInventoryItemEvent : uint8
 };
 
 USTRUCT()
-struct FLFPInventoryItemOperationData
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryItemOperationData
 {
 	GENERATED_BODY()
 
@@ -286,7 +286,7 @@ public:
 };
 
 USTRUCT()
-struct FLFPInventorySlotList
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventorySlotList
 {
 	GENERATED_BODY()
 

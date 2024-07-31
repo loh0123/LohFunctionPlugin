@@ -13,7 +13,7 @@
 #include "LFPItemFunctionLibrary.generated.h"
 
 USTRUCT(BlueprintType)
-struct FLFPInventoryItem
+struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryItem
 {
 	GENERATED_BODY()
 

@@ -9,7 +9,7 @@
 #include "LFPGridContainerComponent.generated.h"
 
 USTRUCT( BlueprintType )
-struct FLFPGridPaletteContainerSetting
+struct LOHFUNCTIONPLUGIN_API FLFPGridPaletteContainerSetting
 {
 	GENERATED_BODY()
 
@@ -84,7 +84,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridPaletteData
+struct LOHFUNCTIONPLUGIN_API FLFPGridPaletteData
 {
 	GENERATED_BODY()
 
@@ -182,7 +182,7 @@ public:
 //}
 
 USTRUCT(BlueprintType)
-struct FLFPGridTagDataTable : public FTableRowBase
+struct LOHFUNCTIONPLUGIN_API FLFPGridTagDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -406,7 +406,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridRegionData
+struct LOHFUNCTIONPLUGIN_API FLFPGridRegionData
 {
 	GENERATED_BODY()
 
@@ -436,7 +436,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridNameUpdateData
+struct LOHFUNCTIONPLUGIN_API FLFPGridNameUpdateData
 {
 	GENERATED_BODY()
 
@@ -476,7 +476,7 @@ FORCEINLINE uint32 GetTypeHash(const FLFPGridNameUpdateData& Thing)
 #endif
 
 USTRUCT(BlueprintType)
-struct FLFPChuckUpdateAction
+struct LOHFUNCTIONPLUGIN_API FLFPChuckUpdateAction
 {
 	GENERATED_BODY()
 
@@ -503,7 +503,7 @@ public: // Operator
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGridChuckUpdate, const FLFPChuckUpdateAction&);
 
 USTRUCT()
-struct FLFPGridChuckDelegate
+struct LOHFUNCTIONPLUGIN_API FLFPGridChuckDelegate
 {
 	GENERATED_BODY()
 
@@ -549,7 +549,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridChangeTagData
+struct LOHFUNCTIONPLUGIN_API FLFPGridChangeTagData
 {
 	GENERATED_BODY()
 
@@ -560,7 +560,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridUpdateAction
+struct LOHFUNCTIONPLUGIN_API FLFPGridUpdateAction
 {
 	GENERATED_BODY()
 

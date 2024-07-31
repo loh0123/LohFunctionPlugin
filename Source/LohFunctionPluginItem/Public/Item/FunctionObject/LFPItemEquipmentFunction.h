@@ -11,7 +11,7 @@
 #include "LFPItemEquipmentFunction.generated.h"
 
 USTRUCT(Blueprintable)
-struct FLFPItemEquipmentData : public FTableRowBase
+struct LOHFUNCTIONPLUGINITEM_API FLFPItemEquipmentData : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -40,8 +40,8 @@ public:
 	}
 };
 
-USTRUCT(Blueprintable)
-struct FLFPItemEquipmentSelector
+USTRUCT(BlueprintType)
+struct LOHFUNCTIONPLUGINITEM_API FLFPItemEquipmentSelector
 {
 	GENERATED_BODY()
 
