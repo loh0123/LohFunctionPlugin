@@ -11,8 +11,6 @@
 
 using namespace UE::Tasks;
 
-FLFPGridPaletteData FLFPGridPaletteData::EmptyData = FLFPGridPaletteData();
-
 uint32 FLFPVoxelRendererStatus::CurrentDynamicAmount = 1;
 
 uint32 FLFPVoxelRendererStatus::CurrentStaticAmount = 1;

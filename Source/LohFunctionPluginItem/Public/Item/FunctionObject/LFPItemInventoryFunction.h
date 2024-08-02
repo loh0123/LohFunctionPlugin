@@ -113,10 +113,6 @@ public:
 	// Categorize Modifier
 
 	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	FGameplayTagContainer GetItemCategorize(const FLFPInventoryItem& ItemData) const;
-	virtual FGameplayTagContainer GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const { return FGameplayTagContainer(); }
-
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
 	FGameplayTagContainer GetItemAllowSlotNameList(const FLFPInventoryItem& ItemData) const;
 	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const { return FGameplayTagContainer(); }
 

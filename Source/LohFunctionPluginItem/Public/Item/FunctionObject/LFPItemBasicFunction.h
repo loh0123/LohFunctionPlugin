@@ -146,8 +146,6 @@ public:
 
 	//// Categorize Modifier
 
-	virtual FGameplayTagContainer GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const override;
-
 	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const override;
 
 	//// Check Modifier

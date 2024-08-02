@@ -246,15 +246,6 @@ bool ULFPItemBasicFunction::ProcessFindItem_Implementation(const FLFPInventoryIt
 }
 
 
-FGameplayTagContainer ULFPItemBasicFunction::GetItemCategorize_Implementation(const FLFPInventoryItem& ItemData) const
-{
-	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.GetItemTag());
-
-	if (TableData == nullptr) return FGameplayTagContainer();
-
-	return TableData->GetCategorize();
-}
-
 FGameplayTagContainer ULFPItemBasicFunction::GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const
 {
 	const FLFPItemBasicData* TableData = GetDataTableRow(ItemData.GetItemTag());

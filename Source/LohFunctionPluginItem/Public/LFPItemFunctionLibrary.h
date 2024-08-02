@@ -41,6 +41,8 @@ public:
 
 	FORCEINLINE	bool MatchesTag(const FGameplayTag& Tag) const { return ItemTag.MatchesTag(Tag); }
 
+	FORCEINLINE	bool MatchesAnyTag(const FGameplayTagContainer& TagList) const { return ItemTag.MatchesAny(TagList); }
+
 	// Item Tag
 
 	FORCEINLINE const FGameplayTag& GetItemTag() const
