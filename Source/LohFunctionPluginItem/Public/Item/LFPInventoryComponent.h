@@ -180,9 +180,11 @@ public:
 		return;
 	}
 
-	FORCEINLINE int32 GetItemNum() const { return ItemList.Num(); }
+	/* Get Loopable Item Index Clamp By SlotMaxIndex If Bigger Than INDEX_NONE */
+	FORCEINLINE int32 GetItemNum(const int32 ExtraSlot = 0) const { return FMath::Min(ItemList.Num() + ExtraSlot, SlotMaxIndex > INDEX_NONE ? SlotMaxIndex : INT_MAX); }
 
-	FORCEINLINE int32 GetMaxNum(const int32 ExtraSlot) const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex - 1 : GetItemNum() + ExtraSlot; }
+	/* Get Maximum Loopable Index */
+	FORCEINLINE int32 GetMaxNum(const int32 ExtraSlot = 0) const { return SlotMaxIndex > INDEX_NONE ? SlotMaxIndex : GetItemNum() + ExtraSlot; }
 
 public: // Get Item
 
@@ -205,6 +207,11 @@ public: // Get Item
 		return ItemList[Index];
 	}
 
+	FORCEINLINE const TArray<FLFPInventoryItem>& GetItemListConst() const
+	{
+		return ItemList;
+	}
+
 public: // List Operation
 
 	FORCEINLINE void ClearEmptyItem()
@@ -215,18 +222,6 @@ public: // List Operation
 		}
 
 		ItemList.Shrink();
-	}
-
-	FORCEINLINE void SortItem(const TFunctionRef<bool(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)> Predicate)
-	{
-		ItemList.RemoveAll(
-			[&](const FLFPInventoryItem& ItemData)
-			{
-				return ItemData.IsValid() == false;
-			}
-		);
-
-		ItemList.StableSort(Predicate);
 	}
 };
 
@@ -242,6 +237,7 @@ enum class ELFPInventoryItemEvent : uint8
 	Inventory_Exchange	UMETA(DisplayName = "Exchange"),
 	Inventory_Trade		UMETA(DisplayName = "Trade"),
 	Inventory_Update	UMETA(DisplayName = "Update"),
+	Inventory_Clear		UMETA(DisplayName = "Clear"),
 };
 
 USTRUCT()
@@ -370,6 +366,23 @@ public: // Get Slot
 		return SlotList[InventoryIndex.SlotListIndex].GetItemRef(InventoryIndex.SlotItemIndex);
 	}
 
+public: // Getter
+
+	FORCEINLINE int32 GetSlotItemNum(const FGameplayTag& SlotTag) const
+	{
+		for (int32 Index = 0; Index < SlotList.Num(); Index++)
+		{
+			if (SlotList[Index].SlotName != SlotTag)
+			{
+				continue;
+			}
+
+			return SlotList[Index].GetItemNum();
+		}
+
+		return INDEX_NONE;
+	}
+
 public: // Slot Operation
 
 	FORCEINLINE void ReserveItemIndex(const FLFPInventoryInternalIndex& InventoryIndex)
@@ -387,10 +400,12 @@ public: // Slot Operation
 		SlotList[SlotListIndex].ClearEmptyItem();
 	}
 
-	FORCEINLINE void SortSlot(const FGameplayTagContainer& InventorySlotNameList, const TFunctionRef<bool(const FGameplayTag& SlotName)> SlotFunction, const TFunctionRef<bool(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)> Predicate)
+	FORCEINLINE void SortSlot(const FGameplayTagContainer& InventorySlotNameList, const TFunctionRef<bool(const FGameplayTag& SlotName)> SlotFunction, const TFunctionRef<bool(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)> Predicate, const FGameplayTag& EventTag)
 	{
-		for (auto& SlotData : SlotList)
+		for (int32 SlotListIndex = 0; SlotListIndex < SlotList.Num(); SlotListIndex++)
 		{
+			FLFPInventorySlot& SlotData = SlotList[SlotListIndex];
+
 			if (SlotData.SlotName.MatchesAny(InventorySlotNameList) == false || SlotFunction(SlotData.SlotName) == false)
 			{
 				UE_LOG(LFPInventoryComponent, Verbose, TEXT("SortSlot Skip Slot Bacause Name Not Match : %s"), *InventorySlotNameList.ToString());
@@ -398,8 +413,21 @@ public: // Slot Operation
 				continue; // Tag Not Match Any One On Search
 			}
 
-			SlotData.SortItem(Predicate);
-			SlotData.ClearEmptyItem();
+			TArray<FLFPInventoryItem> CopyArray = SlotData.GetItemListConst();
+
+			CopyArray.RemoveAll(
+				[&](const FLFPInventoryItem& ItemData)
+				{
+					return ItemData.IsValid() == false;
+				}
+			);
+
+			CopyArray.StableSort(Predicate);
+
+			for (int32 SlotIndex = 0; SlotIndex < SlotData.GetItemNum(); SlotIndex++)
+			{
+				GetSlotItemRef(FLFPInventoryInternalIndex(SlotIndex, SlotListIndex, SlotData.SlotName), true) = CopyArray.IsValidIndex(SlotIndex) ? CopyArray[SlotIndex] : FLFPInventoryItem();
+			}
 		}
 	}
 
@@ -477,6 +505,8 @@ public:
 
 	// Legacy Replication Support
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
+	virtual void Activate(bool bReset) override;
 
 public: // Delegate
 
@@ -760,6 +790,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 	const FLFPInventoryItem& GetSlotItem(const FLFPInventoryIndex& InventoryIndex) const;
 
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+	int32 GetSlotItemNum(const FGameplayTag& SlotTag) const;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInventoryComponent | Function")
@@ -782,7 +815,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Instanced, Replicated, Category = "LFPInventoryComponent | Variable")
 	TArray<TObjectPtr<ULFPItemInventoryFunction>> FunctionList = TArray<TObjectPtr<ULFPItemInventoryFunction>>();
 
-	/* Use On Slot With -1 SlotMaxIndex To Limit Loop Num On Add / Swap */
+	/* Limit Loop Num On New Add / Swap Index */
 	UPROPERTY(EditDefaultsOnly, Category = "LFPInventoryComponent | Setting")
 	int32 ExtraLoopSlot = 32;
 };

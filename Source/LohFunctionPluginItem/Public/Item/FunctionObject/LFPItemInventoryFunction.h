@@ -32,9 +32,14 @@ public:
 
 public:
 
+	UFUNCTION()
 	virtual void InitializeComponent();
 
+	UFUNCTION()
 	virtual void UninitializeComponent() {};
+
+	UFUNCTION()
+	virtual void Reset() {  };
 
 public:
 	

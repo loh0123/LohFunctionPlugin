@@ -32,6 +32,14 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "LFPTagReferenceComponent|Setter")
+	void SetComponentGameplayTags(UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer NewContainer);
+
+	UFUNCTION(BlueprintCallable, Category = "LFPTagReferenceComponent|Setter")
+	void SetEventGameplayTags(UPARAM(meta = (Categories = "Component.Events")) const FGameplayTagContainer NewContainer);
+
+public:
+
 	UFUNCTION(BlueprintCallable, Category = "LFPTagReferenceComponent|Getter")
 		const FGameplayTagContainer& GetCategoryGameplayTags() const;
 
@@ -51,14 +59,14 @@ protected:
 protected:
 
 	/* Group component together and can be find by parent tag */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = Tags, meta = (Categories = "Component.Category"))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Tags, meta = (Categories = "Component.Category"))
 		FGameplayTagContainer CategoryGameplayTags = FGameplayTagContainer();
 
 	/* Identify the component inside the category  */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category=Tags, meta=(Categories="Component.Identifiers"))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Tags, meta=(Categories="Component.Identifiers"))
 		FGameplayTagContainer ComponentGameplayTags = FGameplayTagContainer();
 
 	/* Filter event send out by subsystem ( will not receive any event if left empty ) */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category=Tags, meta=(Categories="Component.Events"))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Tags, meta=(Categories="Component.Events"))
 		FGameplayTagContainer EventGameplayTags = FGameplayTagContainer();
 };

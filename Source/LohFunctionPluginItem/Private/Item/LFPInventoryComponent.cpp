@@ -107,10 +107,35 @@ bool ULFPInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 	////////////////////////////////////////////////////
 }
 
+void ULFPInventoryComponent::Activate(bool bReset)
+{
+	Super::Activate(bReset);
+
+	if (bReset)
+	{
+		FGameplayTagContainer SlotNameList;
+
+		for (const auto& InventorySlotData : InventorySlot.GetSlotListConst())
+		{
+			SlotNameList.AddTag(InventorySlotData.SlotName);
+		}
+
+		ClearInventory(SlotNameList, FGameplayTag());
+
+		ProcessInventoryFunction(
+			[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+			{
+				FunctionObj->Reset();
+
+				return true;
+			}
+		);
+	}
+}
 
 void ULFPInventoryComponent::SendItemDelegateEvent(const FLFPInventoryItemOperationData& ItemOperationData) const
 {
-	if (GetOwner()->GetLocalRole() != ROLE_Authority) return;
+	if (GetOwner()->HasAuthority() == false) return;
 
 	OnItemChange.Broadcast(ItemOperationData);
 
@@ -119,7 +144,11 @@ void ULFPInventoryComponent::SendItemDelegateEvent(const FLFPInventoryItemOperat
 
 void ULFPInventoryComponent::CLIENT_SendItemDelegateEvent_Implementation(const FLFPInventoryItemOperationData& ItemOperationData) const
 {
-	OnItemChange.Broadcast(ItemOperationData);
+	/* Prevent This To Run Again On Singel Player */
+	if (GetOwner()->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		OnItemChange.Broadcast(ItemOperationData);
+	}
 }
 
 const FLFPInventorySlotList& ULFPInventoryComponent::GetInventorySlotList() const
@@ -147,26 +176,22 @@ bool ULFPInventoryComponent::ProcessInventoryIndex(
 			continue; // Tag Not Match Any One On Search
 		}
 
-		// If SearchIndex.SlotIndex Is Invalid Than Loop All SlotData Item And Additional Index
-		int32 Index = 0;
-		const int32 MaxIndex = bUseMaxIndex ? SlotData.GetMaxNum(ExtraLoopSlot) : SlotData.GetItemNum();
+		//
+		const int32 MaxIndex = bUseMaxIndex ? 
+			SlotData.GetMaxNum(ExtraLoopSlot) 
+			: 
+			SlotData.GetItemNum(ExtraLoopSlot)
+			;
 		//
 
-		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | StartIndex = %d | EndIndex = %d"), *SlotData.SlotName.ToString(), Index, MaxIndex);
+		UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex SlotData Start : Name = %s | EndIndex = %d"), *SlotData.SlotName.ToString(), MaxIndex);
 
-		for (Index; Index <= MaxIndex; Index++)
+		for (int32 Index = 0; Index < MaxIndex; Index++)
 		{
 			const FLFPInventoryIndex InventoryIndex(Index, SlotData.SlotName);
 			const FLFPInventoryInternalIndex InventoryInternalIndex((InventorySlot.ToInventoryIndexInternal(FLFPInventoryIndex(Index, SlotData.SlotName))));
 
 			if (InventoryInternalIndex.IsValid() == false) continue;
-
-			//if (InventoryCategorize.IsCategorizesMatch(GetIndexCategorize(InventoryInternalIndex)) == false)
-			//{
-			//	UE_LOG(LFPInventoryComponent, Verbose, TEXT("ProcessInventoryIndex Skip Index Bacause Categorizes Not Match : %s"), *InventoryCategorize.ToString());
-
-			//	continue; // Tag Not Match Any One On Search
-			//}
 
 			if (IndexFunction(InventoryIndex, InventoryInternalIndex))
 			{
@@ -1023,8 +1048,11 @@ bool ULFPInventoryComponent::SortItem(UPARAM(meta = (Categories = "Item.SlotName
 		[&](const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB)
 		{
 			return CanItemSortHigherThan(ItemDataA, ItemDataB, SortTag);
-		}
+		},
+		EventTag
 	);
+
+	ApplyInventoryPendingChange();
 
 	return true;
 }
@@ -1042,16 +1070,22 @@ void ULFPInventoryComponent::ClearInventory(UPARAM(meta = (Categories = "Item.Sl
 				return false;
 			}
 
-			InventorySlot.GetSlotItemRef(InventoryInternalIndex, false) = FLFPInventoryItem();
+			InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(
+				ELFPInventoryItemEvent::Inventory_Clear,
+				InventoryIndex,
+				FLFPInventoryItem(),
+				InventorySlot.GetSlotItemConst(InventoryInternalIndex),
+				EventTag
+			));
+
+			InventorySlot.GetSlotItemRef(InventoryInternalIndex, true) = FLFPInventoryItem();
 
 			return false;
 		},
-		false,
-		[&](const int32 SlotListIndex)
-		{
-			InventorySlot.ClearSlotEmptyItem(SlotListIndex);
-		}
+		false
 	);
+
+	ApplyInventoryPendingChange();
 
 	return;
 }
@@ -1544,6 +1578,11 @@ const FLFPInventoryItem& ULFPInventoryComponent::GetSlotItem(const FLFPInventory
 	if (InventoryInternalIndex.IsValid() == false) return FLFPInventoryItem::EmptyItem;
 
 	return InventorySlot.GetSlotItemConst(InventoryInternalIndex);
+}
+
+int32 ULFPInventoryComponent::GetSlotItemNum(const FGameplayTag& SlotTag) const
+{
+	return InventorySlot.GetSlotItemNum(SlotTag);
 }
 
 

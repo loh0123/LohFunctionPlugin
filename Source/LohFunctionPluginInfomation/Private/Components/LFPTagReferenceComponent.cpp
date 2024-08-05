@@ -50,6 +50,16 @@ void ULFPTagReferenceComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
+void ULFPTagReferenceComponent::SetComponentGameplayTags(UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer NewContainer)
+{
+	ComponentGameplayTags = NewContainer;
+}
+
+void ULFPTagReferenceComponent::SetEventGameplayTags(UPARAM(meta = (Categories = "Component.Events")) const FGameplayTagContainer NewContainer)
+{
+	EventGameplayTags = NewContainer;
+}
+
 void ULFPTagReferenceComponent::BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const FString& Messages) const
 {
 	if (EventGameplayTags.HasTag(EventTag))
