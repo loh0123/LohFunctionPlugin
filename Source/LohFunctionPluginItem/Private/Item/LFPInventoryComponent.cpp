@@ -1115,6 +1115,30 @@ ULFPItemInventoryFunction* ULFPInventoryComponent::GetFunctionObject(const TSubc
 	return ReturnPtr;
 }
 
+TArray<ULFPItemInventoryFunction*> ULFPInventoryComponent::GetFunctionObjectListByClass(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const
+{
+	if (FunctionClass == nullptr) return TArray<ULFPItemInventoryFunction*>();
+
+	TArray<ULFPItemInventoryFunction*> ReturnPtrList = TArray<ULFPItemInventoryFunction*>();
+
+	ProcessInventoryFunction(
+		[&](const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj)
+		{
+			if (FunctionObj.GetClass() == FunctionClass.Get())
+			{
+				ReturnPtrList.Add(FunctionObj);
+
+				/* Stop The Loop Using False */
+				return false;
+			}
+
+			return true;
+		}
+	);
+
+	return ReturnPtrList;
+}
+
 
 bool ULFPInventoryComponent::CanAddItem(const FLFPInventoryItem& ItemData) const
 {

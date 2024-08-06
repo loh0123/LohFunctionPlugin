@@ -697,6 +697,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
 	ULFPItemInventoryFunction* GetFunctionObject(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const;
 
+	UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Function")
+	TArray<ULFPItemInventoryFunction*> GetFunctionObjectListByClass(const TSubclassOf<ULFPItemInventoryFunction> FunctionClass) const;
+
 public:
 
 	// Start Modifier
