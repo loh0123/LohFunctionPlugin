@@ -334,7 +334,7 @@ bool ULFPInventoryComponent::AddItem_Index_Uncheck_Internal(const FLFPInventoryI
 
 	const bool bSuccess = ProcessAddItem(NewItemData, ProcessItemData, InventoryIndex);
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Add, InventoryIndex, NewItemData, OldItemData, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Add, InventoryIndex, NewItemData, OldItemData, EventTag));
 
 	return bSuccess;
 }
@@ -394,7 +394,7 @@ bool ULFPInventoryComponent::RemoveItem_Index_Uncheck_Internal(const FLFPInvento
 
 	const bool bSuccess = ProcessRemoveItem(NewItemData, ProcessItemData, InventoryIndex);
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Remove, InventoryIndex, NewItemData, OldItemData, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Remove, InventoryIndex, NewItemData, OldItemData, EventTag));
 
 	return bSuccess;
 }
@@ -452,8 +452,8 @@ bool ULFPInventoryComponent::SwapItem_Index_Internal(const FLFPInventoryInternal
 
 	const bool bSuccess = ProcessSwapItem(FromData, FromIndex.ToInventoryIndex(), ToData, ToIndex.ToInventoryIndex());
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Swap, FromIndex.ToInventoryIndex(), FromData, CopyFromItem, EventTag));
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Swap, ToIndex.ToInventoryIndex(), ToData, CopyToItem, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Swap, FromIndex.ToInventoryIndex(), FromData, CopyFromItem, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Swap, ToIndex.ToInventoryIndex(), ToData, CopyToItem, EventTag));
 
 	return bSuccess;
 }
@@ -475,8 +475,8 @@ bool ULFPInventoryComponent::MergeItem_Index_Internal(const FLFPInventoryInterna
 
 	const bool bSuccess = ProcessMergeItem(FromData, FromIndex.ToInventoryIndex(), ToData, ToIndex.ToInventoryIndex());
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Merge, FromIndex.ToInventoryIndex(), FromData, CopyFromItem, EventTag));
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Merge, ToIndex.ToInventoryIndex(), ToData, CopyToItem, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Merge, FromIndex.ToInventoryIndex(), FromData, CopyFromItem, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Merge, ToIndex.ToInventoryIndex(), ToData, CopyToItem, EventTag));
 
 	return bSuccess;
 }
@@ -511,7 +511,7 @@ bool ULFPInventoryComponent::Transfer_Index_Internal(const FLFPInventoryIndex& F
 
 	const bool bSuccess = TargetInventoryComponent->AddItemByIndex(ToIndex, RefOfFrom, bMustFullyTransfer, EventTag);
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Transfer, FromIndex, RefOfFrom, CopyOfFrom, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Transfer, FromIndex, RefOfFrom, CopyOfFrom, EventTag));
 
 	return bSuccess;
 }
@@ -531,7 +531,7 @@ bool ULFPInventoryComponent::Transfer_SlotName_Internal(const FLFPInventoryIndex
 
 	const bool bSuccess = TargetInventoryComponent->AddItemBySlotName(ToSlotNameList, RefOfFrom, bMustFullyTransfer, EventTag);
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Transfer, FromIndex, RefOfFrom, CopyOfFrom, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Transfer, FromIndex, RefOfFrom, CopyOfFrom, EventTag));
 
 	return bSuccess;
 }
@@ -549,7 +549,7 @@ bool ULFPInventoryComponent::UpdateItem_Index_Uncheck_Internal(const FLFPInvento
 
 	const bool bSuccess = ProcessUpdateItem(NewItemData, ProcessItemData, InventoryIndex);
 
-	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_Update, InventoryIndex, NewItemData, OldItemData, EventTag));
+	InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_Update, InventoryIndex, NewItemData, OldItemData, EventTag));
 
 	return bSuccess;
 }
@@ -1071,7 +1071,7 @@ void ULFPInventoryComponent::ClearInventory(UPARAM(meta = (Categories = "Item.Sl
 			}
 
 			InventorySlot.AddPendingEvent(FLFPInventoryItemOperationData(
-				ELFPInventoryItemEvent::Inventory_Clear,
+				ELFPInventoryItemEventType::Inventory_Clear,
 				InventoryIndex,
 				FLFPInventoryItem(),
 				InventorySlot.GetSlotItemConst(InventoryInternalIndex),

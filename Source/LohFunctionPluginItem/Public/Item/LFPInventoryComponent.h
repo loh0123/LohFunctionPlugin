@@ -226,7 +226,7 @@ public: // List Operation
 };
 
 UENUM(BlueprintType)
-enum class ELFPInventoryItemEvent : uint8
+enum class ELFPInventoryItemEventType : uint8
 {
 	Inventory_None		UMETA(DisplayName = "None"),
 	Inventory_Add		UMETA(DisplayName = "Add"),
@@ -248,7 +248,7 @@ struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryItemOperationData
 	FLFPInventoryItemOperationData() {}
 
 	FLFPInventoryItemOperationData(
-		const ELFPInventoryItemEvent& IN_EventType,
+		const ELFPInventoryItemEventType& IN_EventType,
 		const FLFPInventoryIndex& IN_InventoryIndex,
 		const FLFPInventoryItem& IN_NewData,
 		const FLFPInventoryItem& IN_OldData,
@@ -266,7 +266,7 @@ struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryItemOperationData
 public:
 
 	UPROPERTY()
-	ELFPInventoryItemEvent EventType = ELFPInventoryItemEvent::Inventory_Add;
+	ELFPInventoryItemEventType EventType = ELFPInventoryItemEventType::Inventory_Add;
 
 	UPROPERTY()
 	FLFPInventoryIndex InventoryIndex = FLFPInventoryIndex();
@@ -479,7 +479,7 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPInventoryItemEvent, const FLFPInventoryItemOperationData&, ItemOperationData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPInventoryItemDelegate, const FLFPInventoryItemOperationData&, ItemOperationData);
 
 UCLASS(Blueprintable, ClassGroup = (LFPlugin), meta = (BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGINITEM_API ULFPInventoryComponent : public UActorComponent
@@ -511,7 +511,7 @@ public:
 public: // Delegate
 
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite, Category = "LFPInventoryComponent | Events")
-	FLFPInventoryItemEvent OnItemChange;
+	FLFPInventoryItemDelegate OnItemChange;
 
 private: // Delegate Function
 

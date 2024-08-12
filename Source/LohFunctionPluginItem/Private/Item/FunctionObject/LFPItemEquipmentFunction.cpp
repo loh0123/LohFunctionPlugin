@@ -114,7 +114,7 @@ void ULFPItemEquipmentFunction::SendSelectorDelegateEvent(const FGameplayTag& Sl
 	{
 		OnUnequipItem.Broadcast(
 			FLFPInventoryItemOperationData(
-				ELFPInventoryItemEvent::Inventory_None,
+				ELFPInventoryItemEventType::Inventory_None,
 				FLFPInventoryIndex(OldIndex, SlotName),
 				OldEquipment,
 				OldEquipment,
@@ -127,7 +127,7 @@ void ULFPItemEquipmentFunction::SendSelectorDelegateEvent(const FGameplayTag& Sl
 	{
 		OnEquipItem.Broadcast(
 			FLFPInventoryItemOperationData(
-				ELFPInventoryItemEvent::Inventory_None,
+				ELFPInventoryItemEventType::Inventory_None,
 				FLFPInventoryIndex(NewIndex, SlotName),
 				NewEquipment,
 				NewEquipment,
@@ -163,7 +163,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged(const FGameplayTag& SlotNa
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnUnequipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
+				OnUnequipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
@@ -179,7 +179,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged(const FGameplayTag& SlotNa
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnEquipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
+				OnEquipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
@@ -199,7 +199,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSelectorDelegateEvent_Implementation(
 	{
 		OnUnequipItem.Broadcast(
 			FLFPInventoryItemOperationData(
-				ELFPInventoryItemEvent::Inventory_None,
+				ELFPInventoryItemEventType::Inventory_None,
 				FLFPInventoryIndex(OldIndex, SlotName),
 				OldEquipment,
 				OldEquipment,
@@ -212,7 +212,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSelectorDelegateEvent_Implementation(
 	{
 		OnEquipItem.Broadcast(
 			FLFPInventoryItemOperationData(
-				ELFPInventoryItemEvent::Inventory_None,
+				ELFPInventoryItemEventType::Inventory_None,
 				FLFPInventoryIndex(NewIndex, SlotName),
 				NewEquipment,
 				NewEquipment,
@@ -244,7 +244,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSlotActiveChanged_Implementation(cons
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnUnequipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
+				OnUnequipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
@@ -260,7 +260,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSlotActiveChanged_Implementation(cons
 				/* Skip Empty Item */
 				if (SlotItem.IsValid() == false) return false;
 
-				OnEquipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEvent::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
+				OnEquipItem.Broadcast(FLFPInventoryItemOperationData(ELFPInventoryItemEventType::Inventory_None, InventoryIndex, SlotItem, SlotItem, EventTag));
 
 				return false;
 			});
