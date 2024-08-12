@@ -121,10 +121,10 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPHashBoxGridComponent | Setter")
-	FORCEINLINE void SetGridSize(const FIntVector NewSize);
+	void SetGridSize(const FIntVector NewSize);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPHashBoxGridComponent | Setter")
-	FORCEINLINE void UpdateGridIndex(const int32 GridIndex);
+	void UpdateGridIndex(const int32 GridIndex);
 
 protected:
 

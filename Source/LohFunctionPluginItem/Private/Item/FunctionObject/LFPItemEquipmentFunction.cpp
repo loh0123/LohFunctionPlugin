@@ -289,7 +289,7 @@ const FLFPItemEquipmentData* ULFPItemEquipmentFunction::GetDataTableRow(const FG
 }
 
 
-bool ULFPItemEquipmentFunction::SelectIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPItemEquipmentFunction::SelectIndex(const FLFPInventoryIndex& InventoryIndex, const FGameplayTag EventTag)
 {
 	if (IsValid(GetOwner()) == false || GetOwner()->IsInventoryIndexValid(InventoryIndex) == false)
 	{
@@ -313,7 +313,7 @@ bool ULFPItemEquipmentFunction::SelectIndex(const FLFPInventoryIndex& InventoryI
 }
 
 
-bool ULFPItemEquipmentFunction::SetSlotNameLock(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTag SlotName, const bool IsLock, UPARAM(meta = (Categories = "Item.Event"))  const FGameplayTag EventTag)
+bool ULFPItemEquipmentFunction::SetSlotNameLock(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTag SlotName, const bool IsLock,  const FGameplayTag EventTag)
 {
 	/* Skip Slot Name Because Not Process By This Module */
 	if (IsEquipmentSlot(SlotName) == false) return false;
@@ -337,7 +337,7 @@ bool ULFPItemEquipmentFunction::SetSlotNameLock(UPARAM(meta = (Categories = "Ite
 	return true;
 }
 
-void ULFPItemEquipmentFunction::SetSlotNameListLock(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNameList, const bool IsLock, UPARAM(meta = (Categories = "Item.Event"))  const FGameplayTag EventTag)
+void ULFPItemEquipmentFunction::SetSlotNameListLock(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNameList, const bool IsLock,  const FGameplayTag EventTag)
 {
 	for (const FGameplayTag& SlotName : SlotNameList)
 	{
@@ -347,7 +347,7 @@ void ULFPItemEquipmentFunction::SetSlotNameListLock(UPARAM(meta = (Categories = 
 	return;
 }
 
-bool ULFPItemEquipmentFunction::SetSlotNameInactive(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTag SlotName, const bool IsInactive, UPARAM(meta = (Categories = "Item.Event"))  const FGameplayTag EventTag)
+bool ULFPItemEquipmentFunction::SetSlotNameInactive(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTag SlotName, const bool IsInactive,  const FGameplayTag EventTag)
 {
 	/* Skip Slot Name Because Not Process By This Module */
 	if (IsEquipmentSlot(SlotName) == false) return false;
@@ -371,7 +371,7 @@ bool ULFPItemEquipmentFunction::SetSlotNameInactive(UPARAM(meta = (Categories = 
 	return true;
 }
 
-void ULFPItemEquipmentFunction::SetSlotNameListInactive(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNameList, const bool IsInactive, UPARAM(meta = (Categories = "Item.Event"))  const FGameplayTag EventTag)
+void ULFPItemEquipmentFunction::SetSlotNameListInactive(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNameList, const bool IsInactive,  const FGameplayTag EventTag)
 {
 	for (const FGameplayTag& SlotName : SlotNameList)
 	{

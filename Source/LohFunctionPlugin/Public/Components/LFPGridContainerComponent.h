@@ -8,7 +8,7 @@
 #include "Engine/DataTable.h"
 #include "LFPGridContainerComponent.generated.h"
 
-USTRUCT( BlueprintType )
+USTRUCT(BlueprintType)
 struct LOHFUNCTIONPLUGIN_API FLFPGridPaletteContainerSetting
 {
 	GENERATED_BODY()
@@ -17,7 +17,9 @@ struct LOHFUNCTIONPLUGIN_API FLFPGridPaletteContainerSetting
 
 	FLFPGridPaletteContainerSetting(const FIntVector NewRegionGridSize, const FIntVector NewChuckGridSize, const FIntVector NewPaletteGridSize)
 		: RegionGridSize(NewRegionGridSize), ChuckGridSize(NewChuckGridSize), PaletteGridSize(NewPaletteGridSize)
-	{ InitSetting(); }
+	{
+		InitSetting();
+	}
 
 private:
 
@@ -29,15 +31,15 @@ private:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "GridContainerSetting | Setting")
-		FIntVector RegionGridSize = FIntVector(1);
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GridContainerSetting | Setting")
+	FIntVector RegionGridSize = FIntVector(1);
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "GridContainerSetting | Setting")
-		FIntVector ChuckGridSize = FIntVector(1);
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GridContainerSetting | Setting")
+	FIntVector ChuckGridSize = FIntVector(1);
 
 	/* Size Of Grid Inside Of A Chuck */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere,		Category = "GridContainerSetting | Setting")
-		FIntVector PaletteGridSize = FIntVector(1);
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "GridContainerSetting | Setting")
+	FIntVector PaletteGridSize = FIntVector(1);
 
 public:
 
@@ -105,15 +107,15 @@ public:
 public:
 
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
-		FName Name = FName();
+	FName Name = FName();
 
 	UPROPERTY(SaveGame, BlueprintReadWrite, EditAnywhere, Category = "LFPGridPaletteData")
-		TArray<FName> TagList = TArray<FName>();
+	TArray<FName> TagList = TArray<FName>();
 
 private:
 
 	UPROPERTY(SaveGame)
-		uint32 RefCounter = 0;
+	uint32 RefCounter = 0;
 
 public:
 
@@ -203,16 +205,16 @@ public:
 private:
 
 	UPROPERTY(SaveGame)
-		TArray<FLFPGridPaletteData> PaletteList = {};
+	TArray<FLFPGridPaletteData> PaletteList = {};
 
 	UPROPERTY(SaveGame)
-		TArray<int32> OpenPaletteList = {};
+	TArray<int32> OpenPaletteList = {};
 
 	UPROPERTY(SaveGame)
-		FLFPCompactIntArray IndexList = FLFPCompactIntArray();
+	FLFPCompactIntArray IndexList = FLFPCompactIntArray();
 
 	UPROPERTY(SaveGame)
-		TArray<FLFPCompactIntNameArray> DataList = TArray<FLFPCompactIntNameArray>();
+	TArray<FLFPCompactIntNameArray> DataList = TArray<FLFPCompactIntNameArray>();
 
 private:
 
@@ -224,7 +226,7 @@ private:
 
 		if (PaletteIndex == INDEX_NONE)
 		{
-			if (OpenPaletteList.IsEmpty() == false) 
+			if (OpenPaletteList.IsEmpty() == false)
 			{
 				PaletteIndex = OpenPaletteList.Pop();
 
@@ -413,7 +415,7 @@ struct LOHFUNCTIONPLUGIN_API FLFPGridRegionData
 public:
 
 	UPROPERTY(SaveGame)
-		TArray<FLFPGridChuckData> ChuckData = {};
+	TArray<FLFPGridChuckData> ChuckData = {};
 
 public:
 
@@ -447,10 +449,10 @@ struct LOHFUNCTIONPLUGIN_API FLFPGridNameUpdateData
 public:
 
 	UPROPERTY()
-		FName FromName = FName();
+	FName FromName = FName();
 
 	UPROPERTY()
-		FName ToName = FName();
+	FName ToName = FName();
 
 public:
 
@@ -514,7 +516,7 @@ private:
 
 
 	UPROPERTY()
-		int32 BindAmount = 0;
+	int32 BindAmount = 0;
 public:
 
 	template <typename UserClass, typename... ParamTypes>
@@ -556,7 +558,7 @@ struct LOHFUNCTIONPLUGIN_API FLFPGridChangeTagData
 public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "LFPGridChangeTagData")
-		TMap<FName, uint8> ChangeData = TMap<FName, uint8>();
+	TMap<FName, uint8> ChangeData = TMap<FName, uint8>();
 };
 
 USTRUCT(BlueprintType)
@@ -567,10 +569,10 @@ struct LOHFUNCTIONPLUGIN_API FLFPGridUpdateAction
 public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "LFPGridUpdateAction")
-		TMap<int32, FLFPGridPaletteData> ChangePalette = TMap<int32, FLFPGridPaletteData>();
+	TMap<int32, FLFPGridPaletteData> ChangePalette = TMap<int32, FLFPGridPaletteData>();
 
 	UPROPERTY(BlueprintReadWrite, Category = "LFPGridUpdateAction")
-		TMap<int32, FLFPGridChangeTagData> ChangeTagData = TMap<int32, FLFPGridChangeTagData>();
+	TMap<int32, FLFPGridChangeTagData> ChangeTagData = TMap<int32, FLFPGridChangeTagData>();
 
 public: // Operator
 
@@ -588,12 +590,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGridContainerChuckInitialized, c
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridContainerRegionInitialized, const int32, RegionIndex);
 
 
-UCLASS( Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin) )
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGIN_API ULFPGridContainerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	ULFPGridContainerComponent();
 
@@ -601,122 +603,122 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public: /** Debugging */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Function")
-		FORCEINLINE FString Test();
+	FString Test();
 
 public: /** Checker */
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-		FORCEINLINE bool IsRegionInitialized(const int32 RegionIndex) const;
+	bool IsRegionInitialized(const int32 RegionIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-		FORCEINLINE bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
+	bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-		FORCEINLINE bool IsRegionPositionValid(const int32 RegionIndex) const;
+	bool IsRegionPositionValid(const int32 RegionIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-		FORCEINLINE bool IsChuckPositionValid(const int32 RegionIndex, const int32 ChuckIndex) const;
+	bool IsChuckPositionValid(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-		FORCEINLINE bool IsGridPositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
+	bool IsGridPositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
 
 public: /** Setter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool AddPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
+	bool AddPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool RemovePaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
+	bool RemovePaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName& Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName Tag, const uint8 Data);
+	bool SetTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName Tag, const uint8 Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool SetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FLFPGridPaletteData& Palette);
+	bool SetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FLFPGridPaletteData& Palette);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool SetGridPalettes(const int32 RegionIndex, const int32 ChuckIndex, const TMap<int32, FLFPGridPaletteData>& PaletteMap);
+	bool SetGridPalettes(const int32 RegionIndex, const int32 ChuckIndex, const TMap<int32, FLFPGridPaletteData>& PaletteMap);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool SetGridChuckData(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridChuckData& ChuckData);
+	bool SetGridChuckData(const int32 RegionIndex, const int32 ChuckIndex, const FLFPGridChuckData& ChuckData);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-		FORCEINLINE bool InitializeGridChuck(const int32 RegionIndex, const int32 ChuckIndex);
+	bool InitializeGridChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 public: /** Getter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE int32 GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const;
+	int32 GetRenderChuckAmount(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FLFPGridChuckData GetGridChuckData(const int32 RegionIndex, const int32 ChuckIndex) const;
+	FLFPGridChuckData GetGridChuckData(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE uint8 GetGridTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName TagName) const;
+	uint8 GetGridTagData(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, const FName TagName) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FLFPGridPaletteData GetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
+	FLFPGridPaletteData GetGridPalette(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE TArray<FLFPGridPaletteData> GetGridPaletteList(const int32 RegionIndex, const int32 ChuckIndex) const;
+	TArray<FLFPGridPaletteData> GetGridPaletteList(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE int32 GetGridPaletteIndex(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
+	int32 GetGridPaletteIndex(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
+	FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
+	FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset, const bool bRound = false) const;
+	FIntVector AddGridGlobalPositionOffset(const FIntVector GridGlobalPosition, const FIntVector GridGlobalIndexOffset, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-		FORCEINLINE FIntVector AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset, const bool bRound = false) const;
+	FIntVector AddGridGlobalIndexOffset(const FIntVector GridGlobalIndex, const FIntVector GridGlobalPositionOffset, const bool bRound = false) const;
 
 public: /** C++ Getter */
 
-	FORCEINLINE const FLFPGridPaletteContainerSetting& GetSetting() const { return Setting; }
+	const FLFPGridPaletteContainerSetting& GetSetting() const { return Setting; }
 
-	FORCEINLINE const FLFPGridPaletteData& GetGridPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
+	const FLFPGridPaletteData& GetGridPaletteRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex) const;
 
-	FORCEINLINE bool GetGridTagDataListRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, TMap<FName, uint8>& TagDataList) const;
+	bool GetGridTagDataListRef(const int32 RegionIndex, const int32 ChuckIndex, const int32 GridIndex, TMap<FName, uint8>& TagDataList) const;
 
-	FORCEINLINE const FLFPGridChuckData& GetGridChuckRef(const int32 RegionIndex, const int32 ChuckIndex) const;
+	const FLFPGridChuckData& GetGridChuckRef(const int32 RegionIndex, const int32 ChuckIndex) const;
 
-	FORCEINLINE bool GetGridChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar);
+	bool GetGridChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar);
 
 public:
 
-	FORCEINLINE bool SetGridChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar);
+	bool SetGridChuckDataByArchive(const int32 RegionIndex, const int32 ChuckIndex, FArchive& Ar);
 
 
 protected: /** Can be override to provide custom behavir */
 
 	UFUNCTION()
-		virtual void InitializeRegion(const int32 RegionIndex);
+	virtual void InitializeRegion(const int32 RegionIndex);
 
 	UFUNCTION()
-		virtual void InitializeChuck(const int32 RegionIndex, const int32 ChuckIndex);
+	virtual void InitializeChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 public: /** Chuck Request */
 
 	/** Request chuck info on chuck spawn */
-	UFUNCTION() 
-		FORCEINLINE FLFPGridChuckDelegate& AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
+	UFUNCTION()
+	FLFPGridChuckDelegate& AddRenderChuck(const int32 RegionIndex, const int32 ChuckIndex);
 
 	/** Release chuck info on chuck destroy */
-	UFUNCTION() 
-		FORCEINLINE void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UActorComponent* RemoveObject);
+	UFUNCTION()
+	void RemoveRenderChuck(const int32 RegionIndex, const int32 ChuckIndex, const UActorComponent* RemoveObject);
 
 protected: /** Function for updating chuck and data */
 
@@ -727,13 +729,13 @@ protected: /** Function for updating chuck and data */
 public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
-		FOnGridContainerChuckUpdate OnGridContainerChuckUpdate;
+	FOnGridContainerChuckUpdate OnGridContainerChuckUpdate;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
-		FOnGridContainerChuckInitialized OnGridContainerChuckInitialized;
+	FOnGridContainerChuckInitialized OnGridContainerChuckInitialized;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPGridContainerComponent | Delegate")
-		FOnGridContainerRegionInitialized OnGridContainerRegionInitialized;
+	FOnGridContainerRegionInitialized OnGridContainerRegionInitialized;
 
 
 public: /** Read and write lock */
@@ -744,29 +746,29 @@ protected: // Initialize Data
 
 	/** What setting this component use when saving the Grid */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting")
-		FLFPGridPaletteContainerSetting Setting;
+	FLFPGridPaletteContainerSetting Setting;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting ")
-		TObjectPtr<UDataTable> TagDataTable = nullptr;
+	TObjectPtr<UDataTable> TagDataTable = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridContainerComponent | Setting ")
-		bool bSwitchRegionZWithX = false;
+	bool bSwitchRegionZWithX = false;
 
 protected:  // Runtime Data
 
 	/** This store the chuck */
 	UPROPERTY(SaveGame)
-		TArray<FLFPGridRegionData> RegionDataList;
+	TArray<FLFPGridRegionData> RegionDataList;
 
 	/** This store chuck delegate to call */
-	UPROPERTY() 
-		TMap<FIntPoint, FLFPGridChuckDelegate> ChuckDelegateList;
+	UPROPERTY()
+	TMap<FIntPoint, FLFPGridChuckDelegate> ChuckDelegateList;
 
 	/** This store future chuck update data to apply */
-	UPROPERTY() 
-		TMap<FIntPoint, FLFPGridUpdateAction> ChuckUpdateDataList;
+	UPROPERTY()
+	TMap<FIntPoint, FLFPGridUpdateAction> ChuckUpdateDataList;
 
 	/** This store future chuck event data to send */
 	UPROPERTY()
-		TMap<FIntPoint, FLFPChuckUpdateAction> ChuckUpdateStateList;
+	TMap<FIntPoint, FLFPChuckUpdateAction> ChuckUpdateStateList;
 };

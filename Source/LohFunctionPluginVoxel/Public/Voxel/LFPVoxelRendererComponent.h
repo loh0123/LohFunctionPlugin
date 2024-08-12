@@ -275,7 +275,7 @@ public:
 		ColorList.Reserve(VertexAmount);
 
 		GenerateRawFaceData(VoxelHalfSize, VoxelRenderOffset, VerticeList, IndexList, UVDataList, ColorList,
-			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D){}
+			[&](const FLFPVoxelRendererFaceDirection& FaceDirection, const int32 Index, const FVector2f& Scale2D) {}
 		);
 
 		ReturnData->Vertices.Append(VerticeList);
@@ -287,9 +287,9 @@ public:
 			Triangle.v1 = IndexList[Index + 1] + VertexStartIndex;
 			Triangle.v2 = IndexList[Index + 2] + VertexStartIndex;
 			ReturnData->Indices.Add(Triangle);
-		
+
 			ReturnData->MaterialIndices.Add(SectionIndex);
-		
+
 			if (bCopyUVs)
 			{
 				ReturnData->UVs[0].Append(
@@ -311,26 +311,26 @@ public:
 		int32 Offset = 0;
 
 		if (bIsInner) Range--;
-		
+
 		for (int32 Index = 0; Index < 6; Index++)
 		{
 			int32 ScanIndex = LocalPosition[LookUpList[Index].Z];
-		
+
 			//if (PositiveList[Index] < 0) ScanIndex = FaceDirectionAmount[LookUpList[Index].Z] - ScanIndex - 1;
-		
+
 			ScanIndex += (bIsInner ? PositiveList[Index] * Range : PositiveList[Index] * -1 * Range);
-		
+
 			ScanIndex = ScanIndex >= 0 && ScanIndex < FaceDirectionAmount[LookUpList[Index].Z] ? ScanIndex : INDEX_NONE;
-		
+
 			const FIntVector4& ScanPosition = FIntVector4(LocalPosition[LookUpList[Index].X], LocalPosition[LookUpList[Index].Y], ScanIndex + Offset, ScanIndex);
-		
+
 			//UE_LOG(LogTemp, Warning, TEXT("ScanIndex value is: %d : %d"), ScanIndex + Offset, ScanIndex);
-		
+
 			Offset += FaceDirectionAmount[LookUpList[Index].Z];
-		
+
 			{
 				if (ScanPosition.W == INDEX_NONE) continue;
-		
+
 				const FInt32Rect IncludeRange =
 					FInt32Rect(
 						ScanPosition.X - Range,
@@ -338,7 +338,7 @@ public:
 						ScanPosition.X + Range,
 						ScanPosition.Y + Range
 					);
-		
+
 				//UE_LOG(LogTemp, Warning, TEXT("IncludeRange is %s"), *IncludeRange.ToString());
 
 				auto ConvertFaceData = [&](const TArray<FInt32Rect>& FaceDataList)
@@ -418,44 +418,44 @@ struct FLFPVoxelRendererSetting
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		FColor EmptyVoxelNameColor = FColor(uint8(0), uint8(0), uint8(0), uint8(255));
+	FColor EmptyVoxelNameColor = FColor(uint8(0), uint8(0), uint8(0), uint8(255));
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		float LumenBoundMultipy = 0.5f;
+	float LumenBoundMultipy = 0.5f;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		FVector VoxelHalfSize = FVector(50.0f);
+	FVector VoxelHalfSize = FVector(50.0f);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bPrintGenerateTime = false;
+	bool bPrintGenerateTime = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bDisableChuckFaceCulling = false;
+	bool bDisableChuckFaceCulling = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bDisableRegionFaceCulling = false;
+	bool bDisableRegionFaceCulling = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bGenerateComplexCollisionData = false;
+	bool bGenerateComplexCollisionData = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bGenerateSimpleCollisionData = false;
+	bool bGenerateSimpleCollisionData = false;
 
 	/* Generate Distance Field And Lumen Card */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		bool bGenerateLumenData = false;
+	bool bGenerateLumenData = false;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		uint8 LumenQuality = 3;
+	uint8 LumenQuality = 3;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
+	TEnumAsByte<ECollisionTraceFlag> CollisionTraceFlag = ECollisionTraceFlag::CTF_UseDefault;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		uint8 DynamicUpdateDelayPerComponent = uint8(0);
+	uint8 DynamicUpdateDelayPerComponent = uint8(0);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		uint8 StaticUpdateDelayPerComponent = uint8(5);
+	uint8 StaticUpdateDelayPerComponent = uint8(5);
 
 public:
 
@@ -481,7 +481,7 @@ struct FLFPVoxelRendererStatus
 
 public:
 
-	FLFPVoxelRendererStatus() : 
+	FLFPVoxelRendererStatus() :
 		CurrentRendererMode(ELFPVoxelRendererMode::LFP_None),
 		NextRendererMode(ELFPVoxelRendererMode::LFP_None),
 		DynamicUpdateDelay(0),
@@ -492,29 +492,29 @@ public:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		ELFPVoxelRendererMode CurrentRendererMode;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+	ELFPVoxelRendererMode CurrentRendererMode;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
-		ELFPVoxelRendererMode NextRendererMode;
+	ELFPVoxelRendererMode NextRendererMode;
 
 public:
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
-		uint8 DynamicUpdateDelay;
+	uint8 DynamicUpdateDelay;
 
 	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
-		uint8 StaticUpdateDelay;
+	uint8 StaticUpdateDelay;
 
 public:
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		TSet<int32> VoxelAttributeDirtyHeightList;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+	TSet<int32> VoxelAttributeDirtyHeightList;
 
 public:
 
-	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus") 
-		uint8 bIsBodyInvalid : 1;
+	UPROPERTY(VisibleAnywhere, Category = "VoxelRendererStatus")
+	uint8 bIsBodyInvalid : 1;
 
 public:
 
@@ -524,8 +524,8 @@ public:
 
 public:
 
-	UPROPERTY() 
-		uint32 TickCounter = uint32(0);
+	UPROPERTY()
+	uint32 TickCounter = uint32(0);
 
 public:
 
@@ -631,14 +631,14 @@ class ULFPGridContainerComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnVoxelRendererUpdate);
 
 /**
- * 
+ *
  */
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = (LFPlugin))
 class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelRendererComponent : public UMeshComponent, public IInterface_CollisionDataProvider
 {
 	GENERATED_BODY()
 
-/** Core Handling */
+	/** Core Handling */
 
 public:
 	// Sets default values for this component's properties
@@ -657,62 +657,62 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
-		FORCEINLINE bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPGridContainerComponent* NewVoxelContainer, TArray<UMaterialInstanceDynamic*>& OutDynamicMaterial);
+	bool InitializeRenderer(const int32 RegionIndex, const int32 ChuckIndex, ULFPGridContainerComponent* NewVoxelContainer, TArray<UMaterialInstanceDynamic*>& OutDynamicMaterial);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Setter")
-		FORCEINLINE bool ReleaseRenderer();
+	bool ReleaseRenderer();
 
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void UpdateMesh();
+	void UpdateMesh();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void UpdateAttribute(const TArray<int32>& DirtyIndexList);
+	void UpdateAttribute(const TArray<int32>& DirtyIndexList);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void SetDisableFaceCulling(const bool bChuck, const bool bRegion);
+	void SetDisableFaceCulling(const bool bChuck, const bool bRegion);
 
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE int32 ToGridIndex(const FVector Location) const;
+	int32 ToGridIndex(const FVector Location) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE FVector ToWorldLocation(const int32 GridIndex) const;
+	FVector ToWorldLocation(const int32 GridIndex) const;
 
 public:
 
 	UFUNCTION()
-		FORCEINLINE void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
+	void OnChuckUpdate(const FLFPChuckUpdateAction& Data);
 
 	UFUNCTION()
-		virtual bool CanUpdateMesh(const FLFPChuckUpdateAction& Data) const;
+	virtual bool CanUpdateMesh(const FLFPChuckUpdateAction& Data) const;
 
 	UFUNCTION()
-		virtual bool CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const;
+	virtual bool CanUpdateAttribute(const FLFPChuckUpdateAction& Data) const;
 
 public: /** Delegate */
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
-		FOnVoxelRendererUpdate OnVoxelRendererUpdate;
+	FOnVoxelRendererUpdate OnVoxelRendererUpdate;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
-		FOnVoxelRendererUpdate OnVoxelMeshUpdate;
+	FOnVoxelRendererUpdate OnVoxelMeshUpdate;
 
 	UPROPERTY(BlueprintAssignable, Category = "LFPVoxelRendererComponent | Delegate")
-		FOnVoxelRendererUpdate OnVoxelAttributesUpdate;
+	FOnVoxelRendererUpdate OnVoxelAttributesUpdate;
 
 
-/**********************/
+	/**********************/
 
-/** Material Handling */
+	/** Material Handling */
 
 public: // Blueprint Expose Function
 
 	/* This Create A List Of Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelAttributesTexture) */
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRendererComponent | Function")
-		FORCEINLINE void SetMaterialList(const TArray<UMaterialInterface*>& Material);
+	void SetMaterialList(const TArray<UMaterialInterface*>& Material);
 
 public: // override Handler
 
@@ -725,18 +725,18 @@ public: // override Handler
 	/* This Create Dynamic Material Instance And Apply VoxelDataTexture And VoxelColorTexture To It (Use Name On Texture Parameter : VoxelAttributesTexture) */
 	virtual UMaterialInstanceDynamic* CreateDynamicMaterialInstance(int32 ElementIndex, class UMaterialInterface* SourceMaterial = nullptr, FName OptionalName = NAME_None) override;
 
-	FORCEINLINE TArray<UMaterialInstanceDynamic*> UpdateMaterialTexture();
+	TArray<UMaterialInstanceDynamic*> UpdateMaterialTexture();
 
-/**********************/
+	/**********************/
 
-/** Share Data Generation Handling */
+	/** Share Data Generation Handling */
 
 public:
 
 	/** Get Generation Setting OutSide The Class */
-	FORCEINLINE const FLFPVoxelRendererSetting& GetGenerationSetting() const;
+	const FLFPVoxelRendererSetting& GetGenerationSetting() const;
 
-	FORCEINLINE const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult();
+	const TSharedPtr<FLFPVoxelRendererThreadResult>& GetThreadResult();
 
 private:
 
@@ -769,25 +769,25 @@ private: // Variable
 public:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "LFPVoxelRendererComponent | Cache")
-		TObjectPtr<UTexture2D> AttributesTexture = nullptr;
+	TObjectPtr<UTexture2D> AttributesTexture = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		TObjectPtr<ULFPGridContainerComponent> VoxelContainer = nullptr;
+	TObjectPtr<ULFPGridContainerComponent> VoxelContainer = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		int32 RegionIndex = INDEX_NONE;
+	int32 RegionIndex = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadOnly, Category = "LFPVoxelRendererComponent | Cache")
-		int32 ChuckIndex = INDEX_NONE;
+	int32 ChuckIndex = INDEX_NONE;
 
 protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPVoxelRendererComponent | Setting")
-		FLFPVoxelRendererSetting GenerationSetting = FLFPVoxelRendererSetting();
+	FLFPVoxelRendererSetting GenerationSetting = FLFPVoxelRendererSetting();
 
-/**********************/
+	/**********************/
 
-/** Rendering Handling */
+	/** Rendering Handling */
 
 protected: // Rendering Handler
 
@@ -798,11 +798,11 @@ protected: // Rendering Handler
 public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VoxelRendererSetting")
-		float DistanceFieldSelfShadowBias = 1.0f;
+	float DistanceFieldSelfShadowBias = 1.0f;
 
-/**********************/
+	/**********************/
 
-/** Collision Handling */
+	/** Collision Handling */
 
 public: // Collision Handler
 
@@ -816,15 +816,15 @@ public: // Collision Handler
 
 	virtual UBodySetup* GetBodySetup() override;
 
-	FORCEINLINE UBodySetup* CreateBodySetup();
+	UBodySetup* CreateBodySetup();
 
-	FORCEINLINE void RebuildPhysicsData();
+	void RebuildPhysicsData();
 
-	FORCEINLINE void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);;
+	void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup);;
 
 private:
 
 	UPROPERTY(Instanced) TObjectPtr<UBodySetup> BodySetup;
 
-/**********************/
+	/**********************/
 };

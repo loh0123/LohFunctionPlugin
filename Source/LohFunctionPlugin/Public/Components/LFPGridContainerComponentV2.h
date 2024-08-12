@@ -14,7 +14,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LFPGridChuckDataV2, Log, All);
 */
 
 USTRUCT( BlueprintType )
-struct FLFPGridContainerSetting
+struct LOHFUNCTIONPLUGIN_API FLFPGridContainerSetting
 {
 	GENERATED_BODY()
 
@@ -94,7 +94,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridChuckDataV2
+struct LOHFUNCTIONPLUGIN_API FLFPGridChuckDataV2
 {
 	GENERATED_BODY()
 
@@ -196,7 +196,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPGridRegionDataV2
+struct LOHFUNCTIONPLUGIN_API FLFPGridRegionDataV2
 {
 	GENERATED_BODY()
 
@@ -258,7 +258,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FLFPChuckUpdateActionV2
+struct LOHFUNCTIONPLUGIN_API FLFPChuckUpdateActionV2
 {
 	GENERATED_BODY()
 
@@ -322,52 +322,52 @@ protected:
 public: /** Checker */
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-	FORCEINLINE bool IsRegionPositionValid(const int32 RegionIndex) const;
+	bool IsRegionPositionValid(const int32 RegionIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-	FORCEINLINE bool IsRegionInitialized(const int32 RegionIndex) const;
+	bool IsRegionInitialized(const int32 RegionIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-	FORCEINLINE bool IsChuckPositionValid(const int32 RegionIndex, const int32 ChuckIndex) const;
+	bool IsChuckPositionValid(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-	FORCEINLINE bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
+	bool IsChuckInitialized(const int32 RegionIndex, const int32 ChuckIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Checker")
-	FORCEINLINE bool IsPalettePositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+	bool IsPalettePositionValid(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
 public: /** Setter */
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-	FORCEINLINE void ReinitializeRegion();
+	void ReinitializeRegion();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-	FORCEINLINE bool InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride = true);
+	bool InitializeData(const int32 RegionIndex, const int32 ChuckIndex, const FGameplayTag StartTag, const bool bOverride = true);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-	FORCEINLINE bool SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag);
+	bool SetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FGameplayTag Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-	FORCEINLINE bool SetPaletteTagList(const int32 RegionIndex, const int32 ChuckIndex, const TArray<int32>& PaletteIndexList, const FGameplayTag Tag);
+	bool SetPaletteTagList(const int32 RegionIndex, const int32 ChuckIndex, const TArray<int32>& PaletteIndexList, const FGameplayTag Tag);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridContainerComponent | Setter")
-	FORCEINLINE bool SetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FLFPCompactMetaData& Data);
+	bool SetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex, const FLFPCompactMetaData& Data);
 
 public: /** Getter */
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-	FORCEINLINE FGameplayTag GetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+	FGameplayTag GetPaletteTag(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Getter")
-	FORCEINLINE FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
+	FLFPCompactMetaData GetPaletteData(const int32 RegionIndex, const int32 ChuckIndex, const int32 PaletteIndex) const;
 
 public: /** Positon */
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Positon")
-	FORCEINLINE FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
+	FIntVector ToGridGlobalPosition(const FIntVector GridGlobalIndex, const bool bRound = false) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridContainerComponent | Positon")
-	FORCEINLINE FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
+	FIntVector ToGridGlobalIndex(FIntVector GridGlobalPosition, const bool bRound = false) const;
 
 public: /** Read and write Thread lock */
 

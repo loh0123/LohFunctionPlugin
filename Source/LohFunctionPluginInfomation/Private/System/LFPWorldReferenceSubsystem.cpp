@@ -296,7 +296,7 @@ bool ULFPWorldReferenceSubsystem::BroadcastGameplayTagEvent(
 	const FGameplayTagQuery ComponentGameplayTagsQuery,
 	const FGameplayTag EventTag,
 	UObject* Caller,
-	const FString Messages
+	const UObject* Messages
 ) const
 {
 	bool bHasFound = false;

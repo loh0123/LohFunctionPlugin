@@ -41,40 +41,40 @@ public:
 public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE int32 WorldLocationToIndex(const FVector& Location) const;
+		int32 WorldLocationToIndex(const FVector& Location) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FIntVector WorldLocationToGridLocation(const FVector& Location) const;
-
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsGridLocationValid(WorldLocationToGridLocation(Location), GridSize); }
+		FIntVector WorldLocationToGridLocation(const FVector& Location) const;
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool GridLocationToWorldLocation(const FIntVector Location, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
+		bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsGridLocationValid(WorldLocationToGridLocation(Location), GridSize); }
 
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE int32 GetGridLength() const { return GridSize.X * GridSize.Y * GridSize.Z; }
+		bool GridLocationToWorldLocation(const FIntVector Location, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FVector GetVolumeSize(const bool bHalfVolume) const { return FVector(GridSize) * (GridGap * (bHalfVolume ? 0.5 : 1.0)); }
+		bool IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
+
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE bool GetCenterOrigin() const { return bCenterOrigin; }
+		int32 GetGridLength() const { return GridSize.X * GridSize.Y * GridSize.Z; }
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FIntVector GetGridSize() const { return GridSize; }
+		FVector GetVolumeSize(const bool bHalfVolume) const { return FVector(GridSize) * (GridGap * (bHalfVolume ? 0.5 : 1.0)); }
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE FVector GetGridGap() const { return GridGap; }
+		bool GetCenterOrigin() const { return bCenterOrigin; }
 
 	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FORCEINLINE ELFPGridType GetGridType() const { return GridType; }
+		FIntVector GetGridSize() const { return GridSize; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		FVector GetGridGap() const { return GridGap; }
+
+	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
+		ELFPGridType GetGridType() const { return GridType; }
 
 protected:
 

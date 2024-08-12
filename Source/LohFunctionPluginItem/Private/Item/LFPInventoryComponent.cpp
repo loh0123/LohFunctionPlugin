@@ -605,12 +605,12 @@ void ULFPInventoryComponent::ClearInventoryPendingChange()
 }
 
 
-bool ULFPInventoryComponent::AddItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag)
 {
 	return AddItemBySlotName(GetItemAllowSlotNameList(ItemData), ItemData, bMustFullyAdd, EventTag);
 }
 
-bool ULFPInventoryComponent::AddItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItemList(UPARAM(ref) TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, const FGameplayTag EventTag)
 {
 	FGameplayTagContainer SearchSlotNameList = FGameplayTagContainer();
 
@@ -624,7 +624,7 @@ bool ULFPInventoryComponent::AddItemList(UPARAM(ref) TArray<FLFPInventoryItem>& 
 	return AddItemListBySlotName(SearchSlotNameList, ItemDataList, bMustFullyAdd, EventTag);
 }
 
-bool ULFPInventoryComponent::AddItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -647,7 +647,7 @@ bool ULFPInventoryComponent::AddItemBySlotName(UPARAM(meta = (Categories = "Item
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::AddItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyAdd, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -671,7 +671,7 @@ bool ULFPInventoryComponent::AddItemListBySlotName(UPARAM(meta = (Categories = "
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::AddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::AddItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyAdd, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -692,12 +692,12 @@ bool ULFPInventoryComponent::AddItemByIndex(const FLFPInventoryIndex& InventoryI
 }
 
 
-bool ULFPInventoryComponent::RemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag)
 {
 	return RemoveItemBySlotName(GetItemAllowSlotNameList(ItemData), ItemData, bMustFullyRemove, EventTag);
 }
 
-bool ULFPInventoryComponent::RemoveItemList(UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItemList(UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, const FGameplayTag EventTag)
 {
 	FGameplayTagContainer SearchSlotNameList = FGameplayTagContainer();
 
@@ -711,7 +711,7 @@ bool ULFPInventoryComponent::RemoveItemList(UPARAM(ref)TArray<FLFPInventoryItem>
 	return RemoveItemListBySlotName(SearchSlotNameList, ItemDataList, bMustFullyRemove, EventTag);
 }
 
-bool ULFPInventoryComponent::RemoveItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -734,7 +734,7 @@ bool ULFPInventoryComponent::RemoveItemBySlotName(UPARAM(meta = (Categories = "I
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::RemoveItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItemListBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& ItemDataList, const bool bMustFullyRemove, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -758,7 +758,7 @@ bool ULFPInventoryComponent::RemoveItemListBySlotName(UPARAM(meta = (Categories 
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref) FLFPInventoryItem& ItemData, const bool bMustFullyRemove, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -779,7 +779,7 @@ bool ULFPInventoryComponent::RemoveItemByIndex(const FLFPInventoryIndex& Invento
 }
 
 
-bool ULFPInventoryComponent::SwapItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::SwapItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -795,7 +795,7 @@ bool ULFPInventoryComponent::SwapItemByIndex(const FLFPInventoryIndex& FromIndex
 }
 
 
-bool ULFPInventoryComponent::MergeItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::MergeItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -810,7 +810,7 @@ bool ULFPInventoryComponent::MergeItemByIndex(const FLFPInventoryIndex& FromInde
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::MergeItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::MergeItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -827,7 +827,7 @@ bool ULFPInventoryComponent::MergeItemBySlotName(const FLFPInventoryIndex& FromI
 }
 
 
-bool ULFPInventoryComponent::TransferItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::TransferItemByIndex(const FLFPInventoryIndex& FromIndex, const FLFPInventoryIndex& ToIndex, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -846,7 +846,7 @@ bool ULFPInventoryComponent::TransferItemByIndex(const FLFPInventoryIndex& FromI
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::TransferItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::TransferItemBySlotName(const FLFPInventoryIndex& FromIndex, const FGameplayTagContainer ToSlotNameList, ULFPInventoryComponent* TargetInventoryComponent, const bool bMustFullyTransfer, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -866,7 +866,7 @@ bool ULFPInventoryComponent::TransferItemBySlotName(const FLFPInventoryIndex& Fr
 }
 
 
-bool ULFPInventoryComponent::ExchangeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::ExchangeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -897,7 +897,7 @@ bool ULFPInventoryComponent::ExchangeItemBySlotName(const FGameplayTagContainer 
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::ExchangeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::ExchangeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -929,7 +929,7 @@ bool ULFPInventoryComponent::ExchangeItemListBySlotName(const FGameplayTagContai
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::TradeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::TradeItemBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)FLFPInventoryItem& TakeItemData, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -966,7 +966,7 @@ bool ULFPInventoryComponent::TradeItemBySlotName(const FGameplayTagContainer Tak
 	return bIsSuccess;
 }
 
-bool ULFPInventoryComponent::TradeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::TradeItemListBySlotName(const FGameplayTagContainer TakeSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& TakeItemDataList, const FGameplayTagContainer GiveSlotNameList, UPARAM(ref)TArray<FLFPInventoryItem>& GiveItemDataList, ULFPInventoryComponent* GiveInventoryComponent, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -1005,12 +1005,12 @@ bool ULFPInventoryComponent::TradeItemListBySlotName(const FGameplayTagContainer
 }
 
 
-bool ULFPInventoryComponent::UpdateItem(UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::UpdateItem(UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
 {
 	return UpdateItemBySlotName(GetItemAllowSlotNameList(ItemData), ItemData, EventTag);
 }
 
-bool ULFPInventoryComponent::UpdateItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::UpdateItemBySlotName(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -1021,7 +1021,7 @@ bool ULFPInventoryComponent::UpdateItemBySlotName(UPARAM(meta = (Categories = "I
 	return true;
 }
 
-bool ULFPInventoryComponent::UpdateItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref)FLFPInventoryItem& ItemData, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::UpdateItemByIndex(const FLFPInventoryIndex& InventoryIndex, UPARAM(ref)FLFPInventoryItem& ItemData, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -1035,7 +1035,7 @@ bool ULFPInventoryComponent::UpdateItemByIndex(const FLFPInventoryIndex& Invento
 }
 
 
-bool ULFPInventoryComponent::SortItem(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+bool ULFPInventoryComponent::SortItem(UPARAM(meta = (Categories = "Item.SlotName"))const FGameplayTagContainer InventorySlotNameList, UPARAM(meta = (Categories = "Item.Sort")) const FGameplayTag SortTag, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return false; // Prevent this function to run on client
 
@@ -1057,7 +1057,7 @@ bool ULFPInventoryComponent::SortItem(UPARAM(meta = (Categories = "Item.SlotName
 	return true;
 }
 
-void ULFPInventoryComponent::ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, UPARAM(meta = (Categories = "Item.Event")) const FGameplayTag EventTag)
+void ULFPInventoryComponent::ClearInventory(UPARAM(meta = (Categories = "Item.SlotName")) const FGameplayTagContainer SlotNames, const FGameplayTag EventTag)
 {
 	if (GetOwner()->GetLocalRole() != ROLE_Authority) return; // Prevent this function to run on client
 

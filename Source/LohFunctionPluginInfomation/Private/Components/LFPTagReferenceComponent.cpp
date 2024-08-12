@@ -60,7 +60,7 @@ void ULFPTagReferenceComponent::SetEventGameplayTags(UPARAM(meta = (Categories =
 	EventGameplayTags = NewContainer;
 }
 
-void ULFPTagReferenceComponent::BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const FString& Messages) const
+void ULFPTagReferenceComponent::BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const UObject* Messages) const
 {
 	if (EventGameplayTags.HasTag(EventTag))
 	{

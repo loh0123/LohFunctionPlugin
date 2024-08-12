@@ -8,7 +8,7 @@
 #include "LFPTagReferenceComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPGameplayTagEvent, const FGameplayTag, EventTag, UObject*, Caller, const FString&, Messages);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FLFPGameplayTagEvent, const FGameplayTag, EventTag, UObject*, Caller, const UObject*, Messages);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -49,7 +49,7 @@ public:
 public:
 
 	UFUNCTION()
-		void BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const FString& Messages) const;
+		void BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const UObject* Messages) const;
 
 protected:
 
@@ -67,6 +67,6 @@ protected:
 		FGameplayTagContainer ComponentGameplayTags = FGameplayTagContainer();
 
 	/* Filter event send out by subsystem ( will not receive any event if left empty ) */
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Tags, meta=(Categories="Component.Events"))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = Tags)
 		FGameplayTagContainer EventGameplayTags = FGameplayTagContainer();
 };

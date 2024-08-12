@@ -8,7 +8,6 @@
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Component)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Component_Category)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Component_Identifiers)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Component_Events)
 
 class FLohFunctionPluginGameplayTagModule : public IModuleInterface
 {

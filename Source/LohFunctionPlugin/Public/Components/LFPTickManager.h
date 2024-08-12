@@ -31,13 +31,13 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
-		FORCEINLINE int32 SendTick();
+		int32 SendTick();
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
-		FORCEINLINE bool AddTickActor(AActor* Actor, const bool IsRandom, const bool CheckDuplication = false);
+		bool AddTickActor(AActor* Actor, const bool IsRandom, const bool CheckDuplication = false);
 
 	UFUNCTION(BlueprintCallable, Category = "LFPRandomTickHelper")
-		FORCEINLINE bool RemoveTickActor(AActor* Actor, const bool RemoveAll);
+		bool RemoveTickActor(AActor* Actor, const bool RemoveAll);
 
 private:
 

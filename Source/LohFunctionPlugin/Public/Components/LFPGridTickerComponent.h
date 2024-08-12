@@ -55,7 +55,7 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPGridTickerComponent | Function")
-		FORCEINLINE void SetupContainer(ULFPGridContainerComponent* NewGridContainer);
+		void SetupContainer(ULFPGridContainerComponent* NewGridContainer);
 
 protected:
 
