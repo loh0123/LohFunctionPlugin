@@ -64,7 +64,7 @@ public:
 
 	// Meta Data
 
-	FORCEINLINE	bool HasMetaData(const FGameplayTag& Tag) const { return MetaData.IndexOfByKey(Tag) != INDEX_NONE; }
+	FORCEINLINE	bool ContainMetaData(const FGameplayTag& Tag) const { return MetaData.IndexOfByKey(Tag) != INDEX_NONE; }
 
 	FORCEINLINE	const FLFPCompactMetaData* GetMetaData(const FGameplayTag& Tag) const
 	{ 
@@ -106,6 +106,16 @@ public:
 		return false;
 	}
 
+	// Append Meta Data
+
+	FORCEINLINE void AppendMetaDataInt(const TMap<FGameplayTag, int32>& DataMap, const bool bUniqueOnly = false);
+
+	FORCEINLINE void AppendMetaDataFloat(const TMap<FGameplayTag, float>& DataMap, const bool bUniqueOnly = false);
+
+	FORCEINLINE void AppendMetaDataString(const TMap<FGameplayTag, FString>& DataMap, const bool bUniqueOnly = false);
+
+	FORCEINLINE void AppendMetaDataBoolean(const TMap<FGameplayTag, bool>& DataMap, const bool bUniqueOnly = false);
+
 	// String
 
 	FORCEINLINE	FString ToString() const
@@ -146,13 +156,22 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunct
 {
 	GENERATED_BODY()
 
-public:
+public: // Checker
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static bool IsMetaDataSame(const FLFPInventoryItem& ItemA, const FLFPInventoryItem& ItemB, const FGameplayTag MetaTag);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static bool HasMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
+	static bool ContainMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
+
+	/* Check Is Item Contain All Meta Data And Equal Or Bigger Than The Cost  */
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	static bool CheckMetaDataCost(const FLFPInventoryItem& Item, const TMap<FGameplayTag, int32>& IntCostDataMap, const TMap<FGameplayTag, float>& FloatCostDataMap);
+
+public: // Getter
+
+	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
+	static FLFPCompactMetaData GetMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static FString GetMetaDataAsString(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
@@ -160,13 +179,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static int32 GetMetaDataAsNumber(const FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 DefaultValue = 0);
 
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static void SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPCompactMetaData& Data);
-
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
 	static FGameplayTag GetItemTag(UPARAM(ref) FLFPInventoryItem& Item);
+
+public: // Setter
+
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	static void SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPCompactMetaData& Data);
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
 	static void SetItemTag(UPARAM(ref) FLFPInventoryItem& Item, const FGameplayTag ItemTag);
 	
+	/* Subtract The Cost From Item Meta Data */
+	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
+	static void ConsumeMetaDataCost(UPARAM(ref) FLFPInventoryItem& Item, const TMap<FGameplayTag, int32>& IntCostDataMap, const TMap<FGameplayTag, float>& FloatCostDataMap);
 };

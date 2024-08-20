@@ -11,15 +11,14 @@ ULFPTagReferenceComponent::ULFPTagReferenceComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
+	bWantsInitializeComponent = true;
 	// ...
 }
 
 
-// Called when the game starts
-void ULFPTagReferenceComponent::BeginPlay()
+void ULFPTagReferenceComponent::InitializeComponent()
 {
-	Super::BeginPlay();
+	Super::InitializeComponent();
 
 	ULFPWorldReferenceSubsystem* SubSystem = Cast<ULFPWorldReferenceSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, ULFPWorldReferenceSubsystem::StaticClass()));
 
@@ -27,6 +26,12 @@ void ULFPTagReferenceComponent::BeginPlay()
 	{
 		SubSystem->RegisterComponent(this);
 	}
+}
+
+// Called when the game starts
+void ULFPTagReferenceComponent::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void ULFPTagReferenceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

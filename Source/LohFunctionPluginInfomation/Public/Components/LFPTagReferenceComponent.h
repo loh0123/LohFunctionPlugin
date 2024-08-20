@@ -21,6 +21,9 @@ public:
 	ULFPTagReferenceComponent();
 
 protected:
+
+	virtual void InitializeComponent() override;
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
 

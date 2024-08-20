@@ -626,6 +626,11 @@ public:
 		return MetaType != ELFPCompactMetaType::LFP_None;
 	}
 
+	FORCEINLINE	ELFPCompactMetaType GetDataType() const
+	{
+		return MetaType;
+	}
+
 	FORCEINLINE	int32 GetDataAsInt() const
 	{
 		if (MetaType != ELFPCompactMetaType::LFP_Int || MetaData.Num() < 4) return -1;
