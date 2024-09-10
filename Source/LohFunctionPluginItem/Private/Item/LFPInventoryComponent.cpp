@@ -1124,12 +1124,9 @@ TArray<ULFPItemInventoryFunction*> ULFPInventoryComponent::GetFunctionObjectList
 	ProcessInventoryFunction(
 		[&] ( const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj )
 		{
-			if ( FunctionObj.GetClass() == FunctionClass.Get() )
+			if ( FunctionObj.IsA( FunctionClass ) )
 			{
 				ReturnPtrList.Add( FunctionObj );
-
-				/* Stop The Loop Using False */
-				return false;
 			}
 
 			return true;

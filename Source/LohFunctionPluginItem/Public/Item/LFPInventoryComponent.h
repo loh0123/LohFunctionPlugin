@@ -504,14 +504,14 @@ public:
 			SlotIndexList.Add( PendingData.Key.SlotListIndex );
 		}
 
-		for ( const auto& PendingEvent : PendingEventList )
-		{
-			ItemEvent( PendingEvent );
-		}
-
 		for ( const int32 SlotIndex : SlotIndexList )
 		{
 			ClearSlotEmptyItem( SlotIndex );
+		}
+
+		for ( const auto& PendingEvent : PendingEventList )
+		{
+			ItemEvent( PendingEvent );
 		}
 
 		ClearPendingChange();
