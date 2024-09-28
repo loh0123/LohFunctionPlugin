@@ -743,8 +743,12 @@ public:
 	UFUNCTION( BlueprintCallable , BlueprintAuthorityOnly , Category = "LFPInventoryComponent | Function" )
 	bool SortItem( UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer InventorySlotNameList , UPARAM( meta = ( Categories = "Item.Sort" ) ) const FGameplayTag SortTag , const FGameplayTag EventTag );
 
+
 	UFUNCTION( BlueprintCallable , BlueprintAuthorityOnly , Category = "LFPInventoryComponent | Function" )
-	void ClearInventory( UPARAM( meta = ( Categories = "Item.SlotName" ) ) const FGameplayTagContainer SlotNames , const FGameplayTag EventTag );
+	void ClearInventoryByIndex( const FLFPInventoryIndex& InventoryIndex , const FGameplayTag EventTag );
+
+	UFUNCTION( BlueprintCallable , BlueprintAuthorityOnly , Category = "LFPInventoryComponent | Function" )
+	void ClearInventoryBySlotName( UPARAM( meta = ( Categories = "Item.SlotName" ) ) const FGameplayTagContainer SlotNames , const FGameplayTag EventTag );
 
 public:
 

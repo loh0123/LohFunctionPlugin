@@ -114,7 +114,7 @@ void ULFPInventoryComponent::Activate( bool bReset )
 			SlotNameList.AddTag( InventorySlotData.SlotName );
 		}
 
-		ClearInventory( SlotNameList , FGameplayTag() );
+		ClearInventoryBySlotName( SlotNameList , FGameplayTag() );
 
 		ProcessInventoryFunction(
 			[&] ( const TObjectPtr<ULFPItemInventoryFunction>& FunctionObj )
@@ -1051,7 +1051,33 @@ bool ULFPInventoryComponent::SortItem( UPARAM( meta = ( Categories = "Item.SlotN
 	return true;
 }
 
-void ULFPInventoryComponent::ClearInventory( UPARAM( meta = ( Categories = "Item.SlotName" ) ) const FGameplayTagContainer SlotNames , const FGameplayTag EventTag )
+void ULFPInventoryComponent::ClearInventoryByIndex( const FLFPInventoryIndex& InventoryIndex , const FGameplayTag EventTag )
+{
+	if ( GetOwner()->GetLocalRole() != ROLE_Authority ) return; // Prevent this function to run on client
+
+	const FLFPInventoryInternalIndex InventoryInternalIndex( ( InventorySlot.ToInventoryIndexInternal( InventoryIndex ) ) );
+
+	if ( InventorySlot.IsSlotItemValid( InventoryInternalIndex ) == false )
+	{
+		return;
+	}
+
+	InventorySlot.AddPendingEvent( FLFPInventoryItemOperationData(
+		ELFPInventoryItemEventType::Inventory_Clear ,
+		InventoryIndex ,
+		FLFPInventoryItem() ,
+		InventorySlot.GetSlotItemConst( InventoryInternalIndex ) ,
+		EventTag
+	) );
+
+	InventorySlot.GetSlotItemRef( InventoryInternalIndex , true ) = FLFPInventoryItem();
+
+	ApplyInventoryPendingChange();
+
+	return;
+}
+
+void ULFPInventoryComponent::ClearInventoryBySlotName( UPARAM( meta = ( Categories = "Item.SlotName" ) ) const FGameplayTagContainer SlotNames , const FGameplayTag EventTag )
 {
 	if ( GetOwner()->GetLocalRole() != ROLE_Authority ) return; // Prevent this function to run on client
 
