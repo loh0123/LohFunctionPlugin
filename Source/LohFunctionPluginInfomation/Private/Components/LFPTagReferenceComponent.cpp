@@ -20,11 +20,11 @@ void ULFPTagReferenceComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	ULFPWorldReferenceSubsystem* SubSystem = Cast<ULFPWorldReferenceSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, ULFPWorldReferenceSubsystem::StaticClass()));
+	ULFPWorldReferenceSubsystem* SubSystem = Cast<ULFPWorldReferenceSubsystem>( USubsystemBlueprintLibrary::GetWorldSubsystem( this , ULFPWorldReferenceSubsystem::StaticClass() ) );
 
-	if (SubSystem != nullptr)
+	if ( SubSystem != nullptr )
 	{
-		SubSystem->RegisterComponent(this);
+		SubSystem->RegisterComponent( this );
 	}
 }
 
@@ -34,42 +34,42 @@ void ULFPTagReferenceComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ULFPTagReferenceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void ULFPTagReferenceComponent::EndPlay( const EEndPlayReason::Type EndPlayReason )
 {
-	Super::EndPlay(EndPlayReason);
+	Super::EndPlay( EndPlayReason );
 
-	ULFPWorldReferenceSubsystem* SubSystem = Cast<ULFPWorldReferenceSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, ULFPWorldReferenceSubsystem::StaticClass()));
+	ULFPWorldReferenceSubsystem* SubSystem = Cast<ULFPWorldReferenceSubsystem>( USubsystemBlueprintLibrary::GetWorldSubsystem( this , ULFPWorldReferenceSubsystem::StaticClass() ) );
 
-	if (SubSystem != nullptr)
+	if ( SubSystem != nullptr )
 	{
-		SubSystem->UnregisterComponent(this);
+		SubSystem->UnregisterComponent( this );
 	}
 }
 
 
 // Called every frame
-void ULFPTagReferenceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void ULFPTagReferenceComponent::TickComponent( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent( DeltaTime , TickType , ThisTickFunction );
 
 	// ...
 }
 
-void ULFPTagReferenceComponent::SetComponentGameplayTags(UPARAM(meta = (Categories = "Component.Identifiers")) const FGameplayTagContainer NewContainer)
+void ULFPTagReferenceComponent::SetComponentGameplayTags( UPARAM( meta = ( Categories = "Component.Identifiers" ) ) const FGameplayTagContainer NewContainer )
 {
 	ComponentGameplayTags = NewContainer;
 }
 
-void ULFPTagReferenceComponent::SetEventGameplayTags(UPARAM(meta = (Categories = "Component.Events")) const FGameplayTagContainer NewContainer)
+void ULFPTagReferenceComponent::SetEventGameplayTags( UPARAM( meta = ( Categories = "Component.Events" ) ) const FGameplayTagContainer NewContainer )
 {
 	EventGameplayTags = NewContainer;
 }
 
-void ULFPTagReferenceComponent::BroadcastEvent(const FGameplayTag EventTag, UObject* Caller, const UObject* Messages) const
+void ULFPTagReferenceComponent::BroadcastEvent( const FGameplayTag EventTag , UObject* Caller , const UObject* Messages ) const
 {
-	if (EventGameplayTags.HasTag(EventTag))
+	if ( EventTag.MatchesAny( EventGameplayTags ) )
 	{
-		OnGameplayTagEvent.Broadcast(EventTag, Caller, Messages);
+		OnGameplayTagEvent.Broadcast( EventTag , Caller , Messages );
 	}
 
 	return;

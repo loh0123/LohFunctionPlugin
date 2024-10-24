@@ -6,7 +6,7 @@
 	"Description": "",
 	"Category": "LohPlugin",
 	"CreatedBy": "Loh Zhi Kang",
-	"CreatedByURL": "",
+	"CreatedByURL": "https://github.com/loh0123/LohFunctionPlugin",
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
@@ -44,11 +44,6 @@
 			"Name": "LohFunctionPluginInfomation",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
-		},
-		{
-			"name": "LohFunctionPluginMarching",
-			"type": "Runtime",
-			"loadingPhase": "PreLoadingScreen"
 		}
 	]
 }

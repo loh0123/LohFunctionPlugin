@@ -7,92 +7,82 @@
 #include "Math/LFPGridLibrary.h"
 
 
-bool FLFPInstanceGridMeshData::IsValid() const
+bool FLFPInstanceGridMeshData::IsDataValid() const
 {
-	return ISMComponent.operator bool();
+	return IsValid( ISMComponent.Get() );
 }
 
-void FLFPInstanceGridMeshData::GetInstanceIndexList(TArray<int32>& ResultList) const
+void FLFPInstanceGridMeshData::GetInstanceIndexList( TArray<int32>& ResultList ) const
 {
-	InstanceIDList.GetKeys(ResultList);
+	InstanceIDList.GetKeys( ResultList );
 }
 
-FPrimitiveInstanceId FLFPInstanceGridMeshData::FindInstanceID(const int32 Item) const
+FPrimitiveInstanceId FLFPInstanceGridMeshData::FindInstanceIDByIndex( const int32 Item ) const
 {
-	const auto ID = InstanceIDList.Find(Item);
+	const auto ID = InstanceIDList.Find( Item );
 
 	return ID == nullptr ? FPrimitiveInstanceId() : *ID;
 }
 
-FPrimitiveInstanceId FLFPInstanceGridMeshData::AddInstance(const int32 InstanceIndex, const FTransform& InstanceTransform, bool bWorldSpace)
+FPrimitiveInstanceId FLFPInstanceGridMeshData::AddInstanceAtIndex( const int32 InstanceIndex , const FTransform& InstanceTransform , bool bWorldSpace )
 {
-	return InstanceIDList.Add(InstanceIndex, ISMComponent->AddInstanceById(InstanceTransform, bWorldSpace));
+	return InstanceIDList.Add( InstanceIndex , ISMComponent->AddInstanceById( InstanceTransform , bWorldSpace ) );
 }
 
-bool FLFPInstanceGridMeshData::RemoveInstanceAt(const int32 InstanceIndex)
+bool FLFPInstanceGridMeshData::RemoveInstanceAtIndex( const int32 InstanceIndex )
 {
-	const auto TargetID = FindInstanceID(InstanceIndex);
+	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
-	if (TargetID.IsValid() == false)
+	if ( TargetID.IsValid() == false )
 	{
 		return false;
 	}
 
-	InstanceIDList.Remove(InstanceIndex);
+	InstanceIDList.Remove( InstanceIndex );
 
-	ISMComponent->RemoveInstanceById(TargetID);
+	ISMComponent->RemoveInstanceById( TargetID );
 
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::UpdateInstance(const int32 InstanceIndex, const FTransform& NewInstanceTransform, const bool bWorldSpace, const bool bMarkRenderStateDirty)
+bool FLFPInstanceGridMeshData::UpdateInstance( const int32 InstanceIndex , const FTransform& NewInstanceTransform , const bool bWorldSpace )
 {
-	const auto TargetID = FindInstanceID(InstanceIndex);
+	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
-	if (TargetID.IsValid() == false)
+	if ( TargetID.IsValid() == false )
 	{
 		return false;
 	}
 
-	ISMComponent->UpdateInstanceTransformById(TargetID, NewInstanceTransform, bWorldSpace, bMarkRenderStateDirty);
+	ISMComponent->UpdateInstanceTransformById( TargetID , NewInstanceTransform , bWorldSpace );
 
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::SetCustomDataValue(const int32 InstanceIndex, const int32 CustomDataIndex, const float CustomDataValue, const bool bMarkRenderStateDirty)
+bool FLFPInstanceGridMeshData::SetCustomDataValue( const int32 InstanceIndex , const int32 CustomDataIndex , const float CustomDataValue )
 {
-	const auto TargetID = FindInstanceID(InstanceIndex);
+	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
-	if (TargetID.IsValid() == false)
+	if ( TargetID.IsValid() == false )
 	{
 		return false;
 	}
 
-	ISMComponent->SetCustomDataValueById(TargetID, CustomDataIndex, CustomDataValue);
-
-	if (bMarkRenderStateDirty)
-	{
-		ISMComponent->MarkRenderStateDirty();
-	}
+	ISMComponent->SetCustomDataValueById( TargetID , CustomDataIndex , CustomDataValue );
 
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::SetCustomData(const int32 InstanceIndex, const TArray<float>& InCustomData, const bool bMarkRenderStateDirty)
+bool FLFPInstanceGridMeshData::SetCustomData( const int32 InstanceIndex , const TArray<float>& InCustomData )
 {
-	const auto TargetID = FindInstanceID(InstanceIndex);
+	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
-	if (TargetID.IsValid() == false)
+	if ( TargetID.IsValid() == false )
 	{
 		return false;
 	}
 
-	ISMComponent->SetCustomDataById(TargetID, InCustomData);
-
-	if (bMarkRenderStateDirty)
-	{
-		ISMComponent->MarkRenderStateDirty();
-	}
+	ISMComponent->SetCustomDataById( TargetID , InCustomData );
 
 	return true;
 }
@@ -111,38 +101,38 @@ void ULFPInstanceIDComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	for (int32 Index = 0; Index < GetNumChildrenComponents(); Index++)
+	for ( int32 Index = 0; Index < GetNumChildrenComponents(); Index++ )
 	{
-		RegisterInstanceStaticMeshComponent(Cast<UInstancedStaticMeshComponent>(GetChildComponent(Index)));
+		RegisterInstanceStaticMeshComponent( Cast<UInstancedStaticMeshComponent>( GetChildComponent( Index ) ) );
 	}
 }
 
-void ULFPInstanceIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void ULFPInstanceIDComponent::EndPlay( const EEndPlayReason::Type EndPlayReason )
 {
-	Super::EndPlay(EndPlayReason);
+	Super::EndPlay( EndPlayReason );
 }
 
 
 // Called every frame
-void ULFPInstanceIDComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void ULFPInstanceIDComponent::TickComponent( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent( DeltaTime , TickType , ThisTickFunction );
 
 	// ...
 }
 
-bool ULFPInstanceIDComponent::IsMeshIndexValid(const int32 MeshIndex) const
+bool ULFPInstanceIDComponent::IsMeshIndexValid( const int32 MeshIndex ) const
 {
-	return MeshList.IsValidIndex(MeshIndex) && MeshList[MeshIndex].IsValid();
+	return MeshList.IsValidIndex( MeshIndex ) && MeshList[ MeshIndex ].IsDataValid();
 }
 
-int32 ULFPInstanceIDComponent::GetMeshIndexByInstance(const int32 InstanceIndex) const
+int32 ULFPInstanceIDComponent::GetMeshIndexByInstance( const int32 InstanceIndex ) const
 {
-	for (int32 MeshIndex = 0; MeshIndex < MeshList.Num(); MeshIndex++)
+	for ( int32 MeshIndex = 0; MeshIndex < MeshList.Num(); MeshIndex++ )
 	{
-		const auto& MeshData = MeshList[MeshIndex];
+		const auto& MeshData = MeshList[ MeshIndex ];
 
-		if (MeshData.IsValid() && MeshData.FindInstanceID(InstanceIndex).IsValid())
+		if ( MeshData.IsDataValid() && MeshData.FindInstanceIDByIndex( InstanceIndex ).IsValid() )
 		{
 			return MeshIndex;
 		}
@@ -151,39 +141,39 @@ int32 ULFPInstanceIDComponent::GetMeshIndexByInstance(const int32 InstanceIndex)
 	return INDEX_NONE;
 }
 
-TArray<int32> ULFPInstanceIDComponent::GetInstanceIndexListByMesh(const int32 MeshIndex) const
+TArray<int32> ULFPInstanceIDComponent::GetInstanceIndexListByMesh( const int32 MeshIndex ) const
 {
 	TArray<int32> ResultList;
 
-	if (IsMeshIndexValid(MeshIndex) == false)
+	if ( IsMeshIndexValid( MeshIndex ) == false )
 	{
 		return ResultList;
 	}
 
-	MeshList[MeshIndex].GetInstanceIndexList(ResultList);
+	MeshList[ MeshIndex ].GetInstanceIndexList( ResultList );
 
 	return ResultList;
 }
 
-int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponent(UInstancedStaticMeshComponent* ISM)
+int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponent( UInstancedStaticMeshComponent* ISM )
 {
-	if (IsValid(ISM) == false)
+	if ( IsValid( ISM ) == false )
 	{
 		return INDEX_NONE;
 	}
 
-	return MeshList.Add(FLFPInstanceGridMeshData(ISM));
+	return MeshList.Add( FLFPInstanceGridMeshData( ISM ) );
 }
 
-int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponentList(TArray<UInstancedStaticMeshComponent*> ISMList)
+int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponentList( TArray<UInstancedStaticMeshComponent*> ISMList )
 {
 	int32 Count = 0;
 
-	for (UInstancedStaticMeshComponent* ISM : ISMList)
+	for ( UInstancedStaticMeshComponent* ISM : ISMList )
 	{
-		if (IsValid(ISM))
+		if ( IsValid( ISM ) )
 		{
-			MeshList.Add(FLFPInstanceGridMeshData(ISM));
+			MeshList.Add( FLFPInstanceGridMeshData( ISM ) );
 
 			Count++;
 		}
@@ -192,24 +182,24 @@ int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponentList(TArray<UI
 	return Count;
 }
 
-bool ULFPInstanceIDComponent::SetInstance(const FLFPInstanceGridInstanceInfo& InstanceInfo)
+bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& InstanceInfo )
 {
-	if (IsMeshIndexValid(InstanceInfo.MeshIndex) == false)
+	if ( IsMeshIndexValid( InstanceInfo.MeshIndex ) == false )
 	{
 		return false;
 	}
 
-	const int32 OccupationID = GetMeshIndexByInstance(InstanceInfo.InstanceIndex);
+	const int32 OccupationID = GetMeshIndexByInstance( InstanceInfo.InstanceIndex );
 
 	/* Find The Prev Data Is Valid And Remove Or Update It */
-	if (OccupationID != INDEX_NONE)
+	if ( OccupationID != INDEX_NONE )
 	{
-		FLFPInstanceGridMeshData& ISMData = MeshList[OccupationID];
+		FLFPInstanceGridMeshData& ISMData = MeshList[ OccupationID ];
 
 		/* Same Instance So Just Update Transform */
-		if (OccupationID == InstanceInfo.MeshIndex)
+		if ( OccupationID == InstanceInfo.MeshIndex )
 		{
-			ISMData.UpdateInstance(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace, true);
+			ISMData.UpdateInstance( InstanceInfo.InstanceIndex , InstanceInfo.Transform , InstanceInfo.bIsWorldSpace );
 
 			return true;
 		}
@@ -217,23 +207,23 @@ bool ULFPInstanceIDComponent::SetInstance(const FLFPInstanceGridInstanceInfo& In
 		/* Remove Operation */
 		else
 		{
-			ISMData.RemoveInstanceAt(InstanceInfo.InstanceIndex);
+			ISMData.RemoveInstanceAtIndex( InstanceInfo.InstanceIndex );
 		}
 	}
 
 	/* Add Operation */
-	MeshList[InstanceInfo.MeshIndex].AddInstance(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace);
+	MeshList[ InstanceInfo.MeshIndex ].AddInstanceAtIndex( InstanceInfo.InstanceIndex , InstanceInfo.Transform , InstanceInfo.bIsWorldSpace );
 
 	return true;
 }
 
-bool ULFPInstanceIDComponent::SetInstances(const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList)
+bool ULFPInstanceIDComponent::SetInstances( const TArray<FLFPInstanceGridInstanceInfo>& InstanceInfoList )
 {
 	bool bResult = true;
 
-	for (const FLFPInstanceGridInstanceInfo& Info : InstanceInfoList)
+	for ( const FLFPInstanceGridInstanceInfo& Info : InstanceInfoList )
 	{
-		if (SetInstance(Info) == false)
+		if ( SetInstance( Info ) == false )
 		{
 			bResult = false;
 		}
@@ -242,26 +232,26 @@ bool ULFPInstanceIDComponent::SetInstances(const TArray<FLFPInstanceGridInstance
 	return bResult;
 }
 
-bool ULFPInstanceIDComponent::SetCustomData(const int32 InstanceIndex, const int32 DataIndex, const float DataValue, const bool bMarkRenderStateDirty)
+bool ULFPInstanceIDComponent::SetCustomData( const int32 InstanceIndex , const int32 DataIndex , const float DataValue )
 {
-	const int32 MeshIndex = GetMeshIndexByInstance(InstanceIndex);
+	const int32 MeshIndex = GetMeshIndexByInstance( InstanceIndex );
 
-	if (IsMeshIndexValid(MeshIndex) == false)
+	if ( IsMeshIndexValid( MeshIndex ) == false )
 	{
 		return false;
 	}
 
-	return MeshList[MeshIndex].SetCustomDataValue(InstanceIndex, DataIndex, DataValue, bMarkRenderStateDirty);
+	return MeshList[ MeshIndex ].SetCustomDataValue( InstanceIndex , DataIndex , DataValue );
 }
 
-bool ULFPInstanceIDComponent::SetCustomDatas(const int32 InstanceIndex, const TArray<float>& DataList, const bool bMarkRenderStateDirty)
+bool ULFPInstanceIDComponent::SetCustomDatas( const int32 InstanceIndex , const TArray<float>& DataList )
 {
-	const int32 MeshIndex = GetMeshIndexByInstance(InstanceIndex);
+	const int32 MeshIndex = GetMeshIndexByInstance( InstanceIndex );
 
-	if (IsMeshIndexValid(MeshIndex) == false)
+	if ( IsMeshIndexValid( MeshIndex ) == false )
 	{
 		return false;
 	}
 
-	return MeshList[MeshIndex].SetCustomData(InstanceIndex, DataList, bMarkRenderStateDirty);
+	return MeshList[ MeshIndex ].SetCustomData( InstanceIndex , DataList );
 }
