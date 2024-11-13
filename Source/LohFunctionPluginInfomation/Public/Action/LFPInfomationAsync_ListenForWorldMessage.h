@@ -17,14 +17,12 @@ protected:
 
 	virtual void Cancel() override;
 
-	virtual bool ShouldBroadcastDelegates() const override;
-
 	virtual void Activate() override;
 
 public:
 
 	UFUNCTION( BlueprintCallable , Category = "Information|Tasks" , meta = ( WorldContext = "WorldContext" , BlueprintInternalUseOnly = "TRUE" ) )
-	static ULFPInfomationAsync_ListenForWorldMessage* ListenForWorldMessage( UObject* WorldContext , FGameplayTag TagChannel , bool bExactOnly = false , bool bOnlyTriggerOnce = false );
+	static ULFPInfomationAsync_ListenForWorldMessage* ListenForWorldMessage( UObject* WorldContext , const FGameplayTag TagChannel , const  bool bExactOnly = false , const bool bOnlyTriggerOnce = false );
 
 protected:
 
@@ -40,9 +38,6 @@ public:
 
 	UPROPERTY()
 	TWeakObjectPtr<ULFPWorldMessageSubsystem> EventSubsystem = nullptr;
-
-	UPROPERTY()
-	TWeakObjectPtr<UObject> OwningWorldContext = nullptr;
 
 	UPROPERTY()
 	FGameplayTag TagChannel = FGameplayTag::EmptyTag;

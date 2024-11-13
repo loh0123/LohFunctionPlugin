@@ -14,7 +14,7 @@ public:
 	UFUNCTION( BlueprintPure , Category = "LFPMarchingLibrary | ID" )
 	static bool GetMarchingIDBit( const uint8 MarchingID , const int32 BitIndex );
 
-	UFUNCTION( BlueprintPure , Category = "LFPMarchingLibrary | ID" )
+	UFUNCTION( BlueprintCallable , Category = "LFPMarchingLibrary | ID" )
 	static void SetMarchingIDBit( uint8& MarchingID , const int32 BitIndex , const bool bNewValue );
 
 public:
@@ -30,4 +30,9 @@ public:
 
 	UFUNCTION( BlueprintCallable , Category = "LFPMarchingLibrary | Rotation" )
 	static uint8 RotateMarchingID( const uint8 MarchingID , const FIntVector& Rotation );
+
+public:
+
+	UFUNCTION( BlueprintCallable , Category = "LFPMarchingLibrary | Function" )
+	static uint8 CalculateDualGridMarchingID( const uint8 FullMarchingID , const int32 CalculateIndex );
 };

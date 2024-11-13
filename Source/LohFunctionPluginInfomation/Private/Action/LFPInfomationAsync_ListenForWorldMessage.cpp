@@ -3,8 +3,6 @@
 
 void ULFPInfomationAsync_ListenForWorldMessage::Cancel()
 {
-	OwningWorldContext = nullptr;
-
 	if ( EventSubsystem.IsValid() )
 	{
 		EventSubsystem->RemoveListener( TagChannel , this );
@@ -15,19 +13,14 @@ void ULFPInfomationAsync_ListenForWorldMessage::Cancel()
 	SetReadyToDestroy();
 }
 
-bool ULFPInfomationAsync_ListenForWorldMessage::ShouldBroadcastDelegates() const
-{
-	return OwningWorldContext.IsValid() && Super::ShouldBroadcastDelegates();
-}
-
 void ULFPInfomationAsync_ListenForWorldMessage::Activate()
 {
 	Super::Activate();
 
 	if (
-		OwningWorldContext.IsValid() == false ||
-		IsValid( OwningWorldContext.Get()->GetWorld() ) == false ||
-		OwningWorldContext.Get()->GetWorld()->HasSubsystem<ULFPWorldMessageSubsystem>() == false
+		IsValid( this ) == false ||
+		IsValid( GetWorld() ) == false ||
+		GetWorld()->HasSubsystem<ULFPWorldMessageSubsystem>() == false
 		)
 	{
 		Cancel();
@@ -42,15 +35,14 @@ void ULFPInfomationAsync_ListenForWorldMessage::Activate()
 		return;
 	}
 
-	EventSubsystem = OwningWorldContext.Get()->GetWorld()->GetSubsystem<ULFPWorldMessageSubsystem>();
+	EventSubsystem = GetWorld()->GetSubsystem<ULFPWorldMessageSubsystem>();
 
-	EventSubsystem->AddListener( TagChannel , OwningWorldContext.Get() ).AddDynamic( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
+	EventSubsystem->AddListener( TagChannel , GetOuter() ).AddDynamic( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
 }
 
-ULFPInfomationAsync_ListenForWorldMessage* ULFPInfomationAsync_ListenForWorldMessage::ListenForWorldMessage( UObject* WorldContext , FGameplayTag TagChannel , bool bExactOnly , bool bOnlyTriggerOnce )
+ULFPInfomationAsync_ListenForWorldMessage* ULFPInfomationAsync_ListenForWorldMessage::ListenForWorldMessage( UObject* WorldContext , FGameplayTag TagChannel , const bool bExactOnly , const bool bOnlyTriggerOnce )
 {
-	ULFPInfomationAsync_ListenForWorldMessage* MyObj = NewObject<ULFPInfomationAsync_ListenForWorldMessage>();
-	MyObj->OwningWorldContext = WorldContext;
+	ULFPInfomationAsync_ListenForWorldMessage* MyObj = NewObject<ULFPInfomationAsync_ListenForWorldMessage>( WorldContext );
 	MyObj->TagChannel = TagChannel;
 	MyObj->bExactOnly = bExactOnly;
 	MyObj->bOnlyTriggerOnce = bOnlyTriggerOnce;

@@ -44,6 +44,11 @@
 			"Name": "LohFunctionPluginInfomation",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "LohFunctionPluginMarching",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	]
 }

@@ -24,7 +24,7 @@ void ULFPMarchingLibrary::SetMarchingIDBit( uint8& MarchingID , const int32 BitI
 
 uint8 ULFPMarchingLibrary::RotateMarchingIDByX( const uint8 MarchingID , const bool bReverse )
 {
-	const int32 SwapList[ 6 ][ 2 ] =
+	constexpr int32 SwapList[ 6 ][ 2 ] =
 	{
 		{ 0,2 },
 		{ 2,6 },
@@ -49,7 +49,7 @@ uint8 ULFPMarchingLibrary::RotateMarchingIDByX( const uint8 MarchingID , const b
 
 uint8 ULFPMarchingLibrary::RotateMarchingIDByY( const uint8 MarchingID , const bool bReverse )
 {
-	const int32 SwapList[ 6 ][ 2 ] =
+	constexpr int32 SwapList[ 6 ][ 2 ] =
 	{
 		{ 0,4 } ,
 		{ 4,5 } ,
@@ -74,7 +74,7 @@ uint8 ULFPMarchingLibrary::RotateMarchingIDByY( const uint8 MarchingID , const b
 
 uint8 ULFPMarchingLibrary::RotateMarchingIDByZ( const uint8 MarchingID , const bool bReverse )
 {
-	const int32 SwapList[ 6 ][ 2 ] =
+	constexpr int32 SwapList[ 6 ][ 2 ] =
 	{
 		{ 0,2 },
 		{ 2,3 },
@@ -123,4 +123,41 @@ uint8 ULFPMarchingLibrary::RotateMarchingID( const uint8 MarchingID , const FInt
 	}
 
 	return ReturnValue;
+}
+
+uint8 ULFPMarchingLibrary::CalculateDualGridMarchingID( const uint8 FullMarchingID , const int32 CalculateIndex )
+{
+	if ( FullMarchingID == 255 || FullMarchingID == 0 )
+	{
+		return 0; /* Fill so skip */
+	}
+
+	constexpr uint8 CheckList[ ] =
+	{
+		23 , 6 , 8 , 18 , 32 , 20 , 64,
+		43 , 10 , 4 , 33 , 16 , 40 , 128,
+		77 , 10 , 2 , 65 , 16 , 72 , 128,
+		142 , 6 , 1 , 130 , 32 , 132 , 64,
+		113 , 96 , 128 , 33 , 2 , 65 , 4,
+		178 , 144 , 64 , 18 , 1 , 130 , 8,
+		212 , 144 , 32 , 20 , 1 , 132 , 8,
+		232 , 96 , 16 , 40 , 2 , 72 , 4
+	};
+
+	const int32 CurrentListIndex = CalculateIndex * 7;
+
+	uint8 CurrentFilter = CheckList[ CurrentListIndex ];
+
+	for ( int32 Step = 0; Step < 3; Step++ )
+	{
+		const uint8 CheckByte = CheckList[ CurrentListIndex + ( Step * 2 ) + 1 ];
+		const uint8 ApplyByte = CheckList[ CurrentListIndex + ( Step * 2 ) + 2 ];
+
+		if ( ( FullMarchingID & CheckByte ) == CheckByte )
+		{
+			CurrentFilter |= ApplyByte;
+		}
+	}
+
+	return FullMarchingID & CurrentFilter;
 }

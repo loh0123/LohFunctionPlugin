@@ -39,13 +39,24 @@ void ULFPWorldMessageSubsystem::RemoveListener( const FGameplayTag TagChannel , 
 
 void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload ) const
 {
-	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Broadcast to channel () on world message sub system" ) , *TagChannel.ToString() );
+	bool bBroadcasted = false;
 
 	for ( const FLFPWorldMessageBindData& BindData : BindList )
 	{
 		if ( BindData.GetTagChannel().MatchesTag( TagChannel ) )
 		{
 			BindData.CallbackDelegate.Broadcast( TagChannel , Payload );
+
+			bBroadcasted = true;
 		}
+	}
+
+	if ( bBroadcasted )
+	{
+		UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Broadcast to channel ( %s ) on world message sub system" ) , *TagChannel.ToString() );
+	}
+	else
+	{
+		UE_LOG( LFPWorldMessageSubsystem , Warning , TEXT( "Channel ( %s ) on world message sub system don't have any listener, message skipped" ) , *TagChannel.ToString() );
 	}
 }
