@@ -18,28 +18,19 @@ struct FLFPWorldMessageBindData
 
 	FLFPWorldMessageBindData() = default;
 
-	FLFPWorldMessageBindData( const FGameplayTag& NewTagChannel ) : TagChannel( NewTagChannel ) {}
-
-protected:
-
-	UPROPERTY()
-	FGameplayTag TagChannel = FGameplayTag::EmptyTag;
-
 public:
 
 	UPROPERTY()
 	FLFPWorldMessageCallbackDelegate CallbackDelegate;
 
+	UPROPERTY()
+	TSet<FGameplayTag> ChildTagList = TSet<FGameplayTag>();
+
 public:
 
-	const FGameplayTag& GetTagChannel() const
+	bool CanRemove() const
 	{
-		return TagChannel;
-	}
-
-	bool operator==( const FGameplayTag& other ) const
-	{
-		return TagChannel == other;
+		return ChildTagList.IsEmpty() && CallbackDelegate.IsBound() == false;
 	}
 };
 
@@ -51,7 +42,7 @@ class LOHFUNCTIONPLUGININFOMATION_API ULFPWorldMessageSubsystem : public UWorldS
 protected:
 
 	UPROPERTY( Transient )
-	TArray<FLFPWorldMessageBindData> BindList = TArray<FLFPWorldMessageBindData>();
+	TMap<FGameplayTag , FLFPWorldMessageBindData> BindList = TMap<FGameplayTag , FLFPWorldMessageBindData>();
 
 public:
 

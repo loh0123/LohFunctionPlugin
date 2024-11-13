@@ -61,7 +61,7 @@ void ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage( const FGamepla
 		return;
 	}
 
-	if ( bExactOnly && Tag != TagChannel )
+	if ( bExactOnly && Tag.MatchesTagExact( TagChannel ) == false )
 	{
 		return;
 	}
