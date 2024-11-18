@@ -44,6 +44,11 @@ public:
 	{
 		return other.Mesh == Mesh;
 	}
+
+	FORCEINLINE bool operator==( const TSoftObjectPtr<UStaticMesh>& other ) const
+	{
+		return other == Mesh;
+	}
 };
 
 UCLASS( Blueprintable )
@@ -63,14 +68,41 @@ protected:
 
 #if WITH_EDITORONLY_DATA  
 
-	UPROPERTY( EditAnywhere , Category = Default , Meta = ( NoElementDuplicate ) )
+	UPROPERTY( EditAnywhere , Category = Edit , Meta = ( NoElementDuplicate ) )
 	TArray<FLFPMarchingSingleMeshData> MeshDataList = TArray<FLFPMarchingSingleMeshData>();
+
+	UPROPERTY( EditAnywhere , Category = Edit , Transient )
+	TSoftObjectPtr<UStaticMesh> EditMesh = nullptr;
+
+	UPROPERTY( EditAnywhere , Category = Edit , Transient )
+	uint8 EditID = 0;
+
+	UPROPERTY( EditAnywhere , Category = Edit , Transient )
+	FIntVector EditRotation = FIntVector( 0 );
 
 #endif
 
 #if WITH_EDITOR
 
 	virtual void PreSave( FObjectPreSaveContext SaveContext ) override;
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateXPlus();
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateXNeg();
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateYPlus();
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateYNeg();
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateZPlus();
+
+	UFUNCTION( CallInEditor , Category = Edit )
+	void RotateZNeg();
 
 #endif
 };

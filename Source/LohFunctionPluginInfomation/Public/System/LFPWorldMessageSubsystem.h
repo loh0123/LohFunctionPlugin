@@ -55,5 +55,5 @@ public:
 public:
 
 	UFUNCTION( BlueprintCallable , Category = LFPWorldMessageSubsystem )
-	void BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload ) const;
+	void BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload , const bool bMarkPayloadGarbage = true ) const;
 };

@@ -80,7 +80,7 @@ void ULFPWorldMessageSubsystem::RemoveListener( const FGameplayTag TagChannel , 
 	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Removed listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
 }
 
-void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload ) const
+void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload , const bool bMarkPayloadGarbage ) const
 {
 	const FLFPWorldMessageBindData* BindData = BindList.Find( TagChannel );
 
@@ -93,7 +93,7 @@ void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel 
 
 	BindData->CallbackDelegate.Broadcast( TagChannel , Payload );
 
-	if ( TArray<FGameplayTag> NewSearchTagList; UGameplayTagsManager::Get().ExtractParentTags( TagChannel , NewSearchTagList ) )
+	if ( TArray<FGameplayTag> NewSearchTagList = BindData->ChildTagList.Array(); NewSearchTagList.IsEmpty() == false )
 	{
 		while ( NewSearchTagList.IsEmpty() == false )
 		{
@@ -115,6 +115,10 @@ void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel 
 		}
 	}
 
+	if ( bMarkPayloadGarbage && IsValid( Payload ) )
+	{
+		Payload->MarkAsGarbage();
+	}
 
 	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Broadcast to channel ( %s ) on world message sub system" ) , *TagChannel.ToString() );
 }
