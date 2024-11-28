@@ -23,6 +23,8 @@ void ULFPInfomationAsync_ListenForWorldMessage::Activate()
 		GetWorld()->HasSubsystem<ULFPWorldMessageSubsystem>() == false
 		)
 	{
+		UE_LOG( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed ULFPWorldMessageSubsystem or World invalid" ) );
+
 		Cancel();
 
 		return;
@@ -30,6 +32,8 @@ void ULFPInfomationAsync_ListenForWorldMessage::Activate()
 
 	if ( TagChannel.IsValid() == false )
 	{
+		UE_LOG( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed Tag ( %s ) invalid" ) , *TagChannel.ToString() );
+
 		Cancel();
 
 		return;
@@ -37,7 +41,11 @@ void ULFPInfomationAsync_ListenForWorldMessage::Activate()
 
 	EventSubsystem = GetWorld()->GetSubsystem<ULFPWorldMessageSubsystem>();
 
-	EventSubsystem->AddListener( TagChannel , GetOuter() ).AddDynamic( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
+	FLFPWorldMessageCallbackDelegate& Delegate = EventSubsystem->AddListener( TagChannel , GetOuter() );
+
+	Delegate.AddDynamic( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
+
+	check( Delegate.IsBound() );
 }
 
 ULFPInfomationAsync_ListenForWorldMessage* ULFPInfomationAsync_ListenForWorldMessage::ListenForWorldMessage( UObject* WorldContext , FGameplayTag TagChannel , const bool bExactOnly , const bool bOnlyTriggerOnce )

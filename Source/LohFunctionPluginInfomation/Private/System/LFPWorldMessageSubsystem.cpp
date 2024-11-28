@@ -7,9 +7,7 @@ DEFINE_LOG_CATEGORY( LFPWorldMessageSubsystem );
 
 FLFPWorldMessageCallbackDelegate& ULFPWorldMessageSubsystem::AddListener( const FGameplayTag TagChannel , UObject* ListenerObject )
 {
-	check( IsValid( ListenerObject ) );
-
-	FLFPWorldMessageCallbackDelegate& ReturnRef = BindList.FindOrAdd( TagChannel ).CallbackDelegate;
+	check( IsValid( ListenerObject ) && TagChannel.IsValid() );
 
 	if ( TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags( TagChannel , ParentTagList ) )
 	{
@@ -26,7 +24,7 @@ FLFPWorldMessageCallbackDelegate& ULFPWorldMessageSubsystem::AddListener( const 
 
 	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Added listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
 
-	return ReturnRef;
+	return BindList.FindOrAdd( TagChannel ).CallbackDelegate;
 }
 
 void ULFPWorldMessageSubsystem::RemoveListener( const FGameplayTag TagChannel , UObject* ListenerObject )

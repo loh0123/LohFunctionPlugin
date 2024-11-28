@@ -4,7 +4,7 @@
 #include "Engine/DataAsset.h"
 #include "LFPMarchingMeshSet.generated.h"
 
-USTRUCT()
+USTRUCT( BlueprintType )
 struct FLFPMarchingMeshMappingData
 {
 	GENERATED_BODY()
@@ -18,10 +18,10 @@ public:
 
 public:
 
-	UPROPERTY( EditAnywhere , Category = Default )
+	UPROPERTY( BlueprintReadOnly , EditAnywhere , Category = Default )
 	int32 MeshID = INDEX_NONE;
 
-	UPROPERTY( EditAnywhere , Category = Default )
+	UPROPERTY( BlueprintReadOnly , EditAnywhere , Category = Default )
 	FIntVector Rotation = FIntVector( 0 );
 };
 
@@ -62,11 +62,21 @@ protected:
 	UPROPERTY( VisibleAnywhere , Category = Default )
 	TArray<TSoftObjectPtr<UStaticMesh>> MappingMeshList = TArray<TSoftObjectPtr<UStaticMesh>>();
 
-	/* Find what mesh and rotation base on Marching ID */
+	/* What mesh and rotation base on Marching ID */
 	UPROPERTY( VisibleAnywhere , Category = Default )
 	TMap<uint8 , FLFPMarchingMeshMappingData> MappingDataList = TMap<uint8 , FLFPMarchingMeshMappingData>();
 
+public:
+
+	UFUNCTION( BlueprintCallable , Category = Default )
+	TArray<UStaticMesh*> GetMeshList() const;
+
+	UFUNCTION( BlueprintCallable , Category = Default )
+	FLFPMarchingMeshMappingData GetMappingData( const uint8 MarchingID ) const;
+
 #if WITH_EDITORONLY_DATA  
+
+protected:
 
 	UPROPERTY( EditAnywhere , Category = Edit , Meta = ( NoElementDuplicate ) )
 	TArray<FLFPMarchingSingleMeshData> MeshDataList = TArray<FLFPMarchingSingleMeshData>();
@@ -84,25 +94,39 @@ protected:
 
 #if WITH_EDITOR
 
+protected:
+
 	virtual void PreSave( FObjectPreSaveContext SaveContext ) override;
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|X" )
 	void RotateXPlus();
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|X" )
 	void RotateXNeg();
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|Y" )
 	void RotateYPlus();
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|Y" )
 	void RotateYNeg();
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|Z" )
 	void RotateZPlus();
 
-	UFUNCTION( CallInEditor , Category = Edit )
+	UFUNCTION( CallInEditor , Category = "Rotation|Z" )
 	void RotateZNeg();
+
+	UFUNCTION( CallInEditor , Category = "Rotation|Full" )
+	void RotateXFull();
+
+	UFUNCTION( CallInEditor , Category = "Rotation|Full" )
+	void RotateYFull();
+
+	UFUNCTION( CallInEditor , Category = "Rotation|Full" )
+	void RotateZFull();
+
+	UFUNCTION( CallInEditor , Category = "Rotation|Full" )
+	void RotateAll();
 
 #endif
 };
