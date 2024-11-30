@@ -20,11 +20,14 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactIntArray
 {
 	GENERATED_BODY()
 
-	FLFPCompactIntArray() {}
+	FLFPCompactIntArray() {
+	}
 
-	FLFPCompactIntArray( const uint32 NewIndexSize ) : IndexSize( NewIndexSize ) {}
+	FLFPCompactIntArray( const uint32 NewIndexSize ) : IndexSize( NewIndexSize ) {
+	}
 
-	FLFPCompactIntArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : IndexSize( NewIndexSize ) , MinBitSize( NewMinSize ) {}
+	FLFPCompactIntArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : IndexSize( NewIndexSize ) , MinBitSize( NewMinSize ) {
+	}
 
 private:
 
@@ -196,11 +199,14 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactIDArray : public FLFPCompactIntArray
 {
 	GENERATED_USTRUCT_BODY()
 
-	FLFPCompactIDArray() {}
+	FLFPCompactIDArray() {
+	}
 
-	FLFPCompactIDArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {}
+	FLFPCompactIDArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {
+	}
 
-	FLFPCompactIDArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : Super( NewIndexSize , NewMinSize ) {}
+	FLFPCompactIDArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : Super( NewIndexSize , NewMinSize ) {
+	}
 
 private:
 
@@ -437,9 +443,11 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactTagArray : public FLFPCompactIDArray
 {
 	GENERATED_USTRUCT_BODY()
 
-	FLFPCompactTagArray() {}
+	FLFPCompactTagArray() {
+	}
 
-	FLFPCompactTagArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {}
+	FLFPCompactTagArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {
+	}
 
 	FLFPCompactTagArray( const uint32 NewIndexSize , const uint32 NewMinSize , const FGameplayTag& StartTag ) : Super( NewIndexSize , NewMinSize )
 	{
@@ -584,13 +592,17 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactMetaData
 {
 	GENERATED_BODY()
 
-	FLFPCompactMetaData() {}
+	FLFPCompactMetaData() {
+	}
 
-	FLFPCompactMetaData( const FGameplayTag& Tag ) : MetaTag( Tag ) , MetaType( ELFPCompactMetaType::LFP_None ) , MetaData( TArray<uint8>() ) {}
+	FLFPCompactMetaData( const FGameplayTag& Tag ) : MetaTag( Tag ) , MetaType( ELFPCompactMetaType::LFP_None ) , MetaData( TArray<uint8>() ) {
+	}
 
-	FLFPCompactMetaData( const FGameplayTag& Tag , const TArray<uint8>& Data , const ELFPCompactMetaType Type ) : MetaTag( Tag ) , MetaType( Type ) , MetaData( Data ) {}
+	FLFPCompactMetaData( const FGameplayTag& Tag , const TArray<uint8>& Data , const ELFPCompactMetaType Type ) : MetaTag( Tag ) , MetaType( Type ) , MetaData( Data ) {
+	}
 
-	FLFPCompactMetaData( const FLFPCompactMetaData& Other ) : MetaTag( Other.MetaTag ) , MetaType( Other.MetaType ) , MetaData( Other.MetaData ) {}
+	FLFPCompactMetaData( const FLFPCompactMetaData& Other ) : MetaTag( Other.MetaTag ) , MetaType( Other.MetaType ) , MetaData( Other.MetaData ) {
+	}
 
 public:
 
@@ -777,11 +789,14 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactMetaIDArray : public FLFPCompactIDArray
 {
 	GENERATED_USTRUCT_BODY()
 
-	FLFPCompactMetaIDArray() {}
+	FLFPCompactMetaIDArray() {
+	}
 
-	FLFPCompactMetaIDArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {}
+	FLFPCompactMetaIDArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {
+	}
 
-	FLFPCompactMetaIDArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : Super( NewIndexSize , NewMinSize ) {}
+	FLFPCompactMetaIDArray( const uint32 NewIndexSize , const uint32 NewMinSize ) : Super( NewIndexSize , NewMinSize ) {
+	}
 
 private:
 
@@ -973,7 +988,8 @@ struct LOHFUNCTIONPLUGIN_API FLFPMetaArray
 {
 	GENERATED_USTRUCT_BODY()
 
-	FLFPMetaArray() {}
+	FLFPMetaArray() {
+	}
 
 	FLFPMetaArray( const int32 NewIndexSize ) {
 		ItemList.SetNum( NewIndexSize );
@@ -1030,11 +1046,14 @@ struct LOHFUNCTIONPLUGIN_API FLFPCompactIntNameArray : public FLFPCompactIntArra
 {
 	GENERATED_USTRUCT_BODY()
 
-	FLFPCompactIntNameArray() {}
+	FLFPCompactIntNameArray() {
+	}
 
-	FLFPCompactIntNameArray( const FName& NewName ) : Name( NewName ) {}
+	FLFPCompactIntNameArray( const FName& NewName ) : Name( NewName ) {
+	}
 
-	FLFPCompactIntNameArray( const FName& NewName , const FLFPCompactIntArray& Setting ) : Super( Setting ) , Name( NewName ) {}
+	FLFPCompactIntNameArray( const FName& NewName , const FLFPCompactIntArray& Setting ) : Super( Setting ) , Name( NewName ) {
+	}
 
 public:
 
@@ -1193,6 +1212,13 @@ class LOHFUNCTIONPLUGIN_API ULohFunctionPluginLibrary : public UBlueprintFunctio
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary | String" )
+	static FString BufferToString( const TArray<uint8>& Buffer );
+
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary | String" )
+	static TArray<uint8> StringToBuffer( FString FromString );
+
 
 	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary | LFPIntPointList" )
 	static bool ContainPoint( const FLFPIntPointList& List , const int32 Index );

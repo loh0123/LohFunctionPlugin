@@ -8,9 +8,29 @@
 UENUM( BlueprintType )
 enum class ELFPStreamDIsconnectFlags : uint8
 {
-	LFP_StreamSocket_User			UMETA( DisplayName = "User" ) ,
-	LFP_StreamSocket_NoConnection	UMETA( DisplayName = "NoConnection" ) ,
-	LFP_StreamSocket_LoseConnection	UMETA( DisplayName = "LoseConnection" ) ,
+	LFP_User			UMETA( DisplayName = "User" ) ,
+	LFP_NoConnection	UMETA( DisplayName = "NoConnection" ) ,
+	LFP_LoseConnection	UMETA( DisplayName = "LoseConnection" ) ,
+};
+
+UENUM( BlueprintType )
+enum class ELFPStreamSocketState : uint8
+{
+	LFP_Idel			UMETA( DisplayName = "Idel" ) ,
+	LFP_Writing			UMETA( DisplayName = "Writing" ) ,
+	LFP_Reading			UMETA( DisplayName = "Reading" ) ,
+	LFP_Closing			UMETA( DisplayName = "Closing" ) ,
+};
+
+USTRUCT( BlueprintType )
+struct FLFPStreamSocketPackageInfo
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	uint32 PackageSize = 0;
 };
 
 USTRUCT( BlueprintType )
@@ -51,10 +71,90 @@ public:
 	bool bSocketReusable = true;
 
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
-	bool bKeppAlive = false;
+	float TimeOutSecond = 3.0f;
 
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
-	float KeppAliveInterval = 10.0f;
+	float PingInterval = 1.0f;
+};
+
+USTRUCT()
+struct FLFPStreamSocketPtrHandle
+{
+	GENERATED_BODY()
+
+public:
+
+	FLFPStreamSocketPtrHandle() : SocketLookUpID( GlobalID++ )
+	{
+	}
+
+	FLFPStreamSocketPtrHandle( FSocket* NewSocket ) : Socket( NewSocket ) , SocketLookUpID( GlobalID++ )
+	{
+		MarkActive();
+	}
+
+private:
+
+	static uint32 GlobalID;
+
+public:
+
+	FSocket* Socket = nullptr;
+
+	ELFPStreamSocketState State = ELFPStreamSocketState::LFP_Idel;
+
+public:
+
+	UPROPERTY()
+	uint8 CurrentPingFailedAttempt = 0;
+
+	UPROPERTY()
+	float ActiveDelayTime = 0;
+
+	UPROPERTY()
+	float LastActiveTime = 0;
+
+	UPROPERTY()
+	int32 LastBtyeSendOrReceive = 0;
+
+	UPROPERTY()
+	uint32 SocketLookUpID = 0;
+
+public:
+
+	static uint32 GetNextID()
+	{
+		return GlobalID;
+	}
+
+public:
+
+	FORCEINLINE bool IsValid() const
+	{
+		return Socket != nullptr;
+	}
+
+	FORCEINLINE bool IsClosing() const
+	{
+		return State == ELFPStreamSocketState::LFP_Closing;
+	}
+
+	FORCEINLINE void MarkActive( const float Delay = 3.0f )
+	{
+		ActiveDelayTime = Delay;
+
+		LastActiveTime = FPlatformTime::Seconds();
+	}
+
+	FORCEINLINE bool IsActive() const
+	{
+		return FPlatformTime::Seconds() - LastActiveTime < ActiveDelayTime;
+	}
+
+	FORCEINLINE uint32 GetID() const
+	{
+		return SocketLookUpID;
+	}
 };
 
 USTRUCT()
@@ -70,31 +170,39 @@ public:
 public:
 
 	UPROPERTY()
-	uint32 SocketLookUpID = 0;
-
-	UPROPERTY()
-	uint8 CurrentReconnectAttempt = 0;
-
-	UPROPERTY()
-	float NextRunTime = 0;
-
-	UPROPERTY()
 	bool bInitilized = false;
-
-	UPROPERTY()
-	bool bClosing = false;
 
 public:
 
-	FSocket* MainSocket = nullptr;
+	UPROPERTY()
+	FLFPStreamSocketPtrHandle MainSocket = FLFPStreamSocketPtrHandle();
 
-	TArray<FSocket*> ClientSocket = TArray<FSocket*>();
+	UPROPERTY()
+	TArray<FLFPStreamSocketPtrHandle> ClientSocket = TArray<FLFPStreamSocketPtrHandle>();
 
 public:
 
 	FORCEINLINE bool IsListenServer() const
 	{
 		return SocketSetting.MaxListenConnection > 0;
+	}
+
+	FORCEINLINE FLFPStreamSocketPtrHandle* GetClientSocketPtr( const int32 ClientID )
+	{
+		return ClientSocket.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
+											 {
+												 return SocketPtrData.GetID() == ClientID;
+											 }
+		);
+	}
+
+	FORCEINLINE const FLFPStreamSocketPtrHandle* GetClientSocketPtr( const int32 ClientID ) const
+	{
+		return ClientSocket.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
+											 {
+												 return SocketPtrData.GetID() == ClientID;
+											 }
+		);
 	}
 };
 
@@ -133,21 +241,29 @@ public:
 
 protected:
 
+	FORCEINLINE FLFPStreamSocketData* GetSocketData( const int32 SocketID );
+
+	FORCEINLINE const FLFPStreamSocketData* GetSocketData( const int32 SocketID ) const;
+
+	FORCEINLINE FLFPStreamSocketPtrHandle* GetSocketPtr( const int32 SocketID , const int32 ClientID = -1 );
+
+	FORCEINLINE const FLFPStreamSocketPtrHandle* GetSocketPtr( const int32 SocketID , const int32 ClientID = -1 ) const;
+
+protected:
+
 	FORCEINLINE void TryInitializeSocket( FLFPStreamSocketData& SocketData , const TSharedRef<FInternetAddr>& Endpoint );
 
 	FORCEINLINE void TryConnectClient( FLFPStreamSocketData& SocketData );
-
-	FORCEINLINE void TryConnectServer( FLFPStreamSocketData& SocketData );
 
 	FORCEINLINE void TryReceiveClientData( FLFPStreamSocketData& SocketData ) const;
 
 	FORCEINLINE void TryReceiveServerData( FLFPStreamSocketData& SocketData ) const;
 
-	FORCEINLINE void CheckSocketClientKeepAlive( FLFPStreamSocketData& SocketData );
+	FORCEINLINE void PingSocketClient( FLFPStreamSocketData& SocketData );
 
-	FORCEINLINE void CheckSocketServerKeepAlive( FLFPStreamSocketData& SocketData );
+	FORCEINLINE void PingSocketServer( FLFPStreamSocketData& SocketData );
 
-	FORCEINLINE void CloseSocket( FLFPStreamSocketData& SocketData , const int32 ClientID = -1 );
+	FORCEINLINE void CleanUpSocket( FLFPStreamSocketData& SocketData , const bool bForce = false );
 
 public:
 
@@ -168,112 +284,8 @@ public:
 private:
 
 	UPROPERTY()
-	uint32 CurrentLookUpID = 0;
-
-	UPROPERTY()
 	TArray<FLFPStreamSocketData> SocketList = TArray<FLFPStreamSocketData>();
 
 	ISocketSubsystem* SocketSubsystem = nullptr;
-};
-
-/**  */
-class FLFPStreamSocketWorker : public FRunnable , public TSharedFromThis<FLFPStreamSocketWorker>
-{
-	//public:
-	//
-	//	FLFPStreamSocket( const int32 InID , ULFPTCPSocketComponent* NewComponent , const FLFPTCPSocketSetting& InSocketSetting )
-	//		: SocketID( InID )
-	//		, bStopping( false )
-	//		, Component( NewComponent )
-	//		, SocketSetting( InSocketSetting )
-	//		, MainSocket( nullptr )
-	//		, Thread( nullptr )
-	//		, ConnectedSocketList( {} )
-	//		, Endpoint( ISocketSubsystem::Get( PLATFORM_SOCKETSUBSYSTEM )->CreateInternetAddr() )
-	//		, EndCode( ELFPTCPDIsconnectFlags::LFP_User )
-	//	{
-	//		Thread = FRunnableThread::Create( this , TEXT( "FLFPTcpSocket" ) , 8 * 1024 , TPri_Normal );
-	//	}
-	//
-	//	~FLFPTcpSocket()
-	//	{
-	//		Component = nullptr;
-	//
-	//		if ( Thread != nullptr )
-	//		{
-	//			Thread->Kill( true );
-	//			delete Thread;
-	//		}
-	//
-	//		for ( auto& ClientSocket : ConnectedSocketList )
-	//		{
-	//			if ( ClientSocket == nullptr ) continue;
-	//
-	//			ClientSocket->Close();
-	//			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
-	//			ClientSocket = nullptr;
-	//		}
-	//
-	//		if ( MainSocket != nullptr )
-	//		{
-	//			MainSocket->Close();
-	//			//ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(MainSocket);
-	//			MainSocket = nullptr;
-	//		}
-	//	}
-	//
-	//public:
-	//
-	//	virtual bool Init() override;
-	//
-	//	virtual uint32 Run() override;
-	//
-	//	virtual void Stop() override;
-	//
-	//	virtual void Exit() override;
-	//
-	//public:
-	//
-	//	FORCEINLINE bool IsStopped() const;
-	//
-	//	FORCEINLINE TSharedPtr<FSocket> GetConnectedSocket( const int32 ID );
-	//
-	//	FORCEINLINE bool RequestDisconnectClient( const int32 ID );
-	//
-	//private:
-	//
-	//	FORCEINLINE bool IsSocketConnected( const TSharedPtr<FSocket>& InSocket ) const;
-	//
-	//	FORCEINLINE bool CloseSocket( const ELFPTCPDIsconnectFlags DIsconnectFlags , const int32 ClientID = -1 );
-	//
-	//private:
-	//
-	//	TQueue<int32 , EQueueMode::Spsc> DisconnectQueue;
-	//
-	//	/** For identify socket. */
-	//	int32 SocketID = INDEX_NONE;
-	//
-	//	/** Is this socket closing. */
-	//	FThreadSafeBool bStopping = false;
-	//
-	//	/** Component that create the socket. */
-	//	TWeakObjectPtr<ULFPTCPSocketComponent> Component;
-	//
-	//	/** This contain all socket setting */
-	//	FLFPTCPSocketSetting SocketSetting;
-	//
-	//	/** Holds the main socket. */
-	//	TSharedPtr<FSocket , ESPMode::ThreadSafe> MainSocket;
-	//
-	//	/** Holds the thread object. */
-	//	FRunnableThread* Thread;
-	//
-	//	/** Holds the connected socket. */
-	//	TArray<TSharedPtr<FSocket , ESPMode::ThreadSafe>> ConnectedSocketList;
-	//
-	//	/** Holds the server endpoint. */
-	//	TSharedRef<FInternetAddr> Endpoint;
-	//
-	//	ELFPTCPDIsconnectFlags EndCode = ELFPTCPDIsconnectFlags::LFP_User;
 };
 
