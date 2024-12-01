@@ -17,8 +17,7 @@ UENUM( BlueprintType )
 enum class ELFPStreamSocketState : uint8
 {
 	LFP_Idel			UMETA( DisplayName = "Idel" ) ,
-	LFP_Writing			UMETA( DisplayName = "Writing" ) ,
-	LFP_Reading			UMETA( DisplayName = "Reading" ) ,
+	LFP_IncomingPkg		UMETA( DisplayName = "Incoming Package" ) ,
 	LFP_Closing			UMETA( DisplayName = "Closing" ) ,
 };
 
@@ -106,6 +105,9 @@ public:
 public:
 
 	UPROPERTY()
+	FLFPStreamSocketPackageInfo CurrentPackageInfo = FLFPStreamSocketPackageInfo();
+
+	UPROPERTY()
 	uint8 CurrentPingFailedAttempt = 0;
 
 	UPROPERTY()
@@ -137,6 +139,11 @@ public:
 	FORCEINLINE bool IsClosing() const
 	{
 		return State == ELFPStreamSocketState::LFP_Closing;
+	}
+
+	FORCEINLINE bool IsIncomingPackage() const
+	{
+		return State == ELFPStreamSocketState::LFP_IncomingPkg;
 	}
 
 	FORCEINLINE void MarkActive( const float Delay = 3.0f )
@@ -259,9 +266,9 @@ protected:
 
 	FORCEINLINE void TryReceiveServerData( FLFPStreamSocketData& SocketData ) const;
 
-	FORCEINLINE void PingSocketClient( FLFPStreamSocketData& SocketData );
+	FORCEINLINE void PingSocketClient( FLFPStreamSocketData& SocketData ) const;
 
-	FORCEINLINE void PingSocketServer( FLFPStreamSocketData& SocketData );
+	FORCEINLINE void PingSocketServer( FLFPStreamSocketData& SocketData ) const;
 
 	FORCEINLINE void CleanUpSocket( FLFPStreamSocketData& SocketData , const bool bForce = false );
 

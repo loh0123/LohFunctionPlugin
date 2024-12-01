@@ -244,12 +244,14 @@ void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& Sock
 		/** Socket is not valid */
 		if ( ClientSocket.IsValid() == false || ClientSocket.IsClosing() ) continue;
 
+		uint32 MinBufferNeeded = ClientSocket.IsIncomingPackage() ? ClientSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
+
 		/** Is data available ? */
-		if ( uint32 BufferSize = 0; ClientSocket.Socket->HasPendingData( BufferSize ) )
+		if ( uint32 BufferSize = 0; ClientSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
 		{
 			TArray<uint8> ReceiveBuffer;
 
-			ReceiveBuffer.SetNumUninitialized( BufferSize );
+			ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
 
 			int32 ReadBtyes = 0;
 
@@ -257,7 +259,23 @@ void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& Sock
 			{
 				ClientSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
 
-				OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ReceiveBuffer );
+				if ( ClientSocket.IsIncomingPackage() )
+				{
+					OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ReceiveBuffer );
+
+					ClientSocket.State = ELFPStreamSocketState::LFP_Idel;
+				}
+				else
+				{
+					FMemoryReader PkgReader( ReceiveBuffer );
+
+					FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &ClientSocket.CurrentPackageInfo );
+
+					if ( ClientSocket.CurrentPackageInfo.PackageSize > 0 )
+					{
+						ClientSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
+					}
+				}
 			}
 		}
 	}
@@ -265,11 +283,18 @@ void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& Sock
 
 void ULFPStreamSocketSubsystem::TryReceiveServerData( FLFPStreamSocketData& SocketData ) const
 {
-	if ( uint32 DataSize = 0; SocketData.MainSocket.Socket->HasPendingData( DataSize ) )
+	if ( SocketData.MainSocket.IsValid() == false || SocketData.MainSocket.IsClosing() )
+	{
+		return;
+	}
+
+	uint32 MinBufferNeeded = SocketData.MainSocket.IsIncomingPackage() ? SocketData.MainSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
+
+	if ( uint32 BufferSize = 0; SocketData.MainSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
 	{
 		TArray<uint8> ReceiveBuffer;
 
-		ReceiveBuffer.SetNumUninitialized( DataSize );
+		ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
 
 		int32 ReadBtyes = 0;
 
@@ -277,14 +302,41 @@ void ULFPStreamSocketSubsystem::TryReceiveServerData( FLFPStreamSocketData& Sock
 		{
 			SocketData.MainSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
 
-			OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ReceiveBuffer );
+			if ( SocketData.MainSocket.IsIncomingPackage() )
+			{
+				OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ReceiveBuffer );
+
+				SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Idel;
+			}
+			else
+			{
+				FMemoryReader PkgReader( ReceiveBuffer );
+
+				FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &SocketData.MainSocket.CurrentPackageInfo );
+
+				if ( SocketData.MainSocket.CurrentPackageInfo.PackageSize > 0 )
+				{
+					SocketData.MainSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
+				}
+			}
 		}
 	}
 }
 
-void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketData )
+void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketData ) const
 {
-	TArray<uint8> SendData = { 0 };
+	TArray<uint8> PkgData;
+	{
+		FLFPStreamSocketPackageInfo PkgInfo;
+
+		PkgInfo.PackageSize = 0;
+
+		const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
+
+		FMemoryWriter PkgWriter( PkgData , false );
+
+		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+	}
 
 	for ( FLFPStreamSocketPtrHandle& SocketPtr : SocketData.ClientSocket )
 	{
@@ -295,7 +347,7 @@ void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketDa
 
 		SocketPtr.MarkActive( SocketData.SocketSetting.PingInterval );
 
-		if ( SocketPtr.Socket->Send( SendData.GetData() , SendData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
+		if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
 		{
 			SocketPtr.CurrentPingFailedAttempt = 0;
 		}
@@ -317,14 +369,25 @@ void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketDa
 	}
 }
 
-void ULFPStreamSocketSubsystem::PingSocketServer( FLFPStreamSocketData& SocketData )
+void ULFPStreamSocketSubsystem::PingSocketServer( FLFPStreamSocketData& SocketData ) const
 {
 	if ( SocketData.MainSocket.Socket->GetConnectionState() != ESocketConnectionState::SCS_Connected )
 	{
 		return;
 	}
 
-	TArray<uint8> SendData = { 0 };
+	TArray<uint8> PkgData;
+	{
+		FLFPStreamSocketPackageInfo PkgInfo;
+
+		PkgInfo.PackageSize = 0;
+
+		const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
+
+		FMemoryWriter PkgWriter( PkgData , false );
+
+		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+	}
 
 	FLFPStreamSocketPtrHandle& SocketPtr = SocketData.MainSocket;
 
@@ -335,7 +398,7 @@ void ULFPStreamSocketSubsystem::PingSocketServer( FLFPStreamSocketData& SocketDa
 
 	SocketPtr.MarkActive( SocketData.SocketSetting.PingInterval );
 
-	if ( SocketPtr.Socket->Send( SendData.GetData() , SendData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
+	if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
 	{
 		SocketPtr.CurrentPingFailedAttempt = 0;
 	}
@@ -469,6 +532,19 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 {
 	if ( FLFPStreamSocketData* SocketData = GetSocketData( SocketID ); SocketData != nullptr )
 	{
+		TArray<uint8> PkgData;
+		{
+			FLFPStreamSocketPackageInfo PkgInfo;
+
+			PkgInfo.PackageSize = Data.Num();
+
+			const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
+
+			FMemoryWriter PkgWriter( PkgData , false );
+
+			FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+		}
+
 		bool bIsSended = true;
 
 		if ( SocketData->IsListenServer() )
@@ -489,12 +565,19 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 					continue;
 				}
 
-				const bool bIsSuccess = ClientSocket.Socket->Send( Data.GetData() , Data.Num() , ClientSocket.LastBtyeSendOrReceive );
-
-				bIsSended &= bIsSuccess;
-
-				if ( bIsSuccess )
+				// Send PkgInfo
+				if ( ClientSocket.Socket->Send( PkgData.GetData() , PkgData.Num() , ClientSocket.LastBtyeSendOrReceive ) == false )
 				{
+					UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : SendData Failed To Send PkgInfo : %d : %d" ) , SocketID , LoopClientIndex );
+
+					continue;
+				}
+
+				// Send Data
+				if ( ClientSocket.Socket->Send( Data.GetData() , Data.Num() , ClientSocket.LastBtyeSendOrReceive ) == false )
+				{
+					bIsSended = false;
+
 					ClientSocket.MarkActive( SocketData->SocketSetting.TimeOutSecond );
 				}
 			}
@@ -509,12 +592,16 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 			}
 			else
 			{
-				const bool bIsSuccess = SocketData->MainSocket.Socket->Send( Data.GetData() , Data.Num() , SocketData->MainSocket.LastBtyeSendOrReceive );
-
-				bIsSended &= bIsSuccess;
-
-				if ( bIsSuccess )
+				// Send PkgInfo
+				if ( SocketData->MainSocket.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketData->MainSocket.LastBtyeSendOrReceive ) == false )
 				{
+					UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : SendData Failed To Send PkgInfo : %d " ) , SocketID );
+				}
+				// Send Data
+				else if ( SocketData->MainSocket.Socket->Send( Data.GetData() , Data.Num() , SocketData->MainSocket.LastBtyeSendOrReceive ) == false )
+				{
+					bIsSended = false;
+
 					SocketData->MainSocket.MarkActive( SocketData->SocketSetting.TimeOutSecond );
 				}
 			}
