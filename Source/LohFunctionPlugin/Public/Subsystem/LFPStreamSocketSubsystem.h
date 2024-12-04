@@ -70,6 +70,9 @@ public:
 	bool bSocketReusable = true;
 
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
+	bool bNoDelay = false;
+
+	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
 	float TimeOutSecond = 3.0f;
 
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )

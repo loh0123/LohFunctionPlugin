@@ -170,6 +170,7 @@ void ULFPStreamSocketSubsystem::TryInitializeSocket( FLFPStreamSocketData& Socke
 			!SocketData.MainSocket.Socket->Bind( Endpoint.Get() ) ||
 			!SocketData.MainSocket.Socket->SetLinger( true , 3.0f ) ||
 			!SocketData.MainSocket.Socket->SetNonBlocking( true ) ||
+			!SocketData.MainSocket.Socket->SetNoDelay( SocketData.SocketSetting.bNoDelay ) ||
 			!SocketData.MainSocket.Socket->Listen( SocketData.SocketSetting.MaxListenConnection );
 	}
 	else // Try Connect To Server On Initialize
@@ -178,6 +179,7 @@ void ULFPStreamSocketSubsystem::TryInitializeSocket( FLFPStreamSocketData& Socke
 			!SocketData.MainSocket.Socket->SetRecvErr() ||
 			!SocketData.MainSocket.Socket->SetLinger( true , 3.0f ) ||
 			!SocketData.MainSocket.Socket->SetNonBlocking( true ) ||
+			!SocketData.MainSocket.Socket->SetNoDelay( SocketData.SocketSetting.bNoDelay ) ||
 			!SocketData.MainSocket.Socket->Connect( Endpoint.Get() );
 	}
 
@@ -223,6 +225,7 @@ void ULFPStreamSocketSubsystem::TryConnectClient( FLFPStreamSocketData& SocketDa
 		{
 			NewSocket->SetRecvErr();
 			NewSocket->SetNonBlocking();
+			NewSocket->SetNoDelay( SocketData.SocketSetting.bNoDelay );
 
 			OnConnected.Broadcast( SocketData.MainSocket.GetID() , SocketData.ClientSocket.Add_GetRef( NewSocket ).GetID() );
 
@@ -577,7 +580,9 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 				if ( ClientSocket.Socket->Send( Data.GetData() , Data.Num() , ClientSocket.LastBtyeSendOrReceive ) == false )
 				{
 					bIsSended = false;
-
+				}
+				else
+				{
 					ClientSocket.MarkActive( SocketData->SocketSetting.TimeOutSecond );
 				}
 			}
@@ -601,7 +606,9 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 				else if ( SocketData->MainSocket.Socket->Send( Data.GetData() , Data.Num() , SocketData->MainSocket.LastBtyeSendOrReceive ) == false )
 				{
 					bIsSended = false;
-
+				}
+				else
+				{
 					SocketData->MainSocket.MarkActive( SocketData->SocketSetting.TimeOutSecond );
 				}
 			}
