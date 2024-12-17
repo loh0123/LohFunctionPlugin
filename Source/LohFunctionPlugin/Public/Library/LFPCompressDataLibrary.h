@@ -36,9 +36,6 @@ private:
 	UPROPERTY()
 	uint8 MinBitSize = 0;
 
-	UPROPERTY()
-	bool bIsBitSizeDirty = false;
-
 private:
 
 	/** Read / Write Bit Function */
@@ -63,13 +60,6 @@ private:
 
 	FORCEINLINE void UpdateBitSize()
 	{
-		if ( bIsBitSizeDirty == false )
-		{
-			return;
-		}
-
-		bIsBitSizeDirty = false;
-
 		const uint8 NewSize = FMath::Max( NewSize , GetNewBitSize() );
 
 		UE_LOG( LFPCompressNumberStaticArray , Log , TEXT( "FLFPCompressNumberStaticArray : Resize Bit To %d" ) , NewSize );
