@@ -36,11 +36,6 @@
 			"LoadingPhase": "PreLoadingScreen"
 		},
 		{
-			"Name": "LohFunctionPluginVoxel",
-			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
-		},
-		{
 			"Name": "LohFunctionPluginInfomation",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"
