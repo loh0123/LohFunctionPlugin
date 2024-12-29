@@ -9,19 +9,22 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
-#include "LohFunctionPluginLibrary.h"
+#include "Library/LFPDynamicTypeLibrary.h"
 #include "LFPItemFunctionLibrary.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT( BlueprintType )
 struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryItem
 {
 	GENERATED_BODY()
 
-	FLFPInventoryItem() {}
+	FLFPInventoryItem() {
+	}
 
-	FLFPInventoryItem(const FGameplayTag& Tag) : ItemTag(Tag), MetaData(TArray<FLFPCompactMetaData>()) {}
+	FLFPInventoryItem( const FGameplayTag& Tag ) : ItemTag( Tag ) , MetaDataList( FLFPPrimitiveDataTagArray() ) {
+	}
 
-	FLFPInventoryItem(const FLFPInventoryItem& Other) : ItemTag(Other.ItemTag), MetaData(Other.MetaData) {}
+	FLFPInventoryItem( const FLFPInventoryItem& Other ) : ItemTag( Other.ItemTag ) , MetaDataList( Other.MetaDataList ) {
+	}
 
 public:
 
@@ -29,19 +32,28 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default, meta = (Categories = "Item.Identifier"))
+	UPROPERTY( BlueprintReadWrite , EditAnywhere , Category = Default , meta = ( Categories = "Item.Identifier" ) )
 	FGameplayTag ItemTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Default)
-	TArray<FLFPCompactMetaData> MetaData = TArray<FLFPCompactMetaData>();
+	UPROPERTY( BlueprintReadWrite , EditAnywhere , Category = Default )
+	FLFPPrimitiveDataTagArray MetaDataList = FLFPPrimitiveDataTagArray();
 
 public:
 
-	FORCEINLINE bool IsValid() const { return ItemTag.IsValid() && UGameplayTagsManager::Get().RequestGameplayTag(ItemTag.GetTagName()).IsValid(); }
+	FORCEINLINE bool IsValid() const
+	{
+		return ItemTag.IsValid() && UGameplayTagsManager::Get().RequestGameplayTag( ItemTag.GetTagName() ).IsValid();
+	}
 
-	FORCEINLINE	bool MatchesTag(const FGameplayTag& Tag) const { return ItemTag.MatchesTag(Tag); }
+	FORCEINLINE	bool MatchesTag( const FGameplayTag& Tag ) const
+	{
+		return ItemTag.MatchesTag( Tag );
+	}
 
-	FORCEINLINE	bool MatchesAnyTag(const FGameplayTagContainer& TagList) const { return ItemTag.MatchesAny(TagList); }
+	FORCEINLINE	bool MatchesAnyTag( const FGameplayTagContainer& TagList ) const
+	{
+		return ItemTag.MatchesAny( TagList );
+	}
 
 	// Item Tag
 
@@ -50,13 +62,13 @@ public:
 		return ItemTag;
 	}
 
-	FORCEINLINE	void SetItemTag(const FGameplayTag& Tag)
+	FORCEINLINE	void SetItemTag( const FGameplayTag& Tag )
 	{
 		ItemTag = Tag;
 
-		if (ItemTag.IsValid() == false)
+		if ( ItemTag.IsValid() == false )
 		{
-			MetaData.Empty();
+			MetaDataList.Empty();
 		}
 
 		return;
@@ -64,92 +76,71 @@ public:
 
 	// Meta Data
 
-	FORCEINLINE	bool ContainMetaData(const FGameplayTag& Tag) const { return MetaData.IndexOfByKey(Tag) != INDEX_NONE; }
-
-	FORCEINLINE	const FLFPCompactMetaData* GetMetaData(const FGameplayTag& Tag) const
-	{ 
-		int32 ReturnIndex(MetaData.IndexOfByKey(Tag));
-
-		return ReturnIndex != INDEX_NONE ? &MetaData[ReturnIndex] : nullptr;
+	FORCEINLINE	bool ContainMetaData( const FGameplayTag& Tag ) const
+	{
+		return MetaDataList.Contain( Tag );
 	}
 
-	FORCEINLINE	const TArray<FLFPCompactMetaData>& GetMetaDataList() const
+	FORCEINLINE	const FLFPPrimitiveData* GetMetaData( const FGameplayTag& Tag ) const
 	{
-		return MetaData;
+		return MetaDataList.GetItemConst( Tag );
 	}
 
-	FORCEINLINE	void SetMetaData(const FLFPCompactMetaData& Data, const bool bUniqueOnly = false)
+	FORCEINLINE	const TArray<FGameplayTag>& GetMetaDataTagList() const
 	{
-		int32 ReturnIndex(MetaData.IndexOfByKey(Data.MetaTag));
-
-		if (ReturnIndex != INDEX_NONE)
-		{
-			if (bUniqueOnly == false) MetaData[ReturnIndex] = Data;
-		}
-		else
-		{
-			MetaData.Add(Data);
-		}
+		return MetaDataList.GetMappingList();
 	}
 
-	FORCEINLINE	bool RemoveMetaData(const FGameplayTag& Tag)
+	FORCEINLINE	void SetMetaData( const FGameplayTag& MetaTag , const FLFPPrimitiveData& MetaData , const bool bUniqueOnly = false )
 	{
-		int32 ReturnIndex(MetaData.IndexOfByKey(Tag));
-
-		if (ReturnIndex != INDEX_NONE)
+		if ( bUniqueOnly && MetaDataList.Contain( MetaTag ) )
 		{
-			MetaData.RemoveAt(ReturnIndex);
-
-			return true;
+			return;
 		}
 
-		return false;
+		MetaDataList.SetItem( MetaTag , MetaData );
+	}
+
+	FORCEINLINE	bool RemoveMetaData( const FGameplayTag& MetaTag )
+	{
+		const bool bIsContain = MetaDataList.Contain( MetaTag );
+
+		MetaDataList.SetItem( MetaTag , FLFPPrimitiveData() );
+
+		return bIsContain;
 	}
 
 	// Append Meta Data
 
-	FORCEINLINE void AppendMetaDataInt(const TMap<FGameplayTag, int32>& DataMap, const bool bUniqueOnly = false);
+	FORCEINLINE void AppendMetaDataInt( const TMap<FGameplayTag , int32>& DataMap , const bool bUniqueOnly = false );
 
-	FORCEINLINE void AppendMetaDataFloat(const TMap<FGameplayTag, float>& DataMap, const bool bUniqueOnly = false);
+	FORCEINLINE void AppendMetaDataFloat( const TMap<FGameplayTag , float>& DataMap , const bool bUniqueOnly = false );
 
-	FORCEINLINE void AppendMetaDataString(const TMap<FGameplayTag, FString>& DataMap, const bool bUniqueOnly = false);
+	FORCEINLINE void AppendMetaDataString( const TMap<FGameplayTag , FString>& DataMap , const bool bUniqueOnly = false );
 
-	FORCEINLINE void AppendMetaDataBoolean(const TMap<FGameplayTag, bool>& DataMap, const bool bUniqueOnly = false);
+	FORCEINLINE void AppendMetaDataBoolean( const TMap<FGameplayTag , bool>& DataMap , const bool bUniqueOnly = false );
 
 	// String
 
 	FORCEINLINE	FString ToString() const
 	{
-		FString ReturnText = ItemTag.ToString();
-
-		for (const auto& Meta : MetaData)
-		{
-			ReturnText += Meta.ToString();
-		}
-
-		return ReturnText;
+		return ItemTag.ToString() + " " + MetaDataList.ToString();
 	}
 
 
-	FORCEINLINE	bool operator==(const FGameplayTag& Tag) const { return ItemTag == Tag; }
-
-	FORCEINLINE	bool operator!=(const FGameplayTag& Tag) const { return ItemTag != Tag; }
-
-	FORCEINLINE	bool operator==(const FLFPInventoryItem& Other) const { return ItemTag == Other.ItemTag && MetaData == Other.MetaData; }
-
-	FORCEINLINE	bool operator!=(const FLFPInventoryItem& Other) const { return ItemTag != Other.ItemTag || MetaData != Other.MetaData; }
-
-	FORCEINLINE	FLFPInventoryItem& operator=(const FLFPInventoryItem& Other)
+	FORCEINLINE	bool operator==( const FGameplayTag& Tag ) const
 	{
-		ItemTag = Other.ItemTag;
-		MetaData = Other.MetaData;
+		return ItemTag == Tag;
+	}
 
-		return *this;
+	FORCEINLINE	bool operator==( const FLFPInventoryItem& Other ) const
+	{
+		return ItemTag == Other.ItemTag && MetaDataList == Other.MetaDataList;
 	}
 };
 
 /**
- * 
+ *
  */
 UCLASS()
 class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunctionLibrary
@@ -158,39 +149,33 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemFunctionLibrary : public UBlueprintFunct
 
 public: // Checker
 
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static bool IsMetaDataSame(const FLFPInventoryItem& ItemA, const FLFPInventoryItem& ItemB, const FGameplayTag MetaTag);
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
+	static bool IsMetaDataSame( const FLFPInventoryItem& ItemA , const FLFPInventoryItem& ItemB , const FGameplayTag MetaTag );
 
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static bool ContainMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
+	static bool ContainMetaData( const FLFPInventoryItem& Item , const FGameplayTag MetaTag );
 
 	/* Check Is Item Contain All Meta Data And Equal Or Bigger Than The Cost  */
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static bool CheckMetaDataCost(const FLFPInventoryItem& Item, const TMap<FGameplayTag, int32>& IntCostDataMap, const TMap<FGameplayTag, float>& FloatCostDataMap);
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
+	static bool CheckMetaDataCost( const FLFPInventoryItem& Item , const TMap<FGameplayTag , int32>& IntCostDataMap , const TMap<FGameplayTag , float>& FloatCostDataMap );
 
 public: // Getter
 
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static FLFPCompactMetaData GetMetaData(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
+	static FLFPPrimitiveData GetMetaData( const FLFPInventoryItem& Item , const FGameplayTag MetaTag );
 
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static FString GetMetaDataAsString(const FLFPInventoryItem& Item, const FGameplayTag MetaTag);
-
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static int32 GetMetaDataAsNumber(const FLFPInventoryItem& Item, const FGameplayTag MetaTag, const int32 DefaultValue = 0);
-
-	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary")
-	static FGameplayTag GetItemTag(UPARAM(ref) FLFPInventoryItem& Item);
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
+	static FGameplayTag GetItemTag( UPARAM( ref ) FLFPInventoryItem& Item );
 
 public: // Setter
 
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static void SetMetaData(UPARAM(ref) FLFPInventoryItem& Item, const FLFPCompactMetaData& Data);
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
+	static void SetMetaData( UPARAM( ref ) FLFPInventoryItem& Item , const FGameplayTag MetaTag , const FLFPPrimitiveData& MetaData );
 
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static void SetItemTag(UPARAM(ref) FLFPInventoryItem& Item, const FGameplayTag ItemTag);
-	
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
+	static void SetItemTag( UPARAM( ref ) FLFPInventoryItem& Item , const FGameplayTag ItemTag );
+
 	/* Subtract The Cost From Item Meta Data */
-	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary")
-	static void ConsumeMetaDataCost(UPARAM(ref) FLFPInventoryItem& Item, const TMap<FGameplayTag, int32>& IntCostDataMap, const TMap<FGameplayTag, float>& FloatCostDataMap);
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
+	static void ConsumeMetaDataCost( UPARAM( ref ) FLFPInventoryItem& Item , const TMap<FGameplayTag , int32>& IntCostDataMap , const TMap<FGameplayTag , float>& FloatCostDataMap );
 };

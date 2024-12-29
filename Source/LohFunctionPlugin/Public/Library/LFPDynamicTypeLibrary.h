@@ -199,7 +199,7 @@ private:
 	TArray<int32> OpenIDList = {};
 
 	UPROPERTY()
-	TArray<int32> IDRefList = {};
+	TArray<int32> IDCountList = {};
 
 protected:
 
@@ -207,11 +207,11 @@ protected:
 
 	FORCEINLINE void ResizeID()
 	{
-		for ( int32 IDIndex = IDRefList.Num() - 1; IDIndex >= 0; --IDIndex )
+		for ( int32 IDIndex = IDCountList.Num() - 1; IDIndex >= 0; --IDIndex )
 		{
-			if ( IDRefList[ IDIndex ] == 0 )
+			if ( IDCountList[ IDIndex ] == 0 )
 			{
-				IDRefList.RemoveAt( IDIndex , EAllowShrinking::No );
+				IDCountList.RemoveAt( IDIndex , EAllowShrinking::No );
 
 				OpenIDList.HeapRemoveAt( OpenIDList.IndexOfByKey( IDIndex ) , EAllowShrinking::No );
 			}
@@ -222,9 +222,9 @@ protected:
 		}
 
 		OpenIDList.Shrink();
-		IDRefList.Shrink();
+		IDCountList.Shrink();
 
-		ResizeElement( IDRefList.Num() );
+		ResizeElement( IDCountList.Num() );
 
 		return;
 	}
@@ -239,23 +239,23 @@ public:
 		}
 		else
 		{
-			return IDRefList.Num();
+			return IDCountList.Num();
 		};
 	}
 
 	FORCEINLINE void RemoveRef( const int32 IDIndex )
 	{
-		check( IDRefList.IsValidIndex( IDIndex ) );
+		check( IDCountList.IsValidIndex( IDIndex ) );
 
-		check( IDRefList[ IDIndex ] > 0 );
+		check( IDCountList[ IDIndex ] > 0 );
 
-		IDRefList[ IDIndex ]--;
+		IDCountList[ IDIndex ]--;
 
-		if ( IDRefList[ IDIndex ] == 0 )
+		if ( IDCountList[ IDIndex ] == 0 )
 		{
-			if ( IDRefList.Num() - 1 == IDIndex )
+			if ( IDCountList.Num() - 1 == IDIndex )
 			{
-				IDRefList.RemoveAt( IDIndex );
+				IDCountList.RemoveAt( IDIndex );
 
 				ResizeID();
 			}
@@ -277,20 +277,20 @@ public:
 	{
 		bool bNeedResize = false;
 
-		if ( IDRefList.IsValidIndex( IDIndex ) == false )
+		if ( IDCountList.IsValidIndex( IDIndex ) == false )
 		{
-			const int32 OldNum = IDRefList.Num();
+			const int32 OldNum = IDCountList.Num();
 
-			IDRefList.SetNum( IDIndex + 1 );
+			IDCountList.SetNum( IDIndex + 1 );
 
-			for ( int32 Index = OldNum; Index < IDRefList.Num() - 1; Index++ )
+			for ( int32 Index = OldNum; Index < IDCountList.Num() - 1; Index++ )
 			{
 				OpenIDList.HeapPush( Index );
 			}
 
 			bNeedResize = true;
 		}
-		else if ( IDRefList[ IDIndex ] == 0 )
+		else if ( IDCountList[ IDIndex ] == 0 )
 		{
 			// In case this ID come from OpenIDList
 			if ( const int32 OpenID = OpenIDList.IndexOfByKey( IDIndex ); OpenID != INDEX_NONE )
@@ -299,9 +299,9 @@ public:
 			}
 		}
 
-		check( IDRefList[ IDIndex ] >= 0 );
+		check( IDCountList[ IDIndex ] >= 0 );
 
-		IDRefList[ IDIndex ]++;
+		IDCountList[ IDIndex ]++;
 
 		if ( bNeedResize )
 		{
@@ -350,22 +350,29 @@ public:
 			return 0;
 		}
 
-		return IDRefList.Num();
+		return IDCountList.Num();
+	}
+
+	FORCEINLINE int32 GetIDCount( const int32 ID ) const
+	{
+		check( IDCountList.IsValidIndex( ID ) );
+
+		return IDCountList[ ID ];
 	}
 };
 
 USTRUCT( BlueprintType )
-struct LOHFUNCTIONPLUGIN_API FLFPRefTagStaticArray : public FLFPIDTrackerStaticArray
+struct LOHFUNCTIONPLUGIN_API FLFPTagTrackerStaticArray : public FLFPIDTrackerStaticArray
 {
 	GENERATED_BODY()
 
-	FLFPRefTagStaticArray() {
+	FLFPTagTrackerStaticArray() {
 	}
 
-	FLFPRefTagStaticArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {
+	FLFPTagTrackerStaticArray( const uint32 NewIndexSize ) : Super( NewIndexSize ) {
 	}
 
-	FLFPRefTagStaticArray( const uint32 NewIndexSize , const uint8 NewDataAlignment , const FGameplayTag& StartTag ) : Super( NewIndexSize , NewDataAlignment )
+	FLFPTagTrackerStaticArray( const uint32 NewIndexSize , const uint8 NewDataAlignment , const FGameplayTag& StartTag ) : Super( NewIndexSize , NewDataAlignment )
 	{
 		if ( StartTag.IsValid() == false )
 		{
@@ -424,6 +431,278 @@ public:
 
 		return ID != INDEX_NONE ? ItemList[ ID ] : FGameplayTag::EmptyTag;
 	}
+
+	FORCEINLINE int32 GetItemCount( const FGameplayTag& Item ) const
+	{
+		if ( const int32 ID = ItemList.IndexOfByKey( Item ); ID >= 0 )
+		{
+			return GetIDCount( ID );
+		}
+
+		return INDEX_NONE;
+	}
+
+	FORCEINLINE bool ContainItem( const FGameplayTag& Item ) const
+	{
+		return ItemList.Contains( Item );
+	}
+};
+
+UENUM( BlueprintType )
+enum class ELFPPrimitiveDataType : uint8
+{
+	LFP_None	UMETA( DisplayName = "None" ) ,
+	LFP_Int		UMETA( DisplayName = "Int" ) ,
+	LFP_Float	UMETA( DisplayName = "Float" ) ,
+	LFP_Boolean	UMETA( DisplayName = "Boolean" ) ,
+	LFP_String	UMETA( DisplayName = "String" ) ,
+};
+
+USTRUCT( BlueprintType )
+struct LOHFUNCTIONPLUGIN_API FLFPPrimitiveData
+{
+	GENERATED_BODY()
+
+private:
+
+	UPROPERTY()
+	ELFPPrimitiveDataType Type = ELFPPrimitiveDataType::LFP_None;
+
+	UPROPERTY()
+	TArray<uint8> DataList = TArray<uint8>();
+
+public:
+
+	FORCEINLINE	FString ToString() const
+	{
+		if ( Type == ELFPPrimitiveDataType::LFP_None ) return FString();
+
+		switch ( Type )
+		{
+			case ELFPPrimitiveDataType::LFP_Int:
+				return FString::FromInt( AsInt() );
+			case ELFPPrimitiveDataType::LFP_Float:
+				return FString::SanitizeFloat( AsFloat() );
+			case ELFPPrimitiveDataType::LFP_Boolean:
+				return AsBoolean() ? "True" : "False";
+			case ELFPPrimitiveDataType::LFP_String:
+				return AsString();
+		}
+
+		return FString();
+	}
+
+public:
+
+	FORCEINLINE	void ClearData()
+	{
+		Type = ELFPPrimitiveDataType::LFP_None;
+
+		DataList.Empty();
+	}
+
+	FORCEINLINE	bool ContainData() const
+	{
+		return Type != ELFPPrimitiveDataType::LFP_None;
+	}
+
+	FORCEINLINE	ELFPPrimitiveDataType GetDataType() const
+	{
+		return Type;
+	}
+
+	FORCEINLINE	const TArray<uint8>& GetData() const
+	{
+		return DataList;
+	}
+
+public:
+
+	FORCEINLINE int32 AsInt() const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Int ) return INDEX_NONE;
+
+		return *( reinterpret_cast< const int32* >( DataList.GetData() ) );
+	}
+
+	FORCEINLINE float AsFloat() const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Float ) return 0.0f;
+
+		return *( reinterpret_cast< const float* >( DataList.GetData() ) );
+	}
+
+	FORCEINLINE bool AsBoolean() const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Boolean ) return false;
+
+		return *( reinterpret_cast< const bool* >( DataList.GetData() ) );
+	}
+
+	FORCEINLINE FString AsString() const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_String ) return "";
+
+		return BytesToString( DataList.GetData() , DataList.Num() );
+	}
+
+public:
+
+	FORCEINLINE void operator=( const int32& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Int;
+
+		DataList.SetNum( 4 );
+
+		*( reinterpret_cast< int32* >( DataList.GetData() ) ) = NewData;
+	}
+
+	FORCEINLINE void operator=( const float& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Float;
+
+		DataList.SetNum( 4 );
+
+		*( reinterpret_cast< float* >( DataList.GetData() ) ) = NewData;
+	}
+
+	FORCEINLINE void operator=( const bool& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Boolean;
+
+		DataList.SetNum( 1 );
+
+		*( reinterpret_cast< bool* >( DataList.GetData() ) ) = NewData;
+	}
+
+	FORCEINLINE void operator=( const FString& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_String;
+
+		DataList.SetNum( NewData.Len() );
+
+		StringToBytes( NewData , DataList.GetData() , DataList.Num() );
+	}
+
+public:
+
+	FORCEINLINE bool operator==( const FLFPPrimitiveData& other ) const
+	{
+		return Type == other.Type && DataList == other.DataList;
+	}
+};
+
+USTRUCT( BlueprintType )
+struct LOHFUNCTIONPLUGIN_API FLFPPrimitiveDataTagArray
+{
+	GENERATED_BODY()
+
+private:
+
+	UPROPERTY()
+	TArray<FLFPPrimitiveData> ItemList = {};
+
+	UPROPERTY()
+	TArray<FGameplayTag> MappingList = {};
+
+public:
+
+	FORCEINLINE	FString ToString() const
+	{
+		FString ReturnString = "";
+
+		for ( int32 Index = 0; Index < MappingList.Num(); Index++ )
+		{
+			const FLFPPrimitiveData& ItemData = ItemList[ Index ];
+			const FGameplayTag& ItemTag = MappingList[ Index ];
+
+			ReturnString += "[ " + ItemTag.ToString() + " : ";
+			ReturnString += ItemData.ToString() + " ]";
+		}
+
+		return ReturnString;
+	}
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE void SetItem( const FGameplayTag& ItemTag , const FLFPPrimitiveData& NewItem )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			if ( NewItem.ContainData() )
+			{
+				ItemList[ ItemIndex ] = NewItem;
+			}
+			else
+			{
+				ItemList.RemoveAtSwap( ItemIndex );
+				MappingList.RemoveAtSwap( ItemIndex );
+			}
+		}
+		else if ( NewItem.ContainData() )
+		{
+			ItemList.Add( NewItem );
+			MappingList.Add( ItemTag );
+		}
+	}
+
+	FORCEINLINE const TArray<FLFPPrimitiveData>& GetItemList() const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE const TArray<FGameplayTag>& GetMappingList() const
+	{
+		return MappingList;
+	}
+
+	FORCEINLINE const FLFPPrimitiveData* GetItemConst( const FGameplayTag& ItemTag ) const
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return &ItemList[ ItemIndex ];
+		}
+
+		return nullptr;
+	}
+
+	FORCEINLINE FLFPPrimitiveData* GetItem( const FGameplayTag& ItemTag )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return &ItemList[ ItemIndex ];
+		}
+
+		return nullptr;
+	}
+
+public:
+
+	FORCEINLINE void Empty()
+	{
+		ItemList.Empty();
+		MappingList.Empty();
+	}
+
+	FORCEINLINE bool Contain( const FGameplayTag& ItemTag ) const
+	{
+		return MappingList.Contains( ItemTag );
+	}
+
+public:
+
+	FORCEINLINE bool operator==( const FLFPPrimitiveDataTagArray& other ) const
+	{
+		return ItemList == other.ItemList && MappingList == other.MappingList;
+	}
 };
 
 UCLASS()
@@ -431,4 +710,50 @@ class LOHFUNCTIONPLUGIN_API ULFPDynamicTypeLibrary : public UBlueprintFunctionLi
 {
 	GENERATED_BODY()
 
+public:
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
+	static void InitializeTrackerArray( UPARAM( ref ) FLFPIDTrackerStaticArray& List , const int32 IndexSize );
+
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
+	static int32 GetNewID( UPARAM( ref ) FLFPIDTrackerStaticArray& List );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
+	static bool SetID( UPARAM( ref ) FLFPIDTrackerStaticArray& List , const int32 Index , const int32 ID );
+
+	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
+	static int32 GetID( UPARAM( ref ) FLFPIDTrackerStaticArray& List , const int32 Index );
+
+public:
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static int32 GetDataAsInt( UPARAM( ref ) FLFPPrimitiveData& Data );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static void SetDataAsInt( UPARAM( ref ) FLFPPrimitiveData& Data , const int32 Value );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static float GetDataAsFloat( UPARAM( ref ) FLFPPrimitiveData& Data );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static void SetDataAsFloat( UPARAM( ref ) FLFPPrimitiveData& Data , const float Value );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static bool GetDataAsBool( UPARAM( ref ) FLFPPrimitiveData& Data );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static void SetDataAsBool( UPARAM( ref ) FLFPPrimitiveData& Data , const bool Value );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static FString GetDataAsString( UPARAM( ref ) FLFPPrimitiveData& Data );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static void SeDataAsString( UPARAM( ref ) FLFPPrimitiveData& Data , const FString Value );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static void ClearData( UPARAM( ref ) FLFPPrimitiveData& Data );
+
+	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static FString ToString( UPARAM( ref ) FLFPPrimitiveData& Data );
 };
