@@ -6,7 +6,7 @@
 #include "LFPStreamSocketSubsystem.generated.h"
 
 UENUM( BlueprintType )
-enum class ELFPStreamDIsconnectFlags : uint8
+enum class ELFPStreamDisconnectFlags : uint8
 {
 	LFP_User			UMETA( DisplayName = "User" ) ,
 	LFP_NoConnection	UMETA( DisplayName = "NoConnection" ) ,
@@ -16,7 +16,7 @@ enum class ELFPStreamDIsconnectFlags : uint8
 UENUM( BlueprintType )
 enum class ELFPStreamSocketState : uint8
 {
-	LFP_Idel			UMETA( DisplayName = "Idel" ) ,
+	LFP_Idle			UMETA( DisplayName = "Idel" ) ,
 	LFP_IncomingPkg		UMETA( DisplayName = "Incoming Package" ) ,
 	LFP_Closing			UMETA( DisplayName = "Closing" ) ,
 };
@@ -39,11 +39,11 @@ struct FLFPStreamSocketSetting
 
 public:
 
-	/** How many time to try reconnect. */
+	/** How many times for trying to reconnect. */
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
 	uint8 MaxReconnectAttempt = 15;
 
-	/** Soceket listen amount, if -1 than switch to client mode. */
+	/** Socket listen amount, if -1 than switch to client mode. */
 	UPROPERTY( BlueprintReadWrite , Category = "LFPTCPSocketSetting" )
 	int32 MaxListenConnection = INDEX_NONE;
 
@@ -86,11 +86,11 @@ struct FLFPStreamSocketPtrHandle
 
 public:
 
-	FLFPStreamSocketPtrHandle() : SocketLookUpID( GlobalID++ )
+	FLFPStreamSocketPtrHandle() : SocketLookUpID( FLFPStreamSocketPtrHandle::GlobalID++ )
 	{
 	}
 
-	FLFPStreamSocketPtrHandle( FSocket* NewSocket ) : Socket( NewSocket ) , SocketLookUpID( GlobalID++ )
+	FLFPStreamSocketPtrHandle( FSocket* NewSocket ) : Socket( NewSocket ) , SocketLookUpID( FLFPStreamSocketPtrHandle::GlobalID++ )
 	{
 		MarkActive();
 	}
@@ -103,7 +103,7 @@ public:
 
 	FSocket* Socket = nullptr;
 
-	ELFPStreamSocketState State = ELFPStreamSocketState::LFP_Idel;
+	ELFPStreamSocketState State = ELFPStreamSocketState::LFP_Idle;
 
 public:
 
@@ -180,7 +180,7 @@ public:
 public:
 
 	UPROPERTY()
-	bool bInitilized = false;
+	bool bInitialized = false;
 
 public:
 
@@ -217,7 +217,7 @@ public:
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams( FLFPStreamSocketEvent , const int32 , SocketID , const int32 , ClientID );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams( FLFPStreamSocketDisconnect , const int32 , SocketID , const int32 , ClientID , const ELFPStreamDIsconnectFlags , DIsconnectFlags );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams( FLFPStreamSocketDisconnect , const int32 , SocketID , const int32 , ClientID , const ELFPStreamDisconnectFlags , DIsconnectFlags );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams( FLFPStreamSocketMessage , const int32 , SocketID , const int32 , ClientID , const TArray<uint8>& , Bytes );
 
 UCLASS()

@@ -1,8 +1,6 @@
 #include "Subsystem/LFPStreamSocketSubsystem.h"
 #include "IPAddress.h"
 #include "Async/Async.h"
-#include "IPAddressAsyncResolve.h"
-#include "Interfaces/IPv4/IPv4Endpoint.h"
 #include "SocketSubsystem.h"
 #include "Common/TcpSocketBuilder.h"
 
@@ -38,7 +36,7 @@ void ULFPStreamSocketSubsystem::Tick( float DeltaTime )
 			continue;
 		}
 
-		if ( SocketData.bInitilized == false )
+		if ( SocketData.bInitialized == false )
 		{
 			continue;
 		}
@@ -208,7 +206,7 @@ void ULFPStreamSocketSubsystem::TryInitializeSocket( FLFPStreamSocketData& Socke
 		}
 	}
 
-	SocketData.bInitilized = true; // All normal pass
+	SocketData.bInitialized = true; // All normal pass
 }
 
 void ULFPStreamSocketSubsystem::TryConnectClient( FLFPStreamSocketData& SocketData )
@@ -256,9 +254,9 @@ void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& Sock
 
 			ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
 
-			int32 ReadBtyes = 0;
+			int32 ReadBytes = 0;
 
-			if ( ClientSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBtyes ) )
+			if ( ClientSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBytes ) )
 			{
 				ClientSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
 
@@ -266,7 +264,7 @@ void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& Sock
 				{
 					OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ReceiveBuffer );
 
-					ClientSocket.State = ELFPStreamSocketState::LFP_Idel;
+					ClientSocket.State = ELFPStreamSocketState::LFP_Idle;
 				}
 				else
 				{
@@ -309,7 +307,7 @@ void ULFPStreamSocketSubsystem::TryReceiveServerData( FLFPStreamSocketData& Sock
 			{
 				OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ReceiveBuffer );
 
-				SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Idel;
+				SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Idle;
 			}
 			else
 			{
@@ -333,8 +331,6 @@ void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketDa
 		FLFPStreamSocketPackageInfo PkgInfo;
 
 		PkgInfo.PackageSize = 0;
-
-		const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
 
 		FMemoryWriter PkgWriter( PkgData , false );
 
@@ -385,8 +381,6 @@ void ULFPStreamSocketSubsystem::PingSocketServer( FLFPStreamSocketData& SocketDa
 
 		PkgInfo.PackageSize = 0;
 
-		const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
-
 		FMemoryWriter PkgWriter( PkgData , false );
 
 		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
@@ -430,7 +424,7 @@ void ULFPStreamSocketSubsystem::CleanUpSocket( FLFPStreamSocketData& SocketData 
 
 		SocketData.MainSocket.Socket = nullptr;
 
-		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ELFPStreamDIsconnectFlags::LFP_User );
+		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ELFPStreamDisconnectFlags::LFP_User );
 
 		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Socket %d On Code ( %d )" ) , SocketData.MainSocket.GetID() , SocketData.MainSocket.LastBtyeSendOrReceive );
 	}
@@ -448,7 +442,7 @@ void ULFPStreamSocketSubsystem::CleanUpSocket( FLFPStreamSocketData& SocketData 
 
 		ClientSocket.Socket = nullptr;
 
-		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ELFPStreamDIsconnectFlags::LFP_User );
+		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ELFPStreamDisconnectFlags::LFP_User );
 
 		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Client %d From Socket %d On Code ( %d )" ) , ClientSocket.GetID() , SocketData.MainSocket.GetID() , ClientSocket.LastBtyeSendOrReceive );
 	}
@@ -541,14 +535,12 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 
 			PkgInfo.PackageSize = Data.Num();
 
-			const uint32 InfoSize = sizeof( FLFPStreamSocketPackageInfo );
-
 			FMemoryWriter PkgWriter( PkgData , false );
 
 			FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
 		}
 
-		bool bIsSended = true;
+		bool bSuccessfullySendData = true;
 
 		if ( SocketData->IsListenServer() )
 		{
@@ -579,7 +571,7 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 				// Send Data
 				if ( ClientSocket.Socket->Send( Data.GetData() , Data.Num() , ClientSocket.LastBtyeSendOrReceive ) == false )
 				{
-					bIsSended = false;
+					bSuccessfullySendData = false;
 				}
 				else
 				{
@@ -593,7 +585,7 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 			{
 				UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : SendData Failed MainSocket Invalid Or Closing : %d" ) , SocketID );
 
-				bIsSended = false;
+				bSuccessfullySendData = false;
 			}
 			else
 			{
@@ -605,7 +597,7 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 				// Send Data
 				else if ( SocketData->MainSocket.Socket->Send( Data.GetData() , Data.Num() , SocketData->MainSocket.LastBtyeSendOrReceive ) == false )
 				{
-					bIsSended = false;
+					bSuccessfullySendData = false;
 				}
 				else
 				{
@@ -614,7 +606,7 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 			}
 		}
 
-		return bIsSended;
+		return bSuccessfullySendData;
 	}
 	else
 	{
