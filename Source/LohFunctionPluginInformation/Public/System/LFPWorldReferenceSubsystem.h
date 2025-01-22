@@ -57,7 +57,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FLFPWorldReferenceComponentUpdate ,
  *
  */
 UCLASS()
-class LOHFUNCTIONPLUGININFOMATION_API ULFPWorldReferenceSubsystem : public UWorldSubsystem
+class LOHFUNCTIONPLUGININFORMATION_API ULFPWorldReferenceSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 

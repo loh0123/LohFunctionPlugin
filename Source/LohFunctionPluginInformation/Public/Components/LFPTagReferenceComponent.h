@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams( FLFPGameplayTagEvent , const FGa
 
 
 UCLASS( ClassGroup = ( Custom ) , meta = ( BlueprintSpawnableComponent ) )
-class LOHFUNCTIONPLUGININFOMATION_API ULFPTagReferenceComponent : public UActorComponent
+class LOHFUNCTIONPLUGININFORMATION_API ULFPTagReferenceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

@@ -35,7 +35,7 @@ public:
 };
 
 UCLASS()
-class LOHFUNCTIONPLUGININFOMATION_API ULFPWorldMessageSubsystem : public UWorldSubsystem
+class LOHFUNCTIONPLUGININFORMATION_API ULFPWorldMessageSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 

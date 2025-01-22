@@ -9,7 +9,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FLFPListenForWorldMessageDelegate ,
 class ULFPWorldMessageSubsystem;
 
 UCLASS()
-class LOHFUNCTIONPLUGININFOMATION_API ULFPInfomationAsync_ListenForWorldMessage : public UCancellableAsyncAction
+class LOHFUNCTIONPLUGININFORMATION_API ULFPInfomationAsync_ListenForWorldMessage : public UCancellableAsyncAction
 {
 	GENERATED_BODY()
 

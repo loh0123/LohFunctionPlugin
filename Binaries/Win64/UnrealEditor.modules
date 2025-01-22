@@ -5,9 +5,8 @@
 		"LohFunctionPlugin": "UnrealEditor-LohFunctionPlugin.dll",
 		"LohFunctionPluginEditor": "UnrealEditor-LohFunctionPluginEditor.dll",
 		"LohFunctionPluginExperience": "UnrealEditor-LohFunctionPluginExperience.dll",
-		"LohFunctionPluginInfomation": "UnrealEditor-LohFunctionPluginInfomation.dll",
+		"LohFunctionPluginInformation": "UnrealEditor-LohFunctionPluginInformation.dll",
 		"LohFunctionPluginItem": "UnrealEditor-LohFunctionPluginItem.dll",
-		"LohFunctionPluginMarching": "UnrealEditor-LohFunctionPluginMarching.dll",
-		"LohFunctionPluginVoxel": "UnrealEditor-LohFunctionPluginVoxel.dll"
+		"LohFunctionPluginMarching": "UnrealEditor-LohFunctionPluginMarching.dll"
 	}
 }
