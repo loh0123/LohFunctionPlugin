@@ -1,69 +1,69 @@
 // Copyright by Loh Zhi Kang
 
-#include "System/LFPWorldMessageSubsystem.h" 	
+#include "System/LFPWorldMessageSubsystem.h"
 #include "GameplayTagsManager.h"
 
-DEFINE_LOG_CATEGORY( LFPWorldMessageSubsystem );
+DEFINE_LOG_CATEGORY ( LFPWorldMessageSubsystem );
 
-FLFPWorldMessageCallbackDelegate& ULFPWorldMessageSubsystem::AddListener( const FGameplayTag TagChannel , UObject* ListenerObject )
+FLFPWorldMessageCallbackDelegate& ULFPWorldMessageSubsystem::AddListener ( const FGameplayTag TagChannel , UObject* ListenerObject )
 {
-	check( IsValid( ListenerObject ) && TagChannel.IsValid() );
+	check ( IsValid( ListenerObject ) && TagChannel.IsValid() );
 
-	if ( TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags( TagChannel , ParentTagList ) )
+	if ( TArray <FGameplayTag> ParentTagList ; UGameplayTagsManager::Get ( ).ExtractParentTags ( TagChannel , ParentTagList ) )
 	{
 		FGameplayTag ChildTag = TagChannel;
 
 		/* Add All Parent And Link It Together */
 		for ( const FGameplayTag& ParentTag : ParentTagList )
 		{
-			BindList.FindOrAdd( ParentTag ).ChildTagList.Add( ChildTag );
+			BindList.FindOrAdd ( ParentTag ).ChildTagList.Add ( ChildTag );
 
 			ChildTag = ParentTag;
 		}
 	}
 
-	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Added listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
+	UE_LOG ( LFPWorldMessageSubsystem , Log , TEXT( "Added listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
 
-	return BindList.FindOrAdd( TagChannel ).CallbackDelegate;
+	return BindList.FindOrAdd ( TagChannel ).CallbackDelegate;
 }
 
-void ULFPWorldMessageSubsystem::RemoveListener( const FGameplayTag TagChannel , UObject* ListenerObject )
+void ULFPWorldMessageSubsystem::RemoveListener ( const FGameplayTag TagChannel , UObject* ListenerObject )
 {
-	check( IsValid( ListenerObject ) );
+	check ( IsValid( ListenerObject ) );
 
-	FLFPWorldMessageBindData* BindData = BindList.Find( TagChannel );
+	FLFPWorldMessageBindData* BindData = BindList.Find ( TagChannel );
 
 	if ( BindData == nullptr )
 	{
 		return;
 	}
 
-	BindData->CallbackDelegate.RemoveAll( ListenerObject );
+	BindData->CallbackDelegate.RemoveAll ( ListenerObject );
 
-	if ( BindData->CanRemove() )
+	if ( BindData->CanRemove ( ) )
 	{
-		BindList.Remove( TagChannel );
+		BindList.Remove ( TagChannel );
 
-		if ( TArray<FGameplayTag> ParentTagList; UGameplayTagsManager::Get().ExtractParentTags( TagChannel , ParentTagList ) )
+		if ( TArray <FGameplayTag> ParentTagList ; UGameplayTagsManager::Get ( ).ExtractParentTags ( TagChannel , ParentTagList ) )
 		{
 			FGameplayTag ChildTag = TagChannel;
 
 			for ( const FGameplayTag& ParentTag : ParentTagList )
 			{
-				FLFPWorldMessageBindData* ParentBindData = BindList.Find( ParentTag );
+				FLFPWorldMessageBindData* ParentBindData = BindList.Find ( ParentTag );
 
 				if ( ParentBindData == nullptr )
 				{
-					UE_LOG( LFPWorldMessageSubsystem , Error , TEXT( "RemoveListener ( %s ) Parent tag on BindList invalid (%s)" ) , *ListenerObject->GetName() , *ParentTag.ToString() );
+					UE_LOG ( LFPWorldMessageSubsystem , Error , TEXT( "RemoveListener ( %s ) Parent tag on BindList invalid (%s)" ) , *ListenerObject->GetName() , *ParentTag.ToString() );
 
 					break;
 				}
 
-				ParentBindData->ChildTagList.Remove( ChildTag );
+				ParentBindData->ChildTagList.Remove ( ChildTag );
 
-				if ( ParentBindData->CanRemove() )
+				if ( ParentBindData->CanRemove ( ) )
 				{
-					BindList.Remove( ParentTag );
+					BindList.Remove ( ParentTag );
 
 					ChildTag = ParentTag;
 				}
@@ -75,48 +75,47 @@ void ULFPWorldMessageSubsystem::RemoveListener( const FGameplayTag TagChannel , 
 		}
 	}
 
-	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Removed listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
+	UE_LOG ( LFPWorldMessageSubsystem , Log , TEXT( "Removed listener ( %s ) to world message sub system" ) , *ListenerObject->GetName() );
 }
 
-void ULFPWorldMessageSubsystem::BroadcastMessage( const FGameplayTag TagChannel , UObject* Payload , const bool bMarkPayloadGarbage ) const
+void ULFPWorldMessageSubsystem::BroadcastMessage ( const FGameplayTag TagChannel , UObject* Payload , const bool bMarkPayloadGarbage ) const
 {
-	const FLFPWorldMessageBindData* BindData = BindList.Find( TagChannel );
+	const FLFPWorldMessageBindData* BindData = BindList.Find ( TagChannel );
 
 	if ( BindData == nullptr )
 	{
-		UE_LOG( LFPWorldMessageSubsystem , Warning , TEXT( "Channel ( %s ) on world message sub system don't have any listener, message skipped" ) , *TagChannel.ToString() );
+		UE_LOG ( LFPWorldMessageSubsystem , Warning , TEXT( "Channel ( %s ) on world message sub system don't have any listener, message skipped" ) , *TagChannel.ToString() );
 
 		return;
 	}
 
-	BindData->CallbackDelegate.Broadcast( TagChannel , Payload );
+	BindData->CallbackDelegate.Broadcast ( TagChannel , Payload );
 
-	if ( TArray<FGameplayTag> NewSearchTagList = BindData->ChildTagList.Array(); NewSearchTagList.IsEmpty() == false )
+	if ( TArray <FGameplayTag> NewSearchTagList = BindData->ChildTagList.Array ( ) ; NewSearchTagList.IsEmpty ( ) == false )
 	{
-		while ( NewSearchTagList.IsEmpty() == false )
+		while ( NewSearchTagList.IsEmpty ( ) == false )
 		{
-			const TArray<FGameplayTag> CurrentSearchlist = NewSearchTagList;
+			const TArray <FGameplayTag> CurrentSearchlist = NewSearchTagList;
 
-			NewSearchTagList.Empty();
+			NewSearchTagList.Empty ( );
 
 			for ( const auto& SearchTag : CurrentSearchlist )
 			{
 				/* Loop Until There Are No Child To Check */
-				if ( const auto ReferenceData = BindList.Find( SearchTag ); ReferenceData != nullptr )
+				if ( const auto ReferenceData = BindList.Find ( SearchTag ) ; ReferenceData != nullptr )
 				{
-					ReferenceData->CallbackDelegate.Broadcast( TagChannel , Payload );
+					ReferenceData->CallbackDelegate.Broadcast ( TagChannel , Payload );
 
-					NewSearchTagList.Append( ReferenceData->ChildTagList.Array() );
+					NewSearchTagList.Append ( ReferenceData->ChildTagList.Array ( ) );
 				}
-
 			}
 		}
 	}
 
-	if ( bMarkPayloadGarbage && IsValid( Payload ) )
+	if ( bMarkPayloadGarbage && IsValid ( Payload ) )
 	{
-		Payload->MarkAsGarbage();
+		Payload->MarkAsGarbage ( );
 	}
 
-	UE_LOG( LFPWorldMessageSubsystem , Log , TEXT( "Broadcast to channel ( %s ) on world message sub system" ) , *TagChannel.ToString() );
+	UE_LOG ( LFPWorldMessageSubsystem , Log , TEXT( "Broadcast to channel ( %s ) on world message sub system" ) , *TagChannel.ToString() );
 }

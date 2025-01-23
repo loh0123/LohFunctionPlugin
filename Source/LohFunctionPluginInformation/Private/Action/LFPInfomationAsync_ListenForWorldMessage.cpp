@@ -1,83 +1,83 @@
 #include "Action/LFPInfomationAsync_ListenForWorldMessage.h"
 #include "System/LFPWorldMessageSubsystem.h"
 
-void ULFPInfomationAsync_ListenForWorldMessage::Cancel()
+void ULFPInfomationAsync_ListenForWorldMessage::Cancel ( )
 {
-	if ( EventSubsystem.IsValid() )
+	if ( EventSubsystem.IsValid ( ) )
 	{
-		EventSubsystem->RemoveListener( TagChannel , this );
+		EventSubsystem->RemoveListener ( TagChannel , this );
 
-		EventSubsystem.Reset();
+		EventSubsystem.Reset ( );
 	}
 
-	SetReadyToDestroy();
+	SetReadyToDestroy ( );
 }
 
-void ULFPInfomationAsync_ListenForWorldMessage::Activate()
+void ULFPInfomationAsync_ListenForWorldMessage::Activate ( )
 {
-	Super::Activate();
+	Super::Activate ( );
 
 	if (
-		IsValid( this ) == false ||
-		IsValid( GetWorld() ) == false ||
-		GetWorld()->HasSubsystem<ULFPWorldMessageSubsystem>() == false
-		)
+		IsValid ( this ) == false ||
+		IsValid ( GetWorld ( ) ) == false ||
+		GetWorld ( )->HasSubsystem <ULFPWorldMessageSubsystem> ( ) == false
+	)
 	{
-		UE_LOG( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed ULFPWorldMessageSubsystem or World invalid" ) );
+		UE_LOG ( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed ULFPWorldMessageSubsystem or World invalid" ) );
 
-		Cancel();
+		Cancel ( );
 
 		return;
 	}
 
-	if ( TagChannel.IsValid() == false )
+	if ( TagChannel.IsValid ( ) == false )
 	{
-		UE_LOG( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed Tag ( %s ) invalid" ) , *TagChannel.ToString() );
+		UE_LOG ( LFPWorldMessageSubsystem , Error , TEXT( "Activate failed Tag ( %s ) invalid" ) , *TagChannel.ToString() );
 
-		Cancel();
+		Cancel ( );
 
 		return;
 	}
 
-	EventSubsystem = GetWorld()->GetSubsystem<ULFPWorldMessageSubsystem>();
+	EventSubsystem = GetWorld ( )->GetSubsystem <ULFPWorldMessageSubsystem> ( );
 
-	FLFPWorldMessageCallbackDelegate& Delegate = EventSubsystem->AddListener( TagChannel , GetOuter() );
+	FLFPWorldMessageCallbackDelegate& Delegate = EventSubsystem->AddListener ( TagChannel , GetOuter ( ) );
 
-	Delegate.AddDynamic( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
+	Delegate.AddDynamic ( this , &ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage );
 
-	check( Delegate.IsBound() );
+	check ( Delegate.IsBound() );
 }
 
-ULFPInfomationAsync_ListenForWorldMessage* ULFPInfomationAsync_ListenForWorldMessage::ListenForWorldMessage( UObject* WorldContext , FGameplayTag TagChannel , const bool bExactOnly , const bool bOnlyTriggerOnce )
+ULFPInfomationAsync_ListenForWorldMessage* ULFPInfomationAsync_ListenForWorldMessage::ListenForWorldMessage ( UObject* WorldContext , FGameplayTag TagChannel , const bool bExactOnly , const bool bOnlyTriggerOnce )
 {
-	ULFPInfomationAsync_ListenForWorldMessage* MyObj = NewObject<ULFPInfomationAsync_ListenForWorldMessage>( WorldContext );
-	MyObj->TagChannel = TagChannel;
-	MyObj->bExactOnly = bExactOnly;
-	MyObj->bOnlyTriggerOnce = bOnlyTriggerOnce;
+	ULFPInfomationAsync_ListenForWorldMessage* MyObj = NewObject <ULFPInfomationAsync_ListenForWorldMessage> ( WorldContext );
+	MyObj->TagChannel                                = TagChannel;
+	MyObj->bExactOnly                                = bExactOnly;
+	MyObj->bOnlyTriggerOnce                          = bOnlyTriggerOnce;
 
-	MyObj->RegisterWithGameInstance( WorldContext );
+	MyObj->RegisterWithGameInstance ( WorldContext );
 
 	return MyObj;
 }
 
-void ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage( const FGameplayTag& Tag , UObject* Payload )
+void ULFPInfomationAsync_ListenForWorldMessage::BroadcastMessage ( const FGameplayTag& Tag , UObject* Payload )
 {
-	if ( ShouldBroadcastDelegates() == false )
+	if ( ShouldBroadcastDelegates ( ) == false )
 	{
-		Cancel();
+		Cancel ( );
 
 		return;
 	}
 
-	if ( bExactOnly && Tag.MatchesTagExact( TagChannel ) == false )
+	if ( bExactOnly && Tag.MatchesTagExact ( TagChannel ) == false )
 	{
 		return;
 	}
 
-	OnEvent.Broadcast( Payload );
+	OnEvent.Broadcast ( Payload );
 
 	if ( bOnlyTriggerOnce )
 	{
-		Cancel();
+		Cancel ( );
 	}
 }

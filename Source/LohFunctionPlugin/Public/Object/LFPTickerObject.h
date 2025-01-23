@@ -10,14 +10,17 @@ class ULFPIndexTickerComponent;
 /**
  * 
  */
-UCLASS(Blueprintable)
+UCLASS ( Blueprintable )
 class LOHFUNCTIONPLUGIN_API ULFPTickerObject : public UObject
 {
-	GENERATED_BODY()
-	
+	GENERATED_BODY ( )
+
 public:
 
-	UFUNCTION(BlueprintNativeEvent)
-		void OnExecute(const FIntPoint& TickGroup, const int32 TickIndex, ULFPIndexTickerComponent* Caller) const;
-		virtual void OnExecute_Implementation(const FIntPoint& TickGroup, const int32 TickIndex, ULFPIndexTickerComponent* Caller) const {}
+	UFUNCTION ( BlueprintNativeEvent )
+	void OnExecute ( const FIntPoint& TickGroup , const int32 TickIndex , ULFPIndexTickerComponent* Caller ) const;
+
+	virtual void OnExecute_Implementation ( const FIntPoint& TickGroup , const int32 TickIndex , ULFPIndexTickerComponent* Caller ) const
+	{
+	}
 };

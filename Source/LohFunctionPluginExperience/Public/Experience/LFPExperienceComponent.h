@@ -7,25 +7,27 @@
 //#include "ScalableFloat.h"
 #include "LFPExperienceComponent.generated.h"
 
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGINEXPERIENCE_API ULFPExperienceComponent : public UActorComponent
 {
-	GENERATED_BODY()
+	GENERATED_BODY ( )
 
-public:	
+public:
+
 	// Sets default values for this component's properties
-	ULFPExperienceComponent();
+	ULFPExperienceComponent ( );
 
 protected:
+
 	// Called when the game starts
-	virtual void BeginPlay() override;
+	virtual void BeginPlay ( ) override;
 
-public:	
+public:
+
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 
-public: // Getter
+	// Getter
 
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 	//	int32 GetCurrentLevel() const;
@@ -36,11 +38,8 @@ public: // Getter
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 	//	float GetCurrentLevelExperience() const;
 
-
 	//UFUNCTION(BlueprintPure, Category = "LFPInventoryComponent | Getter")
 	//	float GetExperienceAmount() const { return ExperienceAmount; }
-
-protected:
 
 	//UPROPERTY(EditAnywhere, Savegame, Category = "LFPExperienceComponent | Data")
 	//	FScalableFloat ExperienceAmount = 0.0f;

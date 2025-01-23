@@ -15,124 +15,140 @@ class ULFPInventoryComponent;
 /**
  * 
  */
-UCLASS(Blueprintable, Abstract, EditInlineNew)
+UCLASS ( Blueprintable , Abstract , EditInlineNew )
 class LOHFUNCTIONPLUGINITEM_API ULFPItemInventoryFunction : public UObject
 {
-	GENERATED_BODY()
+	GENERATED_BODY ( )
 
 public:
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps ( TArray <FLifetimeProperty>& OutLifetimeProps ) const override;
 
-	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+	virtual int32 GetFunctionCallspace ( UFunction* Function , FFrame* Stack ) override;
 
-	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
-	
-	virtual bool IsSupportedForNetworking() const override;
+	virtual bool CallRemoteFunction ( UFunction* Function , void* Parms , struct FOutParmRec* OutParms , FFrame* Stack ) override;
 
-public:
+	virtual bool IsSupportedForNetworking ( ) const override;
 
-	UFUNCTION()
-	virtual void InitializeComponent();
+	UFUNCTION ( )
+	virtual void InitializeComponent ( );
 
-	UFUNCTION()
-	virtual void UninitializeComponent() {};
+	UFUNCTION ( )
+	virtual void UninitializeComponent ( )
+	{
+	};
 
-	UFUNCTION()
-	virtual void Reset() {  };
+	UFUNCTION ( )
+	virtual void Reset ( )
+	{
+	};
 
-public:
-	
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanAddItem(const FLFPInventoryItem& ItemData) const;
-	virtual bool CanAddItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanAddItem ( const FLFPInventoryItem& ItemData ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanRemoveItem(const FLFPInventoryItem& ItemData) const;
-	virtual bool CanRemoveItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
+	virtual bool CanAddItem_Implementation ( const FLFPInventoryItem& ItemData ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanUpdateItem(const FLFPInventoryItem& ItemData) const;
-	virtual bool CanUpdateItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanRemoveItem ( const FLFPInventoryItem& ItemData ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanFindItem(const FLFPInventoryItem& ItemData) const;
-	virtual bool CanFindItem_Implementation(const FLFPInventoryItem& ItemData) const { return true; }
+	virtual bool CanRemoveItem_Implementation ( const FLFPInventoryItem& ItemData ) const { return true; }
 
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanUpdateItem ( const FLFPInventoryItem& ItemData ) const;
 
+	virtual bool CanUpdateItem_Implementation ( const FLFPInventoryItem& ItemData ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanAddItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
-	virtual bool CanAddItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanFindItem ( const FLFPInventoryItem& ItemData ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanRemoveItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
-	virtual bool CanRemoveItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
+	virtual bool CanFindItem_Implementation ( const FLFPInventoryItem& ItemData ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanSwapItemOnSlot(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
-	virtual bool CanSwapItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanAddItemOnSlot ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanMergeItemOnSlot(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
-	virtual bool CanMergeItemOnSlot_Implementation(const FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, const FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
+	virtual bool CanAddItemOnSlot_Implementation ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanTransferItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& ItemData) const;
-	virtual bool CanTransferItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& ItemData) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanRemoveItemOnSlot ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanUpdateItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
-	virtual bool CanUpdateItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
+	virtual bool CanRemoveItemOnSlot_Implementation ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanFindItemOnSlot(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const;
-	virtual bool CanFindItemOnSlot_Implementation(const FLFPInventoryIndex& InventoryIndex, const FLFPInventoryItem& CurrentData, const FLFPInventoryItem& ProcessData) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanSwapItemOnSlot ( const FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , const FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
+
+	virtual bool CanSwapItemOnSlot_Implementation ( const FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , const FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanMergeItemOnSlot ( const FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , const FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
+
+	virtual bool CanMergeItemOnSlot_Implementation ( const FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , const FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanTransferItemOnSlot ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& ItemData ) const;
+
+	virtual bool CanTransferItemOnSlot_Implementation ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& ItemData ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanUpdateItemOnSlot ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const;
+
+	virtual bool CanUpdateItemOnSlot_Implementation ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanFindItemOnSlot ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const;
+
+	virtual bool CanFindItemOnSlot_Implementation ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryItem& CurrentData , const FLFPInventoryItem& ProcessData ) const { return true; }
 
 	// Process Modifier
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessAddItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessAddItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessAddItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessRemoveItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessRemoveItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
+	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessSwapItem(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
-	virtual bool ProcessSwapItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessRemoveItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessMergeItem(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const;
-	virtual bool ProcessMergeItem_Implementation(UPARAM(ref) FLFPInventoryItem& FromItem, const FLFPInventoryIndex& FromIndex, UPARAM(ref) FLFPInventoryItem& ToItem, const FLFPInventoryIndex& ToIndex) const { return true; }
+	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const { return true; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessUpdateItem(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessUpdateItem_Implementation(UPARAM(ref) FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessSwapItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool ProcessFindItem(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const;
-	virtual bool ProcessFindItem_Implementation(const FLFPInventoryItem& ItemData, UPARAM(ref) FLFPInventoryItem& ProcessData, const FLFPInventoryIndex InventoryIndex) const { return true; }
+	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessMergeItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
+
+	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessUpdateItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const;
+
+	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessFindItem ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const;
+
+	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const { return true; }
 
 	// Categorize Modifier
 
-	UFUNCTION(BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	FGameplayTagContainer GetItemAllowSlotNameList(const FLFPInventoryItem& ItemData) const;
-	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation(const FLFPInventoryItem& ItemData) const { return FGameplayTagContainer(); }
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	FGameplayTagContainer GetItemAllowSlotNameList ( const FLFPInventoryItem& ItemData ) const;
+
+	virtual FGameplayTagContainer GetItemAllowSlotNameList_Implementation ( const FLFPInventoryItem& ItemData ) const { return FGameplayTagContainer ( ); }
 
 	// Sort Modifier
 
-	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanSlotNameBeSort(const FGameplayTag& SlotName) const;
-	virtual bool CanSlotNameBeSort_Implementation(const FGameplayTag& SlotName) const { return true; }
+	UFUNCTION ( BlueprintPure , BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanSlotNameBeSort ( const FGameplayTag& SlotName ) const;
 
-	UFUNCTION(BlueprintPure, BlueprintNativeEvent, Category = "LFPItemInventoryFunction | Modifier")
-	bool CanItemSortHigherThan(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const;
-	virtual bool CanItemSortHigherThan_Implementation(const FLFPInventoryItem& ItemDataA, const FLFPInventoryItem& ItemDataB, const FGameplayTag& SortTag) const { return true; }
+	virtual bool CanSlotNameBeSort_Implementation ( const FGameplayTag& SlotName ) const { return true; }
 
-public:
+	UFUNCTION ( BlueprintPure , BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool CanItemSortHigherThan ( const FLFPInventoryItem& ItemDataA , const FLFPInventoryItem& ItemDataB , const FGameplayTag& SortTag ) const;
 
-	UFUNCTION(BlueprintPure, Category = "LFPItemInventoryFunction | Getter")
-	ULFPInventoryComponent* GetOwner() const;
+	virtual bool CanItemSortHigherThan_Implementation ( const FLFPInventoryItem& ItemDataA , const FLFPInventoryItem& ItemDataB , const FGameplayTag& SortTag ) const { return true; }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPItemInventoryFunction | Getter" )
+	ULFPInventoryComponent* GetOwner ( ) const;
 };

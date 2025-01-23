@@ -5,9 +5,9 @@
 
 #include "LohFunctionPluginLibrary.h"
 
-FString ULohFunctionPluginLibrary::BufferToString( const TArray<uint8>& Buffer )
+FString ULohFunctionPluginLibrary::BufferToString ( const TArray <uint8>& Buffer )
 {
-	FMemoryReader StringRead( Buffer );
+	FMemoryReader StringRead ( Buffer );
 
 	FString OutString;
 
@@ -16,34 +16,33 @@ FString ULohFunctionPluginLibrary::BufferToString( const TArray<uint8>& Buffer )
 	return OutString;
 }
 
-TArray<uint8> ULohFunctionPluginLibrary::StringToBuffer( FString FromString )
+TArray <uint8> ULohFunctionPluginLibrary::StringToBuffer ( FString FromString )
 {
-	TArray<uint8> OutArray;
+	TArray <uint8> OutArray;
 
-	FMemoryWriter StringWriter( OutArray , false );
+	FMemoryWriter StringWriter ( OutArray , false );
 
 	StringWriter << FromString;
 
 	return OutArray;
 }
 
-bool ULohFunctionPluginLibrary::ContainPoint( const FLFPIntPointList& List , const int32 Index )
+bool ULohFunctionPluginLibrary::ContainPoint ( const FLFPIntPointList& List , const int32 Index )
 {
-	return List.ContainIndex( Index );
+	return List.ContainIndex ( Index );
 }
 
-void ULohFunctionPluginLibrary::AddPoint( UPARAM( ref )FLFPIntPointList& List , const FIntPoint Range )
+void ULohFunctionPluginLibrary::AddPoint ( UPARAM ( ref )FLFPIntPointList& List , const FIntPoint Range )
 {
-	List.Add( Range );
+	List.Add ( Range );
 }
 
-void ULohFunctionPluginLibrary::RemovePoint( UPARAM( ref )FLFPIntPointList& List , const FIntPoint Range )
+void ULohFunctionPluginLibrary::RemovePoint ( UPARAM ( ref )FLFPIntPointList& List , const FIntPoint Range )
 {
-	List.Remove( Range );
+	List.Remove ( Range );
 }
 
-FGameplayTag ULohFunctionPluginLibrary::GetGameplayTagFromName( const FName TagName )
+FGameplayTag ULohFunctionPluginLibrary::GetGameplayTagFromName ( const FName TagName )
 {
-	return FGameplayTag::RequestGameplayTag( TagName , false );
+	return FGameplayTag::RequestGameplayTag ( TagName , false );
 }
-
