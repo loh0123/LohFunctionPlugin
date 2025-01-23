@@ -8,6 +8,7 @@
 
 void ULFPItemInventoryFunction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	// Add any Blueprint properties
 	if (const UBlueprintGeneratedClass* BPClass = Cast<UBlueprintGeneratedClass>(GetClass()))
 	{
@@ -18,6 +19,7 @@ void ULFPItemInventoryFunction::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 int32 ULFPItemInventoryFunction::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 {
 	check(GetOuter() != nullptr);
+	
 	return GetOuter()->GetFunctionCallspace(Function, Stack);
 }
 
@@ -25,14 +27,14 @@ bool ULFPItemInventoryFunction::CallRemoteFunction(UFunction* Function, void* Pa
 {
 	check(!HasAnyFlags(RF_ClassDefaultObject));
 
-	UActorComponent* Owner = GetTypedOuter<UActorComponent>();
-	UNetDriver* NetDriver = Owner->GetOwner()->GetNetDriver();
+	const UActorComponent* Owner = GetTypedOuter<UActorComponent>();
 
-	if (NetDriver)
+	if (UNetDriver* NetDriver = Owner->GetOwner()->GetNetDriver())
 	{
 		NetDriver->ProcessRemoteFunction(Owner->GetOwner(), Function, Parms, OutParms, Stack, this);
 		return true;
 	}
+	
 	return false;
 }
 

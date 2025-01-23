@@ -6,7 +6,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/KismetStringLibrary.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
 #include "Library/LFPDynamicTypeLibrary.h"
@@ -155,7 +154,7 @@ public: // Checker
 	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
 	static bool ContainMetaData( const FLFPInventoryItem& Item , const FGameplayTag MetaTag );
 
-	/* Check Is Item Contain All Meta Data And Equal Or Bigger Than The Cost  */
+	/* Check Is Item Contain All Metadata And Equal Or Bigger Than The Cost  */
 	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
 	static bool CheckMetaDataCost( const FLFPInventoryItem& Item , const TMap<FGameplayTag , int32>& IntCostDataMap , const TMap<FGameplayTag , float>& FloatCostDataMap );
 
@@ -175,7 +174,7 @@ public: // Setter
 	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
 	static void SetItemTag( UPARAM( ref ) FLFPInventoryItem& Item , const FGameplayTag ItemTag );
 
-	/* Subtract The Cost From Item Meta Data */
+	/* Subtract The Cost From Item Metadata */
 	UFUNCTION( BlueprintCallable , Category = "LohFunctionPluginLibrary" )
 	static void ConsumeMetaDataCost( UPARAM( ref ) FLFPInventoryItem& Item , const TMap<FGameplayTag , int32>& IntCostDataMap , const TMap<FGameplayTag , float>& FloatCostDataMap );
 };

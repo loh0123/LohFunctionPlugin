@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "IPAddressAsyncResolve.h"
 #include "LFPStreamSocketSubsystem.generated.h"
 
 UENUM( BlueprintType )

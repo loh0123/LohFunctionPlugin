@@ -7,7 +7,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "JsonObjectWrapper.h"
 #include "GameplayTagContainer.h"
 #include "LFPItemFunctionLibrary.h"
 #include "LFPInventoryComponent.generated.h"

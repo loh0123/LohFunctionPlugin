@@ -267,8 +267,6 @@ bool ULFPInventoryComponent::ProcessSingleItemOperation(
 	const bool bUseMaxIndex
 ) const
 {
-	bool bIsSuccess = true;
-
 	if ( ItemData.IsValid() == false )
 	{
 		UE_LOG( LFPInventoryComponent , Warning , TEXT( "ProcessSingleItemOperation Skip Invalid Item" ) );
@@ -608,8 +606,6 @@ bool ULFPInventoryComponent::AddItemList( UPARAM( ref ) TArray<FLFPInventoryItem
 {
 	FGameplayTagContainer SearchSlotNameList = FGameplayTagContainer();
 
-	bool bIsSuccess = true;
-
 	for ( FLFPInventoryItem& ItemData : ItemDataList )
 	{
 		SearchSlotNameList.AppendTags( GetItemAllowSlotNameList( ItemData ) );
@@ -694,8 +690,6 @@ bool ULFPInventoryComponent::RemoveItem( UPARAM( ref ) FLFPInventoryItem& ItemDa
 bool ULFPInventoryComponent::RemoveItemList( UPARAM( ref )TArray<FLFPInventoryItem>& ItemDataList , const bool bMustFullyRemove , const FGameplayTag EventTag )
 {
 	FGameplayTagContainer SearchSlotNameList = FGameplayTagContainer();
-
-	bool bIsSuccess = true;
 
 	for ( FLFPInventoryItem& ItemData : ItemDataList )
 	{
@@ -1081,7 +1075,7 @@ void ULFPInventoryComponent::ClearInventoryBySlotName( UPARAM( meta = ( Categori
 {
 	if ( GetOwner()->GetLocalRole() != ROLE_Authority ) return; // Prevent this function to run on client
 
-	const bool bProcessSuccess = ProcessInventoryIndex(
+	ProcessInventoryIndex(
 		SlotNames ,
 		[&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex )
 		{
@@ -1639,7 +1633,7 @@ bool ULFPInventoryComponent::FindInventoryIndexList( TArray<FLFPInventoryIndex>&
 
 	const int32 CurrentAmount = InventoryIndexList.Num();
 
-	const bool bIsSuccess = ProcessSingleItemOperation(
+	ProcessSingleItemOperation(
 		InventorySlotNameList ,
 		ItemData ,
 		[&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex , FLFPInventoryItem& TargetItemData )
@@ -1663,7 +1657,7 @@ bool ULFPInventoryComponent::FindItemDataList( TArray<FLFPInventoryItem>& ItemDa
 
 	const int32 CurrentAmount = ItemDataList.Num();
 
-	const bool bIsSuccess = ProcessSingleItemOperation(
+	ProcessSingleItemOperation(
 		InventorySlotNameList ,
 		ItemData ,
 		[&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex , FLFPInventoryItem& TargetItemData )
@@ -1685,7 +1679,7 @@ bool ULFPInventoryComponent::FindInventoryIndexListByItemTag( TArray<FLFPInvento
 {
 	const int32 CurrentAmount = InventoryIndexList.Num();
 
-	const bool bIsSuccess = ProcessInventoryIndex(
+	ProcessInventoryIndex(
 		InventorySlotNameList ,
 		[&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex )
 		{
@@ -1705,7 +1699,7 @@ bool ULFPInventoryComponent::FindItemDataListByItemTag( TArray<FLFPInventoryItem
 {
 	const int32 CurrentAmount = ItemDataList.Num();
 
-	const bool bIsSuccess = ProcessInventoryIndex(
+	ProcessInventoryIndex(
 		InventorySlotNameList ,
 		[&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex )
 		{

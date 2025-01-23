@@ -157,8 +157,6 @@ TArray<int32> ULFPGridLibrary::RandomSectionGridIndex(const int32 Amount, const 
 
 	if (SectionSize.GetMin() <= 0) return ReturnData;
 
-	FIntVector Size = FIntVector(GridSize.X / SectionSize.X, GridSize.Y / SectionSize.Y, GridSize.Z / SectionSize.Z);
-
 	// Setup Unvist List
 	TArray<int32> UnVisit;
 	// Reserve List To Fill Faster

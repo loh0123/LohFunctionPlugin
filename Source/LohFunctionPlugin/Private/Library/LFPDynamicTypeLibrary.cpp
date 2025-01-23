@@ -24,7 +24,7 @@ bool ULFPDynamicTypeLibrary::SetID( UPARAM( ref )FLFPIDTrackerStaticArray& List 
 	return true;
 }
 
-int32 ULFPDynamicTypeLibrary::GetID( UPARAM( ref )FLFPIDTrackerStaticArray& List , const int32 Index )
+int32 ULFPDynamicTypeLibrary::GetID( const FLFPIDTrackerStaticArray& List , const int32 Index )
 {
 	if ( List.IsValidIndex( Index ) == false )
 	{

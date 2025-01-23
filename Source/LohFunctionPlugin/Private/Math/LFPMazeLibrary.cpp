@@ -6,7 +6,6 @@
 
 
 #include "Math/LFPMazeLibrary.h"
-#include <Runtime/Engine/Classes/Kismet/GameplayStatics.h>
 
 FLFPMazeTable ULFPMazeLibrary::CreateMazeStartData(const FIntVector MazeSize)
 {
@@ -68,6 +67,8 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
             case EMazeCellType::Maze_Open: UnVisitArray.Add(i);
                 break;
             case EMazeCellType::Maze_Room: RoomIndexs.Add(i);
+                break;
+            case EMazeCellType::Maze_Close:
                 break;
             }
 
@@ -201,6 +202,7 @@ bool ULFPMazeLibrary::GenerateMazeData(UPARAM(Ref)FLFPMazeTable& MazeTable, cons
                 MazeTable.MazeData[Item].OpenList.Add(ConnectIndex);
                 MazeTable.MazeData[ConnectIndex].OpenList.Add(Item);
                 break;
+            default: ;
             }
         }
     }

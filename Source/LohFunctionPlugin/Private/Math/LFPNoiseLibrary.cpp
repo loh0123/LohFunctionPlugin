@@ -32,7 +32,7 @@ float ULFPNoiseLibrary::GetFloatNoise(const FLFPNoiseTable& NoiseTable, const FI
 	const float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
 	const float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
-	const float Result = NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256];
+	const float Result = NoiseTable.NoiseData[static_cast<int32>((a + b + c) * 256) % 256];
 
 	return bRoundNoise ? FMath::RoundToFloat(Result) : Result;
 }
@@ -48,7 +48,7 @@ FVector ULFPNoiseLibrary::GetVectorNoise(const FLFPNoiseTable& NoiseTable, const
 	float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
 	float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
-	const FVector Result = FVector(NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256], NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 16) % 256], NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 32) % 256]);
+	const FVector Result = FVector(NoiseTable.NoiseData[static_cast<int32>((a + b + c) * 256) % 256], NoiseTable.NoiseData[(static_cast<int32>((a + b + c) * 256) + 16) % 256], NoiseTable.NoiseData[(static_cast<int32>((a + b + c) * 256) + 32) % 256]);
 
 	return bRoundNoise ? FVector(FMath::RoundToFloat(Result.X), FMath::RoundToFloat(Result.Y), FMath::RoundToFloat(Result.Z)) : Result;
 }
@@ -64,7 +64,7 @@ FVector ULFPNoiseLibrary::GetDirectionNoise(const FLFPNoiseTable& NoiseTable, co
 	float b = NoiseTable.NoiseData[((Location.Y < 0 ? 256 - FMath::Abs(Location.Y) : Location.Y) + 64) % 256];
 	float c = NoiseTable.NoiseData[((Location.Z < 0 ? 256 - FMath::Abs(Location.Z) : Location.Z) + 128) % 256];
 
-	const FRotator Result = FRotator(NoiseTable.NoiseData[((int32)((a + b + c) * 256)) % 256] * 360, NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 16) % 256] * 360, NoiseTable.NoiseData[((int32)((a + b + c) * 256) + 32) % 256] * 360);
+	const FRotator Result = FRotator(NoiseTable.NoiseData[static_cast<int32>((a + b + c) * 256) % 256] * 360, NoiseTable.NoiseData[(static_cast<int32>((a + b + c) * 256) + 16) % 256] * 360, NoiseTable.NoiseData[(static_cast<int32>((a + b + c) * 256) + 32) % 256] * 360);
 
 	return
 		UKismetMathLibrary::GetForwardVector(bRoundNoise ? FRotator(
@@ -77,7 +77,7 @@ FVector ULFPNoiseLibrary::GetDirectionNoise(const FLFPNoiseTable& NoiseTable, co
 		);
 }
 
-float ULFPNoiseLibrary::GetLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise)
+float ULFPNoiseLibrary::GetLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise)
 {
 	FIntVector StartLocation = FIntVector(FMath::TruncToInt(Location.X), FMath::TruncToInt(Location.Y), FMath::TruncToInt(Location.Z));
 	FVector AlphaLocation = FVector(Location.X - StartLocation.X, Location.Y - StartLocation.Y, Location.Z - StartLocation.Z);
@@ -90,7 +90,7 @@ float ULFPNoiseLibrary::GetLerpNoise(const FLFPNoiseTable& NoiseTable, const FVe
 	return FMath::Lerp(FMath::Lerp(Down, DownY, AlphaLocation.Y), FMath::Lerp(Up, UpY, AlphaLocation.Y), AlphaLocation.Z);
 }
 
-FVector ULFPNoiseLibrary::GetLerpVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise)
+FVector ULFPNoiseLibrary::GetLerpVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise)
 {
 	FIntVector StartLocation = FIntVector(FMath::TruncToInt(Location.X), FMath::TruncToInt(Location.Y), FMath::TruncToInt(Location.Z));
 	FVector AlphaLocation = FVector(Location.X - StartLocation.X, Location.Y - StartLocation.Y, Location.Z - StartLocation.Z);
@@ -103,7 +103,7 @@ FVector ULFPNoiseLibrary::GetLerpVectorNoise(const FLFPNoiseTable& NoiseTable, c
 	return FMath::Lerp(FMath::Lerp(Down, DownY, AlphaLocation.Y), FMath::Lerp(Up, UpY, AlphaLocation.Y), AlphaLocation.Z);
 }
 
-FVector ULFPNoiseLibrary::GetLerpDirectionNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise)
+FVector ULFPNoiseLibrary::GetLerpDirectionNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise)
 {
 	FIntVector StartLocation = FIntVector(FMath::TruncToInt(Location.X), FMath::TruncToInt(Location.Y), FMath::TruncToInt(Location.Z));
 	FVector AlphaLocation = FVector(Location.X - StartLocation.X, Location.Y - StartLocation.Y, Location.Z - StartLocation.Z);
@@ -116,7 +116,7 @@ FVector ULFPNoiseLibrary::GetLerpDirectionNoise(const FLFPNoiseTable& NoiseTable
 	return FMath::Lerp(FMath::Lerp(Down, DownY, AlphaLocation.Y), FMath::Lerp(Up, UpY, AlphaLocation.Y), AlphaLocation.Z);
 }
 
-float ULFPNoiseLibrary::MixLerpNoise(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable)
+float ULFPNoiseLibrary::MixLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable)
 {
 	float ReturnValue = 0.0f;
 
@@ -128,7 +128,7 @@ float ULFPNoiseLibrary::MixLerpNoise(const FLFPNoiseTable& NoiseTable, FVector L
 	return ReturnValue;
 }
 
-FVector ULFPNoiseLibrary::MixLerpVector(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable)
+FVector ULFPNoiseLibrary::MixLerpVector(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable)
 {
 	FVector ReturnValue = FVector(0.0f);
 
@@ -140,7 +140,7 @@ FVector ULFPNoiseLibrary::MixLerpVector(const FLFPNoiseTable& NoiseTable, FVecto
 	return ReturnValue;
 }
 
-FVector ULFPNoiseLibrary::MixLerpDirection(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable)
+FVector ULFPNoiseLibrary::MixLerpDirection(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable)
 {
 	FVector ReturnValue = FVector(0.0f);
 
@@ -152,13 +152,11 @@ FVector ULFPNoiseLibrary::MixLerpDirection(const FLFPNoiseTable& NoiseTable, FVe
 	return ReturnValue;
 }
 
-FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const bool IgnoreZ, const FVector Location, const bool bRoundSourceNoise)
+FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const bool IgnoreZ, const FVector& Location, const bool bRoundSourceNoise)
 {
 	FLFPNearbyVectorData Data;
 
 	FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
-
-	FVector Local = Location - FVector(GridLocation);
 
 	for (int32 Z = (IgnoreZ ? 0 : -1); Z <= (IgnoreZ ? 0 : 1); Z++)
 	for (int32 Y = -1; Y <= 1; Y++)
@@ -182,11 +180,9 @@ FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise(const FLFPNois
 	return Data;
 }
 
-void ULFPNoiseLibrary::GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool IgnoreZ, TArray<FLFPNearbyVectorData>& ReturnData, const bool bRoundSourceNoise)
+void ULFPNoiseLibrary::GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool IgnoreZ, TArray<FLFPNearbyVectorData>& ReturnData, const bool bRoundSourceNoise)
 {
 	FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
-
-	FVector Local = Location - FVector(GridLocation);
 
 	ReturnData.Empty(27);
 

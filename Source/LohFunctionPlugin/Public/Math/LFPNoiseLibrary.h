@@ -41,7 +41,7 @@ struct FLFPNearbyVectorData
 	GENERATED_USTRUCT_BODY()
 
 	FLFPNearbyVectorData() {}
-	FLFPNearbyVectorData(const float Dis, const FIntVector Vec, const FVector Point) : NearbyDistance(Dis), NearbyVector(Vec), NearbyPoint(Point) {}
+	FLFPNearbyVectorData(const float Dis, const FIntVector Vec, const FVector& Point) : NearbyDistance(Dis), NearbyVector(Vec), NearbyPoint(Point) {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
 		float NearbyDistance = -1.0f;
@@ -77,26 +77,26 @@ class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 		static FVector GetDirectionNoise(const FLFPNoiseTable& NoiseTable, const FIntVector Location, const bool bRoundNoise = false);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static float GetLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise = false);
+		static float GetLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise = false);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FVector GetLerpVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise = false);
+		static FVector GetLerpVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise = false);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FVector GetLerpDirectionNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool bRoundSourceNoise = false);
+		static FVector GetLerpDirectionNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool bRoundSourceNoise = false);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static float MixLerpNoise(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable);
+		static float MixLerpNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FVector MixLerpVector(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable);
+		static FVector MixLerpVector(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FVector MixLerpDirection(const FLFPNoiseTable& NoiseTable, FVector Location, const TArray<FLFPNoiseMixTable>& MixTable);
+		static FVector MixLerpDirection(const FLFPNoiseTable& NoiseTable, const FVector& Location, const TArray<FLFPNoiseMixTable>& MixTable);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static FLFPNearbyVectorData GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const bool IgnoreZ, const FVector Location, const bool bRoundSourceNoise = false);
+		static FLFPNearbyVectorData GetNearbySingleVectorNoise(const FLFPNoiseTable& NoiseTable, const bool IgnoreZ, const FVector& Location, const bool bRoundSourceNoise = false);
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-		static void GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector Location, const bool IgnoreZ, TArray<FLFPNearbyVectorData>& ReturnData, const bool bRoundSourceNoise = false);
+		static void GetNearbyVectorNoise(const FLFPNoiseTable& NoiseTable, const FVector& Location, const bool IgnoreZ, TArray<FLFPNearbyVectorData>& ReturnData, const bool bRoundSourceNoise = false);
 };

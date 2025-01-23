@@ -6,9 +6,6 @@
 
 
 #include "Render/LFPRenderLibrary.h"
-#include "./Math/LFPGridLibrary.h"
-#include "MeshCardRepresentation.h"
-#include "DistanceFieldAtlas.h"
 
 UTexture2D* ULFPRenderLibrary::CreateTexture2D(const FIntPoint Size, const TextureFilter Filter, const bool bSRGB)
 {
@@ -78,7 +75,7 @@ bool ULFPRenderLibrary::UpdateTexture2D(UTexture2D* Texture, uint8* Data, const 
 {
 	if (IsValid(Texture) == false) return false;
 
-	const int32 BufferSize = 4;
+	constexpr int32 BufferSize = 4;
 
 #if WITH_EDITOR
 	Texture->TemporarilyDisableStreaming();

@@ -57,7 +57,7 @@ private:
 
 	FORCEINLINE void ResizeBitArray( uint8 NewSize )
 	{
-		check( NewSize >= 0 );
+		check( NewSize >= static_cast<uint8>(0));
 
 		UE_LOG( LFPDynamicIntStaticArray , Log , TEXT( "FLFPCompactIntArray : Resize Bit To %d" ) , NewSize );
 
@@ -487,6 +487,7 @@ public:
 				return AsBoolean() ? "True" : "False";
 			case ELFPPrimitiveDataType::LFP_String:
 				return AsString();
+			default: ;
 		}
 
 		return FString();
@@ -723,7 +724,7 @@ public:
 	static bool SetID( UPARAM( ref ) FLFPIDTrackerStaticArray& List , const int32 Index , const int32 ID );
 
 	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
-	static int32 GetID( UPARAM( ref ) FLFPIDTrackerStaticArray& List , const int32 Index );
+	static int32 GetID( const FLFPIDTrackerStaticArray& List , const int32 Index );
 
 public:
 

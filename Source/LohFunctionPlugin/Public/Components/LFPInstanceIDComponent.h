@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
-#include "LohFunctionPluginLibrary.h"
 #include "LFPInstanceIDComponent.generated.h"
 
 class UInstancedStaticMeshComponent;
@@ -61,11 +60,11 @@ public:
 
 	FORCEINLINE bool RemoveInstanceAtIndex( const int32 InstanceIndex );
 
-	FORCEINLINE bool UpdateInstance( const int32 InstanceIndex , const FTransform& NewInstanceTransform , const bool bWorldSpace = false );
+	FORCEINLINE bool UpdateInstance( const int32 InstanceIndex , const FTransform& NewInstanceTransform , const bool bWorldSpace = false ) const;
 
-	FORCEINLINE bool SetCustomDataValue( const int32 InstanceIndex , const int32 CustomDataIndex , const float CustomDataValue );
+	FORCEINLINE bool SetCustomDataValue( const int32 InstanceIndex , const int32 CustomDataIndex , const float CustomDataValue ) const;
 
-	FORCEINLINE bool SetCustomData( const int32 InstanceIndex , const TArray<float>& InCustomData );
+	FORCEINLINE bool SetCustomData( const int32 InstanceIndex , const TArray<float>& InCustomData ) const;
 };
 
 UCLASS( ClassGroup = ( LFPlugin ) , meta = ( BlueprintSpawnableComponent ) )

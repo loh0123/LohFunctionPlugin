@@ -2,9 +2,7 @@
 
 
 #include "Components/LFPInstanceIDComponent.h"
-#include "Components/LFPWorldGrid.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "Math/LFPGridLibrary.h"
 
 
 bool FLFPInstanceGridMeshData::IsDataValid() const
@@ -45,7 +43,7 @@ bool FLFPInstanceGridMeshData::RemoveInstanceAtIndex( const int32 InstanceIndex 
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::UpdateInstance( const int32 InstanceIndex , const FTransform& NewInstanceTransform , const bool bWorldSpace )
+bool FLFPInstanceGridMeshData::UpdateInstance( const int32 InstanceIndex , const FTransform& NewInstanceTransform , const bool bWorldSpace ) const
 {
 	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
@@ -59,7 +57,7 @@ bool FLFPInstanceGridMeshData::UpdateInstance( const int32 InstanceIndex , const
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::SetCustomDataValue( const int32 InstanceIndex , const int32 CustomDataIndex , const float CustomDataValue )
+bool FLFPInstanceGridMeshData::SetCustomDataValue( const int32 InstanceIndex , const int32 CustomDataIndex , const float CustomDataValue ) const
 {
 	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 
@@ -73,7 +71,7 @@ bool FLFPInstanceGridMeshData::SetCustomDataValue( const int32 InstanceIndex , c
 	return true;
 }
 
-bool FLFPInstanceGridMeshData::SetCustomData( const int32 InstanceIndex , const TArray<float>& InCustomData )
+bool FLFPInstanceGridMeshData::SetCustomData( const int32 InstanceIndex , const TArray<float>& InCustomData ) const
 {
 	const auto TargetID = FindInstanceIDByIndex( InstanceIndex );
 

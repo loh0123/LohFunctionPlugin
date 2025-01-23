@@ -2,4 +2,3 @@
 
 
 #include "Object/LFPTickerObject.h"
-#include "Components/LFPIndexTickerComponent.h"

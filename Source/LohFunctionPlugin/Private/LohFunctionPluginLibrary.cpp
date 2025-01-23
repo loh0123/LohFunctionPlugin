@@ -4,8 +4,6 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 #include "LohFunctionPluginLibrary.h"
-#include "LohFunctionPlugin.h"
-#include "Misc/OutputDeviceNull.h"
 
 FString ULohFunctionPluginLibrary::BufferToString( const TArray<uint8>& Buffer )
 {

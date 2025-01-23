@@ -5,7 +5,7 @@ bool ULFPMarchingLibrary::GetMarchingIDBit( const uint8 MarchingID , const int32
 {
 	check( BitIndex >= 0 || BitIndex <= 7 );
 
-	return ( MarchingID & ( 1 << ( BitIndex & ( 8 - 1 ) ) ) ) != 0;
+	return ( MarchingID & 1 << ( BitIndex & 8 - 1 ) ) != 0;
 }
 
 void ULFPMarchingLibrary::SetMarchingIDBit( uint8& MarchingID , const int32 BitIndex , const bool bNewValue )
