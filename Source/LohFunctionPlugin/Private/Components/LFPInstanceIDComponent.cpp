@@ -197,9 +197,7 @@ bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& I
 		/* Same Instance So Just Update Transform */
 		if ( OccupationID == InstanceInfo.MeshIndex )
 		{
-			ISMData.UpdateInstance( InstanceInfo.InstanceIndex , InstanceInfo.Transform , InstanceInfo.bIsWorldSpace );
-
-			return true;
+			return ISMData.UpdateInstance( InstanceInfo.InstanceIndex , InstanceInfo.Transform , InstanceInfo.bIsWorldSpace );
 		}
 
 		/* Remove Operation */

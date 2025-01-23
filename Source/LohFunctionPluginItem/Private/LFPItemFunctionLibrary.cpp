@@ -75,7 +75,7 @@ FLFPPrimitiveData ULFPItemFunctionLibrary::GetMetaData( const FLFPInventoryItem&
 	return MetaData != nullptr ? *MetaData : FLFPPrimitiveData();
 }
 
-FGameplayTag ULFPItemFunctionLibrary::GetItemTag( UPARAM( ref )FLFPInventoryItem& Item )
+FGameplayTag ULFPItemFunctionLibrary::GetItemTag( const FLFPInventoryItem& Item )
 {
 	return Item.GetItemTag();
 }

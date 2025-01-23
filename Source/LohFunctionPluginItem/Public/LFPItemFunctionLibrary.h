@@ -164,7 +164,7 @@ public: // Getter
 	static FLFPPrimitiveData GetMetaData( const FLFPInventoryItem& Item , const FGameplayTag MetaTag );
 
 	UFUNCTION( BlueprintPure , Category = "LohFunctionPluginLibrary" )
-	static FGameplayTag GetItemTag( UPARAM( ref ) FLFPInventoryItem& Item );
+	static FGameplayTag GetItemTag( const FLFPInventoryItem& Item );
 
 public: // Setter
 

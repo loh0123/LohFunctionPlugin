@@ -1550,7 +1550,7 @@ bool ULFPInventoryComponent::CanItemSortHigherThan( const FLFPInventoryItem& Ite
 //}
 
 
-bool ULFPInventoryComponent::ContainItem( FLFPInventoryItem ItemData , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer InventorySlotNameList ) const
+bool ULFPInventoryComponent::ContainItem( FLFPInventoryItem ItemData , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer& InventorySlotNameList ) const
 {
 	if ( CanFindItem( ItemData ) == false ) return false;
 
@@ -1565,7 +1565,7 @@ bool ULFPInventoryComponent::ContainItem( FLFPInventoryItem ItemData , UPARAM( m
 	);
 }
 
-bool ULFPInventoryComponent::ContainItemList( const TArray<FLFPInventoryItem>& ItemDataList , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer InventorySlotNameList , const bool bPartially ) const
+bool ULFPInventoryComponent::ContainItemList( const TArray<FLFPInventoryItem>& ItemDataList , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer& InventorySlotNameList , const bool bPartially ) const
 {
 	for ( const auto& ItemData : ItemDataList )
 	{

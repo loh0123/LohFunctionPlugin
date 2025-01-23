@@ -16,8 +16,8 @@ struct FLFPIndexTickData
 public:
 
 	FLFPIndexTickData() {}
-	FLFPIndexTickData(const TSubclassOf<ULFPTickerObject> NewTicker) : Ticker(NewTicker), Delay(INDEX_NONE) {}
-	FLFPIndexTickData(const TSubclassOf<ULFPTickerObject> NewTicker, const int32 NewDelay) : Ticker(NewTicker), Delay(NewDelay) {}
+	FLFPIndexTickData(const TSubclassOf<ULFPTickerObject>& NewTicker) : Ticker(NewTicker) {}
+	FLFPIndexTickData(const TSubclassOf<ULFPTickerObject>& NewTicker, const int32 NewDelay) : Ticker(NewTicker), Delay(NewDelay) {}
 
 public:
 

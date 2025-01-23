@@ -8,7 +8,7 @@
 void ULFPWorldReferenceSubsystem::ProcessActorComponent(
 	const FGameplayTagContainer& CategoryGameplayTags ,
 	const FGameplayTagQuery& ComponentGameplayTagsQuery ,
-	const TFunctionRef<bool( ULFPTagReferenceComponent* FoundedComponent )> OnMatchComponentFounded
+	const TFunctionRef<bool( ULFPTagReferenceComponent* FoundedComponent )>& OnMatchComponentFounded
 ) const
 {
 	/* Find Component On ReferenceMap And Cache It */
@@ -185,7 +185,7 @@ bool ULFPWorldReferenceSubsystem::FindActorListByTagList(
 	const int32 OldAmount = ActorList.Num();
 
 	ProcessActorComponent( CategoryGameplayTags , ComponentGameplayTagsQuery ,
-						   [&] ( UActorComponent* FoundedComponent )
+						   [&] (const UActorComponent* FoundedComponent )
 						   {
 							   if ( IsValid( FoundedComponent->GetOwner() ) )
 							   {

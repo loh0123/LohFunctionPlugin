@@ -39,18 +39,18 @@ private:
 
 	/** Read / Write Bit Function */
 
-	FORCEINLINE FBitReference GetIndexRef( TArray<uint32>& GridIndexListRef , const int32 Index )
+	FORCEINLINE FBitReference GetIndexRef( const int32 Index )
 	{
 		return FBitReference(
-			GridIndexListRef.GetData()[ Index / NumBitsPerDWORD ] ,
+			DataList.GetData()[ Index / NumBitsPerDWORD ] ,
 			1 << ( Index & ( NumBitsPerDWORD - 1 ) )
 		);
 	}
 
-	FORCEINLINE FConstBitReference GetIndexConstRef( const TArray<uint32>& GridIndexListRef , const int32 Index ) const
+	FORCEINLINE FConstBitReference GetIndexConstRef( const int32 Index ) const
 	{
 		return FConstBitReference(
-			GridIndexListRef.GetData()[ Index / NumBitsPerDWORD ] ,
+			DataList.GetData()[ Index / NumBitsPerDWORD ] ,
 			1 << ( Index & ( NumBitsPerDWORD - 1 ) )
 		);
 	}
@@ -83,7 +83,7 @@ private:
 
 		ElementBitSize = NewSize;
 
-		const int32 ChuckBitSize = FMath::DivideAndRoundUp( IndexSize , uint32( 32 ) );
+		const int32 ChuckBitSize = FMath::DivideAndRoundUp( IndexSize , static_cast<uint32>(32) );
 
 		DataList.Init( 0 , ( NewSize * ChuckBitSize ) );
 
@@ -93,10 +93,14 @@ private:
 		{
 			for ( uint8 EncodeIndex = 0; EncodeIndex < OldElementBitSize; EncodeIndex++ )
 			{
-				const int32 OldBitIndex = int32( ( GridIndex * OldElementBitSize ) + EncodeIndex );
-				const int32 NewBitIndex = int32( ( GridIndex * ElementBitSize ) + EncodeIndex );
+				const int32 OldBitIndex = static_cast<int32>((GridIndex * OldElementBitSize) + EncodeIndex);
+				const int32 NewBitIndex = static_cast<int32>((GridIndex * ElementBitSize) + EncodeIndex);
 
-				GetIndexRef( DataList , NewBitIndex ) = GetIndexConstRef( OldDataList , OldBitIndex );
+				GetIndexRef( NewBitIndex ) = 
+					FConstBitReference(
+						OldDataList.GetData()[ OldBitIndex / NumBitsPerDWORD ] ,
+						1 << ( OldBitIndex & ( NumBitsPerDWORD - 1 ) )
+					);
 			}
 		}
 	}
@@ -115,7 +119,7 @@ public:
 
 	FORCEINLINE bool IsValidIndex( const int32 Index ) const
 	{
-		return Index >= 0 && Index < int32( IndexSize );
+		return Index >= 0 && Index < static_cast<int32>(IndexSize);
 	}
 
 	/** Resize Function */
@@ -145,7 +149,7 @@ public:
 		{
 			const int32 BitIndex = ( Index * ElementBitSize ) + EncodeIndex;
 
-			GetIndexRef( DataList , BitIndex ) = FConstBitReference( Number , 1 << EncodeIndex );
+			GetIndexRef( BitIndex ) = FConstBitReference( Number , 1 << EncodeIndex );
 		}
 	}
 
@@ -159,7 +163,7 @@ public:
 		{
 			const int32 BitIndex = ( Index * ElementBitSize ) + EncodeIndex;
 
-			FBitReference( OutIndex , 1 << EncodeIndex ) = GetIndexConstRef( DataList , BitIndex );
+			FBitReference( OutIndex , 1 << EncodeIndex ) = GetIndexConstRef( BitIndex );
 		}
 
 		return OutIndex;

@@ -453,7 +453,7 @@ public: // Slot Operation
 		SlotList[ SlotListIndex ].ClearEmptyItem();
 	}
 
-	FORCEINLINE void SortSlot( const FGameplayTagContainer& InventorySlotNameList , const TFunctionRef<bool( const FGameplayTag& SlotName )> SlotFunction , const TFunctionRef<bool( const FLFPInventoryItem& ItemDataA , const FLFPInventoryItem& ItemDataB )> Predicate , const FGameplayTag& EventTag )
+	FORCEINLINE void SortSlot( const FGameplayTagContainer& InventorySlotNameList , const TFunctionRef<bool( const FGameplayTag& SlotName )>& SlotFunction , const TFunctionRef<bool( const FLFPInventoryItem& ItemDataA , const FLFPInventoryItem& ItemDataB )>& Predicate , const FGameplayTag& EventTag )
 	{
 		for ( int32 SlotListIndex = 0; SlotListIndex < SlotList.Num(); SlotListIndex++ )
 		{
@@ -832,10 +832,10 @@ public:
 public:
 
 	UFUNCTION( BlueprintPure , Category = "LFPInventoryComponent | Function" )
-	bool ContainItem( FLFPInventoryItem ItemData , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer InventorySlotNameList ) const;
+	bool ContainItem( FLFPInventoryItem ItemData , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer& InventorySlotNameList ) const;
 
 	UFUNCTION( BlueprintPure , Category = "LFPInventoryComponent | Function" )
-	bool ContainItemList( const TArray<FLFPInventoryItem>& ItemDataList , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer InventorySlotNameList , const bool bPartially = false ) const;
+	bool ContainItemList( const TArray<FLFPInventoryItem>& ItemDataList , UPARAM( meta = ( Categories = "Item.SlotName" ) )const FGameplayTagContainer& InventorySlotNameList , const bool bPartially = false ) const;
 
 public:
 

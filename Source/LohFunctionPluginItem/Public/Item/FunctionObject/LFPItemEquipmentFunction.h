@@ -55,11 +55,11 @@ protected:
 
 public:
 
-	FORCEINLINE FLFPInventoryIndex GetInventoryIndex() const { return FLFPInventoryIndex(CurrentSelection, EquipmentSlotName); } const
+	FORCEINLINE FLFPInventoryIndex GetInventoryIndex() const { return FLFPInventoryIndex(CurrentSelection, EquipmentSlotName); }
 
-		FORCEINLINE FGameplayTag GetEquipmentSlotName() const { return EquipmentSlotName; } const
+	FORCEINLINE FGameplayTag GetEquipmentSlotName() const { return EquipmentSlotName; }
 
-		FORCEINLINE bool IsEquipmentSlotNameMatch(const FGameplayTag& Tag) const { return Tag.MatchesTag(EquipmentSlotName); }
+	FORCEINLINE bool IsEquipmentSlotNameMatch(const FGameplayTag& Tag) const { return Tag.MatchesTag(EquipmentSlotName); }
 
 	FORCEINLINE int32 GetCurrentSelection() const { return CurrentSelection; }
 

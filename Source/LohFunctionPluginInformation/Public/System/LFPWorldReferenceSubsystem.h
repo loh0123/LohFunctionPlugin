@@ -66,7 +66,7 @@ private:
 	FORCEINLINE void ProcessActorComponent(
 		const FGameplayTagContainer& CategoryGameplayTags ,
 		const FGameplayTagQuery& ComponentGameplayTagsQuery ,
-		const TFunctionRef<bool( ULFPTagReferenceComponent* FoundedComponent )> OnMatchComponentFounded
+		const TFunctionRef<bool( ULFPTagReferenceComponent* FoundedComponent )>& OnMatchComponentFounded
 	) const;
 
 public:

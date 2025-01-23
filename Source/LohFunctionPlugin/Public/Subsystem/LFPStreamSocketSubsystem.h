@@ -187,7 +187,25 @@ public:
 	FLFPStreamSocketPtrHandle MainSocket = FLFPStreamSocketPtrHandle();
 
 	UPROPERTY()
-	TArray<FLFPStreamSocketPtrHandle> ClientSocket = TArray<FLFPStreamSocketPtrHandle>();
+	TArray<FLFPStreamSocketPtrHandle> ClientSocketList = TArray<FLFPStreamSocketPtrHandle>();
+
+public:
+
+	FORCEINLINE bool TryInitializeSocket(ISocketSubsystem* SocketSubsystem, const TSharedRef<FInternetAddr>& Endpoint );
+
+	FORCEINLINE int32 TryConnectClient(ISocketSubsystem* SocketSubsystem);
+
+	FORCEINLINE bool TryReceiveClientData(const int32 ClientID, TArray<uint8>& ReceiveBuffer);
+
+	FORCEINLINE bool TryReceiveServerData(TArray<uint8>& ReceiveBuffer);
+
+	FORCEINLINE void PingSocketClient(TArray<int32>& ReconnectingClientIDList);
+
+	FORCEINLINE bool PingSocketServer();
+
+	FORCEINLINE void CleanUpClientSocket(ISocketSubsystem* SocketSubsystem,TArray<int32>& CloseClientIDList, const bool bForce = false);
+
+	FORCEINLINE bool CleanUpMainSocket(ISocketSubsystem* SocketSubsystem, const bool bForce = false);
 
 public:
 
@@ -198,7 +216,7 @@ public:
 
 	FORCEINLINE FLFPStreamSocketPtrHandle* GetClientSocketPtr( const int32 ClientID )
 	{
-		return ClientSocket.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
+		return ClientSocketList.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
 											 {
 												 return SocketPtrData.GetID() == ClientID;
 											 }
@@ -207,7 +225,7 @@ public:
 
 	FORCEINLINE const FLFPStreamSocketPtrHandle* GetClientSocketPtr( const int32 ClientID ) const
 	{
-		return ClientSocket.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
+		return ClientSocketList.FindByPredicate( [&] ( const FLFPStreamSocketPtrHandle& SocketPtrData )
 											 {
 												 return SocketPtrData.GetID() == ClientID;
 											 }
@@ -260,9 +278,7 @@ protected:
 
 protected:
 
-	FORCEINLINE void TryInitializeSocket( FLFPStreamSocketData& SocketData , const TSharedRef<FInternetAddr>& Endpoint );
-
-	FORCEINLINE void TryConnectClient( FLFPStreamSocketData& SocketData );
+	FORCEINLINE void TryConnectClient( FLFPStreamSocketData& SocketData ) const;
 
 	FORCEINLINE void TryReceiveClientData( FLFPStreamSocketData& SocketData ) const;
 
@@ -272,7 +288,7 @@ protected:
 
 	FORCEINLINE void PingSocketServer( FLFPStreamSocketData& SocketData ) const;
 
-	FORCEINLINE void CleanUpSocket( FLFPStreamSocketData& SocketData , const bool bForce = false );
+	FORCEINLINE void CleanUpSocket( FLFPStreamSocketData& SocketData , const bool bForce = false ) const;
 
 public:
 

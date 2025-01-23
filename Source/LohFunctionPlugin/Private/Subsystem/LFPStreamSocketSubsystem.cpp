@@ -6,6 +6,319 @@
 
 uint32 FLFPStreamSocketPtrHandle::GlobalID = 0;
 
+bool FLFPStreamSocketData::TryInitializeSocket(ISocketSubsystem* SocketSubsystem, const TSharedRef<FInternetAddr>& Endpoint)
+{
+	const FString MainDescription = SocketSetting.SocketDescription + FString( " : Main Socket" );
+
+	MainSocket = SocketSubsystem->CreateSocket( NAME_Stream , *MainDescription , Endpoint->GetProtocolType() );
+
+	if ( MainSocket.IsValid() == false )
+	{
+		MainSocket.State = ELFPStreamSocketState::LFP_Closing;
+
+		UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : %s : Main Socket create failed" ) , *MainDescription );
+
+		return false;
+	}
+
+	bool Error = false;
+
+	if ( IsListenServer() )
+	{
+		Error |=
+			!MainSocket.Socket->SetReuseAddr( SocketSetting.bSocketReusable ) ||
+			!MainSocket.Socket->SetRecvErr() ||
+			!MainSocket.Socket->Bind( Endpoint.Get() ) ||
+			!MainSocket.Socket->SetLinger( true , 3.0f ) ||
+			!MainSocket.Socket->SetNonBlocking( true ) ||
+			!MainSocket.Socket->SetNoDelay( SocketSetting.bNoDelay ) ||
+			!MainSocket.Socket->Listen( SocketSetting.MaxListenConnection );
+	}
+	else // Try To Connect Server On Initialize
+	{
+		Error |=
+			!MainSocket.Socket->SetRecvErr() ||
+			!MainSocket.Socket->SetLinger( true , 3.0f ) ||
+			!MainSocket.Socket->SetNonBlocking( true ) ||
+			!MainSocket.Socket->SetNoDelay( SocketSetting.bNoDelay ) ||
+			!MainSocket.Socket->Connect( Endpoint.Get() );
+	}
+
+	if ( Error )
+	{
+		UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : %s : Main Socket ( %d ) create failed as configured" ) , *MainDescription , MainSocket.GetID() );
+
+		MainSocket.State = ELFPStreamSocketState::LFP_Closing;
+
+		return false;
+	}
+	
+	UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Currently On %s " ) , MainSocket.GetID() , IsListenServer() ? TEXT( "Listening" ) : TEXT( "Connected" ) );
+
+	MainSocket.MarkActive( SocketSetting.TimeOutSecond );
+
+	int32 OutNewSize;
+
+	if ( SocketSetting.BufferReadSize > 0 && MainSocket.Socket->SetReceiveBufferSize( SocketSetting.BufferReadSize , OutNewSize ) )
+	{
+		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Read Buffer Size %d " ) , MainSocket.GetID() , OutNewSize );
+	}
+
+	if ( SocketSetting.BufferWriteSize > 0 && MainSocket.Socket->SetSendBufferSize( SocketSetting.BufferWriteSize , OutNewSize ) )
+	{
+		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Write Buffer Size %d " ) , MainSocket.GetID() , OutNewSize );
+	}
+
+	bInitialized = true; // All normal pass
+
+	return true;
+}
+
+int32 FLFPStreamSocketData::TryConnectClient(ISocketSubsystem* SocketSubsystem)
+{
+	if ( bool bHasPendingConnection = false; MainSocket.Socket->HasPendingConnection( bHasPendingConnection ) && bHasPendingConnection )
+	{
+		const FString ConnectDescription = SocketSetting.SocketDescription + FString::Printf( TEXT( " : Client Socket ID ( %d )" ) , FLFPStreamSocketPtrHandle::GetNextID() );
+
+		TSharedRef<FInternetAddr> Addr = SocketSubsystem->CreateInternetAddr();
+
+		FSocket* NewSocket = MainSocket.Socket->Accept( *Addr , ConnectDescription );
+
+		if ( NewSocket != nullptr )
+		{
+			NewSocket->SetRecvErr();
+			NewSocket->SetNonBlocking();
+			NewSocket->SetNoDelay( SocketSetting.bNoDelay );
+
+			UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Connected Client ( %s ) On Socket ( %d ) : Addr ( %s )" ) , *ConnectDescription , MainSocket.GetID() , *( Addr.Get().ToString( true ) ) );
+
+			return ClientSocketList.Add_GetRef( NewSocket ).GetID();
+		}
+		else
+		{
+			UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Connect Fail Client ( %s ) On Socket ( %d ) : Addr ( %s )" ) , *ConnectDescription , MainSocket.GetID() , *( Addr.Get().ToString( true ) ) );
+		}
+	}
+
+	return INDEX_NONE;
+}
+
+bool FLFPStreamSocketData::TryReceiveClientData(const int32 ClientID, TArray<uint8>& ReceiveBuffer)
+{
+	FLFPStreamSocketPtrHandle& ClientSocket = ClientSocketList[ ClientID ];
+
+	/** Socket is not valid */
+	if ( ClientSocket.IsValid() == false || ClientSocket.IsClosing() ) return false;
+
+	uint32 MinBufferNeeded = ClientSocket.IsIncomingPackage() ? ClientSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
+
+	/** Is data available ? */
+	if ( uint32 BufferSize = 0; ClientSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
+	{
+		ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
+
+		if (int32 ReadBytes = 0; ClientSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBytes ) )
+		{
+			ClientSocket.MarkActive( SocketSetting.TimeOutSecond );
+
+			if ( ClientSocket.IsIncomingPackage() )
+			{
+				ClientSocket.State = ELFPStreamSocketState::LFP_Idle;
+
+				return true;
+			}
+			else
+			{
+				FMemoryReader PkgReader( ReceiveBuffer );
+
+				FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &ClientSocket.CurrentPackageInfo );
+
+				if ( ClientSocket.CurrentPackageInfo.PackageSize > 0 )
+				{
+					ClientSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+bool FLFPStreamSocketData::TryReceiveServerData(TArray<uint8>& ReceiveBuffer)
+{
+	if ( MainSocket.IsValid() == false || MainSocket.IsClosing() )
+	{
+		return false;
+	}
+
+	uint32 MinBufferNeeded = MainSocket.IsIncomingPackage() ? MainSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
+
+	if ( uint32 BufferSize = 0; MainSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
+	{
+		ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
+
+		if (int32 ReadBytes = 0; MainSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBytes ) )
+		{
+			MainSocket.MarkActive( SocketSetting.TimeOutSecond );
+
+			if ( MainSocket.IsIncomingPackage() )
+			{
+				MainSocket.State = ELFPStreamSocketState::LFP_Idle;
+
+				return true;
+			}
+			else
+			{
+				FMemoryReader PkgReader( ReceiveBuffer );
+
+				FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &MainSocket.CurrentPackageInfo );
+
+				if ( MainSocket.CurrentPackageInfo.PackageSize > 0 )
+				{
+					MainSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void FLFPStreamSocketData::PingSocketClient(TArray<int32>& ReconnectingClientIDList)
+{
+	TArray<uint8> PkgData;
+	{
+		FLFPStreamSocketPackageInfo PkgInfo;
+
+		PkgInfo.PackageSize = 0;
+
+		FMemoryWriter PkgWriter( PkgData , false );
+
+		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+	}
+
+	for ( FLFPStreamSocketPtrHandle& SocketPtr : ClientSocketList )
+	{
+		if ( SocketPtr.IsValid() == false || SocketPtr.IsClosing() || SocketPtr.IsActive() )
+		{
+			continue;
+		}
+
+		SocketPtr.MarkActive( SocketSetting.PingInterval );
+
+		if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
+		{
+			SocketPtr.CurrentPingFailedAttempt = 0;
+		}
+		else
+		{
+			SocketPtr.CurrentPingFailedAttempt += 1;
+
+			if ( SocketPtr.CurrentPingFailedAttempt >= SocketSetting.MaxReconnectAttempt )
+			{
+				SocketPtr.State = ELFPStreamSocketState::LFP_Closing;
+			}
+			else
+			{
+				UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Reconnecting Client ( %d ) On Socket ( %d )" ) , SocketPtr.GetID() , MainSocket.GetID() );
+
+				ReconnectingClientIDList.Add(SocketPtr.GetID());
+			}
+		}
+	}
+}
+
+bool FLFPStreamSocketData::PingSocketServer()
+{
+	if ( MainSocket.Socket->GetConnectionState() != ESocketConnectionState::SCS_Connected )
+	{
+		return false;
+	}
+
+	TArray<uint8> PkgData;
+	{
+		FLFPStreamSocketPackageInfo PkgInfo;
+
+		PkgInfo.PackageSize = 0;
+
+		FMemoryWriter PkgWriter( PkgData , false );
+
+		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+	}
+
+	FLFPStreamSocketPtrHandle& SocketPtr = MainSocket;
+
+	if ( SocketPtr.IsValid() == false || SocketPtr.IsClosing() || SocketPtr.IsActive() )
+	{
+		return false;
+	}
+
+	SocketPtr.MarkActive( SocketSetting.PingInterval );
+
+	if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
+	{
+		SocketPtr.CurrentPingFailedAttempt = 0;
+	}
+	else
+	{
+		SocketPtr.CurrentPingFailedAttempt += 1;
+
+		if ( SocketPtr.CurrentPingFailedAttempt >= SocketSetting.MaxReconnectAttempt )
+		{
+			SocketPtr.State = ELFPStreamSocketState::LFP_Closing;
+		}
+		else
+		{
+			UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Reconnecting On Socket ( %d )" ) , SocketPtr.GetID() );
+
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void FLFPStreamSocketData::CleanUpClientSocket(ISocketSubsystem* SocketSubsystem, TArray<int32>& CloseClientIDList,const bool bForce)
+{
+	CloseClientIDList.Empty(ClientSocketList.Num());
+	
+	for ( int32 ClientIndex = 0; ClientIndex < ClientSocketList.Num(); ClientIndex++ )
+	{
+		FLFPStreamSocketPtrHandle& ClientSocket = ClientSocketList[ ClientIndex ];
+
+		if ( ClientSocket.IsValid() == false || ( ClientSocket.IsClosing() == false && bForce == false ) )
+		{
+			continue;
+		}
+
+		SocketSubsystem->DestroySocket( ClientSocket.Socket );
+
+		ClientSocket.Socket = nullptr;
+
+		CloseClientIDList.Add(ClientIndex);
+
+		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Client %d From Socket %d On Code ( %d )" ) , ClientSocket.GetID() , MainSocket.GetID() , ClientSocket.LastBtyeSendOrReceive );
+	}
+
+	ClientSocketList.RemoveAll( [&] ( const FLFPStreamSocketPtrHandle& ClientSocket ) { return ClientSocket.IsValid() == false; } );
+}
+
+bool FLFPStreamSocketData::CleanUpMainSocket(ISocketSubsystem* SocketSubsystem, const bool bForce)
+{
+	if ( MainSocket.IsValid() && ( MainSocket.IsClosing() || bForce ) )
+	{
+		SocketSubsystem->DestroySocket( MainSocket.Socket );
+
+		MainSocket.Socket = nullptr;
+
+		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Socket %d On Code ( %d )" ) , MainSocket.GetID() , MainSocket.LastBtyeSendOrReceive );
+
+		return true;
+	}
+
+	return false;
+}
+
 void ULFPStreamSocketSubsystem::Initialize( FSubsystemCollectionBase& Collection )
 {
 	Super::Initialize( Collection );
@@ -48,28 +361,30 @@ void ULFPStreamSocketSubsystem::Tick( float DeltaTime )
 			continue;
 		}
 
+		const int32 SocketID = SocketData.MainSocket.GetID();
+
 		// Is Server
 		if ( SocketData.IsListenServer() )
 		{
-			TryConnectClient( SocketData );
+			TryConnectClient(SocketData);
 
-			TryReceiveClientData( SocketData );
+			TryReceiveClientData(SocketData);
 
-			PingSocketClient( SocketData );
+			PingSocketClient(SocketData);
 		}
 		else
 		{
-			TryReceiveServerData( SocketData );
+			TryConnectClient(SocketData);
 
-			PingSocketServer( SocketData );
+			PingSocketClient(SocketData);
 		}
 	}
 
 	SocketList.RemoveAll( [&] ( FLFPStreamSocketData& SocketData )
 						  {
-							  CleanUpSocket( SocketData );
+								CleanUpSocket(SocketData);
 
-							  return SocketData.MainSocket.IsValid() == false;
+								return SocketData.MainSocket.IsValid() == false;
 						  }
 	);
 }
@@ -143,311 +458,70 @@ const FLFPStreamSocketPtrHandle* ULFPStreamSocketSubsystem::GetSocketPtr( const 
 	return nullptr;
 }
 
-void ULFPStreamSocketSubsystem::TryInitializeSocket( FLFPStreamSocketData& SocketData , const TSharedRef<FInternetAddr>& Endpoint )
+void ULFPStreamSocketSubsystem::TryConnectClient(FLFPStreamSocketData& SocketData) const
 {
-	const FString MainDescription = SocketData.SocketSetting.SocketDescription + FString( " : Main Socket" );
-
-	SocketData.MainSocket = SocketSubsystem->CreateSocket( NAME_Stream , *MainDescription , Endpoint->GetProtocolType() );
-
-	if ( SocketData.MainSocket.IsValid() == false )
+	if (const int32 NewClientID = SocketData.TryConnectClient(SocketSubsystem); NewClientID != INDEX_NONE )
 	{
-		SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Closing;
-
-		UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : %s : Main Socket create failed" ) , *MainDescription );
-
-		return;
+		OnConnected.Broadcast(SocketData.MainSocket.GetID(), NewClientID);
 	}
-
-	bool Error = false;
-
-	if ( SocketData.IsListenServer() )
-	{
-		Error |=
-			!SocketData.MainSocket.Socket->SetReuseAddr( SocketData.SocketSetting.bSocketReusable ) ||
-			!SocketData.MainSocket.Socket->SetRecvErr() ||
-			!SocketData.MainSocket.Socket->Bind( Endpoint.Get() ) ||
-			!SocketData.MainSocket.Socket->SetLinger( true , 3.0f ) ||
-			!SocketData.MainSocket.Socket->SetNonBlocking( true ) ||
-			!SocketData.MainSocket.Socket->SetNoDelay( SocketData.SocketSetting.bNoDelay ) ||
-			!SocketData.MainSocket.Socket->Listen( SocketData.SocketSetting.MaxListenConnection );
-	}
-	else // Try Connect To Server On Initialize
-	{
-		Error |=
-			!SocketData.MainSocket.Socket->SetRecvErr() ||
-			!SocketData.MainSocket.Socket->SetLinger( true , 3.0f ) ||
-			!SocketData.MainSocket.Socket->SetNonBlocking( true ) ||
-			!SocketData.MainSocket.Socket->SetNoDelay( SocketData.SocketSetting.bNoDelay ) ||
-			!SocketData.MainSocket.Socket->Connect( Endpoint.Get() );
-	}
-
-	if ( Error )
-	{
-		UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : %s : Main Socket ( %d ) create failed as configured" ) , *MainDescription , SocketData.MainSocket.GetID() );
-
-		SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Closing;
-	}
-	else
-	{
-		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Currently On %s " ) , SocketData.MainSocket.GetID() , SocketData.IsListenServer() ? TEXT( "Listening" ) : TEXT( "Connected" ) );
-
-		SocketData.MainSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
-
-		int32 OutNewSize;
-
-		if ( SocketData.SocketSetting.BufferReadSize > 0 && SocketData.MainSocket.Socket->SetReceiveBufferSize( SocketData.SocketSetting.BufferReadSize , OutNewSize ) )
-		{
-			UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Read Buffer Size %d " ) , SocketData.MainSocket.GetID() , OutNewSize );
-		}
-
-		if ( SocketData.SocketSetting.BufferWriteSize > 0 && SocketData.MainSocket.Socket->SetSendBufferSize( SocketData.SocketSetting.BufferWriteSize , OutNewSize ) )
-		{
-			UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Main Socket ( %d ) Write Buffer Size %d " ) , SocketData.MainSocket.GetID() , OutNewSize );
-		}
-	}
-
-	SocketData.bInitialized = true; // All normal pass
 }
 
-void ULFPStreamSocketSubsystem::TryConnectClient( FLFPStreamSocketData& SocketData )
+void ULFPStreamSocketSubsystem::TryReceiveClientData(FLFPStreamSocketData& SocketData) const
 {
-	if ( bool bHasPendingConnection = false; SocketData.MainSocket.Socket->HasPendingConnection( bHasPendingConnection ) && bHasPendingConnection )
+	for ( int32 ClientID = 0; ClientID < SocketData.ClientSocketList.Num(); ClientID++ )
 	{
-		const FString ConnectDescription = SocketData.SocketSetting.SocketDescription + FString::Printf( TEXT( " : Client Socket ID ( %d )" ) , FLFPStreamSocketPtrHandle::GetNextID() );
-
-		TSharedRef<FInternetAddr> Addr = SocketSubsystem->CreateInternetAddr();
-
-		FSocket* NewSocket = SocketData.MainSocket.Socket->Accept( *Addr , ConnectDescription );
-
-		if ( NewSocket != nullptr )
+		if (TArray<uint8> ReceiveDataList; SocketData.TryReceiveClientData(ClientID,ReceiveDataList))
 		{
-			NewSocket->SetRecvErr();
-			NewSocket->SetNonBlocking();
-			NewSocket->SetNoDelay( SocketData.SocketSetting.bNoDelay );
-
-			OnConnected.Broadcast( SocketData.MainSocket.GetID() , SocketData.ClientSocket.Add_GetRef( NewSocket ).GetID() );
-
-			UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Connected Client ( %s ) On Socket ( %d ) : Addr ( %s )" ) , *ConnectDescription , SocketData.MainSocket.GetID() , *( Addr.Get().ToString( true ) ) );
-		}
-		else
-		{
-			UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Connect Fail Client ( %s ) On Socket ( %d ) : Addr ( %s )" ) , *ConnectDescription , SocketData.MainSocket.GetID() , *( Addr.Get().ToString( true ) ) );
+			OnDataReceived.Broadcast(SocketData.MainSocket.GetID(), ClientID, ReceiveDataList);
 		}
 	}
 }
 
-void ULFPStreamSocketSubsystem::TryReceiveClientData( FLFPStreamSocketData& SocketData ) const
+void ULFPStreamSocketSubsystem::TryReceiveServerData(FLFPStreamSocketData& SocketData) const
 {
-	for ( int32 ClientIndex = 0; ClientIndex < SocketData.ClientSocket.Num(); ClientIndex++ )
+	if (TArray<uint8> ReceiveDataList; SocketData.TryReceiveServerData(ReceiveDataList))
 	{
-		FLFPStreamSocketPtrHandle& ClientSocket = SocketData.ClientSocket[ ClientIndex ];
-
-		/** Socket is not valid */
-		if ( ClientSocket.IsValid() == false || ClientSocket.IsClosing() ) continue;
-
-		uint32 MinBufferNeeded = ClientSocket.IsIncomingPackage() ? ClientSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
-
-		/** Is data available ? */
-		if ( uint32 BufferSize = 0; ClientSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
-		{
-			TArray<uint8> ReceiveBuffer;
-
-			ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
-
-			int32 ReadBytes = 0;
-
-			if ( ClientSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBytes ) )
-			{
-				ClientSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
-
-				if ( ClientSocket.IsIncomingPackage() )
-				{
-					OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ReceiveBuffer );
-
-					ClientSocket.State = ELFPStreamSocketState::LFP_Idle;
-				}
-				else
-				{
-					FMemoryReader PkgReader( ReceiveBuffer );
-
-					FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &ClientSocket.CurrentPackageInfo );
-
-					if ( ClientSocket.CurrentPackageInfo.PackageSize > 0 )
-					{
-						ClientSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
-					}
-				}
-			}
-		}
+		OnDataReceived.Broadcast(SocketData.MainSocket.GetID(), INDEX_NONE, ReceiveDataList);
 	}
 }
 
-void ULFPStreamSocketSubsystem::TryReceiveServerData( FLFPStreamSocketData& SocketData ) const
+void ULFPStreamSocketSubsystem::PingSocketClient(FLFPStreamSocketData& SocketData) const
 {
-	if ( SocketData.MainSocket.IsValid() == false || SocketData.MainSocket.IsClosing() )
+	TArray<int32> ReconnectingClientIDList;
+
+	SocketData.PingSocketClient(ReconnectingClientIDList);
+
+	for (const int32 ReconnectingClientID : ReconnectingClientIDList)
 	{
-		return;
-	}
-
-	uint32 MinBufferNeeded = SocketData.MainSocket.IsIncomingPackage() ? SocketData.MainSocket.CurrentPackageInfo.PackageSize : sizeof( FLFPStreamSocketPackageInfo );
-
-	if ( uint32 BufferSize = 0; SocketData.MainSocket.Socket->HasPendingData( BufferSize ) && BufferSize >= MinBufferNeeded )
-	{
-		TArray<uint8> ReceiveBuffer;
-
-		ReceiveBuffer.SetNumUninitialized( MinBufferNeeded );
-
-		int32 ReadBtyes = 0;
-
-		if ( SocketData.MainSocket.Socket->Recv( ReceiveBuffer.GetData() , ReceiveBuffer.Num() , ReadBtyes ) )
-		{
-			SocketData.MainSocket.MarkActive( SocketData.SocketSetting.TimeOutSecond );
-
-			if ( SocketData.MainSocket.IsIncomingPackage() )
-			{
-				OnDataReceived.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ReceiveBuffer );
-
-				SocketData.MainSocket.State = ELFPStreamSocketState::LFP_Idle;
-			}
-			else
-			{
-				FMemoryReader PkgReader( ReceiveBuffer );
-
-				FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgReader , &SocketData.MainSocket.CurrentPackageInfo );
-
-				if ( SocketData.MainSocket.CurrentPackageInfo.PackageSize > 0 )
-				{
-					SocketData.MainSocket.State = ELFPStreamSocketState::LFP_IncomingPkg;
-				}
-			}
-		}
+		OnReconnecting.Broadcast(SocketData.MainSocket.GetID(), ReconnectingClientID);
 	}
 }
 
-void ULFPStreamSocketSubsystem::PingSocketClient( FLFPStreamSocketData& SocketData ) const
+void ULFPStreamSocketSubsystem::PingSocketServer(FLFPStreamSocketData& SocketData) const
 {
-	TArray<uint8> PkgData;
+	if (SocketData.PingSocketServer() == false)
 	{
-		FLFPStreamSocketPackageInfo PkgInfo;
-
-		PkgInfo.PackageSize = 0;
-
-		FMemoryWriter PkgWriter( PkgData , false );
-
-		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
-	}
-
-	for ( FLFPStreamSocketPtrHandle& SocketPtr : SocketData.ClientSocket )
-	{
-		if ( SocketPtr.IsValid() == false || SocketPtr.IsClosing() || SocketPtr.IsActive() )
-		{
-			continue;
-		}
-
-		SocketPtr.MarkActive( SocketData.SocketSetting.PingInterval );
-
-		if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
-		{
-			SocketPtr.CurrentPingFailedAttempt = 0;
-		}
-		else
-		{
-			SocketPtr.CurrentPingFailedAttempt += 1;
-
-			if ( SocketPtr.CurrentPingFailedAttempt >= SocketData.SocketSetting.MaxReconnectAttempt )
-			{
-				SocketPtr.State = ELFPStreamSocketState::LFP_Closing;
-			}
-			else
-			{
-				UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Reconnecting Client ( %d ) On Socket ( %d )" ) , SocketPtr.GetID() , SocketData.MainSocket.GetID() );
-
-				OnReconnecting.Broadcast( SocketData.MainSocket.GetID() , SocketPtr.GetID() );
-			}
-		}
+		OnReconnecting.Broadcast(SocketData.MainSocket.GetID(), INDEX_NONE);
 	}
 }
 
-void ULFPStreamSocketSubsystem::PingSocketServer( FLFPStreamSocketData& SocketData ) const
+void ULFPStreamSocketSubsystem::CleanUpSocket(FLFPStreamSocketData& SocketData, const bool bForce) const
 {
-	if ( SocketData.MainSocket.Socket->GetConnectionState() != ESocketConnectionState::SCS_Connected )
+	const int32 SocketID = SocketData.MainSocket.GetID();
+
+	if (SocketData.CleanUpMainSocket(SocketSubsystem, bForce))
 	{
-		return;
+		OnDisconnected.Broadcast(SocketID, INDEX_NONE, ELFPStreamDisconnectFlags::LFP_User);
 	}
 
-	TArray<uint8> PkgData;
+	TArray<int32> CloseClientIDList;
+								
+	SocketData.CleanUpClientSocket(SocketSubsystem, CloseClientIDList, bForce);
+								
+	for (const int32 CloseClientID : CloseClientIDList)
 	{
-		FLFPStreamSocketPackageInfo PkgInfo;
-
-		PkgInfo.PackageSize = 0;
-
-		FMemoryWriter PkgWriter( PkgData , false );
-
-		FLFPStreamSocketPackageInfo::StaticStruct()->SerializeBin( PkgWriter , &PkgInfo );
+		OnDisconnected.Broadcast(SocketID, CloseClientID, ELFPStreamDisconnectFlags::LFP_User);
 	}
-
-	FLFPStreamSocketPtrHandle& SocketPtr = SocketData.MainSocket;
-
-	if ( SocketPtr.IsValid() == false || SocketPtr.IsClosing() || SocketPtr.IsActive() )
-	{
-		return;
-	}
-
-	SocketPtr.MarkActive( SocketData.SocketSetting.PingInterval );
-
-	if ( SocketPtr.Socket->Send( PkgData.GetData() , PkgData.Num() , SocketPtr.LastBtyeSendOrReceive ) )
-	{
-		SocketPtr.CurrentPingFailedAttempt = 0;
-	}
-	else
-	{
-		SocketPtr.CurrentPingFailedAttempt += 1;
-
-		if ( SocketPtr.CurrentPingFailedAttempt >= SocketData.SocketSetting.MaxReconnectAttempt )
-		{
-			SocketPtr.State = ELFPStreamSocketState::LFP_Closing;
-		}
-		else
-		{
-			UE_LOG( LogTemp , Warning , TEXT( "ULFPStreamSocketSubsystem : Reconnecting On Socket ( %d )" ) , SocketPtr.GetID() );
-
-			OnReconnecting.Broadcast( SocketPtr.GetID() , INDEX_NONE );
-		}
-	}
-}
-
-void ULFPStreamSocketSubsystem::CleanUpSocket( FLFPStreamSocketData& SocketData , const bool bForce )
-{
-	if ( SocketData.MainSocket.IsValid() && ( SocketData.MainSocket.IsClosing() || bForce ) )
-	{
-		SocketSubsystem->DestroySocket( SocketData.MainSocket.Socket );
-
-		SocketData.MainSocket.Socket = nullptr;
-
-		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , INDEX_NONE , ELFPStreamDisconnectFlags::LFP_User );
-
-		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Socket %d On Code ( %d )" ) , SocketData.MainSocket.GetID() , SocketData.MainSocket.LastBtyeSendOrReceive );
-	}
-
-	for ( int32 ClientIndex = 0; ClientIndex < SocketData.ClientSocket.Num(); ClientIndex++ )
-	{
-		FLFPStreamSocketPtrHandle& ClientSocket = SocketData.ClientSocket[ ClientIndex ];
-
-		if ( ClientSocket.IsValid() == false || ( ClientSocket.IsClosing() == false && bForce == false ) )
-		{
-			continue;
-		}
-
-		SocketSubsystem->DestroySocket( ClientSocket.Socket );
-
-		ClientSocket.Socket = nullptr;
-
-		OnDisconnected.Broadcast( SocketData.MainSocket.GetID() , ClientIndex , ELFPStreamDisconnectFlags::LFP_User );
-
-		UE_LOG( LogTemp , Log , TEXT( "ULFPStreamSocketSubsystem : Disconnected Client %d From Socket %d On Code ( %d )" ) , ClientSocket.GetID() , SocketData.MainSocket.GetID() , ClientSocket.LastBtyeSendOrReceive );
-	}
-
-	SocketData.ClientSocket.RemoveAll( [&] ( const FLFPStreamSocketPtrHandle& ClientSocket ) { return ClientSocket.IsValid() == false; } );
 }
 
 bool ULFPStreamSocketSubsystem::IsSocketValid( const int32 SocketID , const int32 ClientID ) const
@@ -482,14 +556,14 @@ int32 ULFPStreamSocketSubsystem::CreateSocket( const FLFPStreamSocketSetting& So
 
 						   if ( FLFPStreamSocketData* SocketData = OwnerObj->GetSocketData( SocketID ); SocketData != nullptr )
 						   {
-							   if ( Results.Results.IsValidIndex( 0 ) == false )
-							   {
-								   SocketData->MainSocket.State = ELFPStreamSocketState::LFP_Closing;
+								if ( Results.Results.IsValidIndex( 0 ) == false )
+								{
+									SocketData->MainSocket.State = ELFPStreamSocketState::LFP_Closing;
+									
+									return;
+								}
 
-								   return;
-							   }
-
-							   OwnerObj->TryInitializeSocket( *SocketData , Results.Results[ 0 ].Address );
+						   		SocketData->TryInitializeSocket(OwnerObj->SocketSubsystem, Results.Results[ 0 ].Address);
 						   }
 					   }
 			);
@@ -544,9 +618,9 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 
 		if ( SocketData->IsListenServer() )
 		{
-			for ( int32 LoopClientIndex = 0; LoopClientIndex < SocketData->ClientSocket.Num(); LoopClientIndex++ )
+			for ( int32 LoopClientIndex = 0; LoopClientIndex < SocketData->ClientSocketList.Num(); LoopClientIndex++ )
 			{
-				FLFPStreamSocketPtrHandle& ClientSocket = SocketData->ClientSocket[ LoopClientIndex ];
+				FLFPStreamSocketPtrHandle& ClientSocket = SocketData->ClientSocketList[ LoopClientIndex ];
 
 				if ( ClientSocket.GetID() != ClientID && ClientID > 0 )
 				{
