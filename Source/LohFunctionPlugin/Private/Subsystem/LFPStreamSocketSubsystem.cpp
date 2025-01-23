@@ -684,7 +684,7 @@ bool ULFPStreamSocketSubsystem::SendData( const TArray<uint8>& Data , const int3
 	}
 	else
 	{
-		UE_LOG( LogTemp , Error , TEXT( "FLFPTcpSocket : SendData Failed Socket Index Invalid : %d : %d" ) , SocketID , ClientID );
+		UE_LOG( LogTemp , Error , TEXT( "ULFPStreamSocketSubsystem : SendData Failed Socket Index Invalid : %d : %d" ) , SocketID , ClientID );
 	}
 
 	return false;
