@@ -89,21 +89,21 @@ public:
 		return MetaDataList.GetMappingList ( );
 	}
 
-	FORCEINLINE void SetMetaData ( const FGameplayTag& MetaTag , const FLFPPrimitiveData& MetaData , const bool bUniqueOnly = false )
+	FORCEINLINE void AddMetaData ( const FGameplayTag& MetaTag , const FLFPPrimitiveData& MetaData , const bool bUniqueOnly = false )
 	{
 		if ( bUniqueOnly && MetaDataList.Contain ( MetaTag ) )
 		{
 			return;
 		}
 
-		MetaDataList.SetItem ( MetaTag , MetaData );
+		MetaDataList.AddItem ( MetaTag , MetaData );
 	}
 
 	FORCEINLINE bool RemoveMetaData ( const FGameplayTag& MetaTag )
 	{
 		const bool bIsContain = MetaDataList.Contain ( MetaTag );
 
-		MetaDataList.SetItem ( MetaTag , FLFPPrimitiveData ( ) );
+		MetaDataList.RemoveItem ( MetaTag );
 
 		return bIsContain;
 	}

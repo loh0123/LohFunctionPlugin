@@ -87,7 +87,7 @@ FGameplayTag ULFPItemFunctionLibrary::GetItemTag ( const FLFPInventoryItem& Item
 
 void ULFPItemFunctionLibrary::SetMetaData ( UPARAM ( ref ) FLFPInventoryItem& Item , const FGameplayTag MetaTag , const FLFPPrimitiveData& MetaData )
 {
-	Item.SetMetaData ( MetaTag , MetaData );
+	Item.AddMetaData ( MetaTag , MetaData );
 }
 
 void ULFPItemFunctionLibrary::SetItemTag ( UPARAM ( ref )FLFPInventoryItem& Item , const FGameplayTag ItemTag )
@@ -115,7 +115,7 @@ void ULFPItemFunctionLibrary::ConsumeMetaDataCost ( UPARAM ( ref )FLFPInventoryI
 
 		NewMetaData = MetaData->AsInt ( ) - CostData.Value;
 
-		Item.SetMetaData ( CostData.Key , NewMetaData );
+		Item.AddMetaData ( CostData.Key , NewMetaData );
 	}
 
 	for ( const auto& CostData : FloatCostDataMap )
@@ -136,7 +136,7 @@ void ULFPItemFunctionLibrary::ConsumeMetaDataCost ( UPARAM ( ref )FLFPInventoryI
 
 		NewMetaData = MetaData->AsFloat ( ) - CostData.Value;
 
-		Item.SetMetaData ( CostData.Key , NewMetaData );
+		Item.AddMetaData ( CostData.Key , NewMetaData );
 	}
 }
 
@@ -148,7 +148,7 @@ void FLFPInventoryItem::AppendMetaDataInt ( const TMap <FGameplayTag , int32>& D
 
 		NewMetaData = RawMetaData.Value;
 
-		SetMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
 	}
 }
 
@@ -160,7 +160,7 @@ void FLFPInventoryItem::AppendMetaDataFloat ( const TMap <FGameplayTag , float>&
 
 		NewMetaData = RawMetaData.Value;
 
-		SetMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
 	}
 }
 
@@ -172,7 +172,7 @@ void FLFPInventoryItem::AppendMetaDataString ( const TMap <FGameplayTag , FStrin
 
 		NewMetaData = RawMetaData.Value;
 
-		SetMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
 	}
 }
 
@@ -184,6 +184,6 @@ void FLFPInventoryItem::AppendMetaDataBoolean ( const TMap <FGameplayTag , bool>
 
 		NewMetaData = RawMetaData.Value;
 
-		SetMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
 	}
 }

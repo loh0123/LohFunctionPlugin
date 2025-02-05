@@ -638,26 +638,27 @@ public:
 
 	/** Read / Write Function */
 
-	FORCEINLINE void SetItem ( const FGameplayTag& ItemTag , const FLFPPrimitiveData& NewItem )
+	FORCEINLINE void AddItem ( const FGameplayTag& ItemTag , const FLFPPrimitiveData& NewItem )
 	{
 		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
 
 		if ( ItemIndex != INDEX_NONE )
 		{
-			if ( NewItem.ContainData ( ) )
-			{
-				ItemList[ ItemIndex ] = NewItem;
-			}
-			else
-			{
-				ItemList.RemoveAtSwap ( ItemIndex );
-				MappingList.RemoveAtSwap ( ItemIndex );
-			}
+			ItemList[ ItemIndex ] = NewItem;
 		}
 		else if ( NewItem.ContainData ( ) )
 		{
 			ItemList.Add ( NewItem );
 			MappingList.Add ( ItemTag );
+		}
+	}
+
+	FORCEINLINE void RemoveItem ( const FGameplayTag& ItemTag )
+	{
+		if ( const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag ) ; ItemIndex != INDEX_NONE )
+		{
+			ItemList.RemoveAtSwap ( ItemIndex );
+			MappingList.RemoveAtSwap ( ItemIndex );
 		}
 	}
 
@@ -693,6 +694,35 @@ public:
 		}
 
 		return nullptr;
+	}
+
+	FORCEINLINE FLFPPrimitiveData& GetOrAddItem ( const FGameplayTag& ItemTag )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return ItemList[ ItemIndex ];
+		}
+
+		MappingList.Add ( ItemTag );
+
+		return ItemList.AddDefaulted_GetRef ( );
+	}
+
+	FORCEINLINE void CleanEmptyItem ( )
+	{
+		for ( int32 Index = MappingList.Num ( ) - 1 ; Index >= 0 ; Index-- )
+		{
+			if ( const FLFPPrimitiveData& ItemData = ItemList[ Index ] ; ItemData.ContainData ( ) == false )
+			{
+				ItemList.RemoveAtSwap ( Index , EAllowShrinking::No );
+				MappingList.RemoveAtSwap ( Index , EAllowShrinking::No );
+			}
+		}
+
+		ItemList.Shrink ( );
+		MappingList.Shrink ( );
 	}
 
 	FORCEINLINE void Empty ( )
