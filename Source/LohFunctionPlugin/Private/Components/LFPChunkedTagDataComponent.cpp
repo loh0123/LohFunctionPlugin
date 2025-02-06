@@ -141,6 +141,18 @@ FGameplayTag ULFPChunkedTagDataComponent::GetDataTag_Checked( const int32 Region
 	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex);
 }
 
+TMap< int32 , int32 > ULFPChunkedTagDataComponent::GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChuckIndex ) const
+{
+	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMetaIndexMapping();
+}
+
+const FLFPPrimitiveData* ULFPChunkedTagDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChuckIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
+{
+	check(IsChuckValid(RegionIndex, ChuckIndex));
+
+	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+}
+
 ////////////////////////////
 
 FGameplayTag ULFPChunkedTagDataComponent::GetDataTag( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const
@@ -164,7 +176,16 @@ void ULFPChunkedTagDataComponent::SetDataTag( const int32 RegionIndex , const in
 		return;
 	}
 
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).SetDataTag(DataIndex, NewDataTag);
+	if ( NewDataTag == GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex) )
+	{
+		return;
+	}
+
+	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex);
+
+	GridDataList[RegionIndex].GetChuck(ChuckIndex).SetDataTag(DataIndex, NewDataTag);
+
+	OnTagChanged.Broadcast(RegionIndex, ChuckIndex, DataIndex, OldTag, NewDataTag);
 }
 
 FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const
@@ -193,7 +214,15 @@ void ULFPChunkedTagDataComponent::SetDataMeta( const int32 RegionIndex , const i
 		return;
 	}
 
+	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMeta(DataIndex, DataMetaTag);
+
+	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
+		                                  ? *OldMetaPtr
+		                                  : FLFPPrimitiveData();
+
 	GridDataList[RegionIndex].GetChuck(ChuckIndex).GetOrAddDataMeta(DataIndex, DataMetaTag) = NewDataMeta;
+
+	OnMetaChanged.Broadcast(RegionIndex, ChuckIndex, DataIndex, DataMetaTag, OldMeta, NewDataMeta);
 }
 
 ////////////////////////////
@@ -219,7 +248,16 @@ void ULFPChunkedTagDataComponent::SetChuckTag( const int32 RegionIndex , const i
 		return;
 	}
 
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).SetChuckTag(NewChuckTag);
+	if ( NewChuckTag == GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckTag() )
+	{
+		return;
+	}
+
+	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckTag();
+
+	GridDataList[RegionIndex].GetChuck(ChuckIndex).SetChuckTag(NewChuckTag);
+
+	OnTagChanged.Broadcast(RegionIndex, ChuckIndex, INDEX_NONE, OldTag, NewChuckTag);
 }
 
 FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChuckMeta( const int32 RegionIndex , const int32 ChuckIndex , const FGameplayTag& ChuckMetaTag ) const
@@ -248,7 +286,15 @@ void ULFPChunkedTagDataComponent::SetChuckMeta( const int32 RegionIndex , const 
 		return;
 	}
 
+	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckMeta(ChuckMetaTag);
+
+	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
+		                                  ? *OldMetaPtr
+		                                  : FLFPPrimitiveData();
+
 	GridDataList[RegionIndex].GetChuck(ChuckIndex).GetOrAddChuckMeta(ChuckMetaTag) = NewChuckMeta;
+
+	OnMetaChanged.Broadcast(RegionIndex, ChuckIndex, INDEX_NONE, ChuckMetaTag, OldMeta, NewChuckMeta);
 }
 
 ////////////////////////////
@@ -274,7 +320,16 @@ void ULFPChunkedTagDataComponent::SetRegionTag( const int32 RegionIndex , const 
 		return;
 	}
 
-	return GridDataList[RegionIndex].SetRegionTag(NewRegionTag);
+	if ( NewRegionTag == GridDataList[RegionIndex].GetRegionTag() )
+	{
+		return;
+	}
+
+	const FGameplayTag OldTag = GridDataList[RegionIndex].GetRegionTag();
+
+	GridDataList[RegionIndex].SetRegionTag(NewRegionTag);
+
+	OnTagChanged.Broadcast(RegionIndex, INDEX_NONE, INDEX_NONE, OldTag, NewRegionTag);
 }
 
 FLFPPrimitiveData ULFPChunkedTagDataComponent::GetRegionMeta( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const
@@ -303,7 +358,15 @@ void ULFPChunkedTagDataComponent::SetRegionMeta( const int32 RegionIndex , const
 		return;
 	}
 
+	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetRegionMeta(RegionMetaTag);
+
+	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
+		                                  ? *OldMetaPtr
+		                                  : FLFPPrimitiveData();
+
 	GridDataList[RegionIndex].GetOrAddRegionMeta(RegionMetaTag) = NewRegionMeta;
+
+	OnMetaChanged.Broadcast(RegionIndex, INDEX_NONE, INDEX_NONE, RegionMetaTag, OldMeta, NewRegionMeta);
 }
 
 ////////////////////////////

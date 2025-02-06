@@ -169,27 +169,51 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Cached( const int32 DataIndex , const FGameplayTag& MetaTag , int32& LastAccessDataMetaIndex ) const
+	FORCEINLINE TMap< int32 , int32 > GetDataMetaIndexMapping( ) const
+	{
+		TMap< int32 , int32 > ResultMapping;
+
+		ResultMapping.Reserve(DataMetaList.Num());
+
+		for ( int32 MetaIndex = 0 ; MetaIndex < DataMetaList.Num() ; MetaIndex++ )
+		{
+			ResultMapping.Add(DataMetaList[MetaIndex].GetDataIndex(), MetaIndex);
+		}
+
+		return ResultMapping;
+	}
+
+	FORCEINLINE int32 GetDataMetaIndex( const int32 DataIndex ) const
 	{
 		checkf(DataTagList.IsValidIndex ( DataIndex ),
 		       TEXT(
 			       "DataIndex invalid, call InitializeChuckData first. Resize chuck data after initialized not allow."
 		       ));
 
-		if ( DataMetaList.IsValidIndex(LastAccessDataMetaIndex) && DataMetaList[LastAccessDataMetaIndex].GetDataIndex() == DataIndex )
-		{
-			return DataMetaList[LastAccessDataMetaIndex].GetMetaData(MetaTag);
-		}
-
-		if ( const int32 MetaDataIndex = DataMetaList.IndexOfByKey(DataIndex) ; MetaDataIndex != INDEX_NONE )
-		{
-			LastAccessDataMetaIndex = MetaDataIndex;
-
-			return DataMetaList[MetaDataIndex].GetMetaData(MetaTag);
-		}
-
-		return nullptr;
+		return DataMetaList.IndexOfByKey(DataIndex);
 	}
+
+	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 DataMetaIndex , const FGameplayTag& MetaTag ) const
+	{
+		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
+		       TEXT(
+			       "DataMetaIndex invalid"
+		       ));
+
+		return DataMetaList[DataMetaIndex].GetMetaData(MetaTag);
+	}
+
+	FORCEINLINE FLFPPrimitiveData& GetOrAddDataMeta_Direct( const int32 DataMetaIndex , const FGameplayTag& MetaTag )
+	{
+		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
+		       TEXT(
+			       "DataMetaIndex invalid"
+		       ));
+
+		return DataMetaList[DataMetaIndex].GetOrAddMetaData(MetaTag);
+	}
+
+public:
 
 	FORCEINLINE const FLFPPrimitiveData* GetDataMeta( const int32 DataIndex , const FGameplayTag& MetaTag ) const
 	{
@@ -371,6 +395,10 @@ public:
 	FName CompressionName = NAME_Oodle;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FLFPChuckedTagData_TagChanged, const int32, RegionIndex, const int32, ChuckIndex, const int32, DataIndex, const FGameplayTag&, OldTag, const FGameplayTag&, NewTag);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FLFPChuckedTagData_MetaChanged, const int32, RegionIndex, const int32, ChuckIndex, const int32, DataIndex, const FGameplayTag&, MetaTag, const FLFPPrimitiveData&, OldMetaData, const FLFPPrimitiveData&, NewMetaData);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGIN_API ULFPChunkedTagDataComponent : public UActorComponent
 {
@@ -416,7 +444,13 @@ public:
 public:
 
 	// Faster version of get data tag without check
-	FGameplayTag GetDataTag_Checked( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const;
+	FORCEINLINE FGameplayTag GetDataTag_Checked( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const;
+
+	// Get existing all data index to data meta index mapping
+	FORCEINLINE TMap< int32 , int32 > GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChuckIndex ) const;
+
+	// Get meta by data meta index from mapping
+	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 RegionIndex , const int32 ChuckIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const;
 
 public:
 
@@ -478,6 +512,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsRegionInitialized( const int32 RegionIndex ) const;
+
+public:
+
+	UPROPERTY(BlueprintAssignable)
+	FLFPChuckedTagData_TagChanged OnTagChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FLFPChuckedTagData_MetaChanged OnMetaChanged;
 
 private:
 
