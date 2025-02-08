@@ -37,7 +37,7 @@ void ULFPChunkedTagDataComponent::TickComponent( float DeltaTime , ELevelTick Ti
 
 void ULFPChunkedTagDataComponent::LoadRegion( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
@@ -56,7 +56,7 @@ void ULFPChunkedTagDataComponent::LoadRegion( const int32 RegionIndex , const FL
 
 void ULFPChunkedTagDataComponent::SaveRegion( const int32 RegionIndex , FLFPChunkedTagSerializeData& SaveData )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
@@ -72,40 +72,40 @@ void ULFPChunkedTagDataComponent::SaveRegion( const int32 RegionIndex , FLFPChun
 
 ////////////////////////////
 
-void ULFPChunkedTagDataComponent::InitializeChuck( const int32 RegionIndex , const int32 ChuckIndex )
+void ULFPChunkedTagDataComponent::InitializeChunk( const int32 RegionIndex , const int32 ChunkIndex )
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
 		return;
 	}
 
-	if ( IsChuckInitialized(RegionIndex, ChuckIndex) )
+	if ( IsChunkInitialized(RegionIndex, ChunkIndex) )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Log, TEXT("%hs : Chuck ( %i ) on Region ( %i ) already initialized"), __FUNCTION__, ChuckIndex, RegionIndex);
+		UE_LOG(LogChunkedTagDataComponent, Log, TEXT("%hs : Chunk ( %i ) on Region ( %i ) already initialized"), __FUNCTION__, ChunkIndex, RegionIndex);
 
 		return;
 	}
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).InitializeChuckData(DataIndexSize);
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).InitializeChunkData(DataIndexSize);
 }
 
-void ULFPChunkedTagDataComponent::DeinitializeChuck( const int32 RegionIndex , const int32 ChuckIndex )
+void ULFPChunkedTagDataComponent::DeinitializeChunk( const int32 RegionIndex , const int32 ChunkIndex )
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
 		return;
 	}
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).DeinitializeChuckData();
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).DeinitializeChunkData();
 }
 
 void ULFPChunkedTagDataComponent::InitializeRegion( const int32 RegionIndex )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
@@ -119,12 +119,12 @@ void ULFPChunkedTagDataComponent::InitializeRegion( const int32 RegionIndex )
 		return;
 	}
 
-	GridDataList[RegionIndex].InitializeRegionData(ChuckIndexSize);
+	GridDataList[RegionIndex].InitializeRegionData(ChunkIndexSize);
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeRegion( const int32 RegionIndex )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
 		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
 
@@ -136,68 +136,68 @@ void ULFPChunkedTagDataComponent::DeinitializeRegion( const int32 RegionIndex )
 
 ////////////////////////////
 
-FGameplayTag ULFPChunkedTagDataComponent::GetDataTag_Checked( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const
+FGameplayTag ULFPChunkedTagDataComponent::GetDataTag_Checked( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex);
+	return GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTag(DataIndex);
 }
 
-TMap< int32 , int32 > ULFPChunkedTagDataComponent::GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChuckIndex ) const
+TMap< int32 , int32 > ULFPChunkedTagDataComponent::GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMetaIndexMapping();
+	return GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaIndexMapping();
 }
 
-const FLFPPrimitiveData* ULFPChunkedTagDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChuckIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
+const FLFPPrimitiveData* ULFPChunkedTagDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
 {
-	check(IsChuckValid(RegionIndex, ChuckIndex));
+	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
 
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+	return GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
 }
 
 ////////////////////////////
 
-FGameplayTag ULFPChunkedTagDataComponent::GetDataTag( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const
+FGameplayTag ULFPChunkedTagDataComponent::GetDataTag( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
-	if ( IsGridValid(RegionIndex, ChuckIndex, DataIndex) == false )
+	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return FGameplayTag();
 	}
 
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex);
+	return GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTag(DataIndex);
 }
 
-void ULFPChunkedTagDataComponent::SetDataTag( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex , const FGameplayTag& NewDataTag )
+void ULFPChunkedTagDataComponent::SetDataTag( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag )
 {
-	if ( IsGridValid(RegionIndex, ChuckIndex, DataIndex) == false )
+	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return;
 	}
 
-	if ( NewDataTag == GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex) )
+	if ( NewDataTag == GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTag(DataIndex) )
 	{
 		return;
 	}
 
-	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataTag(DataIndex);
+	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTag(DataIndex);
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).SetDataTag(DataIndex, NewDataTag);
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).SetDataTag(DataIndex, NewDataTag);
 
-	OnTagChanged.Broadcast(RegionIndex, ChuckIndex, DataIndex, OldTag, NewDataTag);
+	OnTagChanged.Broadcast(RegionIndex, ChunkIndex, DataIndex, OldTag, NewDataTag);
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const
+FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const
 {
-	if ( IsGridValid(RegionIndex, ChuckIndex, DataIndex) == false )
+	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return FLFPPrimitiveData();
 	}
 
-	if ( const FLFPPrimitiveData* MetaData = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMeta(DataIndex, DataMetaTag) ; MetaData != nullptr )
+	if ( const FLFPPrimitiveData* MetaData = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta(DataIndex, DataMetaTag) ; MetaData != nullptr )
 	{
 		return *MetaData;
 	}
@@ -205,71 +205,71 @@ FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta( const int32 RegionIn
 	return FLFPPrimitiveData();
 }
 
-void ULFPChunkedTagDataComponent::SetDataMeta( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta )
+void ULFPChunkedTagDataComponent::SetDataMeta( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta )
 {
-	if ( IsGridValid(RegionIndex, ChuckIndex, DataIndex) == false )
+	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return;
 	}
 
-	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetDataMeta(DataIndex, DataMetaTag);
+	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta(DataIndex, DataMetaTag);
 
 	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
 		                                  ? *OldMetaPtr
 		                                  : FLFPPrimitiveData();
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).GetOrAddDataMeta(DataIndex, DataMetaTag) = NewDataMeta;
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).GetOrAddDataMeta(DataIndex, DataMetaTag) = NewDataMeta;
 
-	OnMetaChanged.Broadcast(RegionIndex, ChuckIndex, DataIndex, DataMetaTag, OldMeta, NewDataMeta);
+	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, DataIndex, DataMetaTag, OldMeta, NewDataMeta);
 }
 
 ////////////////////////////
 
-FGameplayTag ULFPChunkedTagDataComponent::GetChuckTag( const int32 RegionIndex , const int32 ChuckIndex ) const
+FGameplayTag ULFPChunkedTagDataComponent::GetChunkTag( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return FGameplayTag();
 	}
 
-	return GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckTag();
+	return GridDataList[RegionIndex].GetChunk(ChunkIndex).GetChunkTag();
 }
 
-void ULFPChunkedTagDataComponent::SetChuckTag( const int32 RegionIndex , const int32 ChuckIndex , const FGameplayTag& NewChuckTag )
+void ULFPChunkedTagDataComponent::SetChunkTag( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& NewChunkTag )
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return;
 	}
 
-	if ( NewChuckTag == GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckTag() )
+	if ( NewChunkTag == GridDataList[RegionIndex].GetChunk(ChunkIndex).GetChunkTag() )
 	{
 		return;
 	}
 
-	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckTag();
+	const FGameplayTag OldTag = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetChunkTag();
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).SetChuckTag(NewChuckTag);
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).SetChunkTag(NewChunkTag);
 
-	OnTagChanged.Broadcast(RegionIndex, ChuckIndex, INDEX_NONE, OldTag, NewChuckTag);
+	OnTagChanged.Broadcast(RegionIndex, ChunkIndex, INDEX_NONE, OldTag, NewChunkTag);
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChuckMeta( const int32 RegionIndex , const int32 ChuckIndex , const FGameplayTag& ChuckMetaTag ) const
+FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChucnMeta( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return FLFPPrimitiveData();
 	}
 
-	if ( const FLFPPrimitiveData* MetaData = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckMeta(ChuckMetaTag) ; MetaData != nullptr )
+	if ( const FLFPPrimitiveData* MetaData = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetChunkMeta(ChunkMetaTag) ; MetaData != nullptr )
 	{
 		return *MetaData;
 	}
@@ -277,33 +277,33 @@ FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChuckMeta( const int32 RegionI
 	return FLFPPrimitiveData();
 }
 
-void ULFPChunkedTagDataComponent::SetChuckMeta( const int32 RegionIndex , const int32 ChuckIndex , const FGameplayTag& ChuckMetaTag , const FLFPPrimitiveData& NewChuckMeta )
+void ULFPChunkedTagDataComponent::SetChunkMeta( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FLFPPrimitiveData& NewChunkMeta )
 {
-	if ( IsChuckValid(RegionIndex, ChuckIndex) == false )
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return;
 	}
 
-	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChuck(ChuckIndex).GetChuckMeta(ChuckMetaTag);
+	const FLFPPrimitiveData* OldMetaPtr = GridDataList[RegionIndex].GetChunk(ChunkIndex).GetChunkMeta(ChunkMetaTag);
 
 	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
 		                                  ? *OldMetaPtr
 		                                  : FLFPPrimitiveData();
 
-	GridDataList[RegionIndex].GetChuck(ChuckIndex).GetOrAddChuckMeta(ChuckMetaTag) = NewChuckMeta;
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).GetOrAddChunkMeta(ChunkMetaTag) = NewChunkMeta;
 
-	OnMetaChanged.Broadcast(RegionIndex, ChuckIndex, INDEX_NONE, ChuckMetaTag, OldMeta, NewChuckMeta);
+	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, INDEX_NONE, ChunkMetaTag, OldMeta, NewChunkMeta);
 }
 
 ////////////////////////////
 
 FGameplayTag ULFPChunkedTagDataComponent::GetRegionTag( const int32 RegionIndex ) const
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return FGameplayTag();
 	}
@@ -313,9 +313,9 @@ FGameplayTag ULFPChunkedTagDataComponent::GetRegionTag( const int32 RegionIndex 
 
 void ULFPChunkedTagDataComponent::SetRegionTag( const int32 RegionIndex , const FGameplayTag& NewRegionTag )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return;
 	}
@@ -334,9 +334,9 @@ void ULFPChunkedTagDataComponent::SetRegionTag( const int32 RegionIndex , const 
 
 FLFPPrimitiveData ULFPChunkedTagDataComponent::GetRegionMeta( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return FLFPPrimitiveData();
 	}
@@ -351,9 +351,9 @@ FLFPPrimitiveData ULFPChunkedTagDataComponent::GetRegionMeta( const int32 Region
 
 void ULFPChunkedTagDataComponent::SetRegionMeta( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FLFPPrimitiveData& NewRegionMeta )
 {
-	if ( IsRegionValid(RegionIndex) == false )
+	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index"), __FUNCTION__);
+		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return;
 	}
@@ -371,27 +371,27 @@ void ULFPChunkedTagDataComponent::SetRegionMeta( const int32 RegionIndex , const
 
 ////////////////////////////
 
-bool ULFPChunkedTagDataComponent::IsGridValid( const int32 RegionIndex , const int32 ChuckIndex , const int32 DataIndex ) const
+bool ULFPChunkedTagDataComponent::IsDataIndexValid( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
-	return GridDataList.IsValidIndex(RegionIndex) && GridDataList[RegionIndex].IsChuckIndexValid(ChuckIndex) && GridDataList[RegionIndex].GetChuck(ChuckIndex).IsDataIndexValid(DataIndex);
+	return GridDataList.IsValidIndex(RegionIndex) && GridDataList[RegionIndex].IsChunkIndexValid(ChunkIndex) && GridDataList[RegionIndex].GetChunk(ChunkIndex).IsDataIndexValid(DataIndex);
 }
 
-bool ULFPChunkedTagDataComponent::IsChuckValid( const int32 RegionIndex , const int32 ChuckIndex ) const
+bool ULFPChunkedTagDataComponent::IsChunkIndexValid( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
-	return GridDataList.IsValidIndex(RegionIndex) && GridDataList[RegionIndex].IsChuckIndexValid(ChuckIndex);
+	return GridDataList.IsValidIndex(RegionIndex) && GridDataList[RegionIndex].IsChunkIndexValid(ChunkIndex);
 }
 
-bool ULFPChunkedTagDataComponent::IsRegionValid( const int32 RegionIndex ) const
+bool ULFPChunkedTagDataComponent::IsRegionIndexValid( const int32 RegionIndex ) const
 {
 	return GridDataList.IsValidIndex(RegionIndex);
 }
 
-bool ULFPChunkedTagDataComponent::IsChuckInitialized( const int32 RegionIndex , const int32 ChuckIndex ) const
+bool ULFPChunkedTagDataComponent::IsChunkInitialized( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
-	return IsChuckValid(RegionIndex, ChuckIndex) && GridDataList[RegionIndex].GetChuck(ChuckIndex).IsInitialized();
+	return IsChunkIndexValid(RegionIndex, ChunkIndex) && GridDataList[RegionIndex].GetChunk(ChunkIndex).IsInitialized();
 }
 
 bool ULFPChunkedTagDataComponent::IsRegionInitialized( const int32 RegionIndex ) const
 {
-	return IsRegionValid(RegionIndex) && GridDataList[RegionIndex].IsInitialized();
+	return IsRegionIndexValid(RegionIndex) && GridDataList[RegionIndex].IsInitialized();
 }
