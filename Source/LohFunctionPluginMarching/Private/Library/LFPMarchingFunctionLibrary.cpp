@@ -11,7 +11,7 @@ FIntVector ULFPMarchingFunctionLibrary::GetRegionChunkAndDataIndex( const FIntVe
 	{
 		return FIntVector::NoneValue;
 	}
-	
+
 	const FIntVector FullChuckSize = ChuckSize * DataSize;
 
 	const int32 RegionIndex = ULFPGridLibrary::ToGridIndex(FIntVector(Position.X / FullChuckSize.X, Position.Y / FullChuckSize.Y, Position.Z / FullChuckSize.Z), RegionSize);
@@ -34,29 +34,27 @@ uint8 ULFPMarchingFunctionLibrary::GetMarchingIDByValidTag( const ULFPChunkedTag
 		return 0;
 	}
 
-	const FIntVector LoopVectorList[8] =
-		{
-			FIntVector(0, 0, 0)
-			, FIntVector(0, 1, 0)
-			, FIntVector(1, 0, 0)
-			, FIntVector(1, 1, 0)
-			, FIntVector(0, 0, 1)
-			, FIntVector(0, 1, 1)
-			, FIntVector(1, 0, 1)
-			, FIntVector(1, 1, 1)
-		};
-
 	uint8 MarchingID = 0;
 
-	for ( int32 Index = 0 ; Index < 8 ; ++Index )
+	int32 Index = 0;
+
+	for ( int32 Index_Z = 0 ; Index_Z < 2 ; Index_Z++ )
 	{
-		const FIntVector TargetPosition = Position + LoopVectorList[Index];
-
-		const FIntVector IndexList = GetRegionChunkAndDataIndex(TargetPosition, RegionSize, ChuckSize, DataSize);
-
-		if ( IndexList.X != INDEX_NONE && DataComponent->GetDataTag(IndexList.X, IndexList.Y, IndexList.Z).IsValid() )
+		for ( int32 Index_Y = 0 ; Index_Y < 2 ; Index_Y++ )
 		{
-			MarchingID |= (1 << Index);
+			for ( int32 Index_X = 0 ; Index_X < 2 ; Index_X++ )
+			{
+				const FIntVector TargetPosition = Position + FIntVector(Index_X, Index_Y, Index_Z);
+
+				const FIntVector IndexList = GetRegionChunkAndDataIndex(TargetPosition, RegionSize, ChuckSize, DataSize);
+
+				if ( IndexList.X != INDEX_NONE && DataComponent->GetDataTag(IndexList.X, IndexList.Y, IndexList.Z).IsValid() )
+				{
+					MarchingID |= (1 << Index);
+				}
+
+				Index++;
+			}
 		}
 	}
 
