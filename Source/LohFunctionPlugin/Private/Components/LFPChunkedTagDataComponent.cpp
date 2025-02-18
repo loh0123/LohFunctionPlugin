@@ -1,4 +1,7 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright (c) 2023-2025 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
 
 #include "Components/LFPChunkedTagDataComponent.h"
 
@@ -72,7 +75,7 @@ void ULFPChunkedTagDataComponent::SaveRegion( const int32 RegionIndex , FLFPChun
 
 ////////////////////////////
 
-void ULFPChunkedTagDataComponent::InitializeChunk( const int32 RegionIndex , const int32 ChunkIndex )
+void ULFPChunkedTagDataComponent::InitializeChunk( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& FillTag )
 {
 	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
@@ -88,7 +91,7 @@ void ULFPChunkedTagDataComponent::InitializeChunk( const int32 RegionIndex , con
 		return;
 	}
 
-	GridDataList[RegionIndex].GetChunk(ChunkIndex).InitializeChunkData(DataIndexSize);
+	GridDataList[RegionIndex].GetChunk(ChunkIndex).InitializeChunkData(DataIndexSize, FillTag);
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeChunk( const int32 RegionIndex , const int32 ChunkIndex )

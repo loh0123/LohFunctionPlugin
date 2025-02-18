@@ -1,5 +1,11 @@
+// Copyright (c) 2023-2025 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
+
 #include "Data/LFPMarchingMeshSet.h"
-#include "Math/LFPMarchingLibrary.h"
+
+#include "Library/LFPMarchingFunctionLibrary.h"
 #include "UObject/ObjectSaveContext.h"
 
 TArray< UStaticMesh* > ULFPMarchingMeshSet::GetMeshList( ) const
@@ -55,7 +61,7 @@ void ULFPMarchingMeshSet::RotateXPlus( )
 			EditRotation.X = 0;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByX(EditID, false);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByX(EditID, false);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -70,7 +76,7 @@ void ULFPMarchingMeshSet::RotateXNeg( )
 			EditRotation.X = 3;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByX(EditID, true);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByX(EditID, true);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -85,7 +91,7 @@ void ULFPMarchingMeshSet::RotateYPlus( )
 			EditRotation.Y = 0;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByY(EditID, false);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByY(EditID, false);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -100,7 +106,7 @@ void ULFPMarchingMeshSet::RotateYNeg( )
 			EditRotation.Y = 3;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByY(EditID, true);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByY(EditID, true);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -115,7 +121,7 @@ void ULFPMarchingMeshSet::RotateZPlus( )
 			EditRotation.Z = 0;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByZ(EditID, false);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByZ(EditID, false);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -130,7 +136,7 @@ void ULFPMarchingMeshSet::RotateZNeg( )
 			EditRotation.Z = 3;
 		}
 
-		EditID = ULFPMarchingLibrary::RotateMarchingIDByZ(EditID, true);
+		EditID = ULFPMarchingFunctionLibrary::RotateMarchingIDByZ(EditID, true);
 
 		MeshDataList[MeshDataIndex].MarchingRotationMap.Add(EditID, EditRotation);
 	}
@@ -170,7 +176,7 @@ void ULFPMarchingMeshSet::RotateAll( )
 			{
 				for ( int32 X = 0 ; X < 4 ; X++ )
 				{
-					const uint8 NewID = ULFPMarchingLibrary::RotateMarchingID(EditID, FIntVector(X, Y, Z));
+					const uint8 NewID = ULFPMarchingFunctionLibrary::RotateMarchingID(EditID, FIntVector(X, Y, Z));
 
 					if ( MeshDataList[MeshDataIndex].MarchingRotationMap.Contains(NewID) == false )
 					{
@@ -194,7 +200,7 @@ void ULFPMarchingMeshSet::RotateAllMesh( )
 			{
 				for ( int32 X = 0 ; X < 4 ; X++ )
 				{
-					const uint8 NewID = ULFPMarchingLibrary::RotateMarchingID(MeshData.DefaultID, FIntVector(X, Y, Z));
+					const uint8 NewID = ULFPMarchingFunctionLibrary::RotateMarchingID(MeshData.DefaultID, FIntVector(X, Y, Z));
 
 					if ( MeshData.MarchingRotationMap.Contains(NewID) == false )
 					{

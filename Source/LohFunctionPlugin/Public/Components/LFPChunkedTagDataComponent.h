@@ -1,4 +1,7 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright (c) 2023-2025 Loh Zhi Kang ( loh0123@hotmail.com )
+//
+// Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
+// or copy at http://opensource.org/licenses/MIT)
 
 #pragma once
 
@@ -94,9 +97,17 @@ private:
 
 public:
 
-	FORCEINLINE void InitializeChunkData( const int32 NewDataIndexSize )
+	FORCEINLINE void InitializeChunkData( const int32 NewDataIndexSize , const FGameplayTag& FillTag )
 	{
 		DataTagList = FLFPTagTrackerStaticArray(NewDataIndexSize);
+
+		if ( FillTag.IsValid() )
+		{
+			for ( int32 Index = 0 ; Index < NewDataIndexSize ; ++Index )
+			{
+				SetDataTag(Index, FillTag);
+			}
+		}
 	}
 
 	FORCEINLINE void DeinitializeChunkData( )
@@ -429,8 +440,8 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintCallable)
-	void InitializeChunk( const int32 RegionIndex , const int32 ChunkIndex );
+	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="FillTag"))
+	void InitializeChunk( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& FillTag );
 
 	UFUNCTION(BlueprintCallable)
 	void DeinitializeChunk( const int32 RegionIndex , const int32 ChunkIndex );
@@ -526,14 +537,14 @@ private:
 	UPROPERTY()
 	TArray< FLFPTaggedRegionData > GridDataList = TArray< FLFPTaggedRegionData >();
 
-public:
+protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
 	int32 DataIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
 	int32 ChunkIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
 	int32 RegionIndexSize = 1;
 };
