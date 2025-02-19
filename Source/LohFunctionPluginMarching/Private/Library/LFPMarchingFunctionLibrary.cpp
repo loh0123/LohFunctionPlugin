@@ -360,7 +360,26 @@ FIntVector ULFPMarchingFunctionLibrary::ToChunkedDataIndex( const ULFPMarchingDa
 	return FIntVector(RegionIndex, ChuckIndex, DataIndex);
 }
 
-uint8 ULFPMarchingFunctionLibrary::GetMarchingIDByGlobalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag )
+FIntVector ULFPMarchingFunctionLibrary::ToChunkedGlobalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex )
+{
+	if ( IsValid(DataComponent) == false )
+	{
+		return FIntVector::NoneValue;
+	}
+
+	const FIntVector& RegionSize = DataComponent->GetRegionGridSize();
+	const FIntVector& ChunkSize  = DataComponent->GetChunkGridSize();
+	const FIntVector& DataSize   = DataComponent->GetDataGridSize();
+
+	const FIntVector FullChuckSize = ChunkSize * DataSize;
+
+	const FIntVector RegionPos = ULFPGridLibrary::ToGridLocation(RegionIndex, RegionSize) * FullChuckSize;
+	const FIntVector ChuckPos  = ULFPGridLibrary::ToGridLocation(ChunkIndex, ChunkSize) * DataSize;
+
+	return RegionPos + ChuckPos + LocalPosition;
+}
+
+uint8 ULFPMarchingFunctionLibrary::GenerateMarchingID( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag )
 {
 	if ( IsValid(DataComponent) == false )
 	{
@@ -390,28 +409,4 @@ uint8 ULFPMarchingFunctionLibrary::GetMarchingIDByGlobalPosition( const ULFPMarc
 	}
 
 	return MarchingID;
-}
-
-uint8 ULFPMarchingFunctionLibrary::GetMarchingIDByLocalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& IncludeTag )
-{
-	if ( IsValid(DataComponent) == false )
-	{
-		return 0;
-	}
-
-	if ( LocalPosition.GetMin() < 0 )
-	{
-		return 0;
-	}
-
-	const FIntVector& RegionSize = DataComponent->GetRegionGridSize();
-	const FIntVector& ChunkSize  = DataComponent->GetChunkGridSize();
-	const FIntVector& DataSize   = DataComponent->GetDataGridSize();
-
-	const FIntVector FullChuckSize = ChunkSize * DataSize;
-
-	const FIntVector RegionPos = ULFPGridLibrary::ToGridLocation(RegionIndex, RegionSize) * FullChuckSize;
-	const FIntVector ChuckPos  = ULFPGridLibrary::ToGridLocation(ChunkIndex, ChunkSize) * DataSize;
-
-	return GetMarchingIDByGlobalPosition(DataComponent, RegionPos + ChuckPos + LocalPosition, IncludeTag);
 }

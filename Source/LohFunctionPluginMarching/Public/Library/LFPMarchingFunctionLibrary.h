@@ -48,9 +48,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Marching")
 	static FIntVector ToChunkedDataIndex( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition );
 
-	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, GlobalPosition"))
-	static uint8 GetMarchingIDByGlobalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag );
+	UFUNCTION(BlueprintPure, Category = "Marching")
+	static FIntVector ToChunkedGlobalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex );
 
-	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, LocalPosition"))
-	static uint8 GetMarchingIDByLocalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& IncludeTag );
+	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, GlobalPosition"))
+	static uint8 GenerateMarchingID( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag );
 };

@@ -162,7 +162,7 @@ FGameplayTag ULFPChunkedTagDataComponent::GetDataTag( const int32 RegionIndex , 
 {
 	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return FGameplayTag();
 	}
@@ -195,7 +195,7 @@ FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta( const int32 RegionIn
 {
 	if ( IsDataIndexValid(RegionIndex, ChunkIndex, DataIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )"), __FUNCTION__, RegionIndex, ChunkIndex, DataIndex);
 
 		return FLFPPrimitiveData();
 	}
@@ -234,7 +234,7 @@ FGameplayTag ULFPChunkedTagDataComponent::GetChunkTag( const int32 RegionIndex ,
 {
 	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return FGameplayTag();
 	}
@@ -263,11 +263,11 @@ void ULFPChunkedTagDataComponent::SetChunkTag( const int32 RegionIndex , const i
 	OnTagChanged.Broadcast(RegionIndex, ChunkIndex, INDEX_NONE, OldTag, NewChunkTag);
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChucnMeta( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const
+FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChunkMeta( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const
 {
 	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
 
 		return FLFPPrimitiveData();
 	}
@@ -306,7 +306,7 @@ FGameplayTag ULFPChunkedTagDataComponent::GetRegionTag( const int32 RegionIndex 
 {
 	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return FGameplayTag();
 	}
@@ -339,7 +339,7 @@ FLFPPrimitiveData ULFPChunkedTagDataComponent::GetRegionMeta( const int32 Region
 {
 	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
-		UE_LOG(LogChunkedTagDataComponent, Warning, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i )"), __FUNCTION__, RegionIndex);
 
 		return FLFPPrimitiveData();
 	}

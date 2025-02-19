@@ -96,9 +96,18 @@ class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
 	static FVector MixLerpDirection( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray< FLFPNoiseMixTable >& MixTable );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FLFPNearbyVectorData GetNearbySingleVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+private:
+
+	static FLFPNearbyVectorData VectorAlgo( const FLFPNoiseTable& NoiseTable , const FIntVector& CurrentLocation , const FVector& Location , const bool bUseVectorLength , const float ClampRange , const bool bIgnoreZ );
+
+public:
 
 	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static void GetNearbyVectorNoise( TArray< FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+	static FLFPNearbyVectorData GetNearbySingleVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bUseVectorLength = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+
+	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
+	static float GetNearbyVectorDistance( const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bCompareSecondary = false , const bool bUseVectorLength = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+
+	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
+	static void GetNearbyVectorNoise( TArray< FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bUseVectorLength = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
 };

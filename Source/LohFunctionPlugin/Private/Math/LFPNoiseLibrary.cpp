@@ -14,7 +14,7 @@ FLFPNoiseTable ULFPNoiseLibrary::CreateNoiseTable( const FRandomStream& Seed )
 
 	for ( float& Item : NewTable.NoiseData )
 	{
-		Item = Seed.FRand();
+		Item = Seed.GetFraction();
 	}
 
 	return NewTable;
@@ -161,7 +161,36 @@ FVector ULFPNoiseLibrary::MixLerpDirection( const FLFPNoiseTable& NoiseTable , c
 	return ReturnValue;
 }
 
-FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ClampRange , const bool bIgnoreZ )
+FLFPNearbyVectorData ULFPNoiseLibrary::VectorAlgo( const FLFPNoiseTable& NoiseTable , const FIntVector& CurrentLocation , const FVector& Location , const bool bUseVectorLength , const float ClampRange , const bool bIgnoreZ )
+{
+	const FVector CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation) * ClampRange;
+	const FVector CurrentFloatLocation  = FVector(CurrentLocation) + CurrentNoiseDirection;
+
+	if ( bUseVectorLength )
+	{
+		const FVector LenghtVector = Location - CurrentFloatLocation;
+
+		return FLFPNearbyVectorData(
+			LenghtVector.X + LenghtVector.Y + (bIgnoreZ
+				                                   ? 0
+				                                   : LenghtVector.Y)
+			,
+			CurrentLocation,
+			CurrentNoiseDirection
+			);
+	}
+
+	return FLFPNearbyVectorData(
+		bIgnoreZ
+			? FVector::Dist2D(Location, CurrentFloatLocation)
+			: FVector::Dist(Location, CurrentFloatLocation)
+		,
+		CurrentLocation,
+		CurrentNoiseDirection
+		);
+}
+
+FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bUseVectorLength , const float ClampRange , const bool bIgnoreZ )
 {
 	FLFPNearbyVectorData Data;
 
@@ -181,14 +210,9 @@ FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise( const FLFPNoi
 		{
 			for ( int32 X = -1 ; X <= 1 ; X++ )
 			{
-				const FIntVector CurrentLocation       = GridLocation + FIntVector(X, Y, Z);
-				const FVector    CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation) * ClampRange;
+				const FIntVector CurrentLocation = GridLocation + FIntVector(X, Y, Z);
 
-				const FLFPNearbyVectorData CurrentData(
-					FVector::Dist(Location, FVector(CurrentLocation) + CurrentNoiseDirection),
-					CurrentLocation,
-					CurrentNoiseDirection
-					);
+				const FLFPNearbyVectorData CurrentData = VectorAlgo(NoiseTable, CurrentLocation, Location, bUseVectorLength, ClampRange, bIgnoreZ);
 
 				if ( Data.NearbyDistance < 0 || CurrentData < Data )
 				{
@@ -201,7 +225,46 @@ FLFPNearbyVectorData ULFPNoiseLibrary::GetNearbySingleVectorNoise( const FLFPNoi
 	return Data;
 }
 
-void ULFPNoiseLibrary::GetNearbyVectorNoise( TArray< FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ClampRange , const bool bIgnoreZ )
+float ULFPNoiseLibrary::GetNearbyVectorDistance( const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bCompareSecondary , const bool bUseVectorLength , const float ClampRange , const bool bIgnoreZ )
+{
+	FLFPNearbyVectorData DataA , DataB;
+
+	const FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
+
+	for ( int32 Z =
+		      bIgnoreZ
+			      ? 0
+			      : -1 ;
+	      Z <=
+	      (bIgnoreZ
+		       ? 0
+		       : 1) ;
+	      Z++ )
+	{
+		for ( int32 Y = -1 ; Y <= 1 ; Y++ )
+		{
+			for ( int32 X = -1 ; X <= 1 ; X++ )
+			{
+				const FIntVector CurrentLocation = GridLocation + FIntVector(X, Y, Z);
+
+				const FLFPNearbyVectorData CurrentData = VectorAlgo(NoiseTable, CurrentLocation, Location, bUseVectorLength, ClampRange, bIgnoreZ);
+
+				if ( DataA.NearbyDistance < 0 || CurrentData < DataA )
+				{
+					DataB = DataA;
+					DataA = CurrentData;
+				}
+
+			}
+		}
+	}
+
+	return bCompareSecondary
+		       ? FMath::Abs(DataA.NearbyDistance - DataB.NearbyDistance)
+		       : DataA.NearbyDistance;
+}
+
+void ULFPNoiseLibrary::GetNearbyVectorNoise( TArray< FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const bool bUseVectorLength , const float ClampRange , const bool bIgnoreZ )
 {
 	const FIntVector GridLocation = FIntVector(FMath::Floor(Location.X), FMath::Floor(Location.Y), FMath::Floor(Location.Z));
 
@@ -221,14 +284,10 @@ void ULFPNoiseLibrary::GetNearbyVectorNoise( TArray< FLFPNearbyVectorData >& Ret
 		{
 			for ( int32 X = -1 ; X <= 1 ; X++ )
 			{
-				const FIntVector CurrentLocation       = GridLocation + FIntVector(X, Y, Z);
-				const FVector    CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation) * ClampRange;
+				const FIntVector           CurrentLocation = GridLocation + FIntVector(X, Y, Z);
+				const FLFPNearbyVectorData CurrentData     = VectorAlgo(NoiseTable, CurrentLocation, Location, bUseVectorLength, ClampRange, bIgnoreZ);
 
-				ReturnData.Add(FLFPNearbyVectorData(
-					FVector::Dist(Location, FVector(CurrentLocation) + CurrentNoiseDirection),
-					CurrentLocation,
-					CurrentNoiseDirection
-					));
+				ReturnData.Add(CurrentData);
 			}
 		}
 	}
