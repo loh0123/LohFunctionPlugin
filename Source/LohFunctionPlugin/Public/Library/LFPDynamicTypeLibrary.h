@@ -40,7 +40,7 @@ private:
 	UPROPERTY()
 	uint8 ElementAlignment = 4;
 
-	/** Read / Write Bit Function */
+	/** Read / Write Function */
 
 	FORCEINLINE FBitReference GetIndexRef( const int32 Index )
 	{
@@ -152,7 +152,7 @@ public:
 
 	FORCEINLINE void SetIndexNumber( const int32 Index , const uint32 Number )
 	{
-		checkf(IsValidIndex( Index ) && HasData(), TEXT( "Index : %d, EncodeBtye : %u" ), Index, ElementBitSize);
+		checkf(IsValidIndex( Index ) && HasData(), TEXT( "Index : %d, EncodeByte : %u" ), Index, ElementBitSize);
 
 		for ( uint8 EncodeIndex = 0 ; EncodeIndex < ElementBitSize ; EncodeIndex++ )
 		{
@@ -164,7 +164,7 @@ public:
 
 	FORCEINLINE uint32 GetIndexNumber( const int32 Index ) const
 	{
-		checkf(IsValidIndex( Index ), TEXT( "Index : %d, EncodeBtye : %u" ), Index, ElementBitSize);
+		checkf(IsValidIndex( Index ), TEXT( "Index : %d, EncodeByte : %u" ), Index, ElementBitSize);
 
 		uint32 OutIndex = 0;
 
@@ -743,6 +743,8 @@ public:
 	{
 		return MappingList.Contains(ItemTag);
 	}
+
+public:
 
 	FORCEINLINE bool operator==( const FLFPPrimitiveDataTagArray& other ) const
 	{
