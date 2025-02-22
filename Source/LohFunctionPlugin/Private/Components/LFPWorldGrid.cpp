@@ -36,7 +36,7 @@ FIntVector ULFPWorldGrid::WorldLocationToGridLocation ( const FVector& Location 
 {
 	// if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
 
-	FVector LocalLocation;
+	FVector LocalLocation = FVector(0.0f, 0.0f, 0.0f);
 
 	const FVector ComponentLocation = bCenterOrigin
 		                                  ? Location - GetComponentLocation ( ) + GetVolumeSize ( true )

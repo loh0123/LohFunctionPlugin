@@ -31,6 +31,20 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "Marching", meta=(AutoCreateRefTerm="GlobalPosition"))
+	FIntVector ToChunkedDataIndex( const FIntVector& GlobalPosition ) const;
+
+	UFUNCTION(BlueprintPure, Category = "Marching", meta=(AutoCreateRefTerm="LocalPosition"))
+	FIntVector ToGlobalPosition( const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex ) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, GlobalPosition"))
+	uint8 GenerateMarchingID( const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag ) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, StartGlobalPosition, EndGlobalPosition"))
+	TArray<uint8> GenerateMarchingIDList( const FIntVector& StartGlobalPosition ,const FIntVector& EndGlobalPosition , const FGameplayTag& IncludeTag ) const;
+
+public:
+
 	UFUNCTION(BlueprintPure, Category="Marching|Getter")
 	const FIntVector& GetDataGridSize( ) const;
 

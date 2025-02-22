@@ -17,4 +17,4 @@ void FLohFunctionPluginMarchingModule::ShutdownModule ( )
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE ( FLohFunctionPluginMarchingModule , LohFunctionPluginMarchingModule )
+IMPLEMENT_MODULE ( FLohFunctionPluginMarchingModule , LohFunctionPluginMarching )

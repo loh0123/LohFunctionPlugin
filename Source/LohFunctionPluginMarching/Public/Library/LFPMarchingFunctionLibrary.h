@@ -42,15 +42,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPMarchingLibrary|Function")
 	static uint8 CalculateDualGridMarchingID( const uint8 FullMarchingID , const int32 CalculateIndex );
-
-public:
-
-	UFUNCTION(BlueprintPure, Category = "Marching")
-	static FIntVector ToChunkedDataIndex( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition );
-
-	UFUNCTION(BlueprintPure, Category = "Marching")
-	static FIntVector ToChunkedGlobalPosition( const ULFPMarchingDataComponent* DataComponent , const FIntVector& LocalPosition , const int32 RegionIndex , const int32 ChunkIndex );
-
-	UFUNCTION(BlueprintCallable, Category = "Marching", meta=(AutoCreateRefTerm="IncludeTag, GlobalPosition"))
-	static uint8 GenerateMarchingID( const ULFPMarchingDataComponent* DataComponent , const FIntVector& GlobalPosition , const FGameplayTag& IncludeTag );
 };

@@ -344,7 +344,7 @@ bool ULFPMazeLibrary::GenerateMazeArea ( UPARAM ( Ref )FLFPMazeTable& MazeTable 
 		}
 		else
 		{
-			const int32 CurrentIndex = NextVisitList.Pop ( false );
+			const int32 CurrentIndex = NextVisitList.Pop ( EAllowShrinking::No );
 
 			// Fill Open List
 			TArray <int32> OpenIndex = MazeTable.MazeData[ CurrentIndex ].OpenList;

@@ -285,7 +285,7 @@ public:
 	{
 		while ( ItemList.Num ( ) > 0 && ItemList.Last ( ).IsValid ( ) == false )
 		{
-			ItemList.RemoveAt ( ItemList.Num ( ) - 1 , 1 , false );
+			ItemList.RemoveAt ( ItemList.Num ( ) - 1 , 1 , EAllowShrinking::No );
 		}
 
 		ItemList.Shrink ( );

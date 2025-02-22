@@ -81,7 +81,7 @@ void ULFPTickManager::SendTickInternal ( )
 				break; // Jump Back To For Loop
 			}
 
-			TickActorList.RemoveAtSwap ( CurrentArrayIndex , 1 , false ); // Remove Null Pointer
+			TickActorList.RemoveAtSwap ( CurrentArrayIndex , 1 , EAllowShrinking::No ); // Remove Null Pointer
 		}
 
 		// Break If On Index End
