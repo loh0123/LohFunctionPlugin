@@ -398,3 +398,18 @@ bool ULFPChunkedTagDataComponent::IsRegionInitialized( const int32 RegionIndex )
 {
 	return IsRegionIndexValid(RegionIndex) && RegionDataList[RegionIndex].IsInitialized();
 }
+
+int32 ULFPChunkedTagDataComponent::GetDataIndexSize( ) const
+{
+	return DataIndexSize;
+}
+
+int32 ULFPChunkedTagDataComponent::GetChunkIndexSize( ) const
+{
+	return ChunkIndexSize;
+}
+
+int32 ULFPChunkedTagDataComponent::GetRegionIndexSize( ) const
+{
+	return RegionIndexSize;
+}

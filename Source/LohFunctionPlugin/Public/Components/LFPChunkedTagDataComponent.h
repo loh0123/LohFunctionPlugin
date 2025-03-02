@@ -526,6 +526,17 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure)
+	int32 GetDataIndexSize( ) const;
+
+	UFUNCTION(BlueprintPure)
+	int32 GetChunkIndexSize( ) const;
+
+	UFUNCTION(BlueprintPure)
+	int32 GetRegionIndexSize( ) const;
+
+public:
+
 	UPROPERTY(BlueprintAssignable)
 	FLFPChunkedTagData_TagChanged OnTagChanged;
 
@@ -539,12 +550,12 @@ private:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 DataIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 ChunkIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 RegionIndexSize = 1;
 };

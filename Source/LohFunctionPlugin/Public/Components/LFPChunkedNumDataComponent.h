@@ -165,14 +165,14 @@ public:
 	{
 		check(DataTagList.IsValidIndex ( DataIndex ));
 
-		return DataTagList.GetID(DataIndex);
+		return DataTagList.GetItem(DataIndex);
 	}
 
 	FORCEINLINE void SetDataID( const int32 DataIndex , const int32 NewDataID )
 	{
 		check(DataTagList.IsValidIndex ( DataIndex ));
 
-		DataTagList.SetID(DataIndex, NewDataID);
+		DataTagList.SetItem(DataIndex, NewDataID);
 	}
 
 public:
@@ -407,7 +407,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FLFPChunkedNumData_TagChanged, con
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FLFPChunkedNumData_MetaChanged, const int32, RegionIndex, const int32, ChunkIndex, const int32, DataIndex, const FGameplayTag&, MetaTag, const FLFPPrimitiveData&, OldMetaData, const FLFPPrimitiveData&, NewMetaData);
 
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGIN_API ULFPChunkedNumDataComponent : public UActorComponent
 {
@@ -524,6 +523,17 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure)
+	int32 GetDataIndexSize( ) const;
+
+	UFUNCTION(BlueprintPure)
+	int32 GetChunkIndexSize( ) const;
+
+	UFUNCTION(BlueprintPure)
+	int32 GetRegionIndexSize( ) const;
+
+public:
+
 	UPROPERTY(BlueprintAssignable)
 	FLFPChunkedNumData_TagChanged OnIDChanged;
 
@@ -537,12 +547,12 @@ private:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 DataIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 ChunkIndexSize = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|IndexSize")
+	UPROPERTY(EditAnywhere, Category = "Setting|IndexSize")
 	int32 RegionIndexSize = 1;
 };

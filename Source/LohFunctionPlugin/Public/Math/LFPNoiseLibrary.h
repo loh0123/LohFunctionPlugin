@@ -66,6 +66,8 @@ class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
+public:
+
 	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Noise")
 	static FLFPNoiseTable CreateNoiseTable( const FRandomStream& Seed );
 

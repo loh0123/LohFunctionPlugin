@@ -4,9 +4,6 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 #include "Library/LFPMarchingFunctionLibrary.h"
-#include "Components/LFPChunkedTagDataComponent.h"
-#include "Components/LFPMarchingDataComponent.h"
-#include "Math/LFPGridLibrary.h"
 
 bool ULFPMarchingFunctionLibrary::GetMarchingIDBit( const uint8 MarchingID , const int32 BitIndex )
 {

@@ -190,20 +190,20 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct LOHFUNCTIONPLUGIN_API FLFPIDTrackerStaticArray : public FLFPDynamicIntStaticArray
+struct LOHFUNCTIONPLUGIN_API FLFPIndexTrackerStaticArray : public FLFPDynamicIntStaticArray
 {
 	GENERATED_BODY()
 
-	FLFPIDTrackerStaticArray( )
+	FLFPIndexTrackerStaticArray( )
 	{
 	}
 
-	FLFPIDTrackerStaticArray( const uint32 NewIndexSize ) :
+	FLFPIndexTrackerStaticArray( const uint32 NewIndexSize ) :
 		Super(NewIndexSize)
 	{
 	}
 
-	FLFPIDTrackerStaticArray( const uint32 NewIndexSize , const uint8 NewDataAlignment ) :
+	FLFPIndexTrackerStaticArray( const uint32 NewIndexSize , const uint8 NewDataAlignment ) :
 		Super(NewIndexSize, NewDataAlignment)
 	{
 	}
@@ -370,7 +370,100 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct LOHFUNCTIONPLUGIN_API FLFPTagTrackerStaticArray : public FLFPIDTrackerStaticArray
+struct LOHFUNCTIONPLUGIN_API FLFPIDTrackerStaticArray : public FLFPIndexTrackerStaticArray
+{
+	GENERATED_BODY()
+
+	FLFPIDTrackerStaticArray( )
+	{
+	}
+
+	FLFPIDTrackerStaticArray( const uint32 NewIndexSize ) :
+		Super(NewIndexSize)
+	{
+	}
+
+	FLFPIDTrackerStaticArray( const uint32 NewIndexSize , const uint8 NewDataAlignment , const int32 StartID ) :
+		Super(NewIndexSize, NewDataAlignment)
+	{
+		if ( StartID == INDEX_NONE )
+		{
+			return;
+		}
+
+		ItemList.Add(StartID);
+
+		for ( uint32 ArrayIndex = 0 ; ArrayIndex < NewIndexSize ; ArrayIndex++ )
+		{
+			SetID(ArrayIndex, 0);
+		}
+	}
+
+private:
+
+	UPROPERTY()
+	TArray< int32 > ItemList = {};
+
+public:
+
+	FORCEINLINE void SetItem( const int32 ArrayIndex , const int32 Item )
+	{
+		check(IsValidIndex( ArrayIndex ));
+
+		int32 NewItemIndex = INDEX_NONE;
+
+		if ( Item != INDEX_NONE )
+		{
+			if ( NewItemIndex = ItemList.IndexOfByKey(Item) ; NewItemIndex == INDEX_NONE )
+			{
+				NewItemIndex = GetNewID();
+
+				if ( ItemList.IsValidIndex(NewItemIndex) == false )
+				{
+					ItemList.SetNum(NewItemIndex + 1);
+				}
+
+				ItemList[NewItemIndex] = Item;
+			}
+		}
+
+		SetID(ArrayIndex, NewItemIndex);
+
+		ItemList.SetNum(IDLength());
+	}
+
+	FORCEINLINE const TArray< int32 >& GetItemList( ) const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE int32 GetItem( const int32 ArrayIndex ) const
+	{
+		const int32 ID = GetID(ArrayIndex);
+
+		return ID != INDEX_NONE
+			       ? ItemList[ID]
+			       : INDEX_NONE;
+	}
+
+	FORCEINLINE int32 GetItemCount( const int32 Item ) const
+	{
+		if ( const int32 ID = ItemList.IndexOfByKey(Item) ; ID >= 0 )
+		{
+			return GetIDCount(ID);
+		}
+
+		return INDEX_NONE;
+	}
+
+	FORCEINLINE bool ContainItem( const int32 Item ) const
+	{
+		return ItemList.Contains(Item);
+	}
+};
+
+USTRUCT(BlueprintType)
+struct LOHFUNCTIONPLUGIN_API FLFPTagTrackerStaticArray : public FLFPIndexTrackerStaticArray
 {
 	GENERATED_BODY()
 
@@ -468,6 +561,7 @@ enum class ELFPPrimitiveDataType : uint8
 	LFP_None UMETA(DisplayName = "None")
 	, LFP_Int UMETA(DisplayName = "Int")
 	, LFP_Float UMETA(DisplayName = "Float")
+	, LFP_Double UMETA(DisplayName = "Double")
 	, LFP_Boolean UMETA(DisplayName = "Boolean")
 	, LFP_String UMETA(DisplayName = "String")
 	,
@@ -477,6 +571,55 @@ USTRUCT(BlueprintType)
 struct LOHFUNCTIONPLUGIN_API FLFPPrimitiveData
 {
 	GENERATED_BODY()
+
+public:
+
+	FLFPPrimitiveData( ) = default;
+
+	FLFPPrimitiveData( const int32 NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Int;
+
+		DataList.SetNum(4);
+
+		*(reinterpret_cast< int32* >(DataList.GetData())) = NewData;
+	}
+
+	FLFPPrimitiveData( const float NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Float;
+
+		DataList.SetNum(4);
+
+		*(reinterpret_cast< float* >(DataList.GetData())) = NewData;
+	}
+
+	FLFPPrimitiveData( const double NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Double;
+
+		DataList.SetNum(8);
+
+		*(reinterpret_cast< double* >(DataList.GetData())) = NewData;
+	}
+
+	FLFPPrimitiveData( const bool NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Boolean;
+
+		DataList.SetNum(1);
+
+		*(reinterpret_cast< bool* >(DataList.GetData())) = NewData;
+	}
+
+	FLFPPrimitiveData( const FString& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_String;
+
+		DataList.SetNum(NewData.Len());
+
+		StringToBytes(NewData, DataList.GetData(), DataList.Num());
+	}
 
 private:
 
@@ -499,6 +642,7 @@ public:
 		{
 			case ELFPPrimitiveDataType::LFP_Int : return FString::FromInt(AsInt());
 			case ELFPPrimitiveDataType::LFP_Float : return FString::SanitizeFloat(AsFloat());
+			case ELFPPrimitiveDataType::LFP_Double : return FString::SanitizeFloat(AsDouble());
 			case ELFPPrimitiveDataType::LFP_Boolean : return AsBoolean()
 				                                                 ? "True"
 				                                                 : "False";
@@ -551,6 +695,27 @@ public:
 		return *(reinterpret_cast< const float* >(DataList.GetData()));
 	}
 
+	FORCEINLINE double AsDouble( ) const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Double )
+		{
+			return 0.0;
+		}
+
+		return *(reinterpret_cast< const double* >(DataList.GetData()));
+	}
+
+	FORCEINLINE double AsNum( ) const
+	{
+		switch ( Type )
+		{
+			case ELFPPrimitiveDataType::LFP_Int : return AsInt();
+			case ELFPPrimitiveDataType::LFP_Float : return AsFloat();
+			case ELFPPrimitiveDataType::LFP_Double : return AsDouble();
+			default : return 0.0;
+		}
+	}
+
 	FORCEINLINE bool AsBoolean( ) const
 	{
 		if ( Type != ELFPPrimitiveDataType::LFP_Boolean )
@@ -569,42 +734,6 @@ public:
 		}
 
 		return BytesToString(DataList.GetData(), DataList.Num());
-	}
-
-	FORCEINLINE void operator=( const int32& NewData )
-	{
-		Type = ELFPPrimitiveDataType::LFP_Int;
-
-		DataList.SetNum(4);
-
-		*(reinterpret_cast< int32* >(DataList.GetData())) = NewData;
-	}
-
-	FORCEINLINE void operator=( const float& NewData )
-	{
-		Type = ELFPPrimitiveDataType::LFP_Float;
-
-		DataList.SetNum(4);
-
-		*(reinterpret_cast< float* >(DataList.GetData())) = NewData;
-	}
-
-	FORCEINLINE void operator=( const bool& NewData )
-	{
-		Type = ELFPPrimitiveDataType::LFP_Boolean;
-
-		DataList.SetNum(1);
-
-		*(reinterpret_cast< bool* >(DataList.GetData())) = NewData;
-	}
-
-	FORCEINLINE void operator=( const FString& NewData )
-	{
-		Type = ELFPPrimitiveDataType::LFP_String;
-
-		DataList.SetNum(NewData.Len());
-
-		StringToBytes(NewData, DataList.GetData(), DataList.Num());
 	}
 
 	FORCEINLINE bool operator==( const FLFPPrimitiveData& other ) const
@@ -760,16 +889,16 @@ class LOHFUNCTIONPLUGIN_API ULFPDynamicTypeLibrary : public UBlueprintFunctionLi
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray")
-	static void InitializeTrackerArray( UPARAM(ref) FLFPIDTrackerStaticArray& List , const int32 IndexSize );
+	static void InitializeTrackerArray( UPARAM(ref) FLFPIndexTrackerStaticArray& List , const int32 IndexSize );
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray")
-	static int32 GetNewID( UPARAM(ref) FLFPIDTrackerStaticArray& List );
+	static int32 GetNewID( UPARAM(ref) FLFPIndexTrackerStaticArray& List );
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray")
-	static bool SetID( UPARAM(ref) FLFPIDTrackerStaticArray& List , const int32 Index , const int32 ID );
+	static bool SetID( UPARAM(ref) FLFPIndexTrackerStaticArray& List , const int32 Index , const int32 ID );
 
 	UFUNCTION(BlueprintPure, Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray")
-	static int32 GetID( const FLFPIDTrackerStaticArray& List , const int32 Index );
+	static int32 GetID( const FLFPIndexTrackerStaticArray& List , const int32 Index );
 
 	UFUNCTION(BlueprintCallable, Category = "LohFunctionPluginLibrary | LFPPrimitiveData")
 	static int32 GetDataAsInt( UPARAM(ref) FLFPPrimitiveData& Data );

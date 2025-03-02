@@ -314,7 +314,7 @@ int32 ULFPChunkedNumDataComponent::GetRegionID( const int32 RegionIndex ) const
 	return RegionDataList[RegionIndex].GetRegionID();
 }
 
-void ULFPChunkedNumDataComponent::SetRegionID( const int32 RegionIndex ,const int32 NewRegionID )
+void ULFPChunkedNumDataComponent::SetRegionID( const int32 RegionIndex , const int32 NewRegionID )
 {
 	if ( IsRegionIndexValid(RegionIndex) == false )
 	{
@@ -399,3 +399,17 @@ bool ULFPChunkedNumDataComponent::IsRegionInitialized( const int32 RegionIndex )
 	return IsRegionIndexValid(RegionIndex) && RegionDataList[RegionIndex].IsInitialized();
 }
 
+int32 ULFPChunkedNumDataComponent::GetDataIndexSize( ) const
+{
+	return DataIndexSize;
+}
+
+int32 ULFPChunkedNumDataComponent::GetChunkIndexSize( ) const
+{
+	return ChunkIndexSize;
+}
+
+int32 ULFPChunkedNumDataComponent::GetRegionIndexSize( ) const
+{
+	return RegionIndexSize;
+}

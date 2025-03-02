@@ -163,16 +163,36 @@ FVector ULFPNoiseLibrary::MixLerpDirection( const FLFPNoiseTable& NoiseTable , c
 
 FLFPNearbyVectorData ULFPNoiseLibrary::VectorAlgo( const FLFPNoiseTable& NoiseTable , const FIntVector& CurrentLocation , const FVector& Location , const float ValuePower , const float ClampRange , const bool bIgnoreZ )
 {
-	const FVector CurrentNoiseDirection = GetVectorNoise(NoiseTable, CurrentLocation) * ClampRange;
+	const FVector CurrentNoiseDirection = (GetVectorNoise(NoiseTable, CurrentLocation) * ClampRange) + ((1.0f - ClampRange) * 0.5f);
 	const FVector CurrentFloatLocation  = FVector(CurrentLocation) + CurrentNoiseDirection;
 
-	const FVector LenghtVector = (Location - CurrentFloatLocation).GetAbs();
+	float PowDistance;
+	{
+		// Calculate Offset For Negative Value
+		FVector PushVector(FVector::Min(Location, CurrentFloatLocation));
+		PushVector.X = PushVector.X < 0.0f
+			               ? FMath::Abs(PushVector.X)
+			               : 0.0f;
+		PushVector.Y = PushVector.Y < 0.0f
+			               ? FMath::Abs(PushVector.Y)
+			               : 0.0f;
+		PushVector.Z = PushVector.Z < 0.0f
+			               ? FMath::Abs(PushVector.Z)
+			               : 0.0f;
+
+		const FVector LenghtVector = ((Location + PushVector) - (CurrentFloatLocation + PushVector)).GetAbs();
+
+		PowDistance = FMath::Pow(LenghtVector.X, ValuePower);
+		PowDistance += FMath::Pow(LenghtVector.Y, ValuePower);
+
+		if ( bIgnoreZ == false )
+		{
+			PowDistance += FMath::Pow(LenghtVector.Z, ValuePower);
+		}
+	}
 
 	return FLFPNearbyVectorData(
-		FMath::Pow(LenghtVector.X, ValuePower) + FMath::Pow(LenghtVector.Y, ValuePower) + (bIgnoreZ
-			                                                                                   ? 0
-			                                                                                   : FMath::Pow(LenghtVector.Y, ValuePower))
-		,
+		PowDistance,
 		CurrentLocation,
 		CurrentNoiseDirection
 		);

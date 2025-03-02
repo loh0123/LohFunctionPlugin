@@ -217,7 +217,7 @@ bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& I
 
 	const int32 OccupationID = GetMeshIndexByInstance(InstanceInfo.InstanceIndex);
 
-	/* Find The Prev Data Is Valid And Remove Or Update It */
+	/* If Prev Data Is Valid , Remove Or Update It */
 	if ( OccupationID != INDEX_NONE )
 	{
 		FLFPInstanceGridMeshData& ISMData = MeshList[OccupationID];
@@ -228,11 +228,11 @@ bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& I
 			return ISMData.UpdateInstance(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace);
 		}
 
-		/* Remove Operation */
+		/* Remove It */
 		ISMData.RemoveInstanceAtIndex(InstanceInfo.InstanceIndex);
 	}
 
-	/* Add Operation */
+	/* Add It */
 	MeshList[InstanceInfo.MeshIndex].AddInstanceAtIndex(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace);
 
 	return true;
