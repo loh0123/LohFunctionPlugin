@@ -180,6 +180,13 @@ public:
 
 public:
 
+	FORCEINLINE const TArray< FGameplayTag >& GetAllDataTag( ) const
+	{
+		return DataTagList.GetItemList();
+	}
+
+public:
+
 	FORCEINLINE TMap< int32 , int32 > GetDataMetaIndexMapping( ) const
 	{
 		TMap< int32 , int32 > ResultMapping;
@@ -410,6 +417,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FLFPChunkedTagData_TagChanged, con
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FLFPChunkedTagData_MetaChanged, const int32, RegionIndex, const int32, ChunkIndex, const int32, DataIndex, const FGameplayTag&, MetaTag, const FLFPPrimitiveData&, OldMetaData, const FLFPPrimitiveData&, NewMetaData);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLFPChunkedTagData_Initialization, const int32, RegionIndex, const int32, ChunkIndex);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGIN_API ULFPChunkedTagDataComponent : public UActorComponent
 {
@@ -543,7 +552,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FLFPChunkedTagData_MetaChanged OnMetaChanged;
 
-private:
+	UPROPERTY(BlueprintAssignable)
+	FLFPChunkedTagData_Initialization OnInitialized;
+
+	UPROPERTY(BlueprintAssignable)
+	FLFPChunkedTagData_Initialization OnUninitialized;
+
+protected:
 
 	UPROPERTY()
 	TArray< FLFPTaggedRegionData > RegionDataList = TArray< FLFPTaggedRegionData >();

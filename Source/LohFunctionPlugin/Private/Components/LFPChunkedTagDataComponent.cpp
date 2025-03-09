@@ -92,6 +92,8 @@ void ULFPChunkedTagDataComponent::InitializeChunk( const int32 RegionIndex , con
 	}
 
 	RegionDataList[RegionIndex].GetChunk(ChunkIndex).InitializeChunkData(DataIndexSize, FillTag);
+
+	OnInitialized.Broadcast(RegionIndex, ChunkIndex);
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeChunk( const int32 RegionIndex , const int32 ChunkIndex )
@@ -104,6 +106,8 @@ void ULFPChunkedTagDataComponent::DeinitializeChunk( const int32 RegionIndex , c
 	}
 
 	RegionDataList[RegionIndex].GetChunk(ChunkIndex).DeinitializeChunkData();
+
+	OnUninitialized.Broadcast(RegionIndex, ChunkIndex);
 }
 
 void ULFPChunkedTagDataComponent::InitializeRegion( const int32 RegionIndex )
@@ -123,6 +127,8 @@ void ULFPChunkedTagDataComponent::InitializeRegion( const int32 RegionIndex )
 	}
 
 	RegionDataList[RegionIndex].InitializeRegionData(ChunkIndexSize);
+
+	OnInitialized.Broadcast(RegionIndex, INDEX_NONE);
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeRegion( const int32 RegionIndex )
@@ -135,6 +141,8 @@ void ULFPChunkedTagDataComponent::DeinitializeRegion( const int32 RegionIndex )
 	}
 
 	RegionDataList[RegionIndex].DeinitializeRegionData();
+
+	OnUninitialized.Broadcast(RegionIndex, INDEX_NONE);
 }
 
 ////////////////////////////

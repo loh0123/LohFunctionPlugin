@@ -116,6 +116,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Initializer")
 	int32 RegisterInstanceStaticMeshComponentList( TArray< UInstancedStaticMeshComponent* > ISMList );
 
+	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent ")
+	void UnregisterAllInstanceStaticMeshComponent( const bool bClearInstance );
+
 	/** Set Instance Type On This Grid Location (Use -1 To Remove) */
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent | Setter")
 	bool SetInstance( const FLFPInstanceGridInstanceInfo& InstanceInfo );
@@ -130,5 +133,5 @@ public:
 	bool SetCustomDataList( const int32 InstanceIndex , const TArray< float >& DataList );
 
 	UFUNCTION(BlueprintCallable, Category = "LFPInstanceIDComponent ")
-	void EmptyAllInstance( );
+	void ClearAllInstances( );
 };

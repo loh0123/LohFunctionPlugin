@@ -208,13 +208,18 @@ int32 ULFPInstanceIDComponent::RegisterInstanceStaticMeshComponentList( TArray< 
 	return Count;
 }
 
-bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& InstanceInfo )
+void ULFPInstanceIDComponent::UnregisterAllInstanceStaticMeshComponent( const bool bClearInstance )
 {
-	if ( IsMeshIndexValid(InstanceInfo.MeshIndex) == false )
+	if ( bClearInstance )
 	{
-		return false;
+		ClearAllInstances();
 	}
 
+	MeshList.Empty();
+}
+
+bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& InstanceInfo )
+{
 	const int32 OccupationID = GetMeshIndexByInstance(InstanceInfo.InstanceIndex);
 
 	/* If Prev Data Is Valid , Remove Or Update It */
@@ -233,7 +238,10 @@ bool ULFPInstanceIDComponent::SetInstance( const FLFPInstanceGridInstanceInfo& I
 	}
 
 	/* Add It */
-	MeshList[InstanceInfo.MeshIndex].AddInstanceAtIndex(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace);
+	if ( IsMeshIndexValid(InstanceInfo.MeshIndex) )
+	{
+		MeshList[InstanceInfo.MeshIndex].AddInstanceAtIndex(InstanceInfo.InstanceIndex, InstanceInfo.Transform, InstanceInfo.bIsWorldSpace);
+	}
 
 	return true;
 }
@@ -277,12 +285,10 @@ bool ULFPInstanceIDComponent::SetCustomDataList( const int32 InstanceIndex , con
 	return MeshList[MeshIndex].SetCustomData(InstanceIndex, DataList);
 }
 
-void ULFPInstanceIDComponent::EmptyAllInstance( )
+void ULFPInstanceIDComponent::ClearAllInstances( )
 {
 	for ( FLFPInstanceGridMeshData& Element : MeshList )
 	{
 		Element.EmptyInstance();
 	}
-
-	MeshList.Empty();
 }
