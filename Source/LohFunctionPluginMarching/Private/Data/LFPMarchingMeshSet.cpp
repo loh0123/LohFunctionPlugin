@@ -14,9 +14,9 @@ TArray< UStaticMesh* > ULFPMarchingMeshSet::GetMeshList( ) const
 
 	LoadedList.Reserve(MappingMeshList.Num());
 
-	for ( const auto& MeshSolfPtr : MappingMeshList )
+	for ( const auto& MeshSoftPtr : MappingMeshList )
 	{
-		LoadedList.Add(MeshSolfPtr.LoadSynchronous());
+		LoadedList.Add(MeshSoftPtr.LoadSynchronous());
 	}
 
 	return LoadedList;

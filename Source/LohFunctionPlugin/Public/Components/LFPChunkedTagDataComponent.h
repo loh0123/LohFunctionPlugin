@@ -201,6 +201,11 @@ public:
 		return ResultMapping;
 	}
 
+	FORCEINLINE int32 GetDataMetaNum( ) const
+	{
+		return DataMetaList.Num();
+	}
+
 	FORCEINLINE int32 GetDataMetaIndex( const int32 DataIndex ) const
 	{
 		checkf(DataTagList.IsValidIndex ( DataIndex ),
