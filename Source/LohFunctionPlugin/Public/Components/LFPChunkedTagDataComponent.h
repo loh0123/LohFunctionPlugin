@@ -53,6 +53,11 @@ public:
 
 public:
 
+	FORCEINLINE const TArray< FGameplayTag >& GetMetaDataTagList( ) const
+	{
+		return MetaList.GetMappingList();
+	}
+
 	FORCEINLINE const FLFPPrimitiveData* GetMetaData( const FGameplayTag& MetaTag ) const
 	{
 		return MetaList.GetItemConst(MetaTag);
@@ -216,6 +221,8 @@ public:
 		return DataMetaList.IndexOfByKey(DataIndex);
 	}
 
+public:
+
 	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 DataMetaIndex , const FGameplayTag& MetaTag ) const
 	{
 		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
@@ -234,6 +241,26 @@ public:
 		       ));
 
 		return DataMetaList[DataMetaIndex].GetOrAddMetaData(MetaTag);
+	}
+
+	FORCEINLINE const FLFPTaggedMetaData& GetDataMeta_Direct_All( const int32 DataMetaIndex ) const
+	{
+		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
+		       TEXT(
+			       "DataMetaIndex invalid"
+		       ));
+
+		return DataMetaList[DataMetaIndex];
+	}
+
+	FORCEINLINE FLFPTaggedMetaData& GetDataMeta_Direct_All( const int32 DataMetaIndex )
+	{
+		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
+		       TEXT(
+			       "DataMetaIndex invalid"
+		       ));
+
+		return DataMetaList[DataMetaIndex];
 	}
 
 public:
@@ -474,8 +501,17 @@ public:
 	// Get existing all data index to data meta index mapping
 	FORCEINLINE TMap< int32 , int32 > GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
+	// Get data index to data meta count
+	FORCEINLINE int32 GetDataMeta_MappingNum( const int32 RegionIndex , const int32 ChunkIndex ) const;
+
+	// Get existing All Meta Tag in data 
+	FORCEINLINE const TArray< FGameplayTag >& GetDataMeta_MetaTagList( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const;
+
 	// Get meta by data meta index from mapping
 	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const;
+
+	// Set meta by data meta index from mapping
+	FORCEINLINE void SetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta );
 
 public:
 

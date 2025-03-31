@@ -157,11 +157,40 @@ TMap< int32 , int32 > ULFPChunkedTagDataComponent::GetDataMeta_Mapping( const in
 	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaIndexMapping();
 }
 
+int32 ULFPChunkedTagDataComponent::GetDataMeta_MappingNum( const int32 RegionIndex , const int32 ChunkIndex ) const
+{
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaNum();
+}
+
+const TArray< FGameplayTag >& ULFPChunkedTagDataComponent::GetDataMeta_MetaTagList( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const
+{
+	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
+
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct_All(MappingIndex).GetMetaDataTagList();
+}
+
 const FLFPPrimitiveData* ULFPChunkedTagDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
 {
 	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
 
 	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+}
+
+void ULFPChunkedTagDataComponent::SetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta )
+{
+	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
+
+	const int32 DataIndex = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct_All(MappingIndex).GetDataIndex();
+
+	const FLFPPrimitiveData* OldMetaPtr = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+
+	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
+		                                  ? *OldMetaPtr
+		                                  : FLFPPrimitiveData();
+
+	RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetOrAddDataMeta_Direct(MappingIndex, DataMetaTag) = NewDataMeta;
+
+	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, DataIndex, DataMetaTag, OldMeta, NewDataMeta);
 }
 
 ////////////////////////////
