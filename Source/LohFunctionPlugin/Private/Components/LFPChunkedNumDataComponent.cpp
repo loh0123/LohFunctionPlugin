@@ -144,16 +144,47 @@ int32 ULFPChunkedNumDataComponent::GetDataID_Checked( const int32 RegionIndex , 
 	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataID(DataIndex);
 }
 
-TMap< int32 , int32 > ULFPChunkedNumDataComponent::GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChunkIndex ) const
+int32 ULFPChunkedNumDataComponent::GetDataMeta_MappingNum( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
-	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaIndexMapping();
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaNum();
 }
 
-const FLFPPrimitiveData* ULFPChunkedNumDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
+const FLFPNumMetaData* ULFPChunkedNumDataComponent::GetDataMetaList_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const
 {
 	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
 
-	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaList_Direct(MappingIndex);
+}
+
+void ULFPChunkedNumDataComponent::SetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta )
+{
+	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
+
+	FLFPNumMetaData* DataMetaPtr = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaList_Direct_Mutable(MappingIndex);
+
+	check(DataMetaPtr != nullptr);
+
+	const FLFPPrimitiveData* OldMetaPtr = DataMetaPtr->GetMetaData(DataMetaTag);
+
+	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
+		                                  ? *OldMetaPtr
+		                                  : FLFPPrimitiveData();
+
+	DataMetaPtr->GetOrAddMetaData(DataMetaTag) = NewDataMeta;
+
+	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, DataMetaPtr->GetDataIndex(), DataMetaTag, OldMeta, NewDataMeta);
+}
+
+TArray< int32 > ULFPChunkedNumDataComponent::GetDataIDList( const int32 RegionIndex , const int32 ChunkIndex ) const
+{
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
+	{
+		UE_LOG(LogChunkedNumDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
+
+		return TArray< int32 >();
+	}
+
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataIDList();
 }
 
 ////////////////////////////

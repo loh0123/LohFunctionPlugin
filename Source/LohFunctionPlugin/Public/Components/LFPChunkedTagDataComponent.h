@@ -185,82 +185,40 @@ public:
 
 public:
 
-	FORCEINLINE const TArray< FGameplayTag >& GetAllDataTag( ) const
+	FORCEINLINE const TArray< FGameplayTag >& GetDataTagList( ) const
 	{
 		return DataTagList.GetItemList();
 	}
 
-public:
-
-	FORCEINLINE TMap< int32 , int32 > GetDataMetaIndexMapping( ) const
+	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList( const int32 DataIndex ) const
 	{
-		TMap< int32 , int32 > ResultMapping;
-
-		ResultMapping.Reserve(DataMetaList.Num());
-
-		for ( int32 MetaIndex = 0 ; MetaIndex < DataMetaList.Num() ; MetaIndex++ )
-		{
-			ResultMapping.Add(DataMetaList[MetaIndex].GetDataIndex(), MetaIndex);
-		}
-
-		return ResultMapping;
+		return DataMetaList.FindByKey(DataIndex);
 	}
+
+	FORCEINLINE FLFPTaggedMetaData* GetDataMetaList_Mutable( const int32 DataIndex )
+	{
+		return DataMetaList.FindByKey(DataIndex);
+	}
+
+	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList_Direct( const int32 DataMetaIndex ) const
+	{
+		return DataMetaList.IsValidIndex(DataMetaIndex)
+			       ? &DataMetaList[DataMetaIndex]
+			       : nullptr;
+	}
+
+	FORCEINLINE FLFPTaggedMetaData* GetDataMetaList_Direct_Mutable( const int32 DataMetaIndex )
+	{
+		return DataMetaList.IsValidIndex(DataMetaIndex)
+			       ? &DataMetaList[DataMetaIndex]
+			       : nullptr;
+	}
+
+public:
 
 	FORCEINLINE int32 GetDataMetaNum( ) const
 	{
 		return DataMetaList.Num();
-	}
-
-	FORCEINLINE int32 GetDataMetaIndex( const int32 DataIndex ) const
-	{
-		checkf(DataTagList.IsValidIndex ( DataIndex ),
-		       TEXT(
-			       "DataIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
-		       ));
-
-		return DataMetaList.IndexOfByKey(DataIndex);
-	}
-
-public:
-
-	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 DataMetaIndex , const FGameplayTag& MetaTag ) const
-	{
-		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
-		       TEXT(
-			       "DataMetaIndex invalid"
-		       ));
-
-		return DataMetaList[DataMetaIndex].GetMetaData(MetaTag);
-	}
-
-	FORCEINLINE FLFPPrimitiveData& GetOrAddDataMeta_Direct( const int32 DataMetaIndex , const FGameplayTag& MetaTag )
-	{
-		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
-		       TEXT(
-			       "DataMetaIndex invalid"
-		       ));
-
-		return DataMetaList[DataMetaIndex].GetOrAddMetaData(MetaTag);
-	}
-
-	FORCEINLINE const FLFPTaggedMetaData& GetDataMeta_Direct_All( const int32 DataMetaIndex ) const
-	{
-		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
-		       TEXT(
-			       "DataMetaIndex invalid"
-		       ));
-
-		return DataMetaList[DataMetaIndex];
-	}
-
-	FORCEINLINE FLFPTaggedMetaData& GetDataMeta_Direct_All( const int32 DataMetaIndex )
-	{
-		checkf(DataMetaList.IsValidIndex ( DataMetaIndex ),
-		       TEXT(
-			       "DataMetaIndex invalid"
-		       ));
-
-		return DataMetaList[DataMetaIndex];
 	}
 
 public:
@@ -498,22 +456,19 @@ public:
 	// Faster version of get data tag without check
 	FORCEINLINE FGameplayTag GetDataTag_Checked( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
-	// Get existing all data index to data meta index mapping
-	FORCEINLINE TMap< int32 , int32 > GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChunkIndex ) const;
-
 	// Get data index to data meta count
 	FORCEINLINE int32 GetDataMeta_MappingNum( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	// Get existing All Meta Tag in data 
-	FORCEINLINE const TArray< FGameplayTag >& GetDataMeta_MetaTagList( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const;
-
-	// Get meta by data meta index from mapping
-	FORCEINLINE const FLFPPrimitiveData* GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const;
+	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const;
 
 	// Set meta by data meta index from mapping
 	FORCEINLINE void SetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta );
 
 public:
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FGameplayTag> GetDataTagList( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION(BlueprintCallable)
 	FGameplayTag GetDataTag( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
@@ -599,7 +554,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FLFPChunkedTagData_Initialization OnUninitialized;
 
-protected:
+private:
 
 	UPROPERTY()
 	TArray< FLFPTaggedRegionData > RegionDataList = TArray< FLFPTaggedRegionData >();

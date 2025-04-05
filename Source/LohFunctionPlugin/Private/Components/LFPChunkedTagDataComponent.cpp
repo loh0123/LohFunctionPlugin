@@ -152,45 +152,47 @@ FGameplayTag ULFPChunkedTagDataComponent::GetDataTag_Checked( const int32 Region
 	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTag(DataIndex);
 }
 
-TMap< int32 , int32 > ULFPChunkedTagDataComponent::GetDataMeta_Mapping( const int32 RegionIndex , const int32 ChunkIndex ) const
-{
-	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaIndexMapping();
-}
-
 int32 ULFPChunkedTagDataComponent::GetDataMeta_MappingNum( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaNum();
 }
 
-const TArray< FGameplayTag >& ULFPChunkedTagDataComponent::GetDataMeta_MetaTagList( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const
+const FLFPTaggedMetaData* ULFPChunkedTagDataComponent::GetDataMetaList_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const
 {
 	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
 
-	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct_All(MappingIndex).GetMetaDataTagList();
-}
-
-const FLFPPrimitiveData* ULFPChunkedTagDataComponent::GetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag ) const
-{
-	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
-
-	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaList_Direct(MappingIndex);
 }
 
 void ULFPChunkedTagDataComponent::SetDataMeta_Direct( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta )
 {
 	check(IsChunkIndexValid(RegionIndex, ChunkIndex));
 
-	const int32 DataIndex = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct_All(MappingIndex).GetDataIndex();
+	FLFPTaggedMetaData* DataMetaPtr = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMetaList_Direct_Mutable(MappingIndex);
 
-	const FLFPPrimitiveData* OldMetaPtr = RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataMeta_Direct(MappingIndex, DataMetaTag);
+	check(DataMetaPtr != nullptr);
+
+	const FLFPPrimitiveData* OldMetaPtr = DataMetaPtr->GetMetaData(DataMetaTag);
 
 	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
 		                                  ? *OldMetaPtr
 		                                  : FLFPPrimitiveData();
 
-	RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetOrAddDataMeta_Direct(MappingIndex, DataMetaTag) = NewDataMeta;
+	DataMetaPtr->GetOrAddMetaData(DataMetaTag) = NewDataMeta;
 
-	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, DataIndex, DataMetaTag, OldMeta, NewDataMeta);
+	OnMetaChanged.Broadcast(RegionIndex, ChunkIndex, DataMetaPtr->GetDataIndex(), DataMetaTag, OldMeta, NewDataMeta);
+}
+
+TArray< FGameplayTag > ULFPChunkedTagDataComponent::GetDataTagList( const int32 RegionIndex , const int32 ChunkIndex ) const
+{
+	if ( IsChunkIndexValid(RegionIndex, ChunkIndex) == false )
+	{
+		UE_LOG(LogChunkedTagDataComponent, Verbose, TEXT("%hs : Invalid Index ( R : %i , C : %i )"), __FUNCTION__, RegionIndex, ChunkIndex);
+
+		return TArray< FGameplayTag >();
+	}
+
+	return RegionDataList[RegionIndex].GetChunk(ChunkIndex).GetDataTagList();
 }
 
 ////////////////////////////
