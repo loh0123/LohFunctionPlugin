@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UDynamicMesh.h"
 #include "Engine/DataAsset.h"
 #include "LFPMarchingMeshSet.generated.h"
 
@@ -26,6 +27,13 @@ struct FLFPMarchingMeshMappingData
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Default)
 	FIntVector Rotation = FIntVector(0);
+
+public:
+
+	FORCEINLINE FRotator GetRotation( ) const
+	{
+		return FRotator(Rotation.Y * 90.0f, Rotation.Z * 90.0f, Rotation.X * 90.0f);
+	}
 };
 
 USTRUCT()
@@ -60,6 +68,16 @@ class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingMeshSet : public UPrimaryDataAss
 
 protected:
 
+	TArray< FDynamicMesh3 > MappingDynamicList = TArray< FDynamicMesh3 >();
+
+public:
+
+	const TArray< FDynamicMesh3 >& GetDynamicList( ) const;
+
+	FORCEINLINE void GenerateDynamicList( );
+
+protected:
+
 	/* The static mesh use on this set, the index on this array follow MeshDataList */
 	UPROPERTY(VisibleAnywhere, Category = Default)
 	TArray< TSoftObjectPtr< UStaticMesh > > MappingMeshList = TArray< TSoftObjectPtr< UStaticMesh > >();
@@ -71,6 +89,9 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = Default)
+	bool IsDynamicListValid( ) const;
+
+	UFUNCTION(BlueprintCallable, Category = Default)
 	TArray< UStaticMesh* > GetMeshList( ) const;
 
 	UFUNCTION(BlueprintCallable, Category = Default)
@@ -79,6 +100,9 @@ public:
 #if WITH_EDITORONLY_DATA
 
 protected:
+
+	UPROPERTY(EditAnywhere, Category = Edit)
+	bool bSaveDynamicData = true;
 
 	UPROPERTY(EditAnywhere, Category = Edit, Meta = ( NoElementDuplicate ))
 	TArray< FLFPMarchingSingleMeshData > MeshDataList = TArray< FLFPMarchingSingleMeshData >();
@@ -93,6 +117,8 @@ protected:
 	FIntVector EditRotation = FIntVector(0);
 
 #endif
+
+	virtual void PostLoad( ) override;
 
 #if WITH_EDITOR
 

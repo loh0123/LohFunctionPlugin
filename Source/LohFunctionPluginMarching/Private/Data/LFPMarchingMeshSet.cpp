@@ -5,8 +5,55 @@
 
 #include "Data/LFPMarchingMeshSet.h"
 
+#include "StaticMeshLODResourcesToDynamicMesh.h"
 #include "Library/LFPMarchingFunctionLibrary.h"
 #include "UObject/ObjectSaveContext.h"
+
+const TArray< FDynamicMesh3 >& ULFPMarchingMeshSet::GetDynamicList( ) const
+{
+	return MappingDynamicList;
+}
+
+void ULFPMarchingMeshSet::GenerateDynamicList( )
+{
+	if ( bSaveDynamicData )
+	{
+		MappingDynamicList.SetNum(MappingMeshList.Num());
+
+		for ( int32 MeshIndex = 0 ; MeshIndex < MappingMeshList.Num() ; ++MeshIndex )
+		{
+			const UStaticMesh* MeshData = MappingMeshList[MeshIndex].LoadSynchronous();
+
+			if ( IsValid(MeshData) == false )
+			{
+				continue;
+			}
+
+			if ( MeshData->bAllowCPUAccess == false )
+			{
+				continue;
+			}
+
+			if ( const FStaticMeshRenderData* RenderData = MeshData->GetRenderData() ; RenderData != nullptr )
+			{
+				if ( const FStaticMeshLODResources* LODData = RenderData->GetCurrentFirstLOD(0) ; LODData != nullptr )
+				{
+					FDynamicMesh3& NewMeshData = MappingDynamicList[MeshIndex];
+
+					UE::Geometry::FStaticMeshLODResourcesToDynamicMesh::ConversionOptions ConvertOptions;
+
+					UE::Geometry::FStaticMeshLODResourcesToDynamicMesh Converter;
+					Converter.Convert(LODData, ConvertOptions, NewMeshData);
+				}
+			}
+		}
+	}
+}
+
+bool ULFPMarchingMeshSet::IsDynamicListValid( ) const
+{
+	return MappingDynamicList.Num() == MappingMeshList.Num();
+}
 
 TArray< UStaticMesh* > ULFPMarchingMeshSet::GetMeshList( ) const
 {
@@ -29,10 +76,18 @@ FLFPMarchingMeshMappingData ULFPMarchingMeshSet::GetMappingData( const uint8 Mar
 		       : FLFPMarchingMeshMappingData();
 }
 
+void ULFPMarchingMeshSet::PostLoad( )
+{
+	GenerateDynamicList();
+
+	Super::PostLoad();
+}
+
 void ULFPMarchingMeshSet::PreSave( FObjectPreSaveContext SaveContext )
 {
 	MappingMeshList.Empty(MeshDataList.Num());
 	MappingDataList.Empty(255);
+	MappingDynamicList.Empty(MeshDataList.Num());
 
 	for ( const FLFPMarchingSingleMeshData& SingelMeshData : MeshDataList )
 	{
@@ -48,6 +103,8 @@ void ULFPMarchingMeshSet::PreSave( FObjectPreSaveContext SaveContext )
 			MappingDataList.Add(RotationData.Key, FLFPMarchingMeshMappingData(MeshID, RotationData.Value));
 		}
 	}
+
+	GenerateDynamicList();
 
 	Super::PreSave(SaveContext);
 }

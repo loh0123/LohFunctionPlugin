@@ -3,14 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/LFPGridSetting.h"
 #include "LFPVoxelSetting.generated.h"
 
 /**
  * 
  */
-UCLASS(Blueprintable, EditInlineNew)
-class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelSetting : public ULFPGridFragmentSettingBase
+UCLASS(Blueprintable)
+class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelSetting : public UDataAsset
 {
 	GENERATED_BODY()
 

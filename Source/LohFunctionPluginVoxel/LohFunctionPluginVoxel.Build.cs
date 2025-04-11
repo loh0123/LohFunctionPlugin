@@ -18,13 +18,10 @@ public class LohFunctionPluginVoxel : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
-				"Slate",
-				"SlateCore",
 				"GeometryFramework",
 				"GeometryCore",
 				"LohFunctionPlugin",
-				"GameplayTags",
-				"DynamicMesh"
+				"GameplayTags"
 			}
 		);
 	}

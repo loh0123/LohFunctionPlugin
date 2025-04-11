@@ -2,18 +2,15 @@
 
 #include "Components/LFPVoxelRenderComponent.h"
 
+#include "MeshCardBuild.h"
 #include "Components/LFPChunkedTagDataComponent.h"
 #include "Components/LFPGridTagDataComponent.h"
 #include "Data/LFPGridSetting.h"
 #include "Data/LFPVoxelSetting.h"
 #include "DynamicMesh/DynamicMeshAABBTree3.h"
-#include "DynamicMesh/Operations/MergeCoincidentMeshEdges.h"
-#include "Generators/MarchingCubes.h"
 #include "Math/LFPGridLibrary.h"
-#include "Operations/MeshBevel.h"
 #include "Render/LFPRenderLibrary.h"
 #include "Runtime/GeometryFramework/Private/Components/DynamicMeshSceneProxy.h"
-#include "Selections/GeometrySelectionUtil.h"
 #include "Spatial/FastWinding.h"
 
 class ULFPVoxelSetting;
@@ -25,10 +22,6 @@ ULFPVoxelRenderComponent::ULFPVoxelRenderComponent( )
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	VoxelMeshComputeQueue.OnComputeCompleted = [&] ( TUniquePtr< FDynamicMesh3 > NewData )
-	{
-		OnComputeNewVoxelMesh_Completed(MoveTemp(NewData));
-	};
 	// ...
 }
 
@@ -47,11 +40,75 @@ void ULFPVoxelRenderComponent::TickComponent( float DeltaTime , ELevelTick TickT
 	// ...
 }
 
-void ULFPVoxelRenderComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex )
+FIntVector ULFPVoxelRenderComponent::GetChunkDataSize( ) const
 {
-	DataComponent = NewDataComponent;
-	RegionIndex   = NewRegionIndex;
-	ChunkIndex    = NewChunkIndex;
+	if ( IsDataComponentValid() )
+	{
+		const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting();
+
+		return GridSetting->GetDataGridSize();
+	}
+
+	return FIntVector::NoneValue;
+}
+
+int32 ULFPVoxelRenderComponent::GetChunkDataNum( ) const
+{
+	const FIntVector& Size = GetChunkDataSize();
+
+	if ( Size == FIntVector::NoneValue )
+	{
+		return INDEX_NONE;
+	}
+
+	return Size.X * Size.Y * Size.Z;
+}
+
+FVector ULFPVoxelRenderComponent::GetVoxelSize( ) const
+{
+	if ( IsDataComponentValid() )
+	{
+		return RenderSetting->GetVoxelSize();
+	}
+
+	return FVector(0.0f);
+}
+
+bool ULFPVoxelRenderComponent::IsDataComponentValid( ) const
+{
+	if ( IsValid(DataComponent) == false || IsValid(RenderSetting) == false )
+	{
+		return false;
+	}
+
+	const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting();
+
+	if ( IsValid(GridSetting) == false )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void ULFPVoxelRenderComponent::GetFaceCullingSetting( bool& bIsChunkFaceCullingDisable , bool& bIsRegionFaceCullingDisable ) const
+{
+	bIsChunkFaceCullingDisable  = false;
+	bIsRegionFaceCullingDisable = false;
+
+	if ( IsDataComponentValid() )
+	{
+		bIsChunkFaceCullingDisable  = RenderSetting->IsChunkFaceCullingDisable();
+		bIsRegionFaceCullingDisable = RenderSetting->IsRegionFaceCullingDisable();
+	}
+}
+
+void ULFPVoxelRenderComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndexIndex )
+{
+	DataComponent     = NewDataComponent;
+	RegionIndex       = NewRegionIndex;
+	ChunkIndex        = NewChunkIndex;
+	ChunkSectionIndex = NewSectionIndexIndex;
 }
 
 void ULFPVoxelRenderComponent::Uninitialize( )
@@ -61,15 +118,7 @@ void ULFPVoxelRenderComponent::Uninitialize( )
 
 void ULFPVoxelRenderComponent::UpdateVoxel( )
 {
-	if ( IsValid(DataComponent) == false )
-	{
-		return;
-	}
-
-	const ULFPGridSetting*  GridSetting  = DataComponent->GetGridSetting();
-	const ULFPVoxelSetting* VoxelSetting = GridSetting->FindGridFragmentByClass< ULFPVoxelSetting >();
-
-	if ( IsValid(GridSetting) == false || IsValid(VoxelSetting) == false )
+	if ( IsDataComponentValid() == false )
 	{
 		return;
 	}
@@ -78,16 +127,21 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 
 	const double StartTime = FPlatformTime::Seconds();
 
+	const FIntVector& VoxelGridSize = GetChunkDataSize();
+
+	const FVector VoxelFullSize = GetVoxelSize();
+
+	const FVector VoxelBoundFullSize = VoxelFullSize * FVector(VoxelGridSize);
+	const FVector VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
+
 	FDynamicMesh3 MeshData;
 	{
 		MeshData.Clear();
 
-		int32 MaxMaterialIndex = 1;
+		bool bIsChunkFaceCullingDisable  = false;
+		bool bIsRegionFaceCullingDisable = false;
 
-		const FVector VoxelFullSize = VoxelSetting->GetVoxelSize();
-
-		const FVector VoxelBoundFullSize = VoxelFullSize * FVector(GridSetting->GetDataGridSize());
-		const FVector VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
+		GetFaceCullingSetting(bIsChunkFaceCullingDisable, bIsRegionFaceCullingDisable);
 
 		TMap< FIntVector4 , int32 > VertexMapping;
 
@@ -105,7 +159,7 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 
 		const auto& CreateFace = [&] ( const int32& VoxelIndex , const int32& RotationID , const int32 MaterialID )
 		{
-			const FIntVector VoxelGridPos = ULFPGridLibrary::ToGridLocation(VoxelIndex, GridSetting->GetDataGridSize());
+			const FIntVector VoxelGridPos = ULFPGridLibrary::ToGridLocation(VoxelIndex, VoxelGridSize);
 			const FVector    CenterPos    = FVector(VoxelGridPos) + 0.5f;
 			const FRotator   Rotation     = LFPVoxelRenderConstantData::VertexRotationList[RotationID];
 			const FVector3f  Normal       = FVector3f(LFPVoxelRenderConstantData::FaceDirection[RotationID].Up);
@@ -197,7 +251,7 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 		};
 
 		/* Generate Voxel Mesh Data */
-		for ( int32 VoxelIndex = 0 ; VoxelIndex < GridSetting->GetDataIndexSize() ; ++VoxelIndex )
+		for ( int32 VoxelIndex = 0 ; VoxelIndex < GetChunkDataNum() ; ++VoxelIndex )
 		{
 			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, VoxelIndex);
 
@@ -208,7 +262,7 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 					const FIntVector& TargetIndex = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, VoxelIndex), LFPVoxelRenderConstantData::FaceDirection[FaceDirectionIndex].Up);
 
 					/** Check Do We Ignore Border Data And Always Fill The Face */
-					const bool bForceRender = (VoxelSetting->IsChunkFaceCullingDisable() && ChunkIndex != TargetIndex.Y) || (VoxelSetting->IsRegionFaceCullingDisable() && RegionIndex != TargetIndex.X) || TargetIndex == FIntVector::NoneValue;
+					const bool bForceRender = (bIsChunkFaceCullingDisable && ChunkIndex != TargetIndex.Y) || (bIsRegionFaceCullingDisable && RegionIndex != TargetIndex.X) || TargetIndex == FIntVector::NoneValue;
 
 					const FGameplayTag& TargetVoxelTag = bForceRender
 						                                     ? FGameplayTag::EmptyTag
@@ -216,7 +270,6 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 
 					if ( TargetVoxelTag.MatchesTag(HandleTag) == false )
 					{
-						// TODO : Render Water
 						CreateFace(VoxelIndex, FaceDirectionIndex, 0);
 					}
 				}
@@ -274,15 +327,11 @@ void ULFPVoxelRenderComponent::UpdateVoxel( )
 		}
 	}
 
-	VoxelMeshComputeQueue.LaunchJob(TEXT("VoxelDynamicMeshGenerator"),
-	                                [this, StartTime, TempBevelSize = BevelSize , MovedMeshDta = MoveTemp(MeshData)] ( FProgressCancel& Progress )
-	                                {
-		                                TUniquePtr< FDynamicMesh3 > MeshPtr = MakeUnique< FDynamicMesh3 >(MovedMeshDta);
-		                                ComputeNewVoxelMesh_TaskFunction(Progress, *MeshPtr, TempBevelSize);
+	UE_LOG(LogTemp, Warning, TEXT("UpdateVoxel Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
 
-		                                UE_LOG(LogTemp, Warning, TEXT("UpdateVoxel Generate Time Use : %f"), (float)(FPlatformTime::Seconds() - StartTime));
-		                                return MeshPtr;
-	                                });
+	GetDynamicMesh()->SetMesh(MoveTemp(MeshData));
+
+	OnVoxelMeshGenerated.Broadcast();
 }
 
 void ULFPVoxelRenderComponent::RebuildPhysicsData( )
@@ -297,13 +346,11 @@ void ULFPVoxelRenderComponent::RebuildPhysicsData( )
 	{
 		const double StartTime = FPlatformTime::Seconds();
 
-		const ULFPGridSetting*  GridSetting  = DataComponent->GetGridSetting();
-		const ULFPVoxelSetting* VoxelSetting = GridSetting->FindGridFragmentByClass< ULFPVoxelSetting >();
+		const FIntVector VoxelGridSize = GetChunkDataSize();
 
-		const FVector VoxelFullSize = VoxelSetting->GetVoxelSize();
-		const FVector VoxelHalfSize = VoxelFullSize * 0.5f;
+		const FVector VoxelFullSize = RenderSetting->GetVoxelSize();
 
-		const FVector VoxelBoundFullSize = VoxelFullSize * FVector(GridSetting->GetDataGridSize());
+		const FVector VoxelBoundFullSize = VoxelFullSize * FVector(VoxelGridSize);
 		const FVector VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
 
 		TMap< FIntVector , FIntVector > BatchDataMap;
@@ -343,16 +390,16 @@ void ULFPVoxelRenderComponent::RebuildPhysicsData( )
 		};
 
 		/** Generate Batch Data Map */
-		for ( int32 Z = 0 ; Z < GridSetting->GetDataGridSize().Z ; Z++ )
+		for ( int32 Z = 0 ; Z < VoxelGridSize.Z ; Z++ )
 		{
-			for ( int32 Y = 0 ; Y < GridSetting->GetDataGridSize().Y ; Y++ )
+			for ( int32 Y = 0 ; Y < VoxelGridSize.Y ; Y++ )
 			{
-				for ( int32 X = 0 ; X < GridSetting->GetDataGridSize().X ; X++ )
+				for ( int32 X = 0 ; X < VoxelGridSize.X ; X++ )
 				{
 					/***************** Identify Data *****************/
 					const FIntVector CurrentPos(X, Y, Z);
 
-					const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentPos, GridSetting->GetDataGridSize());
+					const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentPos, VoxelGridSize);
 
 					const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, CurrentIndex);
 
@@ -456,102 +503,292 @@ void ULFPVoxelRenderComponent::UpdateDistanceField( )
 		GeoOnlyCopy.Copy(ReadMesh, false, false, false, false);
 	});
 	DistanceFieldComputeQueue.LaunchJob(TEXT("VoxelDynamicMeshComponentDistanceField"),
-	                                    [this, MovedGeoOnlyCopy = MoveTemp(GeoOnlyCopy), bMostlyTwoSided] ( FProgressCancel& Progress )
+	                                    [this, MovedGeoOnlyCopy = MoveTemp(GeoOnlyCopy), CurrentDistanceFieldResolutionScale = DistanceFieldResolutionScale, bMostlyTwoSided] ( FProgressCancel& Progress )
 	                                    {
-		                                    return ComputeNewDistanceField_TaskFunctionV2(Progress, MovedGeoOnlyCopy, bMostlyTwoSided);
+		                                    return ComputeNewDistanceField_TaskFunctionV2(Progress, MovedGeoOnlyCopy, bMostlyTwoSided, CurrentDistanceFieldResolutionScale);
 	                                    });
 }
 
-void ULFPVoxelRenderComponent::ComputeNewVoxelMesh_TaskFunction( FProgressCancel& Progress , FDynamicMesh3& Mesh , const float CurrentBevelSize ) const
+void ULFPVoxelRenderComponent::CreateVoxelLumenCard( FCardRepresentationData& LumenCardData ) const
 {
-	if ( Progress.Cancelled() ) { return; }
-
-	UE::Geometry::FMergeCoincidentMeshEdges Welder(&Mesh);
-	Welder.MergeVertexTolerance = 0.5f;
-	Welder.OnlyUniquePairs      = false;
-
-	if ( Welder.Apply() == false )
+	if ( GetDistanceFieldMode() == EDynamicMeshComponentDistanceFieldMode::NoDistanceField )
 	{
 		return;
 	}
 
-	if ( Progress.Cancelled() ) { return; }
-
-	TArray< int32 > Edges;
+	if ( IsDataComponentValid() == false )
 	{
-		TSet< int32 > UniqueEdges;
+		return;
+	}
 
-		constexpr float MinAngleDeg = 20.0f;
-		double          CosThresh   = FMath::Cos(FMathd::DegToRad * MinAngleDeg);
+	const double TaskTime = FPlatformTime::Seconds();
 
-		for ( int32 EID : Mesh.EdgeIndicesItr() )
+	const FIntVector VoxelGridSize = GetChunkDataSize();
+
+	const FVector3f VoxelFullSize = FVector3f(GetVoxelSize());
+	const FVector3f VoxelHalfSize = VoxelFullSize * 0.5f;
+
+	const FVector3f VoxelBoundFullSize = VoxelFullSize * FVector3f(VoxelGridSize);
+	const FVector3f VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
+
+	const FBox3f CurrentLocalBounds = FBox3f(-VoxelBoundHalfSize, VoxelBoundHalfSize);
+
+	auto SetCoverIndex = [&] ( FIntPoint& CoverIndex , const int32 Index )
+	{
+		if ( Index <= -1 )
 		{
-			UE::Geometry::FIndex2i EdgeT = Mesh.GetEdgeT(EID);
-			if ( EdgeT.B == INDEX_NONE )
+			CoverIndex = FIntPoint(INDEX_NONE);
+		}
+		else if ( CoverIndex.GetMin() == INDEX_NONE )
+		{
+			CoverIndex = FIntPoint(Index);
+		}
+		else if ( CoverIndex.X > Index )
+		{
+			CoverIndex.X = Index;
+		}
+		else if ( CoverIndex.Y < Index )
+		{
+			CoverIndex.Y = Index;
+		}
+	};
+
+	auto CheckFaceVisible = [&] ( const FIntVector& CurrentVoxelPos , const FIntVector& FromDirection )
+	{
+		const int32 VoxelIndex = ULFPGridLibrary::ToGridIndex(CurrentVoxelPos, VoxelGridSize);
+
+		const FIntVector CheckIndex = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, VoxelIndex), FromDirection);
+
+		const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(CheckIndex.X, CheckIndex.Y, CheckIndex.Z);
+
+		const FGameplayTag& TargetVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, VoxelIndex);
+
+		if ( SelfVoxelTag.MatchesTag(HandleTag) )
+		{
+			return false;
+		}
+		
+		if ( TargetVoxelTag.MatchesTag(HandleTag) == false )
+		{
+			return false;
+		}
+
+		return true;
+	};
+
+	auto AddCardBuild = [&] ( TArray< FLumenCardBuildData >& CardBuildList , const FIntPoint& CoverIndex , const int32 DirectionIndex )
+	{
+		FBox3f LumenBox;
+
+		switch ( DirectionIndex )
+		{
+			case 0 :
+			case 3 : LumenBox = FBox3f(
+				         FVector3f(CurrentLocalBounds.Min.X, CurrentLocalBounds.Min.Y, (CoverIndex.X * VoxelHalfSize.Z * 2) - VoxelBoundHalfSize.Z - BoundExpand),
+				         FVector3f(CurrentLocalBounds.Max.X, CurrentLocalBounds.Max.Y, (CoverIndex.Y * VoxelHalfSize.Z * 2) - VoxelBoundHalfSize.Z + BoundExpand)
+				         );
+
+				if ( DirectionIndex == 0 )
+				{
+					LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, 0.0f, VoxelHalfSize.Z) * 2.0f);
+				}
+				break;
+
+			case 1 :
+			case 4 : LumenBox = FBox3f(
+				         FVector3f((CoverIndex.X * VoxelHalfSize.X * 2) - VoxelBoundHalfSize.X - BoundExpand, CurrentLocalBounds.Min.Y, CurrentLocalBounds.Min.Z),
+				         FVector3f((CoverIndex.Y * VoxelHalfSize.X * 2) - VoxelBoundHalfSize.X + BoundExpand, CurrentLocalBounds.Max.Y, CurrentLocalBounds.Max.Z)
+				         );
+
+				if ( DirectionIndex == 4 )
+				{
+					LumenBox = LumenBox.ShiftBy(FVector3f(VoxelHalfSize.X, 0.0f, 0.0f) * 2.0f);
+				}
+				break;
+
+			case 2 :
+			case 5 : LumenBox = FBox3f(
+				         FVector3f(CurrentLocalBounds.Min.X, (CoverIndex.X * VoxelHalfSize.Y * 2) - VoxelBoundHalfSize.Y - BoundExpand, CurrentLocalBounds.Min.Z),
+				         FVector3f(CurrentLocalBounds.Max.X, (CoverIndex.Y * VoxelHalfSize.Y * 2) - VoxelBoundHalfSize.Y + BoundExpand, CurrentLocalBounds.Max.Z)
+				         );
+
+				if ( DirectionIndex == 2 )
+				{
+					LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, VoxelHalfSize.Y, 0.0f) * 2.0f);
+				}
+				break;
+			default : break;
+		}
+
+		FLumenCardBuildData BuildData;
+
+		BuildData.AxisAlignedDirectionIndex = LFPVoxelRenderConstantData::SurfaceDirectionID[DirectionIndex];
+
+		LFPVoxelRenderConstantData::FaceDirection[DirectionIndex].SetAxis(
+			BuildData.OBB.AxisX,
+			BuildData.OBB.AxisY,
+			BuildData.OBB.AxisZ
+			);
+
+		BuildData.OBB.Origin = FVector3f(LumenBox.GetCenter());
+		BuildData.OBB.Extent = FVector3f(LFPVoxelRenderConstantData::VertexRotationList[DirectionIndex].UnrotateVector(FVector(LumenBox.GetExtent())).GetAbs());
+
+		CardBuildList.Add(BuildData);
+
+		return;
+	};
+
+	LumenCardData.MeshCardsBuildData.Bounds = FBox(CurrentLocalBounds);
+
+	TArray< FLumenCardBuildData >& CardBuildList = LumenCardData.MeshCardsBuildData.CardBuildData;
+
+	CardBuildList.Empty();
+
+	struct FLFPFaceListData
+	{
+		FLFPFaceListData( const FIntVector InID , const int32 InFaceID , const bool InbIsReverse ) :
+			ID(InID), FaceID(InFaceID), bIsReverse(InbIsReverse)
+		{
+		}
+
+		const FIntVector ID         = FIntVector(0, 1, 2);
+		const int32      FaceID     = 0;
+		const bool       bIsReverse = false;
+	};
+
+	constexpr bool FaceReverseList[] =
+		{
+			true
+			, false
+			, true
+			, false
+			, true
+			, false
+		};
+
+	for ( int32 Direction = 0 ; Direction < 6 ; ++Direction )
+	{
+		const FIntVector VoxelDimension = FIntVector(
+			VoxelGridSize[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].X],
+			VoxelGridSize[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].Y],
+			VoxelGridSize[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].Z]
+			);
+
+		const int32 VoxelPlaneLength = VoxelDimension.X * VoxelDimension.Y;
+
+		FIntPoint CoverIndex = FIntPoint(INDEX_NONE);
+
+		TBitArray< > BlockMap = TBitArray(false, VoxelPlaneLength);
+
+		const bool& bIsReverse = FaceReverseList[Direction];
+
+		for ( int32 DepthIndex = bIsReverse
+			                         ? VoxelDimension.Z - 1
+			                         : 0 ; bIsReverse
+				                               ? DepthIndex > -1
+				                               : DepthIndex < VoxelDimension.Z ; bIsReverse
+					                                                                 ? DepthIndex--
+					                                                                 : DepthIndex++ )
+		{
+		StartCheck:
+
+			for ( int32 X = 0 ; X < VoxelDimension.X ; X++ )
 			{
-				continue;
-			}
-			FVector3d NormalA = Mesh.GetTriNormal(EdgeT.A);
-			FVector3d NormalB = Mesh.GetTriNormal(EdgeT.B);
-			if ( NormalA.Dot(NormalB) <= CosThresh )
-			{
-				UniqueEdges.Add(EID);
+				for ( int32 Y = 0 ; Y < VoxelDimension.Y ; Y++ )
+				{
+					FIntVector VoxelGridLocation;
+					VoxelGridLocation[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].X] = X;
+					VoxelGridLocation[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].Y] = Y;
+					VoxelGridLocation[LFPVoxelRenderConstantData::FaceLoopDirectionList[Direction].Z] = DepthIndex;
+
+					const int32 VoxelPlaneIndex = X + (Y * VoxelDimension.X);
+
+					const bool bIsFaceVisible = CheckFaceVisible(VoxelGridLocation, LFPVoxelRenderConstantData::FaceDirection[Direction].Up);
+
+					if ( BlockMap[VoxelPlaneIndex] )
+					{
+						if ( bIsFaceVisible )
+						{
+							AddCardBuild(CardBuildList, CoverIndex, Direction);
+
+							/* Reset */
+							BlockMap = TBitArray(false, VoxelPlaneLength);
+
+							SetCoverIndex(CoverIndex, INDEX_NONE);
+
+							goto StartCheck;
+						}
+					}
+					else if ( bIsFaceVisible )
+					{
+						BlockMap[VoxelPlaneIndex] = bIsFaceVisible;
+
+						SetCoverIndex(CoverIndex, DepthIndex);
+					}
+				}
 			}
 		}
 
-		Edges = UniqueEdges.Array();
-	}
-
-	if ( Progress.Cancelled() ) { return; }
-
-	{
-		UE::Geometry::FMeshBevel Bevel;
-		Bevel.InsetDistance         = CurrentBevelSize;
-		Bevel.MaterialIDMode        = UE::Geometry::FMeshBevel::EMaterialIDMode::InferMaterialID;
-		Bevel.SetConstantMaterialID = 0;
-		Bevel.NumSubdivisions       = 1;
-		Bevel.RoundWeight           = 1.0f;
-
-		// Note: Using group junctions as corner vertices tends to help the bevel match the result of a similar polygroup bevel in the UI
-		// (though is often very similar to the no-corner bevel; necessary corners where more than 2 selected edges meet are automatically detected)
-		Bevel.InitializeFromTriangleEdges(Mesh, Edges, [&Mesh] ( int32 VID )
+		if ( CoverIndex.GetMin() != INDEX_NONE )
 		{
-			return Mesh.IsGroupJunctionVertex(VID);
-		});
-
-		Bevel.Apply(Mesh, nullptr);
+			AddCardBuild(CardBuildList, CoverIndex, Direction);
+		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Lumen Card Data Time Use : %f : %i"), (float)(FPlatformTime::Seconds() - TaskTime), CardBuildList.Num());
 }
 
-void ULFPVoxelRenderComponent::OnComputeNewVoxelMesh_Completed( TUniquePtr< FDynamicMesh3 > NewMeshData )
+FPrimitiveSceneProxy* ULFPVoxelRenderComponent::CreateSceneProxy( )
 {
-	AsyncTask(
-		ENamedThreads::GameThread,
-		[this, MovedMeshData = MoveTemp(*NewMeshData.Release())]( )
-		{
-			EditMesh([&] ( FDynamicMesh3& MeshData )
-			{
-				MeshData = MovedMeshData;
-			});
+	FPrimitiveSceneProxy* NewProxy = Super::CreateSceneProxy();
 
-			OnVoxelMeshGenerated.Broadcast();
-		}
-		);
+	if ( NewProxy == nullptr )
+	{
+		return nullptr;
+	}
+
+	if ( IsDataComponentValid() == false )
+	{
+		return NewProxy;
+	}
+
+	if ( GetDistanceFieldMode() == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || CurrentDistanceField.IsValid() == false )
+	{
+		return NewProxy;
+	}
+
+	// Hijack The Data And Force Edit It
+	FCardRepresentationData* LumenCard = const_cast< FCardRepresentationData* >(NewProxy->GetMeshCardRepresentation());
+
+	if ( LumenCard == nullptr )
+	{
+		return NewProxy;
+	}
+
+	CreateVoxelLumenCard(*LumenCard);
+
+	return NewProxy;
 }
 
-TUniquePtr< FDistanceFieldVolumeData > ULFPVoxelRenderComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bMostlyTwoSided ) const
+TUniquePtr< FDistanceFieldVolumeData > ULFPVoxelRenderComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bMostlyTwoSided , const float CurrentDistanceFieldResolutionScale )
 {
 	if ( Progress.Cancelled() )
 	{
 		return nullptr;
 	}
 
-	TUniquePtr< FDistanceFieldVolumeData > NewDistanceField =
-		ComputeDistanceFieldForMesh(Mesh, Progress, bMostlyTwoSided);
+	TUniquePtr< FDistanceFieldVolumeData > NewDistanceField = MakeUnique< FDistanceFieldVolumeData >();
+	const bool                             bSuccess         = DynamicMesh_GenerateSignedDistanceFieldVolumeData(Mesh, bMostlyTwoSided, CurrentDistanceFieldResolutionScale, *NewDistanceField, Progress);
+
+	if ( Progress.Cancelled() || bSuccess == false )
+	{
+		return TUniquePtr< FDistanceFieldVolumeData >();
+	}
+
 	return NewDistanceField;
 }
 
-bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData( const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , FDistanceFieldVolumeData& VolumeDataOut , FProgressCancel& Progress ) const
+bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData( const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale , FDistanceFieldVolumeData& VolumeDataOut , FProgressCancel& Progress )
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(DynamicMesh_GenerateSignedDistanceFieldVolumeData);
 
@@ -560,12 +797,17 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 		return false;
 	}
 
-	if ( DistanceFieldResolutionScale <= 0 )
+	if ( CurrentDistanceFieldResolutionScale <= 0 )
 	{
 		return false;
 	}
 
 	const double StartTime = FPlatformTime::Seconds();
+
+	const auto ComputeLinearVoxelIndex = [&] ( FIntVector VoxelCoordinate , FIntVector VolumeDimensions )
+	{
+		return (VoxelCoordinate.Z * VolumeDimensions.Y + VoxelCoordinate.Y) * VolumeDimensions.X + VoxelCoordinate.X;
+	};
 
 	UE::Geometry::FDynamicMeshAABBTree3 Spatial(&Mesh, true);
 	if ( Progress.Cancelled() ) { return false; }
@@ -577,15 +819,17 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 	const int32       PerMeshMax = CVar->GetValueOnAnyThread();
 
 	// Meshes with explicit artist-specified scale can go higher
-	const int32 MaxNumBlocksOneDim = FMath::Min< int32 >(FMath::DivideAndRoundNearest(DistanceFieldResolutionScale <= 1
+	const int32 MaxNumBlocksOneDim = FMath::Min< int32 >(FMath::DivideAndRoundNearest(CurrentDistanceFieldResolutionScale <= 1
 		                                                                                  ? PerMeshMax / 2
 		                                                                                  : PerMeshMax, DistanceField::UniqueDataBrickSize), DistanceField::MaxIndirectionDimension - 1);
 
 	static const auto CVarDensity  = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.DistanceFields.DefaultVoxelDensity"));
-	const float       VoxelDensity = CVarDensity->GetValueOnAnyThread();
+	const float       VoxelDensity = CVarDensity != nullptr
+		                           ? CVarDensity->GetValueOnAnyThread()
+		                           : 0.0f;
 
-	const float NumVoxelsPerLocalSpaceUnit = VoxelDensity * DistanceFieldResolutionScale;
-	FBox3f      LocalSpaceMeshBounds       = (FBox3f)MeshBounds;
+	const float NumVoxelsPerLocalSpaceUnit = VoxelDensity * CurrentDistanceFieldResolutionScale;
+	FBox3f      LocalSpaceMeshBounds       = FBox3f(MeshBounds);
 
 	// Make sure the mesh bounding box has positive extents to handle planes
 	{
@@ -597,16 +841,16 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 
 	// We sample on voxel corners and use central differencing for gradients, so a box mesh using two-sided materials whose vertices lie on LocalSpaceMeshBounds produces a zero gradient on intersection
 	// Expand the mesh bounds by a fraction of a voxel to allow room for a pullback on the hit location for computing the gradient.
-	// Only expand for two sided meshes as this adds significant Mesh SDF tracing cost
+	// Only expand for two-sided meshes as this adds significant Mesh SDF tracing cost
 	if ( bGenerateAsIfTwoSided )
 	{
-		const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / (float)DistanceField::UniqueDataBrickSize));
+		const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
 		const FIntVector Mip0IndirectionDimensions = FIntVector(
 			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
 			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
 			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Z), 1, MaxNumBlocksOneDim));
 
-		const float     CentralDifferencingExpandInVoxels = .25f;
+		constexpr float CentralDifferencingExpandInVoxels = .25f;
 		const FVector3f TexelObjectSpaceSize              = LocalSpaceMeshBounds.GetSize() / FVector3f(Mip0IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * CentralDifferencingExpandInVoxels));
 		LocalSpaceMeshBounds                              = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
 	}
@@ -614,7 +858,7 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 	// The tracing shader uses a Volume space that is normalized by the maximum extent, to keep Volume space within [-1, 1], we must match that behavior when encoding
 	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
 
-	const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / (float)DistanceField::UniqueDataBrickSize));
+	const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
 	const FIntVector Mip0IndirectionDimensions = FIntVector(
 		FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
 		FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
@@ -625,12 +869,12 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 	struct FDistanceFieldBrick
 	{
 		FDistanceFieldBrick(
-			float      InLocalSpaceTraceDistance ,
-			FBox3f     InVolumeBounds ,
-			float      InLocalToVolumeScale ,
-			FVector2f  InDistanceFieldToVolumeScaleBias ,
-			FIntVector InBrickCoordinate ,
-			FIntVector InIndirectionSize ) :
+			float         InLocalSpaceTraceDistance ,
+			const FBox3f& InVolumeBounds ,
+			float         InLocalToVolumeScale ,
+			FVector2f     InDistanceFieldToVolumeScaleBias ,
+			FIntVector    InBrickCoordinate ,
+			FIntVector    InIndirectionSize ) :
 			LocalSpaceTraceDistance(InLocalSpaceTraceDistance),
 			VolumeBounds(InVolumeBounds),
 			LocalToVolumeScale(InLocalToVolumeScale),
@@ -668,8 +912,7 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 		const FVector3f TexelObjectSpaceSize      = LocalSpaceMeshBounds.GetSize() / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
 		const FBox3f    DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
 
-		const FVector3f IndirectionVoxelSize   = DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
-		const float     IndirectionVoxelRadius = IndirectionVoxelSize.Size();
+		const FVector3f IndirectionVoxelSize = DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
 
 		const FVector3f VolumeSpaceDistanceFieldVoxelSize = IndirectionVoxelSize * LocalToVolumeScale / FVector3f(DistanceField::UniqueDataBrickSize);
 		const float     MaxDistanceForEncoding            = VolumeSpaceDistanceFieldVoxelSize.Size() * DistanceField::BandSizeInVoxels;
@@ -725,17 +968,15 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 						            float MinLocalSpaceDistance = LocalSpaceTraceDistance;
 
 						            double NearestDistSqr    = 0;
-						            int32  NearestTriangleID = Spatial.FindNearestTriangle((FVector3d)VoxelPosition, NearestDistSqr,
+						            int32  NearestTriangleID = Spatial.FindNearestTriangle(FVector3d(VoxelPosition), NearestDistSqr,
 						                                                                  UE::Geometry::IMeshSpatial::FQueryOptions(LocalSpaceTraceDistance));
 						            if ( NearestTriangleID != IndexConstants::InvalidID )
 						            {
 							            const float ClosestDistance = FMath::Sqrt(NearestDistSqr);
 							            MinLocalSpaceDistance       = FMath::Min(MinLocalSpaceDistance, ClosestDistance);
 
-							            // found closest point within search radius
-							            double IsoThreshold = 0.5;
-							            bool   bInside      = WindingTree.IsInside((FVector3d)VoxelPosition, 0.5);
-							            if ( bInside )
+							            // found the closest point within search radius
+							            if ( WindingTree.IsInside(FVector3d(VoxelPosition), 0.5) )
 							            {
 								            MinLocalSpaceDistance *= -1;
 							            }
@@ -863,7 +1104,7 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 	VolumeDataOut.StreamableMips.Unlock();
 	VolumeDataOut.StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
 
-	const float BuildTime = (float)(FPlatformTime::Seconds() - StartTime);
+	const float BuildTime = static_cast< float >(FPlatformTime::Seconds() - StartTime);
 
 	UE_LOG(LogGeometry, Log, TEXT("DynamicMeshComponent - Finished distance field build in %.1fs - %ux%ux%u sparse distance field, %.1fMb total, %.1fMb always loaded, %u%% occupied, %u triangles"),
 	       BuildTime,
@@ -876,16 +1117,4 @@ bool ULFPVoxelRenderComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData
 	       Mesh.TriangleCount());
 
 	return true;
-}
-
-TUniquePtr< FDistanceFieldVolumeData > ULFPVoxelRenderComponent::ComputeDistanceFieldForMesh( const FDynamicMesh3& Mesh , FProgressCancel& Progress , bool bGenerateAsIfTwoSided ) const
-{
-	TUniquePtr< FDistanceFieldVolumeData > NewDistanceField = MakeUnique< FDistanceFieldVolumeData >();
-	const bool                             bCompleted       = DynamicMesh_GenerateSignedDistanceFieldVolumeData(Mesh, bGenerateAsIfTwoSided, *NewDistanceField, Progress);
-	if ( bCompleted )
-	{
-		return NewDistanceField;
-	}
-
-	return TUniquePtr< FDistanceFieldVolumeData >();
 }

@@ -29,7 +29,9 @@ public class LohFunctionPluginMarching : ModuleRules
 			{
 				"Core",
 				"LohFunctionPlugin",
-				"GameplayTags"
+				"GameplayTags",
+				"GeometryFramework",
+				"GeometryCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -42,11 +44,11 @@ public class LohFunctionPluginMarching : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"LohFunctionPlugin"
+				"LohFunctionPlugin",
+				"MeshConversionEngineTypes"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);
-
 
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
