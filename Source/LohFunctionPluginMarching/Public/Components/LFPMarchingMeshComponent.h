@@ -76,9 +76,9 @@ public:
 	bool       bNeedCollision              = false;
 	bool       bIsChunkFaceCullingDisable  = false;
 	bool       bIsRegionFaceCullingDisable = false;
-	FVector    MarchingMeshFullSize        = FVector();
-	FIntVector RealGridSize                = FIntVector();
-	int32      RealIndexSize               = INDEX_NONE;
+	FVector    MeshFullSize                = FVector();
+	FIntVector DataSize                    = FIntVector();
+	int32      DataNum                     = INDEX_NONE;
 	float      BoundExpand                 = 0.0f;
 	FDateTime  StartTime                   = FDateTime();
 
@@ -124,10 +124,10 @@ public:
 public:
 
 	UPROPERTY(BlueprintAssignable)
-	FLFPOnMarchingMeshGenerateEvent OnMarchingMeshRebuild;
+	FLFPOnMarchingMeshGenerateEvent OnMeshRebuilding;
 
 	UPROPERTY(BlueprintAssignable)
-	FLFPOnMarchingMeshGenerateEvent OnMarchingMeshGenerated;
+	FLFPOnMarchingMeshGenerateEvent OnMeshGenerated;
 
 protected:
 
@@ -149,9 +149,6 @@ protected:
 protected:
 
 	UPROPERTY(Transient)
-	FGameplayTagContainer HandleTagContainer = FGameplayTagContainer();
-
-	UPROPERTY(Transient)
 	TObjectPtr< class ULFPGridTagDataComponent > DataComponent = nullptr;
 
 	UPROPERTY(Transient)
@@ -160,16 +157,19 @@ protected:
 	UPROPERTY(Transient)
 	int32 ChunkIndex = INDEX_NONE;
 
+	UPROPERTY(Transient)
+	int32 SectionIndex = INDEX_NONE;
+
 protected:
 
 	UFUNCTION()
-	FORCEINLINE FIntVector GetChunkDataSize( ) const;
+	FORCEINLINE FIntVector GetDataSize( ) const;
 
 	UFUNCTION()
-	FORCEINLINE int32 GetChunkDataNum( ) const;
+	FORCEINLINE int32 GetDataNum( ) const;
 
 	UFUNCTION()
-	FORCEINLINE FVector GetMarchingMeshSize( ) const;
+	FORCEINLINE FVector GetMeshSize( ) const;
 
 	UFUNCTION()
 	FORCEINLINE bool IsDataComponentValid( ) const;
@@ -185,7 +185,7 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
-	void Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex );
+	void Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex );
 
 	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
 	void Uninitialize( );
@@ -193,15 +193,18 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRender")
-	void ClearMarching( );
+	void ClearRender( );
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRender")
-	void UpdateMarching( );
+	void UpdateRender( );
+
+protected:
 
 	virtual void RebuildPhysicsData( ) override;
 
 protected:
 
+	// Add Mesh Fill
 	virtual void UpdateDistanceField( ) override;
 
 protected:
@@ -218,17 +221,11 @@ private:
 
 	void ComputeNewMarchingMesh_Completed( TUniquePtr< FLFPMarchingThreadData > ThreadData );
 
-	// Add Safety
-	virtual void OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData ) override;
-
-	// Internal method to compute the distance field, run in a background thread.
-	static TUniquePtr< FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
+private:
 
 	// Modify to use ParallelFor
-	static bool DynamicMesh_GenerateSignedDistanceFieldVolumeData(
-		const FDynamicMesh3&      Mesh ,
-		const bool                bGenerateAsIfTwoSided ,
-		const float               CurrentDistanceFieldResolutionScale ,
-		FDistanceFieldVolumeData& VolumeDataOut ,
-		FProgressCancel&          Progress );
+	static TUniquePtr< FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
+
+	// Add Safety
+	virtual void OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData ) override;
 };

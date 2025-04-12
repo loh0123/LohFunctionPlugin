@@ -68,13 +68,13 @@ class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingMeshSet : public UPrimaryDataAss
 
 protected:
 
-	TArray< FDynamicMesh3 > MappingDynamicList = TArray< FDynamicMesh3 >();
+	TArray< FDynamicMesh3 > MappingDynamicMeshList = TArray< FDynamicMesh3 >();
 
 public:
 
-	const TArray< FDynamicMesh3 >& GetDynamicList( ) const;
+	const TArray< FDynamicMesh3 >& GetDynamicMeshList( ) const;
 
-	FORCEINLINE void GenerateDynamicList( );
+	FORCEINLINE void GenerateDynamicMeshList( );
 
 protected:
 
@@ -89,7 +89,9 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable, Category = Default)
-	bool IsDynamicListValid( ) const;
+	bool IsDynamicMeshListValid( ) const;
+
+public:
 
 	UFUNCTION(BlueprintCallable, Category = Default)
 	TArray< UStaticMesh* > GetMeshList( ) const;

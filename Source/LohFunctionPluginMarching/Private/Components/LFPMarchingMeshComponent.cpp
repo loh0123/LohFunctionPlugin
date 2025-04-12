@@ -46,7 +46,7 @@ void ULFPMarchingMeshComponent::TickComponent( float DeltaTime , ELevelTick Tick
 	// ...
 }
 
-FIntVector ULFPMarchingMeshComponent::GetChunkDataSize( ) const
+FIntVector ULFPMarchingMeshComponent::GetDataSize( ) const
 {
 	if ( IsDataComponentValid() )
 	{
@@ -58,19 +58,19 @@ FIntVector ULFPMarchingMeshComponent::GetChunkDataSize( ) const
 	return FIntVector::NoneValue;
 }
 
-int32 ULFPMarchingMeshComponent::GetChunkDataNum( ) const
+int32 ULFPMarchingMeshComponent::GetDataNum( ) const
 {
-	const FIntVector& Size = GetChunkDataSize();
+	const FIntVector& DataSize = GetDataSize();
 
-	if ( Size == FIntVector::NoneValue )
+	if ( DataSize == FIntVector::NoneValue )
 	{
 		return INDEX_NONE;
 	}
 
-	return Size.X * Size.Y * Size.Z;
+	return DataSize.X * DataSize.Y * DataSize.Z;
 }
 
-FVector ULFPMarchingMeshComponent::GetMarchingMeshSize( ) const
+FVector ULFPMarchingMeshComponent::GetMeshSize( ) const
 {
 	if ( IsDataComponentValid() )
 	{
@@ -89,7 +89,7 @@ bool ULFPMarchingMeshComponent::IsDataComponentValid( ) const
 
 	const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting();
 
-	if ( IsValid(GridSetting) == false || IsValid(RenderSetting->GetMeshSet()) == false || RenderSetting->GetMeshSet()->IsDynamicListValid() == false )
+	if ( IsValid(GridSetting) == false || IsValid(RenderSetting->GetMeshSet()) == false || RenderSetting->GetMeshSet()->IsDynamicMeshListValid() == false )
 	{
 		return false;
 	}
@@ -133,62 +133,53 @@ uint8 ULFPMarchingMeshComponent::GetMarchingID( const FIntVector& Offset ) const
 	return 0;
 }
 
-void ULFPMarchingMeshComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex )
+void ULFPMarchingMeshComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex )
 {
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
+	SectionIndex  = NewSectionIndex;
+
+	if ( IsDataComponentValid() )
+	{
+		UpdateRender();
+	}
 }
 
 void ULFPMarchingMeshComponent::Uninitialize( )
 {
 	DataComponent = nullptr;
+
+	ClearRender();
 }
 
-void ULFPMarchingMeshComponent::ClearMarching( )
+void ULFPMarchingMeshComponent::ClearRender( )
 {
-	MeshComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentMeshData"),
+	MeshComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentMeshData Clearing"),
 	                           [] ( FProgressCancel& Progress )
 	                           {
 		                           return TUniquePtr< FLFPMarchingThreadData >();
 	                           });
-
-	LocalThreadData = FLFPMarchingThreadData();
-
-	FScopeLock Lock(&DistanceFieldLock);
-	CurrentDistanceField = TSharedPtr< FDistanceFieldVolumeData >();
-
-	EditMesh([&] ( FDynamicMesh3& Mesh )
-	{
-		Mesh.Clear();
-	}, EDynamicMeshComponentRenderUpdateMode::FullUpdate);
 }
 
-void ULFPMarchingMeshComponent::UpdateMarching( )
+void ULFPMarchingMeshComponent::UpdateRender( )
 {
 	if ( IsDataComponentValid() == false )
 	{
 		return;
 	}
 
-	OnMarchingMeshRebuild.Broadcast();
+	OnMeshRebuilding.Broadcast();
 
-	//const FIntVector& MarchingGridSize = GetChunkDataSize();
+	const FIntVector& CacheDataSize  = GetDataSize() + FIntVector(2);
+	const int32       CacheDataIndex = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
 
-	//const FVector MarchingFullSize = GetMarchingSize();
-
-	//const FVector MarchingBoundFullSize = MarchingFullSize * FVector(MarchingGridSize);
-	//const FVector MarchingBoundHalfSize = MarchingBoundFullSize * 0.5f;
-
-	const FIntVector& SolidDataGridSize  = GetChunkDataSize() + FIntVector(2);
-	const int32       SolidDataIndexSize = SolidDataGridSize.X * SolidDataGridSize.Y * SolidDataGridSize.Z;
-
-	TBitArray< > SolidList = TBitArray(false, SolidDataIndexSize);
+	TBitArray< > CacheDataList = TBitArray(false, CacheDataIndex);
 	{
 		/* Generate Marching Mesh Data */
-		for ( int32 SolidIndex = 0 ; SolidIndex < SolidDataIndexSize ; ++SolidIndex )
+		for ( int32 SolidIndex = 0 ; SolidIndex < CacheDataIndex ; ++SolidIndex )
 		{
-			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation(SolidIndex, SolidDataGridSize) - FIntVector(1);
+			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation(SolidIndex, CacheDataSize) - FIntVector(1);
 			const FIntVector CheckIndex  = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, 0), CheckOffset);
 
 			if ( CheckIndex.GetMin() == INDEX_NONE )
@@ -196,7 +187,7 @@ void ULFPMarchingMeshComponent::UpdateMarching( )
 				continue;
 			}
 
-			SolidList[SolidIndex] = DataComponent->GetDataTag(CheckIndex.X, CheckIndex.Y, CheckIndex.Z).MatchesTag(HandleTag);
+			CacheDataList[SolidIndex] = DataComponent->GetDataTag(CheckIndex.X, CheckIndex.Y, CheckIndex.Z).MatchesTag(HandleTag);
 		}
 	}
 
@@ -204,107 +195,20 @@ void ULFPMarchingMeshComponent::UpdateMarching( )
 
 	GetFaceCullingSetting(PassData.bIsChunkFaceCullingDisable, PassData.bIsRegionFaceCullingDisable);
 
-	PassData.MarchingMeshFullSize = GetMarchingMeshSize();
-	PassData.RealGridSize         = GetChunkDataSize();
-	PassData.RealIndexSize        = GetChunkDataNum();
-	PassData.BoundExpand          = BoundExpand;
-	PassData.StartTime            = FDateTime::UtcNow();
-	PassData.bNeedCollision       = IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple;
+	PassData.MeshFullSize   = GetMeshSize();
+	PassData.DataSize       = GetDataSize();
+	PassData.DataNum        = GetDataNum();
+	PassData.BoundExpand    = BoundExpand;
+	PassData.StartTime      = FDateTime::UtcNow();
+	PassData.bNeedCollision = IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple;
 
 	PassData.RenderSetting = RenderSetting;
 
 	MeshComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentMeshData"),
-	                           [this, MovedSolidList = MoveTemp(SolidList),MovedPassData = MoveTemp(PassData)] ( FProgressCancel& Progress )
+	                           [this, MovedCacheDataList = MoveTemp(CacheDataList),MovedPassData = MoveTemp(PassData)] ( FProgressCancel& Progress )
 	                           {
-		                           return ComputeNewMarchingMesh_TaskFunction(Progress, MovedSolidList, MovedPassData);
+		                           return ComputeNewMarchingMesh_TaskFunction(Progress, MovedCacheDataList, MovedPassData);
 	                           });
-
-	{
-		////FDynamicMesh3 MeshData;
-		////{
-		////	MeshData.Clear();
-		//
-		////	bool bIsChunkFaceCullingDisable  = false;
-		////	bool bIsRegionFaceCullingDisable = false;
-		//
-		////	GetFaceCullingSetting(bIsChunkFaceCullingDisable, bIsRegionFaceCullingDisable);
-		//
-		////	const FVector    MarchingMeshFullSize = GetMarchingMeshSize();
-		////	const FVector    MarchingMeshHalfSize = MarchingMeshFullSize * 0.5f;
-		////	const FVector    MarchingMeshGapSize  = MarchingMeshFullSize * 2.0f;
-		////	const FIntVector RealGridSize         = GetChunkDataSize();
-		//
-		////	const FVector MarchingBoundFullSize = MarchingMeshGapSize * FVector(RealGridSize);
-		////	const FVector MarchingBoundHalfSize = MarchingBoundFullSize * FVector(0.5f);
-		//
-		////	const int32      MarchingIndexSize = GetChunkMarchingNum();
-		////	const FIntVector MarchingGridSize  = GetChunkMarchingSize();
-		//
-		////	const ULFPMarchingMeshSet*     MeshAsset       = RenderSetting->GetMeshSet();
-		////	const TArray< FDynamicMesh3 >& DynamicMeshList = MeshAsset->GetDynamicList();
-		//
-		////	const FIntVector CurrentGridLocation = DataComponent->ToGridPosition(FIntVector(RegionIndex, ChunkIndex, 0));
-		//
-		////	TArray< uint8 > MarchingIDList;
-		////	{
-		////		MarchingIDList.SetNum(MarchingIndexSize);
-		//
-		////		for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingIndexSize ; ++MarchingIndex )
-		////		{
-		////			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingGridSize) - FIntVector(1);
-		//
-		////			MarchingIDList[MarchingIndex] = GetMarchingID(CheckOffset);
-		////		}
-		//
-		////	}
-		//
-		////	/* Generate Marching Mesh Data */
-		////	for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingIndexSize ; ++MarchingIndex )
-		////	{
-		////		const FIntVector MarchingGridLocation = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingGridSize);
-		////		const FVector    MarchingMeshLocation = (MarchingMeshGapSize * FVector(MarchingGridLocation)) - MarchingBoundHalfSize;
-		//
-		////		for ( int32 MarchingPartIndex = 0 ; MarchingPartIndex < 8 ; ++MarchingPartIndex )
-		////		{
-		////			const FIntVector PartLocation   = ULFPGridLibrary::ToGridLocation(MarchingPartIndex, FIntVector(2));
-		////			const FIntVector RealGridIndex  = DataComponent->ToGridIndex((MarchingGridLocation - FIntVector(1)) + PartLocation + CurrentGridLocation);
-		////			const uint8      DualMarchingID = ULFPMarchingFunctionLibrary::CalculateDualGridMarchingID(MarchingIDList[MarchingIndex], MarchingPartIndex);
-		//
-		////			if ( RealGridIndex.X != RegionIndex || RealGridIndex.Y != ChunkIndex )
-		////			{
-		////				continue;
-		////			}
-		//
-		////			if ( const FLFPMarchingMeshMappingData& MeshMappingData = MeshAsset->GetMappingData(DualMarchingID) ; MeshMappingData.MeshID != INDEX_NONE )
-		////			{
-		////				const FDynamicMesh3& AppendMesh = DynamicMeshList[MeshMappingData.MeshID];
-		//
-		////				const FTransform AppendTransform(
-		////					MeshMappingData.GetRotation(),
-		////					(MarchingMeshLocation + (FVector(PartLocation) * MarchingMeshFullSize) - MarchingMeshHalfSize),
-		////					FVector(1.0f)
-		////					);
-		//
-		////				MeshData.EnableMatchingAttributes(AppendMesh, false, false);
-		//
-		////				UE::Geometry::FTransformSRT3d    XForm(AppendTransform);
-		////				UE::Geometry::FMeshIndexMappings TmpMappings;
-		////				UE::Geometry::FDynamicMeshEditor Editor(&MeshData);
-		////				Editor.AppendMesh(&AppendMesh, TmpMappings,
-		////				                  [&XForm] ( const int32 VID , const FVector3d& Position ) { return XForm.TransformPosition(Position); },
-		////				                  [&XForm] ( const int32 NID , const FVector3d& Normal ) { return XForm.TransformNormal(Normal); },
-		////				                  XForm.GetDeterminant() < 0);
-		////			}
-		////		}
-		////	}
-		////}
-		//
-		////UE_LOG(LogTemp, Warning, TEXT("UpdateMarching Generate Time Use : %f : %i"), (float)(FPlatformTime::Seconds() - StartTime), MeshData.TriangleCount());
-		//
-		////GetDynamicMesh()->SetMesh(MoveTemp(MeshData));
-	}
-
-	//OnMarchingMeshGenerated.Broadcast();
 }
 
 void ULFPMarchingMeshComponent::RebuildPhysicsData( )
@@ -328,7 +232,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 {
 	if ( IsDataComponentValid() == false || GetDynamicMesh()->IsEmpty() || DistanceFieldMode == EDynamicMeshComponentDistanceFieldMode::NoDistanceField )
 	{
-		DistanceFieldComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentDistanceField"),
+		DistanceFieldComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentDistanceField Clearing"),
 		                                    [] ( FProgressCancel& Progress )
 		                                    {
 			                                    return TUniquePtr< FDistanceFieldVolumeData >();
@@ -370,20 +274,20 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 
 	// Fill Mesh Hole
 	{
-		const FIntVector& VoxelGridSize = GetChunkDataSize();
+		const FIntVector& DataSize = GetDataSize();
 
-		const FVector VoxelFullSize = GetMarchingMeshSize() * 2.0f;
-		const FVector VoxelHalfSize = VoxelFullSize * 0.5f;
+		const FVector MeshFullSize = GetMeshSize() * 2.0f;
+		const FVector MeshHalfSize = MeshFullSize * 0.5f;
 
-		const FVector VoxelBoundFullSize = VoxelFullSize * FVector(VoxelGridSize);
-		const FVector VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
+		const FVector MeshBoundFullSize = MeshFullSize * FVector(DataSize);
+		const FVector MeshBoundHalfSize = MeshBoundFullSize * 0.5f;
 
 		const auto& CreateFace = [&] ( const int32& VoxelIndex , const int32& RotationID )
 		{
-			const FIntVector        VoxelGridPos            = ULFPGridLibrary::ToGridLocation(VoxelIndex, VoxelGridSize);
-			const FVector           CenterPos               = (FVector(VoxelGridPos) + 0.5f) * VoxelFullSize;
+			const FIntVector        VoxelGridPos            = ULFPGridLibrary::ToGridLocation(VoxelIndex, DataSize);
+			const FVector           CenterPos               = (FVector(VoxelGridPos) + 0.5f) * MeshFullSize;
 			const FRotator          Rotation                = LFPMarchingRenderConstantData::VertexRotationList[RotationID];
-			const TArray< FVector > FaceVertexList          = ULFPRenderLibrary::CreateVertexPosList(CenterPos, Rotation, VoxelHalfSize);
+			const TArray< FVector > FaceVertexList          = ULFPRenderLibrary::CreateVertexPosList(CenterPos, Rotation, MeshHalfSize);
 			const FVector           FaceVertexPosList[2][3] =
 				{
 					{
@@ -404,7 +308,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 
 				for ( int32 FaceVertexIndex = 0 ; FaceVertexIndex < 3 ; ++FaceVertexIndex )
 				{
-					const FVector& FaceVertexPos = FaceVertexPosList[FaceIndex][FaceVertexIndex] - VoxelBoundHalfSize;
+					const FVector& FaceVertexPos = FaceVertexPosList[FaceIndex][FaceVertexIndex] - MeshBoundHalfSize;
 
 					FaceVertexIndexList[FaceVertexIndex] = GeoOnlyCopy.AppendVertex(FaceVertexPos);
 				}
@@ -414,7 +318,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 		};
 
 		/* Generate Voxel Mesh Data */
-		for ( int32 VoxelIndex = 0 ; VoxelIndex < GetChunkDataNum() ; ++VoxelIndex )
+		for ( int32 VoxelIndex = 0 ; VoxelIndex < GetDataNum() ; ++VoxelIndex )
 		{
 			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, VoxelIndex);
 
@@ -485,25 +389,27 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		return nullptr;
 	}
 
+	TRACE_CPUPROFILER_EVENT_SCOPE(MarchingMesh_GeneratingThreadData);
+
 	TUniquePtr< FLFPMarchingThreadData > NewMeshData = MakeUnique< FLFPMarchingThreadData >();
 
 	NewMeshData->StartTime = PassData.StartTime;
 
-	const FVector& MarchingMeshFullSize = PassData.MarchingMeshFullSize;
-	const FVector  MarchingMeshHalfSize = MarchingMeshFullSize * 0.5f;
-	const FVector  MarchingMeshGapSize  = MarchingMeshFullSize * 2.0f;
+	const FVector& MeshFullSize = PassData.MeshFullSize;
+	const FVector  MeshHalfSize = MeshFullSize * 0.5f;
+	const FVector  MeshGapSize  = MeshFullSize * 2.0f;
 
-	const FIntVector& RealGridSize = PassData.RealGridSize;
+	const FIntVector& DataSize = PassData.DataSize;
 
-	const FIntVector& SolidGridSize = RealGridSize + FIntVector(2);
+	const FIntVector& CacheDataSize = DataSize + FIntVector(2);
 
-	const FVector MarchingBoundFullSize = MarchingMeshGapSize * FVector(RealGridSize);
-	const FVector MarchingBoundHalfSize = MarchingBoundFullSize * FVector(0.5f);
+	const FVector MeshBoundFullSize = MeshGapSize * FVector(DataSize);
+	const FVector MeshBoundHalfSize = MeshBoundFullSize * FVector(0.5f);
 
-	const FIntVector MarchingGridSize  = RealGridSize + FIntVector(1);
-	const int32      MarchingIndexSize = MarchingGridSize.X * MarchingGridSize.Y * MarchingGridSize.Z;
+	const FIntVector MarchingSize = DataSize + FIntVector(1);
+	const int32      MarchingNum  = MarchingSize.X * MarchingSize.Y * MarchingSize.Z;
 
-	const FBox CurrentLocalBounds = FBox(-MarchingBoundHalfSize, MarchingBoundHalfSize);
+	const FBox CurrentLocalBounds = FBox(-MeshBoundHalfSize, MeshBoundHalfSize);
 
 	const float BoundExpand = PassData.BoundExpand;
 
@@ -514,7 +420,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		for ( int32 MarchingIndex = 0 ; MarchingIndex < 8 ; ++MarchingIndex )
 		{
 			const FIntVector MarchingPosition = ULFPGridLibrary::ToGridLocation(MarchingIndex, FIntVector(2)) + StartPosition;
-			const int32      SolidIndex       = ULFPGridLibrary::ToGridIndex(MarchingPosition, RealGridSize + FIntVector(2));
+			const int32      SolidIndex       = ULFPGridLibrary::ToGridIndex(MarchingPosition, DataSize + FIntVector(2));
 
 			if ( SolidList[SolidIndex] )
 			{
@@ -532,18 +438,20 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 
 	// Mesh Data
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(MarchingMesh_GeneratingMesh);
+
 		FDynamicMesh3& MeshData = NewMeshData->MeshData;
 
 		const ULFPMarchingMeshSet*     MeshAsset       = PassData.RenderSetting->GetMeshSet();
-		const TArray< FDynamicMesh3 >& DynamicMeshList = MeshAsset->GetDynamicList();
+		const TArray< FDynamicMesh3 >& DynamicMeshList = MeshAsset->GetDynamicMeshList();
 
 		TArray< uint8 > MarchingIDList;
 		{
-			MarchingIDList.SetNum(MarchingIndexSize);
+			MarchingIDList.SetNum(MarchingNum);
 
-			for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingIndexSize ; ++MarchingIndex )
+			for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingNum ; ++MarchingIndex )
 			{
-				const FIntVector CheckPos = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingGridSize);
+				const FIntVector CheckPos = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingSize);
 
 				MarchingIDList[MarchingIndex] = GetMarchingID(CheckPos);
 			}
@@ -553,10 +461,10 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		UE::Geometry::FDynamicMeshEditor Editor(&MeshData);
 
 		/* Generate Marching Mesh Data */
-		for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingIndexSize ; ++MarchingIndex )
+		for ( int32 MarchingIndex = 0 ; MarchingIndex < MarchingNum ; ++MarchingIndex )
 		{
-			const FIntVector MarchingGridLocation = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingGridSize);
-			const FVector    MarchingMeshLocation = (MarchingMeshGapSize * FVector(MarchingGridLocation)) - MarchingBoundHalfSize;
+			const FIntVector MarchingGridLocation = ULFPGridLibrary::ToGridLocation(MarchingIndex, MarchingSize);
+			const FVector    MarchingMeshLocation = (MeshGapSize * FVector(MarchingGridLocation)) - MeshBoundHalfSize;
 
 			if ( Progress.Cancelled() )
 			{
@@ -569,7 +477,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 				const FIntVector RealGridPosition = (MarchingGridLocation - FIntVector(1)) + PartLocation;
 				const uint8      DualMarchingID   = ULFPMarchingFunctionLibrary::CalculateDualGridMarchingID(MarchingIDList[MarchingIndex], MarchingPartIndex);
 
-				if ( ULFPGridLibrary::IsGridLocationValid(RealGridPosition, RealGridSize) == false )
+				if ( ULFPGridLibrary::IsGridLocationValid(RealGridPosition, DataSize) == false )
 				{
 					continue;
 				}
@@ -580,7 +488,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 
 					const FTransform AppendTransform(
 						MeshMappingData.GetRotation(),
-						(MarchingMeshLocation + (FVector(PartLocation) * MarchingMeshFullSize) - MarchingMeshHalfSize),
+						(MarchingMeshLocation + (FVector(PartLocation) * MeshFullSize) - MeshHalfSize),
 						FVector(1.0f)
 						);
 
@@ -604,6 +512,8 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 
 	// Lumen Card
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(MarchingMesh_GeneratingLumen);
+
 		auto SetCoverIndex = [&] ( FIntPoint& CoverIndex , const int32 Index )
 		{
 			if ( Index <= -1 )
@@ -629,8 +539,8 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 			const FIntVector TargetCheckPos  = CurrentPos + FIntVector(1);
 			const FIntVector CurrentCheckPos = TargetCheckPos + FromDirection;
 
-			const int32 TargetIndex  = ULFPGridLibrary::ToGridIndex(TargetCheckPos, SolidGridSize);
-			const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentCheckPos, SolidGridSize);
+			const int32 TargetIndex  = ULFPGridLibrary::ToGridIndex(TargetCheckPos, CacheDataSize);
+			const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentCheckPos, CacheDataSize);
 
 			return SolidList[CurrentIndex] == false && SolidList[TargetIndex];
 		};
@@ -643,37 +553,37 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 			{
 				case 0 :
 				case 3 : LumenBox = FBox3f(
-					         FVector3f(CurrentLocalBounds.Min.X, CurrentLocalBounds.Min.Y, (CoverIndex.X * MarchingMeshFullSize.Z * 2) - MarchingBoundHalfSize.Z - BoundExpand),
-					         FVector3f(CurrentLocalBounds.Max.X, CurrentLocalBounds.Max.Y, (CoverIndex.Y * MarchingMeshFullSize.Z * 2) - MarchingBoundHalfSize.Z + BoundExpand)
+					         FVector3f(CurrentLocalBounds.Min.X, CurrentLocalBounds.Min.Y, (CoverIndex.X * MeshFullSize.Z * 2) - MeshBoundHalfSize.Z - BoundExpand),
+					         FVector3f(CurrentLocalBounds.Max.X, CurrentLocalBounds.Max.Y, (CoverIndex.Y * MeshFullSize.Z * 2) - MeshBoundHalfSize.Z + BoundExpand)
 					         );
 
 					if ( DirectionIndex == 0 )
 					{
-						LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, 0.0f, MarchingMeshFullSize.Z) * 2.0f);
+						LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, 0.0f, MeshFullSize.Z) * 2.0f);
 					}
 					break;
 
 				case 1 :
 				case 4 : LumenBox = FBox3f(
-					         FVector3f((CoverIndex.X * MarchingMeshFullSize.X * 2) - MarchingBoundHalfSize.X - BoundExpand, CurrentLocalBounds.Min.Y, CurrentLocalBounds.Min.Z),
-					         FVector3f((CoverIndex.Y * MarchingMeshFullSize.X * 2) - MarchingBoundHalfSize.X + BoundExpand, CurrentLocalBounds.Max.Y, CurrentLocalBounds.Max.Z)
+					         FVector3f((CoverIndex.X * MeshFullSize.X * 2) - MeshBoundHalfSize.X - BoundExpand, CurrentLocalBounds.Min.Y, CurrentLocalBounds.Min.Z),
+					         FVector3f((CoverIndex.Y * MeshFullSize.X * 2) - MeshBoundHalfSize.X + BoundExpand, CurrentLocalBounds.Max.Y, CurrentLocalBounds.Max.Z)
 					         );
 
 					if ( DirectionIndex == 4 )
 					{
-						LumenBox = LumenBox.ShiftBy(FVector3f(MarchingMeshFullSize.X, 0.0f, 0.0f) * 2.0f);
+						LumenBox = LumenBox.ShiftBy(FVector3f(MeshFullSize.X, 0.0f, 0.0f) * 2.0f);
 					}
 					break;
 
 				case 2 :
 				case 5 : LumenBox = FBox3f(
-					         FVector3f(CurrentLocalBounds.Min.X, (CoverIndex.X * MarchingMeshFullSize.Y * 2) - MarchingBoundHalfSize.Y - BoundExpand, CurrentLocalBounds.Min.Z),
-					         FVector3f(CurrentLocalBounds.Max.X, (CoverIndex.Y * MarchingMeshFullSize.Y * 2) - MarchingBoundHalfSize.Y + BoundExpand, CurrentLocalBounds.Max.Z)
+					         FVector3f(CurrentLocalBounds.Min.X, (CoverIndex.X * MeshFullSize.Y * 2) - MeshBoundHalfSize.Y - BoundExpand, CurrentLocalBounds.Min.Z),
+					         FVector3f(CurrentLocalBounds.Max.X, (CoverIndex.Y * MeshFullSize.Y * 2) - MeshBoundHalfSize.Y + BoundExpand, CurrentLocalBounds.Max.Z)
 					         );
 
 					if ( DirectionIndex == 2 )
 					{
-						LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, MarchingMeshFullSize.Y, 0.0f) * 2.0f);
+						LumenBox = LumenBox.ShiftBy(FVector3f(0.0f, MeshFullSize.Y, 0.0f) * 2.0f);
 					}
 					break;
 				default : break;
@@ -733,9 +643,9 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 			}
 
 			const FIntVector MarchingDimension = FIntVector(
-				RealGridSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].X],
-				RealGridSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].Y],
-				RealGridSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].Z]
+				DataSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].X],
+				DataSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].Y],
+				DataSize[LFPMarchingRenderConstantData::FaceLoopDirectionList[Direction].Z]
 				);
 
 			const int32 MarchingPlaneLength = MarchingDimension.X * MarchingDimension.Y;
@@ -808,6 +718,8 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 	// Collision Box
 	if ( PassData.bNeedCollision )
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(MarchingMesh_GeneratingBoxCollision);
+
 		TMap< FIntVector , FIntVector > BatchDataMap;
 
 		TPair< FIntVector , FIntVector > CurrentBatchData(INDEX_NONE, INDEX_NONE);
@@ -845,21 +757,21 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		};
 
 		/** Generate Batch Data Map */
-		for ( int32 Z = 0 ; Z < RealGridSize.Z ; Z++ )
+		for ( int32 Z = 0 ; Z < DataSize.Z ; Z++ )
 		{
 			if ( Progress.Cancelled() )
 			{
 				return nullptr;
 			}
 
-			for ( int32 Y = 0 ; Y < RealGridSize.Y ; Y++ )
+			for ( int32 Y = 0 ; Y < DataSize.Y ; Y++ )
 			{
-				for ( int32 X = 0 ; X < RealGridSize.X ; X++ )
+				for ( int32 X = 0 ; X < DataSize.X ; X++ )
 				{
 					/***************** Identify Data *****************/
 					const FIntVector CurrentPos(X, Y, Z);
 
-					const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentPos + FIntVector(1), SolidGridSize);
+					const int32 CurrentIndex = ULFPGridLibrary::ToGridIndex(CurrentPos + FIntVector(1), CacheDataSize);
 
 					/*************************************************/
 
@@ -902,10 +814,10 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		/** Add To Result */
 		for ( const auto& BatchData : BatchDataMap )
 		{
-			const FVector MinPos = FVector(BatchData.Value) * MarchingMeshGapSize;
-			const FVector MaxPos = FVector(BatchData.Key + FIntVector(1)) * MarchingMeshGapSize;
+			const FVector MinPos = FVector(BatchData.Value) * MeshGapSize;
+			const FVector MaxPos = FVector(BatchData.Key + FIntVector(1)) * MeshGapSize;
 			const FVector Scale  = (MaxPos - MinPos);
-			const FVector Center = FMath::Lerp(MinPos, MaxPos, 0.5f) - MarchingBoundHalfSize;
+			const FVector Center = FMath::Lerp(MinPos, MaxPos, 0.5f) - MeshBoundHalfSize;
 
 			FKBoxElem CurrentBoxElem(Scale.X, Scale.Y, Scale.Z);
 
@@ -951,80 +863,356 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed( TUniquePtr< FL
 
 				SetMesh(MoveTemp(LocalThreadData.MeshData));
 
-				//EditMesh([&] ( FDynamicMesh3& GeoOnlyCopy )
-				//{
-				//	{
-				//		const FIntVector& VoxelGridSize = GetChunkDataSize();
-				//
-				//		const FVector VoxelFullSize = GetMarchingMeshSize() * 2.0f;
-				//		const FVector VoxelHalfSize = VoxelFullSize * 0.5f;
-				//
-				//		const FVector VoxelBoundFullSize = VoxelFullSize * FVector(VoxelGridSize);
-				//		const FVector VoxelBoundHalfSize = VoxelBoundFullSize * 0.5f;
-				//
-				//		const auto& CreateFace = [&] ( const int32& VoxelIndex , const int32& RotationID )
-				//		{
-				//			const FIntVector        VoxelGridPos            = ULFPGridLibrary::ToGridLocation(VoxelIndex, VoxelGridSize);
-				//			const FVector           CenterPos               = (FVector(VoxelGridPos) + 0.5f) * VoxelFullSize;
-				//			const FRotator          Rotation                = LFPMarchingRenderConstantData::VertexRotationList[RotationID];
-				//			const TArray< FVector > FaceVertexList          = ULFPRenderLibrary::CreateVertexPosList(CenterPos, Rotation, VoxelHalfSize);
-				//			const FVector           FaceVertexPosList[2][3] =
-				//				{
-				//					{
-				//						FaceVertexList[1]
-				//						, FaceVertexList[0]
-				//						, FaceVertexList[3]
-				//					}
-				//					, {
-				//						FaceVertexList[2]
-				//						, FaceVertexList[3]
-				//						, FaceVertexList[0]
-				//					}
-				//				};
-				//
-				//			for ( int32 FaceIndex = 0 ; FaceIndex < 2 ; ++FaceIndex )
-				//			{
-				//				FIntVector FaceVertexIndexList;
-				//
-				//				for ( int32 FaceVertexIndex = 0 ; FaceVertexIndex < 3 ; ++FaceVertexIndex )
-				//				{
-				//					const FVector& FaceVertexPos = FaceVertexPosList[FaceIndex][FaceVertexIndex] - VoxelBoundHalfSize;
-				//
-				//					FaceVertexIndexList[FaceVertexIndex] = GeoOnlyCopy.AppendVertex(FaceVertexPos);
-				//				}
-				//
-				//				GeoOnlyCopy.AppendTriangle(FaceVertexIndexList);
-				//			}
-				//		};
-				//
-				//		/* Generate Voxel Mesh Data */
-				//		for ( int32 VoxelIndex = 0 ; VoxelIndex < GetChunkDataNum() ; ++VoxelIndex )
-				//		{
-				//			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, VoxelIndex);
-				//
-				//			if ( SelfVoxelTag.MatchesTag(HandleTag) )
-				//			{
-				//				for ( int32 FaceDirectionIndex = 0 ; FaceDirectionIndex < 6 ; ++FaceDirectionIndex )
-				//				{
-				//					const FIntVector& TargetIndex = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, VoxelIndex), LFPMarchingRenderConstantData::FaceDirection[FaceDirectionIndex].Up);
-				//
-				//					// Check Is Border
-				//					if ( ChunkIndex != TargetIndex.Y || RegionIndex != TargetIndex.X || TargetIndex == FIntVector::NoneValue )
-				//					{
-				//						CreateFace(VoxelIndex, FaceDirectionIndex);
-				//					}
-				//				}
-				//			}
-				//		}
-				//	}
-				//});
-
 				UE_LOG(LogTemp, Warning, TEXT("Marching Data Time Use : %d ms"), (int32)(FDateTime::UtcNow() - LocalThreadData.StartTime).GetTotalMilliseconds());
 
-				OnMarchingMeshGenerated.Broadcast();
+				OnMeshGenerated.Broadcast();
 			}
 		}
 		);
+}
+
+TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale )
+{
+	if ( Progress.Cancelled() )
+	{
+		return nullptr;
+	}
+
+	TUniquePtr< FDistanceFieldVolumeData > NewDistanceField = MakeUnique< FDistanceFieldVolumeData >();
+	FDistanceFieldVolumeData&              VolumeDataOut    = *NewDistanceField;
+
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(DynamicMesh_GenerateSignedDistanceFieldVolumeData);
+
+		if ( DoesProjectSupportDistanceFields() == false )
+		{
+			return TUniquePtr< FDistanceFieldVolumeData >();
+		}
+
+		if ( CurrentDistanceFieldResolutionScale <= 0 )
+		{
+			return TUniquePtr< FDistanceFieldVolumeData >();
+		}
+
+		const double StartTime = FPlatformTime::Seconds();
+
+		const auto ComputeLinearMarchingIndex = [&] ( FIntVector MarchingCoordinate , FIntVector VolumeDimensions )
+		{
+			return (MarchingCoordinate.Z * VolumeDimensions.Y + MarchingCoordinate.Y) * VolumeDimensions.X + MarchingCoordinate.X;
+		};
+
+		UE::Geometry::FDynamicMeshAABBTree3 Spatial(&Mesh, true);
+		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+		UE::Geometry::FAxisAlignedBox3d                 MeshBounds = Spatial.GetBoundingBox();
+		UE::Geometry::TFastWindingTree< FDynamicMesh3 > WindingTree(&Spatial, true);
+		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+		static const auto CVar       = IConsoleManager::Get().FindTConsoleVariableDataInt(TEXT("r.DistanceFields.MaxPerMeshResolution"));
+		const int32       PerMeshMax = CVar->GetValueOnAnyThread();
+
+		// Meshes with explicit artist-specified scale can go higher
+		const int32 MaxNumBlocksOneDim = FMath::Min< int32 >(FMath::DivideAndRoundNearest(CurrentDistanceFieldResolutionScale <= 1
+			                                                                                  ? PerMeshMax / 2
+			                                                                                  : PerMeshMax, DistanceField::UniqueDataBrickSize), DistanceField::MaxIndirectionDimension - 1);
+
+		static const auto CVarDensity  = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.DistanceFields.DefaultVoxelDensity"));
+		const float       VoxelDensity = CVarDensity->GetValueOnAnyThread();
+
+		const float NumVoxelsPerLocalSpaceUnit = VoxelDensity * CurrentDistanceFieldResolutionScale;
+		FBox3f      LocalSpaceMeshBounds       = FBox3f(MeshBounds);
+
+		// Make sure the mesh bounding box has positive extents to handle planes
+		{
+			FVector3f MeshBoundsCenter = LocalSpaceMeshBounds.GetCenter();
+			FVector3f MeshBoundsExtent = FVector3f::Max(LocalSpaceMeshBounds.GetExtent(), FVector3f(1.0f, 1.0f, 1.0f));
+			LocalSpaceMeshBounds.Min   = MeshBoundsCenter - MeshBoundsExtent;
+			LocalSpaceMeshBounds.Max   = MeshBoundsCenter + MeshBoundsExtent;
+		}
+
+		// We sample on voxel corners and use central differencing for gradients, so a box mesh using two-sided materials whose vertices lie on LocalSpaceMeshBounds produces a zero gradient on intersection
+		// Expand the mesh bounds by a fraction of a voxel to allow room for a pullback on the hit location for computing the gradient.
+		// Only expand for two-sided meshes as this adds significant Mesh SDF tracing cost
+		if ( bGenerateAsIfTwoSided )
+		{
+			const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
+			const FIntVector Mip0IndirectionDimensions = FIntVector(
+				FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
+				FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
+				FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Z), 1, MaxNumBlocksOneDim));
+
+			constexpr float CentralDifferencingExpandInVoxels = .25f;
+			const FVector3f TexelObjectSpaceSize              = LocalSpaceMeshBounds.GetSize() / FVector3f(Mip0IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * CentralDifferencingExpandInVoxels));
+			LocalSpaceMeshBounds                              = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
+		}
+
+		// The tracing shader uses a Volume space that is normalized by the maximum extent, to keep Volume space within [-1, 1], we must match that behavior when encoding
+		const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
+
+		const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
+		const FIntVector Mip0IndirectionDimensions = FIntVector(
+			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
+			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
+			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Z), 1, MaxNumBlocksOneDim));
+
+		TArray< uint8 > StreamableMipData;
+
+		struct FDistanceFieldBrick
+		{
+			FDistanceFieldBrick(
+				float         InLocalSpaceTraceDistance ,
+				const FBox3f& InVolumeBounds ,
+				float         InLocalToVolumeScale ,
+				FVector2f     InDistanceFieldToVolumeScaleBias ,
+				FIntVector    InBrickCoordinate ,
+				FIntVector    InIndirectionSize ) :
+				LocalSpaceTraceDistance(InLocalSpaceTraceDistance),
+				VolumeBounds(InVolumeBounds),
+				LocalToVolumeScale(InLocalToVolumeScale),
+				DistanceFieldToVolumeScaleBias(InDistanceFieldToVolumeScaleBias),
+				BrickCoordinate(InBrickCoordinate),
+				IndirectionSize(InIndirectionSize),
+				BrickMaxDistance(MIN_uint8),
+				BrickMinDistance(MAX_uint8)
+			{
+			}
+
+			float      LocalSpaceTraceDistance;
+			FBox3f     VolumeBounds;
+			float      LocalToVolumeScale;
+			FVector2f  DistanceFieldToVolumeScaleBias;
+			FIntVector BrickCoordinate;
+			FIntVector IndirectionSize;
+
+			// Output
+			uint8           BrickMaxDistance;
+			uint8           BrickMinDistance;
+			TArray< uint8 > DistanceFieldVolume;
+		};
+
+		for ( int32 MipIndex = 0 ; MipIndex < DistanceField::NumMips ; MipIndex++ )
+		{
+			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+			const FIntVector IndirectionDimensions = FIntVector(
+				FMath::DivideAndRoundUp(Mip0IndirectionDimensions.X, 1 << MipIndex),
+				FMath::DivideAndRoundUp(Mip0IndirectionDimensions.Y, 1 << MipIndex),
+				FMath::DivideAndRoundUp(Mip0IndirectionDimensions.Z, 1 << MipIndex));
+
+			// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
+			const FVector3f TexelObjectSpaceSize      = LocalSpaceMeshBounds.GetSize() / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
+			const FBox3f    DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
+
+			const FVector3f IndirectionMarchingSize = DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
+
+			const FVector3f VolumeSpaceDistanceFieldMarchingSize = IndirectionMarchingSize * LocalToVolumeScale / FVector3f(DistanceField::UniqueDataBrickSize);
+			const float     MaxDistanceForEncoding               = VolumeSpaceDistanceFieldMarchingSize.Size() * DistanceField::BandSizeInVoxels;
+			const float     LocalSpaceTraceDistance              = MaxDistanceForEncoding / LocalToVolumeScale;
+			const FVector2f DistanceFieldToVolumeScaleBias(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
+
+			TArray< FDistanceFieldBrick > BricksToCompute;
+			BricksToCompute.Reserve(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z / 8);
+			for ( int32 ZIndex = 0 ; ZIndex < IndirectionDimensions.Z ; ZIndex++ )
+			{
+				for ( int32 YIndex = 0 ; YIndex < IndirectionDimensions.Y ; YIndex++ )
+				{
+					for ( int32 XIndex = 0 ; XIndex < IndirectionDimensions.X ; XIndex++ )
+					{
+						BricksToCompute.Emplace(
+							LocalSpaceTraceDistance,
+							DistanceFieldVolumeBounds,
+							LocalToVolumeScale,
+							DistanceFieldToVolumeScaleBias,
+							FIntVector(XIndex, YIndex, ZIndex),
+							IndirectionDimensions);
+					}
+				}
+			}
+
+			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+			// compute bricks now
+			ParallelFor(BricksToCompute.Num(), [&] ( const int32 BrickIndex )
+			            //for ( FDistanceFieldBrick& Brick : BricksToCompute )
+			            {
+				            FDistanceFieldBrick& Brick                        = BricksToCompute[BrickIndex];
+				            const FVector3f      BrickIndirectionMarchingSize = Brick.VolumeBounds.GetSize() / FVector3f(Brick.IndirectionSize);
+				            const FVector3f      DistanceFieldMarchingSize    = BrickIndirectionMarchingSize / FVector3f(DistanceField::UniqueDataBrickSize);
+				            const FVector3f      BrickMinPosition             = Brick.VolumeBounds.Min + FVector3f(Brick.BrickCoordinate) * BrickIndirectionMarchingSize;
+
+				            Brick.DistanceFieldVolume.Empty(DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize);
+				            Brick.DistanceFieldVolume.AddZeroed(DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize);
+
+				            for ( int32 ZIndex = 0 ; ZIndex < DistanceField::BrickSize ; ZIndex++ )
+				            {
+					            if ( Progress.Cancelled() ) { return; }
+
+					            for ( int32 YIndex = 0 ; YIndex < DistanceField::BrickSize ; YIndex++ )
+					            {
+						            if ( Progress.Cancelled() ) { return; }
+
+						            for ( int32 XIndex = 0 ; XIndex < DistanceField::BrickSize ; XIndex++ )
+						            {
+							            const FVector3f MarchingPosition = FVector3f(XIndex, YIndex, ZIndex) * DistanceFieldMarchingSize + BrickMinPosition;
+							            const int32     Index            = (ZIndex * DistanceField::BrickSize * DistanceField::BrickSize + YIndex * DistanceField::BrickSize + XIndex);
+
+							            float MinLocalSpaceDistance = LocalSpaceTraceDistance;
+
+							            double NearestDistSqr    = 0;
+							            int32  NearestTriangleID = Spatial.FindNearestTriangle(FVector3d(MarchingPosition), NearestDistSqr,
+							                                                                  UE::Geometry::IMeshSpatial::FQueryOptions(LocalSpaceTraceDistance));
+							            if ( NearestTriangleID != IndexConstants::InvalidID )
+							            {
+								            const float ClosestDistance = FMath::Sqrt(NearestDistSqr);
+								            MinLocalSpaceDistance       = FMath::Min(MinLocalSpaceDistance, ClosestDistance);
+
+								            if ( WindingTree.IsInside(FVector3d(MarchingPosition), 0.5) )
+								            {
+									            MinLocalSpaceDistance *= -1;
+								            }
+
+							            }
+							            else
+							            {
+								            // no closest point...
+								            MinLocalSpaceDistance = LocalSpaceTraceDistance;
+							            }
+
+							            // Transform to the tracing shader's Volume space
+							            const float VolumeSpaceDistance = MinLocalSpaceDistance * LocalToVolumeScale;
+							            // Transform to the Distance Field texture's space
+							            const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
+							            check(DistanceField::DistanceFieldFormat == PF_G8);
+							            const uint8 QuantizedDistance    = FMath::Clamp< int32 >(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
+							            Brick.DistanceFieldVolume[Index] = QuantizedDistance;
+							            Brick.BrickMaxDistance           = FMath::Max(Brick.BrickMaxDistance, QuantizedDistance);
+							            Brick.BrickMinDistance           = FMath::Min(Brick.BrickMinDistance, QuantizedDistance);
+
+						            } // X iteration 
+					            }     // Y iteration
+				            }         // Z iteration
+
+			            }, EParallelForFlags::Unbalanced); // Bricks iteration
+
+			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+			FSparseDistanceFieldMip& OutMip = VolumeDataOut.Mips[MipIndex];
+			TArray< uint32 >         IndirectionTable;
+			IndirectionTable.Empty(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z);
+			IndirectionTable.AddUninitialized(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z);
+
+			for ( int32 i = 0 ; i < IndirectionTable.Num() ; i++ )
+			{
+				IndirectionTable[i] = DistanceField::InvalidBrickIndex;
+			}
+
+			TArray< FDistanceFieldBrick* > ValidBricks;
+			ValidBricks.Reserve(BricksToCompute.Num());
+
+			for ( int32 k = 0 ; k < BricksToCompute.Num() ; k++ )
+			{
+				const FDistanceFieldBrick& ComputedBrick = BricksToCompute[k];
+				if ( ComputedBrick.BrickMinDistance < MAX_uint8 && ComputedBrick.BrickMaxDistance > MIN_uint8 )
+				{
+					ValidBricks.Add(&BricksToCompute[k]);
+				}
+			}
+
+			const uint32 NumBricks      = ValidBricks.Num();
+			const uint32 BrickSizeBytes = DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize * GPixelFormats[DistanceField::DistanceFieldFormat].BlockBytes;
+
+			TArray< uint8 > DistanceFieldBrickData;
+			DistanceFieldBrickData.Empty(BrickSizeBytes * NumBricks);
+			DistanceFieldBrickData.AddUninitialized(BrickSizeBytes * NumBricks);
+
+			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+			for ( int32 BrickIndex = 0 ; BrickIndex < ValidBricks.Num() ; BrickIndex++ )
+			{
+				const FDistanceFieldBrick& Brick            = *ValidBricks[BrickIndex];
+				const int32                IndirectionIndex = ComputeLinearMarchingIndex(Brick.BrickCoordinate, IndirectionDimensions);
+				IndirectionTable[IndirectionIndex]          = BrickIndex;
+
+				check(BrickSizeBytes == Brick.DistanceFieldVolume.Num() * Brick.DistanceFieldVolume.GetTypeSize());
+				FPlatformMemory::Memcpy(&DistanceFieldBrickData[BrickIndex * BrickSizeBytes], Brick.DistanceFieldVolume.GetData(), Brick.DistanceFieldVolume.Num() * Brick.DistanceFieldVolume.GetTypeSize());
+			}
+
+			const int32 IndirectionTableBytes = IndirectionTable.Num() * IndirectionTable.GetTypeSize();
+			const int32 MipDataBytes          = IndirectionTableBytes + DistanceFieldBrickData.Num();
+
+			if ( MipIndex == DistanceField::NumMips - 1 )
+			{
+				VolumeDataOut.AlwaysLoadedMip.Empty(MipDataBytes);
+				VolumeDataOut.AlwaysLoadedMip.AddUninitialized(MipDataBytes);
+
+				FPlatformMemory::Memcpy(&VolumeDataOut.AlwaysLoadedMip[0], IndirectionTable.GetData(), IndirectionTableBytes);
+
+				if ( DistanceFieldBrickData.Num() > 0 )
+				{
+					FPlatformMemory::Memcpy(&VolumeDataOut.AlwaysLoadedMip[IndirectionTableBytes], DistanceFieldBrickData.GetData(), DistanceFieldBrickData.Num());
+				}
+			}
+			else
+			{
+				OutMip.BulkOffset = StreamableMipData.Num();
+				StreamableMipData.AddUninitialized(MipDataBytes);
+				OutMip.BulkSize = StreamableMipData.Num() - OutMip.BulkOffset;
+				checkf(OutMip.BulkSize > 0, TEXT("DynamicMeshComponent - BulkSize was 0 with %ux%ux%u indirection"), IndirectionDimensions.X, IndirectionDimensions.Y, IndirectionDimensions.Z);
+
+				FPlatformMemory::Memcpy(&StreamableMipData[OutMip.BulkOffset], IndirectionTable.GetData(), IndirectionTableBytes);
+
+				if ( DistanceFieldBrickData.Num() > 0 )
+				{
+					FPlatformMemory::Memcpy(&StreamableMipData[OutMip.BulkOffset + IndirectionTableBytes], DistanceFieldBrickData.GetData(), DistanceFieldBrickData.Num());
+				}
+			}
+
+			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+			OutMip.IndirectionDimensions          = IndirectionDimensions;
+			OutMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
+			OutMip.NumDistanceFieldBricks         = NumBricks;
+
+			// Account for the border voxels we added
+			const FVector3f VirtualUVMin  = FVector3f(DistanceField::MeshDistanceFieldObjectBorder) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+			const FVector3f VirtualUVSize = FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
+
+			const FVector3f VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
+
+			// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
+			OutMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
+			OutMip.VolumeToVirtualUVAdd   = VolumePositionExtent * OutMip.VolumeToVirtualUVScale + VirtualUVMin;
+		}
+
+		VolumeDataOut.bMostlyTwoSided      = bGenerateAsIfTwoSided;
+		VolumeDataOut.LocalSpaceMeshBounds = LocalSpaceMeshBounds;
+
+		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+
+		VolumeDataOut.StreamableMips.Lock(LOCK_READ_WRITE);
+		uint8* Ptr = (uint8*)VolumeDataOut.StreamableMips.Realloc(StreamableMipData.Num());
+		FMemory::Memcpy(Ptr, StreamableMipData.GetData(), StreamableMipData.Num());
+		VolumeDataOut.StreamableMips.Unlock();
+		VolumeDataOut.StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
+
+		const float BuildTime = static_cast< float >(FPlatformTime::Seconds() - StartTime);
+
+		UE_LOG(LogGeometry, Log, TEXT("DynamicMeshComponent - Finished distance field build in %.1fs - %ux%ux%u sparse distance field, %.1fMb total, %.1fMb always loaded, %u%% occupied, %u triangles"),
+		       BuildTime,
+		       Mip0IndirectionDimensions.X * DistanceField::UniqueDataBrickSize,
+		       Mip0IndirectionDimensions.Y * DistanceField::UniqueDataBrickSize,
+		       Mip0IndirectionDimensions.Z * DistanceField::UniqueDataBrickSize,
+		       (VolumeDataOut.GetResourceSizeBytes() + VolumeDataOut.StreamableMips.GetBulkDataSize()) / 1024.0f / 1024.0f,
+		       (VolumeDataOut.AlwaysLoadedMip.GetAllocatedSize()) / 1024.0f / 1024.0f,
+		       FMath::RoundToInt(100.0f * VolumeDataOut.Mips[0].NumDistanceFieldBricks / (float)(Mip0IndirectionDimensions.X * Mip0IndirectionDimensions.Y * Mip0IndirectionDimensions.Z)),
+		       Mesh.TriangleCount());
+
+		if ( Progress.Cancelled() )
+		{
+			return TUniquePtr< FDistanceFieldVolumeData >();
+		}
+	}
+
+	return NewDistanceField;
 }
 
 void ULFPMarchingMeshComponent::OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData )
@@ -1056,351 +1244,4 @@ void ULFPMarchingMeshComponent::OnNewDistanceFieldData_Async( TUniquePtr< FDista
 			);
 	}
 	DistanceFieldLock.Unlock();
-}
-
-TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale )
-{
-	if ( Progress.Cancelled() )
-	{
-		return nullptr;
-	}
-
-	TUniquePtr< FDistanceFieldVolumeData > NewDistanceField = MakeUnique< FDistanceFieldVolumeData >();
-	const bool                             bSuccess         = DynamicMesh_GenerateSignedDistanceFieldVolumeData(Mesh, bGenerateAsIfTwoSided, CurrentDistanceFieldResolutionScale, *NewDistanceField, Progress);
-
-	if ( Progress.Cancelled() || bSuccess == false )
-	{
-		return TUniquePtr< FDistanceFieldVolumeData >();
-	}
-
-	return NewDistanceField;
-}
-
-bool ULFPMarchingMeshComponent::DynamicMesh_GenerateSignedDistanceFieldVolumeData( const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale , FDistanceFieldVolumeData& VolumeDataOut , FProgressCancel& Progress )
-{
-	TRACE_CPUPROFILER_EVENT_SCOPE(DynamicMesh_GenerateSignedDistanceFieldVolumeData);
-
-	if ( DoesProjectSupportDistanceFields() == false )
-	{
-		return false;
-	}
-
-	if ( CurrentDistanceFieldResolutionScale <= 0 )
-	{
-		return false;
-	}
-
-	const double StartTime = FPlatformTime::Seconds();
-
-	const auto ComputeLinearMarchingIndex = [&] ( FIntVector MarchingCoordinate , FIntVector VolumeDimensions )
-	{
-		return (MarchingCoordinate.Z * VolumeDimensions.Y + MarchingCoordinate.Y) * VolumeDimensions.X + MarchingCoordinate.X;
-	};
-
-	UE::Geometry::FDynamicMeshAABBTree3 Spatial(&Mesh, true);
-	if ( Progress.Cancelled() ) { return false; }
-	UE::Geometry::FAxisAlignedBox3d                 MeshBounds = Spatial.GetBoundingBox();
-	UE::Geometry::TFastWindingTree< FDynamicMesh3 > WindingTree(&Spatial, true);
-	if ( Progress.Cancelled() ) { return false; }
-
-	static const auto CVar       = IConsoleManager::Get().FindTConsoleVariableDataInt(TEXT("r.DistanceFields.MaxPerMeshResolution"));
-	const int32       PerMeshMax = CVar->GetValueOnAnyThread();
-
-	// Meshes with explicit artist-specified scale can go higher
-	const int32 MaxNumBlocksOneDim = FMath::Min< int32 >(FMath::DivideAndRoundNearest(CurrentDistanceFieldResolutionScale <= 1
-		                                                                                  ? PerMeshMax / 2
-		                                                                                  : PerMeshMax, DistanceField::UniqueDataBrickSize), DistanceField::MaxIndirectionDimension - 1);
-
-	static const auto CVarDensity  = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.DistanceFields.DefaultVoxelDensity"));
-	const float       VoxelDensity = CVarDensity->GetValueOnAnyThread();
-
-	const float NumVoxelsPerLocalSpaceUnit = VoxelDensity * CurrentDistanceFieldResolutionScale;
-	FBox3f      LocalSpaceMeshBounds       = FBox3f(MeshBounds);
-
-	// Make sure the mesh bounding box has positive extents to handle planes
-	{
-		FVector3f MeshBoundsCenter = LocalSpaceMeshBounds.GetCenter();
-		FVector3f MeshBoundsExtent = FVector3f::Max(LocalSpaceMeshBounds.GetExtent(), FVector3f(1.0f, 1.0f, 1.0f));
-		LocalSpaceMeshBounds.Min   = MeshBoundsCenter - MeshBoundsExtent;
-		LocalSpaceMeshBounds.Max   = MeshBoundsCenter + MeshBoundsExtent;
-	}
-
-	// We sample on voxel corners and use central differencing for gradients, so a box mesh using two-sided materials whose vertices lie on LocalSpaceMeshBounds produces a zero gradient on intersection
-	// Expand the mesh bounds by a fraction of a voxel to allow room for a pullback on the hit location for computing the gradient.
-	// Only expand for two-sided meshes as this adds significant Mesh SDF tracing cost
-	if ( bGenerateAsIfTwoSided )
-	{
-		const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
-		const FIntVector Mip0IndirectionDimensions = FIntVector(
-			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
-			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
-			FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Z), 1, MaxNumBlocksOneDim));
-
-		constexpr float CentralDifferencingExpandInVoxels = .25f;
-		const FVector3f TexelObjectSpaceSize              = LocalSpaceMeshBounds.GetSize() / FVector3f(Mip0IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * CentralDifferencingExpandInVoxels));
-		LocalSpaceMeshBounds                              = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
-	}
-
-	// The tracing shader uses a Volume space that is normalized by the maximum extent, to keep Volume space within [-1, 1], we must match that behavior when encoding
-	const float LocalToVolumeScale = 1.0f / LocalSpaceMeshBounds.GetExtent().GetMax();
-
-	const FVector3f  DesiredDimensions         = FVector3f(LocalSpaceMeshBounds.GetSize() * FVector3f(NumVoxelsPerLocalSpaceUnit / static_cast< float >(DistanceField::UniqueDataBrickSize)));
-	const FIntVector Mip0IndirectionDimensions = FIntVector(
-		FMath::Clamp(FMath::RoundToInt(DesiredDimensions.X), 1, MaxNumBlocksOneDim),
-		FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Y), 1, MaxNumBlocksOneDim),
-		FMath::Clamp(FMath::RoundToInt(DesiredDimensions.Z), 1, MaxNumBlocksOneDim));
-
-	TArray< uint8 > StreamableMipData;
-
-	struct FDistanceFieldBrick
-	{
-		FDistanceFieldBrick(
-			float         InLocalSpaceTraceDistance ,
-			const FBox3f& InVolumeBounds ,
-			float         InLocalToVolumeScale ,
-			FVector2f     InDistanceFieldToVolumeScaleBias ,
-			FIntVector    InBrickCoordinate ,
-			FIntVector    InIndirectionSize ) :
-			LocalSpaceTraceDistance(InLocalSpaceTraceDistance),
-			VolumeBounds(InVolumeBounds),
-			LocalToVolumeScale(InLocalToVolumeScale),
-			DistanceFieldToVolumeScaleBias(InDistanceFieldToVolumeScaleBias),
-			BrickCoordinate(InBrickCoordinate),
-			IndirectionSize(InIndirectionSize),
-			BrickMaxDistance(MIN_uint8),
-			BrickMinDistance(MAX_uint8)
-		{
-		}
-
-		float      LocalSpaceTraceDistance;
-		FBox3f     VolumeBounds;
-		float      LocalToVolumeScale;
-		FVector2f  DistanceFieldToVolumeScaleBias;
-		FIntVector BrickCoordinate;
-		FIntVector IndirectionSize;
-
-		// Output
-		uint8           BrickMaxDistance;
-		uint8           BrickMinDistance;
-		TArray< uint8 > DistanceFieldVolume;
-	};
-
-	for ( int32 MipIndex = 0 ; MipIndex < DistanceField::NumMips ; MipIndex++ )
-	{
-		if ( Progress.Cancelled() ) { return false; }
-
-		const FIntVector IndirectionDimensions = FIntVector(
-			FMath::DivideAndRoundUp(Mip0IndirectionDimensions.X, 1 << MipIndex),
-			FMath::DivideAndRoundUp(Mip0IndirectionDimensions.Y, 1 << MipIndex),
-			FMath::DivideAndRoundUp(Mip0IndirectionDimensions.Z, 1 << MipIndex));
-
-		// Expand to guarantee one voxel border for gradient reconstruction using bilinear filtering
-		const FVector3f TexelObjectSpaceSize      = LocalSpaceMeshBounds.GetSize() / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder));
-		const FBox3f    DistanceFieldVolumeBounds = LocalSpaceMeshBounds.ExpandBy(TexelObjectSpaceSize);
-
-		const FVector3f IndirectionMarchingSize = DistanceFieldVolumeBounds.GetSize() / FVector3f(IndirectionDimensions);
-
-		const FVector3f VolumeSpaceDistanceFieldMarchingSize = IndirectionMarchingSize * LocalToVolumeScale / FVector3f(DistanceField::UniqueDataBrickSize);
-		const float     MaxDistanceForEncoding               = VolumeSpaceDistanceFieldMarchingSize.Size() * DistanceField::BandSizeInVoxels;
-		const float     LocalSpaceTraceDistance              = MaxDistanceForEncoding / LocalToVolumeScale;
-		const FVector2f DistanceFieldToVolumeScaleBias(2.0f * MaxDistanceForEncoding, -MaxDistanceForEncoding);
-
-		TArray< FDistanceFieldBrick > BricksToCompute;
-		BricksToCompute.Reserve(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z / 8);
-		for ( int32 ZIndex = 0 ; ZIndex < IndirectionDimensions.Z ; ZIndex++ )
-		{
-			for ( int32 YIndex = 0 ; YIndex < IndirectionDimensions.Y ; YIndex++ )
-			{
-				for ( int32 XIndex = 0 ; XIndex < IndirectionDimensions.X ; XIndex++ )
-				{
-					BricksToCompute.Emplace(
-						LocalSpaceTraceDistance,
-						DistanceFieldVolumeBounds,
-						LocalToVolumeScale,
-						DistanceFieldToVolumeScaleBias,
-						FIntVector(XIndex, YIndex, ZIndex),
-						IndirectionDimensions);
-				}
-			}
-		}
-
-		if ( Progress.Cancelled() ) { return false; }
-
-		// compute bricks now
-		ParallelFor(BricksToCompute.Num(), [&] ( const int32 BrickIndex )
-		            //for ( FDistanceFieldBrick& Brick : BricksToCompute )
-		            {
-			            FDistanceFieldBrick& Brick                        = BricksToCompute[BrickIndex];
-			            const FVector3f      BrickIndirectionMarchingSize = Brick.VolumeBounds.GetSize() / FVector3f(Brick.IndirectionSize);
-			            const FVector3f      DistanceFieldMarchingSize    = BrickIndirectionMarchingSize / FVector3f(DistanceField::UniqueDataBrickSize);
-			            const FVector3f      BrickMinPosition             = Brick.VolumeBounds.Min + FVector3f(Brick.BrickCoordinate) * BrickIndirectionMarchingSize;
-
-			            Brick.DistanceFieldVolume.Empty(DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize);
-			            Brick.DistanceFieldVolume.AddZeroed(DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize);
-
-			            for ( int32 ZIndex = 0 ; ZIndex < DistanceField::BrickSize ; ZIndex++ )
-			            {
-				            if ( Progress.Cancelled() ) { return; }
-
-				            for ( int32 YIndex = 0 ; YIndex < DistanceField::BrickSize ; YIndex++ )
-				            {
-					            if ( Progress.Cancelled() ) { return; }
-
-					            for ( int32 XIndex = 0 ; XIndex < DistanceField::BrickSize ; XIndex++ )
-					            {
-						            const FVector3f MarchingPosition = FVector3f(XIndex, YIndex, ZIndex) * DistanceFieldMarchingSize + BrickMinPosition;
-						            const int32     Index            = (ZIndex * DistanceField::BrickSize * DistanceField::BrickSize + YIndex * DistanceField::BrickSize + XIndex);
-
-						            float MinLocalSpaceDistance = LocalSpaceTraceDistance;
-
-						            double NearestDistSqr    = 0;
-						            int32  NearestTriangleID = Spatial.FindNearestTriangle(FVector3d(MarchingPosition), NearestDistSqr,
-						                                                                  UE::Geometry::IMeshSpatial::FQueryOptions(LocalSpaceTraceDistance));
-						            if ( NearestTriangleID != IndexConstants::InvalidID )
-						            {
-							            const float ClosestDistance = FMath::Sqrt(NearestDistSqr);
-							            MinLocalSpaceDistance       = FMath::Min(MinLocalSpaceDistance, ClosestDistance);
-
-							            if ( WindingTree.IsInside(FVector3d(MarchingPosition), 0.5) )
-							            {
-								            MinLocalSpaceDistance *= -1;
-							            }
-
-						            }
-						            else
-						            {
-							            // no closest point...
-							            MinLocalSpaceDistance = LocalSpaceTraceDistance;
-						            }
-
-						            // Transform to the tracing shader's Volume space
-						            const float VolumeSpaceDistance = MinLocalSpaceDistance * LocalToVolumeScale;
-						            // Transform to the Distance Field texture's space
-						            const float RescaledDistance = (VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y) / DistanceFieldToVolumeScaleBias.X;
-						            check(DistanceField::DistanceFieldFormat == PF_G8);
-						            const uint8 QuantizedDistance    = FMath::Clamp< int32 >(FMath::FloorToInt(RescaledDistance * 255.0f + .5f), 0, 255);
-						            Brick.DistanceFieldVolume[Index] = QuantizedDistance;
-						            Brick.BrickMaxDistance           = FMath::Max(Brick.BrickMaxDistance, QuantizedDistance);
-						            Brick.BrickMinDistance           = FMath::Min(Brick.BrickMinDistance, QuantizedDistance);
-
-					            } // X iteration 
-				            }     // Y iteration
-			            }         // Z iteration
-
-		            }, EParallelForFlags::Unbalanced); // Bricks iteration
-
-		if ( Progress.Cancelled() ) { return false; }
-
-		FSparseDistanceFieldMip& OutMip = VolumeDataOut.Mips[MipIndex];
-		TArray< uint32 >         IndirectionTable;
-		IndirectionTable.Empty(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z);
-		IndirectionTable.AddUninitialized(IndirectionDimensions.X * IndirectionDimensions.Y * IndirectionDimensions.Z);
-
-		for ( int32 i = 0 ; i < IndirectionTable.Num() ; i++ )
-		{
-			IndirectionTable[i] = DistanceField::InvalidBrickIndex;
-		}
-
-		TArray< FDistanceFieldBrick* > ValidBricks;
-		ValidBricks.Reserve(BricksToCompute.Num());
-
-		for ( int32 k = 0 ; k < BricksToCompute.Num() ; k++ )
-		{
-			const FDistanceFieldBrick& ComputedBrick = BricksToCompute[k];
-			if ( ComputedBrick.BrickMinDistance < MAX_uint8 && ComputedBrick.BrickMaxDistance > MIN_uint8 )
-			{
-				ValidBricks.Add(&BricksToCompute[k]);
-			}
-		}
-
-		const uint32 NumBricks      = ValidBricks.Num();
-		const uint32 BrickSizeBytes = DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize * GPixelFormats[DistanceField::DistanceFieldFormat].BlockBytes;
-
-		TArray< uint8 > DistanceFieldBrickData;
-		DistanceFieldBrickData.Empty(BrickSizeBytes * NumBricks);
-		DistanceFieldBrickData.AddUninitialized(BrickSizeBytes * NumBricks);
-
-		if ( Progress.Cancelled() ) { return false; }
-
-		for ( int32 BrickIndex = 0 ; BrickIndex < ValidBricks.Num() ; BrickIndex++ )
-		{
-			const FDistanceFieldBrick& Brick            = *ValidBricks[BrickIndex];
-			const int32                IndirectionIndex = ComputeLinearMarchingIndex(Brick.BrickCoordinate, IndirectionDimensions);
-			IndirectionTable[IndirectionIndex]          = BrickIndex;
-
-			check(BrickSizeBytes == Brick.DistanceFieldVolume.Num() * Brick.DistanceFieldVolume.GetTypeSize());
-			FPlatformMemory::Memcpy(&DistanceFieldBrickData[BrickIndex * BrickSizeBytes], Brick.DistanceFieldVolume.GetData(), Brick.DistanceFieldVolume.Num() * Brick.DistanceFieldVolume.GetTypeSize());
-		}
-
-		const int32 IndirectionTableBytes = IndirectionTable.Num() * IndirectionTable.GetTypeSize();
-		const int32 MipDataBytes          = IndirectionTableBytes + DistanceFieldBrickData.Num();
-
-		if ( MipIndex == DistanceField::NumMips - 1 )
-		{
-			VolumeDataOut.AlwaysLoadedMip.Empty(MipDataBytes);
-			VolumeDataOut.AlwaysLoadedMip.AddUninitialized(MipDataBytes);
-
-			FPlatformMemory::Memcpy(&VolumeDataOut.AlwaysLoadedMip[0], IndirectionTable.GetData(), IndirectionTableBytes);
-
-			if ( DistanceFieldBrickData.Num() > 0 )
-			{
-				FPlatformMemory::Memcpy(&VolumeDataOut.AlwaysLoadedMip[IndirectionTableBytes], DistanceFieldBrickData.GetData(), DistanceFieldBrickData.Num());
-			}
-		}
-		else
-		{
-			OutMip.BulkOffset = StreamableMipData.Num();
-			StreamableMipData.AddUninitialized(MipDataBytes);
-			OutMip.BulkSize = StreamableMipData.Num() - OutMip.BulkOffset;
-			checkf(OutMip.BulkSize > 0, TEXT("DynamicMeshComponent - BulkSize was 0 with %ux%ux%u indirection"), IndirectionDimensions.X, IndirectionDimensions.Y, IndirectionDimensions.Z);
-
-			FPlatformMemory::Memcpy(&StreamableMipData[OutMip.BulkOffset], IndirectionTable.GetData(), IndirectionTableBytes);
-
-			if ( DistanceFieldBrickData.Num() > 0 )
-			{
-				FPlatformMemory::Memcpy(&StreamableMipData[OutMip.BulkOffset + IndirectionTableBytes], DistanceFieldBrickData.GetData(), DistanceFieldBrickData.Num());
-			}
-		}
-
-		if ( Progress.Cancelled() ) { return false; }
-
-		OutMip.IndirectionDimensions          = IndirectionDimensions;
-		OutMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
-		OutMip.NumDistanceFieldBricks         = NumBricks;
-
-		// Account for the border voxels we added
-		const FVector3f VirtualUVMin  = FVector3f(DistanceField::MeshDistanceFieldObjectBorder) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-		const FVector3f VirtualUVSize = FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize - FIntVector(2 * DistanceField::MeshDistanceFieldObjectBorder)) / FVector3f(IndirectionDimensions * DistanceField::UniqueDataBrickSize);
-
-		const FVector3f VolumePositionExtent = LocalSpaceMeshBounds.GetExtent() * LocalToVolumeScale;
-
-		// [-VolumePositionExtent, VolumePositionExtent] -> [VirtualUVMin, VirtualUVMin + VirtualUVSize]
-		OutMip.VolumeToVirtualUVScale = VirtualUVSize / (2 * VolumePositionExtent);
-		OutMip.VolumeToVirtualUVAdd   = VolumePositionExtent * OutMip.VolumeToVirtualUVScale + VirtualUVMin;
-	}
-
-	VolumeDataOut.bMostlyTwoSided      = bGenerateAsIfTwoSided;
-	VolumeDataOut.LocalSpaceMeshBounds = LocalSpaceMeshBounds;
-
-	if ( Progress.Cancelled() ) { return false; }
-
-	VolumeDataOut.StreamableMips.Lock(LOCK_READ_WRITE);
-	uint8* Ptr = (uint8*)VolumeDataOut.StreamableMips.Realloc(StreamableMipData.Num());
-	FMemory::Memcpy(Ptr, StreamableMipData.GetData(), StreamableMipData.Num());
-	VolumeDataOut.StreamableMips.Unlock();
-	VolumeDataOut.StreamableMips.SetBulkDataFlags(BULKDATA_Force_NOT_InlinePayload);
-
-	const float BuildTime = static_cast< float >(FPlatformTime::Seconds() - StartTime);
-
-	UE_LOG(LogGeometry, Log, TEXT("DynamicMeshComponent - Finished distance field build in %.1fs - %ux%ux%u sparse distance field, %.1fMb total, %.1fMb always loaded, %u%% occupied, %u triangles"),
-	       BuildTime,
-	       Mip0IndirectionDimensions.X * DistanceField::UniqueDataBrickSize,
-	       Mip0IndirectionDimensions.Y * DistanceField::UniqueDataBrickSize,
-	       Mip0IndirectionDimensions.Z * DistanceField::UniqueDataBrickSize,
-	       (VolumeDataOut.GetResourceSizeBytes() + VolumeDataOut.StreamableMips.GetBulkDataSize()) / 1024.0f / 1024.0f,
-	       (VolumeDataOut.AlwaysLoadedMip.GetAllocatedSize()) / 1024.0f / 1024.0f,
-	       FMath::RoundToInt(100.0f * VolumeDataOut.Mips[0].NumDistanceFieldBricks / (float)(Mip0IndirectionDimensions.X * Mip0IndirectionDimensions.Y * Mip0IndirectionDimensions.Z)),
-	       Mesh.TriangleCount());
-
-	return true;
 }

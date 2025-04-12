@@ -72,6 +72,7 @@ class ULFPChunkedTagDataComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLFPOnVoxelMeshGenerateEvent);
 
+// TODO : Make sure it work as same as Marching Render Component
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGINVOXEL_API ULFPVoxelRenderComponent : public UDynamicMeshComponent
 {

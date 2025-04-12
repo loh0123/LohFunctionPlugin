@@ -9,16 +9,16 @@
 #include "Library/LFPMarchingFunctionLibrary.h"
 #include "UObject/ObjectSaveContext.h"
 
-const TArray< FDynamicMesh3 >& ULFPMarchingMeshSet::GetDynamicList( ) const
+const TArray< FDynamicMesh3 >& ULFPMarchingMeshSet::GetDynamicMeshList( ) const
 {
-	return MappingDynamicList;
+	return MappingDynamicMeshList;
 }
 
-void ULFPMarchingMeshSet::GenerateDynamicList( )
+void ULFPMarchingMeshSet::GenerateDynamicMeshList( )
 {
 	if ( bSaveDynamicData )
 	{
-		MappingDynamicList.SetNum(MappingMeshList.Num());
+		MappingDynamicMeshList.SetNum(MappingMeshList.Num());
 
 		for ( int32 MeshIndex = 0 ; MeshIndex < MappingMeshList.Num() ; ++MeshIndex )
 		{
@@ -38,7 +38,7 @@ void ULFPMarchingMeshSet::GenerateDynamicList( )
 			{
 				if ( const FStaticMeshLODResources* LODData = RenderData->GetCurrentFirstLOD(0) ; LODData != nullptr )
 				{
-					FDynamicMesh3& NewMeshData = MappingDynamicList[MeshIndex];
+					FDynamicMesh3& NewMeshData = MappingDynamicMeshList[MeshIndex];
 
 					UE::Geometry::FStaticMeshLODResourcesToDynamicMesh::ConversionOptions ConvertOptions;
 
@@ -50,9 +50,9 @@ void ULFPMarchingMeshSet::GenerateDynamicList( )
 	}
 }
 
-bool ULFPMarchingMeshSet::IsDynamicListValid( ) const
+bool ULFPMarchingMeshSet::IsDynamicMeshListValid( ) const
 {
-	return MappingDynamicList.Num() == MappingMeshList.Num();
+	return MappingDynamicMeshList.Num() == MappingMeshList.Num();
 }
 
 TArray< UStaticMesh* > ULFPMarchingMeshSet::GetMeshList( ) const
@@ -78,7 +78,7 @@ FLFPMarchingMeshMappingData ULFPMarchingMeshSet::GetMappingData( const uint8 Mar
 
 void ULFPMarchingMeshSet::PostLoad( )
 {
-	GenerateDynamicList();
+	GenerateDynamicMeshList();
 
 	Super::PostLoad();
 }
@@ -87,7 +87,7 @@ void ULFPMarchingMeshSet::PreSave( FObjectPreSaveContext SaveContext )
 {
 	MappingMeshList.Empty(MeshDataList.Num());
 	MappingDataList.Empty(255);
-	MappingDynamicList.Empty(MeshDataList.Num());
+	MappingDynamicMeshList.Empty(MeshDataList.Num());
 
 	for ( const FLFPMarchingSingleMeshData& SingelMeshData : MeshDataList )
 	{
@@ -104,7 +104,7 @@ void ULFPMarchingMeshSet::PreSave( FObjectPreSaveContext SaveContext )
 		}
 	}
 
-	GenerateDynamicList();
+	GenerateDynamicMeshList();
 
 	Super::PreSave(SaveContext);
 }
