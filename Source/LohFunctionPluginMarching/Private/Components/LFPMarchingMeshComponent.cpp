@@ -14,6 +14,7 @@
 #include "Render/LFPRenderLibrary.h"
 #include "Runtime/GeometryFramework/Private/Components/DynamicMeshSceneProxy.h"
 #include "Spatial/FastWinding.h"
+#include "Windows/WindowsSemaphore.h"
 
 // Sets default values for this component's properties
 ULFPMarchingMeshComponent::ULFPMarchingMeshComponent( )
@@ -133,16 +134,18 @@ uint8 ULFPMarchingMeshComponent::GetMarchingID( const FIntVector& Offset ) const
 	return 0;
 }
 
-void ULFPMarchingMeshComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex )
+void ULFPMarchingMeshComponent::Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate )
 {
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
 	SectionIndex  = NewSectionIndex;
 
-	if ( IsDataComponentValid() )
+	ClearRender();
+
+	if ( IsDataComponentValid() && bDeferUpdate == false )
 	{
-		UpdateRender();
+		UpdateRender(true);
 	}
 }
 
@@ -155,6 +158,19 @@ void ULFPMarchingMeshComponent::Uninitialize( )
 
 void ULFPMarchingMeshComponent::ClearRender( )
 {
+	LocalThreadData.bIsValid = false;
+
+	LocalThreadData.CollisionBoxElems.Empty();
+
+	AggGeom.EmptyElements();
+
+	UpdateCollision(false);
+
+	EditMesh([] ( FDynamicMesh3& Mesh )
+	{
+		Mesh.Clear();
+	});
+
 	MeshComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentMeshData Clearing"),
 	                           [] ( FProgressCancel& Progress )
 	                           {
@@ -162,20 +178,30 @@ void ULFPMarchingMeshComponent::ClearRender( )
 	                           });
 }
 
-void ULFPMarchingMeshComponent::UpdateRender( )
+bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 {
 	if ( IsDataComponentValid() == false )
 	{
-		return;
+		return false;
 	}
 
-	OnMeshRebuilding.Broadcast();
+	if ( bIsRebuild == false && LocalThreadData.IsValid() )
+	{
+		return false;
+	}
+
+	if ( DataComponent->GetDataTagList(RegionIndex, ChunkIndex).IsEmpty() )
+	{
+		ClearRender();
+		return false;
+	}
 
 	const FIntVector& CacheDataSize  = GetDataSize() + FIntVector(2);
 	const int32       CacheDataIndex = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
 
 	TBitArray< > CacheDataList = TBitArray(false, CacheDataIndex);
 	{
+		int32 ValidCount = 0;
 		/* Generate Marching Mesh Data */
 		for ( int32 SolidIndex = 0 ; SolidIndex < CacheDataIndex ; ++SolidIndex )
 		{
@@ -188,8 +214,23 @@ void ULFPMarchingMeshComponent::UpdateRender( )
 			}
 
 			CacheDataList[SolidIndex] = DataComponent->GetDataTag(CheckIndex.X, CheckIndex.Y, CheckIndex.Z).MatchesTag(HandleTag);
+
+			if ( CacheDataList[SolidIndex] )
+			{
+				ValidCount += 1;
+			}
+		}
+
+		if ( CacheDataIndex == ValidCount )
+		{
+			ClearRender();
+			return false;
 		}
 	}
+
+	LocalThreadData.bIsValid = false;
+
+	OnMeshRebuilding.Broadcast();
 
 	FLFPMarchingPassData PassData;
 
@@ -200,7 +241,7 @@ void ULFPMarchingMeshComponent::UpdateRender( )
 	PassData.DataNum        = GetDataNum();
 	PassData.BoundExpand    = BoundExpand;
 	PassData.StartTime      = FDateTime::UtcNow();
-	PassData.bNeedCollision = IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple;
+	PassData.bNeedCollision = IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple && bOverrideBoxCollision;
 
 	PassData.RenderSetting = RenderSetting;
 
@@ -209,6 +250,8 @@ void ULFPMarchingMeshComponent::UpdateRender( )
 	                           {
 		                           return ComputeNewMarchingMesh_TaskFunction(Progress, MovedCacheDataList, MovedPassData);
 	                           });
+
+	return true;
 }
 
 void ULFPMarchingMeshComponent::RebuildPhysicsData( )
@@ -220,9 +263,9 @@ void ULFPMarchingMeshComponent::RebuildPhysicsData( )
 		return;
 	}
 
-	if ( IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple )
+	if ( bOverrideBoxCollision && IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple )
 	{
-		AggGeom.BoxElems = MoveTemp(LocalThreadData.CollisionBoxElems);
+		AggGeom.BoxElems = LocalThreadData.CollisionBoxElems;
 	}
 
 	Super::RebuildPhysicsData();
@@ -230,7 +273,7 @@ void ULFPMarchingMeshComponent::RebuildPhysicsData( )
 
 void ULFPMarchingMeshComponent::UpdateDistanceField( )
 {
-	if ( IsDataComponentValid() == false || GetDynamicMesh()->IsEmpty() || DistanceFieldMode == EDynamicMeshComponentDistanceFieldMode::NoDistanceField )
+	if ( DistanceFieldMode == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || LocalThreadData.IsValid() == false || IsDataComponentValid() == false || GetDynamicMesh()->IsEmpty() )
 	{
 		DistanceFieldComputeQueue.LaunchJob(TEXT("MarchingDynamicMeshComponentDistanceField Clearing"),
 		                                    [] ( FProgressCancel& Progress )
@@ -240,6 +283,8 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 
 		return;
 	}
+
+	OnDistanceFieldGenerated.Broadcast();
 
 	// For safety, run the distance field compute on a (geometry-only) copy of the mesh
 	FDynamicMesh3 GeoOnlyCopy;
@@ -503,6 +548,8 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 				}
 			}
 		}
+
+		MeshData.CompactInPlace(nullptr);
 	}
 
 	if ( Progress.Cancelled() )
@@ -603,8 +650,6 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 			BuildData.OBB.Extent = FVector3f(LFPMarchingRenderConstantData::VertexRotationList[DirectionIndex].UnrotateVector(FVector(LumenBox.GetExtent())).GetAbs());
 
 			CardBuildList.Add(BuildData);
-
-			return;
 		};
 
 		NewMeshData->LumenBound = FBox(CurrentLocalBounds);
@@ -639,6 +684,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		{
 			if ( Progress.Cancelled() )
 			{
+
 				return nullptr;
 			}
 
@@ -712,6 +758,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 
 	if ( Progress.Cancelled() )
 	{
+
 		return nullptr;
 	}
 
@@ -761,6 +808,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		{
 			if ( Progress.Cancelled() )
 			{
+
 				return nullptr;
 			}
 
@@ -808,6 +856,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 
 		if ( Progress.Cancelled() )
 		{
+
 			return nullptr;
 		}
 
@@ -832,12 +881,14 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 		return nullptr;
 	}
 
+	NewMeshData->bIsValid = true;
+
 	return NewMeshData;
 }
 
 void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed( TUniquePtr< FLFPMarchingThreadData > ThreadData )
 {
-	if ( ThreadData == nullptr )
+	if ( IsValid(this) == false )
 	{
 		return;
 	}
@@ -848,22 +899,28 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed( TUniquePtr< FL
 		{
 			if ( IsValid(this) == false )
 			{
+				delete MovedData;
 				return;
 			}
 
 			if ( MovedData == nullptr )
 			{
+				EditMesh([] ( FDynamicMesh3& Mesh )
+				{
+					Mesh.Clear();
+				});
+
 				LocalThreadData = FLFPMarchingThreadData();
 			}
 			else
 			{
 				LocalThreadData = MoveTemp(*MovedData);
 
-				delete MovedData;
-
 				SetMesh(MoveTemp(LocalThreadData.MeshData));
 
 				UE_LOG(LogTemp, Warning, TEXT("Marching Data Time Use : %d ms"), (int32)(FDateTime::UtcNow() - LocalThreadData.StartTime).GetTotalMilliseconds());
+
+				delete MovedData;
 
 				OnMeshGenerated.Broadcast();
 			}
@@ -871,7 +928,7 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed( TUniquePtr< FL
 		);
 }
 
-TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale )
+TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale )
 {
 	if ( Progress.Cancelled() )
 	{
@@ -886,12 +943,14 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 
 		if ( DoesProjectSupportDistanceFields() == false )
 		{
-			return TUniquePtr< FDistanceFieldVolumeData >();
+
+			return nullptr;
 		}
 
 		if ( CurrentDistanceFieldResolutionScale <= 0 )
 		{
-			return TUniquePtr< FDistanceFieldVolumeData >();
+
+			return nullptr;
 		}
 
 		const double StartTime = FPlatformTime::Seconds();
@@ -902,10 +961,16 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 		};
 
 		UE::Geometry::FDynamicMeshAABBTree3 Spatial(&Mesh, true);
-		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+		if ( Progress.Cancelled() )
+		{
+			return nullptr;
+		}
 		UE::Geometry::FAxisAlignedBox3d                 MeshBounds = Spatial.GetBoundingBox();
 		UE::Geometry::TFastWindingTree< FDynamicMesh3 > WindingTree(&Spatial, true);
-		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+		if ( Progress.Cancelled() )
+		{
+			return nullptr;
+		}
 
 		static const auto CVar       = IConsoleManager::Get().FindTConsoleVariableDataInt(TEXT("r.DistanceFields.MaxPerMeshResolution"));
 		const int32       PerMeshMax = CVar->GetValueOnAnyThread();
@@ -991,7 +1056,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 
 		for ( int32 MipIndex = 0 ; MipIndex < DistanceField::NumMips ; MipIndex++ )
 		{
-			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+			if ( Progress.Cancelled() )
+			{
+				return nullptr;
+			}
 
 			const FIntVector IndirectionDimensions = FIntVector(
 				FMath::DivideAndRoundUp(Mip0IndirectionDimensions.X, 1 << MipIndex),
@@ -1028,7 +1096,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 				}
 			}
 
-			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+			if ( Progress.Cancelled() )
+			{
+				return nullptr;
+			}
 
 			// compute bricks now
 			ParallelFor(BricksToCompute.Num(), [&] ( const int32 BrickIndex )
@@ -1093,7 +1164,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 
 			            }, EParallelForFlags::Unbalanced); // Bricks iteration
 
-			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+			if ( Progress.Cancelled() )
+			{
+				return nullptr;
+			}
 
 			FSparseDistanceFieldMip& OutMip = VolumeDataOut.Mips[MipIndex];
 			TArray< uint32 >         IndirectionTable;
@@ -1124,7 +1198,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 			DistanceFieldBrickData.Empty(BrickSizeBytes * NumBricks);
 			DistanceFieldBrickData.AddUninitialized(BrickSizeBytes * NumBricks);
 
-			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+			if ( Progress.Cancelled() )
+			{
+				return nullptr;
+			}
 
 			for ( int32 BrickIndex = 0 ; BrickIndex < ValidBricks.Num() ; BrickIndex++ )
 			{
@@ -1166,7 +1243,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 				}
 			}
 
-			if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+			if ( Progress.Cancelled() )
+			{
+				return nullptr;
+			}
 
 			OutMip.IndirectionDimensions          = IndirectionDimensions;
 			OutMip.DistanceFieldToVolumeScaleBias = DistanceFieldToVolumeScaleBias;
@@ -1186,7 +1266,10 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 		VolumeDataOut.bMostlyTwoSided      = bGenerateAsIfTwoSided;
 		VolumeDataOut.LocalSpaceMeshBounds = LocalSpaceMeshBounds;
 
-		if ( Progress.Cancelled() ) { return TUniquePtr< FDistanceFieldVolumeData >(); }
+		if ( Progress.Cancelled() )
+		{
+			return nullptr;
+		}
 
 		VolumeDataOut.StreamableMips.Lock(LOCK_READ_WRITE);
 		uint8* Ptr = (uint8*)VolumeDataOut.StreamableMips.Realloc(StreamableMipData.Num());
@@ -1208,7 +1291,8 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 
 		if ( Progress.Cancelled() )
 		{
-			return TUniquePtr< FDistanceFieldVolumeData >();
+
+			return nullptr;
 		}
 	}
 
@@ -1217,7 +1301,7 @@ TUniquePtr< FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDist
 
 void ULFPMarchingMeshComponent::OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData )
 {
-	if ( NewData == nullptr || IsValid(this) == false )
+	if ( IsValid(this) == false )
 	{
 		return;
 	}
@@ -1237,6 +1321,8 @@ void ULFPMarchingMeshComponent::OnNewDistanceFieldData_Async( TUniquePtr< FDista
 				{
 					return;
 				}
+
+				OnDistanceFieldGenerated.Broadcast();
 
 				// the new distance field will be set when the scene proxy is re-created
 				MarkRenderStateDirty();

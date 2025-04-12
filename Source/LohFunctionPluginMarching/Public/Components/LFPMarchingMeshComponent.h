@@ -89,6 +89,8 @@ struct FLFPMarchingThreadData
 {
 public:
 
+	bool bIsValid = false;
+
 	FDynamicMesh3 MeshData = FDynamicMesh3();
 
 	TArray< FLumenCardBuildData > LumenCardData = TArray< FLumenCardBuildData >();
@@ -97,6 +99,13 @@ public:
 	TArray< FKBoxElem > CollisionBoxElems;
 
 	FDateTime StartTime = FDateTime();
+
+public:
+
+	FORCEINLINE bool IsValid( ) const
+	{
+		return bIsValid;
+	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLFPOnMarchingMeshGenerateEvent);
@@ -129,6 +138,12 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FLFPOnMarchingMeshGenerateEvent OnMeshGenerated;
 
+	UPROPERTY(BlueprintAssignable)
+	FLFPOnMarchingMeshGenerateEvent OnDistanceFieldRebuilding;
+
+	UPROPERTY(BlueprintAssignable)
+	FLFPOnMarchingMeshGenerateEvent OnDistanceFieldGenerated;
+
 protected:
 
 	UPROPERTY(EditAnywhere, Category="Setting")
@@ -145,6 +160,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Setting")
 	bool bForceTwoSide = true;
+
+	UPROPERTY(EditAnywhere, Category="Setting")
+	bool bOverrideBoxCollision = true;
 
 protected:
 
@@ -185,7 +203,7 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
-	void Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex );
+	void Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate );
 
 	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
 	void Uninitialize( );
@@ -196,7 +214,7 @@ public:
 	void ClearRender( );
 
 	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRender")
-	void UpdateRender( );
+	bool UpdateRender( const bool bIsRebuild );
 
 protected:
 
@@ -224,7 +242,7 @@ private:
 private:
 
 	// Modify to use ParallelFor
-	static TUniquePtr< FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
+	static TUniquePtr< FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
 
 	// Add Safety
 	virtual void OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData ) override;
