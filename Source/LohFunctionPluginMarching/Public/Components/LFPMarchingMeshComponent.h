@@ -78,7 +78,7 @@ public:
 	bool       bIsRegionFaceCullingDisable = false;
 	FVector    MeshFullSize                = FVector();
 	FIntVector DataSize                    = FIntVector();
-	int32      DataNum                     = INDEX_NONE;
+	FIntVector DataOffset                  = FIntVector();
 	float      BoundExpand                 = 0.0f;
 	FDateTime  StartTime                   = FDateTime();
 
@@ -108,9 +108,9 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLFPOnMarchingMeshGenerateEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPOnMarchingMeshGenerateEvent, UDynamicMeshComponent*, Component);
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(Custom), EditInlineNew, meta=(BlueprintSpawnableComponent))
 class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingMeshComponent : public UDynamicMeshComponent
 {
 	GENERATED_BODY()
@@ -178,21 +178,24 @@ protected:
 	UPROPERTY(Transient)
 	int32 SectionIndex = INDEX_NONE;
 
-protected:
+public:
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
+	FORCEINLINE FIntVector GetDataOffset( ) const;
+
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
 	FORCEINLINE FIntVector GetDataSize( ) const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
 	FORCEINLINE int32 GetDataNum( ) const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
 	FORCEINLINE FVector GetMeshSize( ) const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
 	FORCEINLINE bool IsDataComponentValid( ) const;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
 	FORCEINLINE void GetFaceCullingSetting( bool& bIsChunkFaceCullingDisable , bool& bIsRegionFaceCullingDisable ) const;
 
 protected:

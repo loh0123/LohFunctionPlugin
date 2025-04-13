@@ -22,6 +22,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting")
 	FIntVector MarchingSize = FIntVector(100);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|GridSize")
+	FIntVector SectionGridSize = FIntVector(2);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting")
 	bool bDisableChuckFaceCulling = false;
 
@@ -33,6 +36,10 @@ public:
 	FORCEINLINE ULFPMarchingMeshSet* GetMeshSet( ) const { return MeshSet.LoadSynchronous(); }
 
 	FORCEINLINE FVector GetMarchingSize( ) const { return FVector(MarchingSize); }
+
+	FORCEINLINE const FIntVector& GetSectionGridSize( ) const { return SectionGridSize; }
+
+	FORCEINLINE int32 GetSectionIndexSize( ) const { return SectionGridSize.X * SectionGridSize.Y * SectionGridSize.Z; }
 
 	FORCEINLINE bool IsChunkFaceCullingDisable( ) const { return bDisableChuckFaceCulling; }
 

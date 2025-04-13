@@ -9,6 +9,7 @@
 #include "Data/LFPMarchingData.h"
 #include "Data/LFPMarchingMeshSet.h"
 #include "DynamicMesh/DynamicMeshAABBTree3.h"
+#include "DynamicMesh/Operations/MergeCoincidentMeshEdges.h"
 #include "Library/LFPMarchingFunctionLibrary.h"
 #include "Math/LFPGridLibrary.h"
 #include "Render/LFPRenderLibrary.h"
@@ -47,13 +48,25 @@ void ULFPMarchingMeshComponent::TickComponent( float DeltaTime , ELevelTick Tick
 	// ...
 }
 
+FIntVector ULFPMarchingMeshComponent::GetDataOffset( ) const
+{
+	if ( IsDataComponentValid() && RenderSetting->GetSectionGridSize().GetMin() >= 1 )
+	{
+		const FIntVector Offset = ULFPGridLibrary::ToGridLocation(SectionIndex, RenderSetting->GetSectionGridSize());
+
+		return GetDataSize() * Offset;
+	}
+
+	return FIntVector::NoneValue;
+}
+
 FIntVector ULFPMarchingMeshComponent::GetDataSize( ) const
 {
 	if ( IsDataComponentValid() )
 	{
 		const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting();
 
-		return GridSetting->GetDataGridSize();
+		return FIntVector::DivideAndRoundUp(GridSetting->GetDataGridSize(), RenderSetting->GetSectionGridSize());
 	}
 
 	return FIntVector::NoneValue;
@@ -190,14 +203,16 @@ bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 		return false;
 	}
 
+	// Complete Empty No Need Render
 	if ( DataComponent->GetDataTagList(RegionIndex, ChunkIndex).IsEmpty() )
 	{
 		ClearRender();
 		return false;
 	}
 
-	const FIntVector& CacheDataSize  = GetDataSize() + FIntVector(2);
-	const int32       CacheDataIndex = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
+	const FIntVector& CacheDataSize   = GetDataSize() + FIntVector(2);
+	const FIntVector& CacheDataOffset = GetDataOffset();
+	const int32       CacheDataIndex  = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
 
 	TBitArray< > CacheDataList = TBitArray(false, CacheDataIndex);
 	{
@@ -205,7 +220,7 @@ bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 		/* Generate Marching Mesh Data */
 		for ( int32 SolidIndex = 0 ; SolidIndex < CacheDataIndex ; ++SolidIndex )
 		{
-			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation(SolidIndex, CacheDataSize) - FIntVector(1);
+			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation(SolidIndex, CacheDataSize) + CacheDataOffset - FIntVector(1);
 			const FIntVector CheckIndex  = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, 0), CheckOffset);
 
 			if ( CheckIndex.GetMin() == INDEX_NONE )
@@ -221,6 +236,7 @@ bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 			}
 		}
 
+		// Inside Other Chunk So Don't Need To Render
 		if ( CacheDataIndex == ValidCount )
 		{
 			ClearRender();
@@ -230,7 +246,7 @@ bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 
 	LocalThreadData.bIsValid = false;
 
-	OnMeshRebuilding.Broadcast();
+	OnMeshRebuilding.Broadcast(this);
 
 	FLFPMarchingPassData PassData;
 
@@ -238,7 +254,7 @@ bool ULFPMarchingMeshComponent::UpdateRender( const bool bIsRebuild )
 
 	PassData.MeshFullSize   = GetMeshSize();
 	PassData.DataSize       = GetDataSize();
-	PassData.DataNum        = GetDataNum();
+	PassData.DataOffset     = GetDataOffset();
 	PassData.BoundExpand    = BoundExpand;
 	PassData.StartTime      = FDateTime::UtcNow();
 	PassData.bNeedCollision = IsCollisionEnabled() && CollisionType != CTF_UseComplexAsSimple && bOverrideBoxCollision;
@@ -284,7 +300,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 		return;
 	}
 
-	OnDistanceFieldGenerated.Broadcast();
+	OnDistanceFieldGenerated.Broadcast(this);
 
 	// For safety, run the distance field compute on a (geometry-only) copy of the mesh
 	FDynamicMesh3 GeoOnlyCopy;
@@ -319,7 +335,10 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 
 	// Fill Mesh Hole
 	{
-		const FIntVector& DataSize = GetDataSize();
+		const FIntVector& DataSize   = GetDataSize();
+		const FIntVector& DataOffset = GetDataOffset();
+
+		const int32 DataNum = GetDataNum();
 
 		const FVector MeshFullSize = GetMeshSize() * 2.0f;
 		const FVector MeshHalfSize = MeshFullSize * 0.5f;
@@ -363,24 +382,27 @@ void ULFPMarchingMeshComponent::UpdateDistanceField( )
 		};
 
 		/* Generate Voxel Mesh Data */
-		for ( int32 VoxelIndex = 0 ; VoxelIndex < GetDataNum() ; ++VoxelIndex )
+		for ( int32 DataIndex = 0 ; DataIndex < DataNum ; ++DataIndex )
 		{
-			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(RegionIndex, ChunkIndex, VoxelIndex);
+			const FIntVector VoxelPos       = ULFPGridLibrary::ToGridLocation(DataIndex, DataSize) + DataOffset;
+			const FIntVector VoxelDataIndex = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, 0), VoxelPos);
+
+			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag(VoxelDataIndex.X, VoxelDataIndex.Y, VoxelDataIndex.Z);
 
 			if ( SelfVoxelTag.MatchesTag(HandleTag) )
 			{
 				for ( int32 FaceDirectionIndex = 0 ; FaceDirectionIndex < 6 ; ++FaceDirectionIndex )
 				{
-					const FIntVector& TargetIndex = DataComponent->AddOffsetToGridIndex(FIntVector(RegionIndex, ChunkIndex, VoxelIndex), LFPMarchingRenderConstantData::FaceDirection[FaceDirectionIndex].Up);
+					const FIntVector& TargetIndex = DataComponent->AddOffsetToGridIndex(VoxelDataIndex, LFPMarchingRenderConstantData::FaceDirection[FaceDirectionIndex].Up);
 
-					const bool bForceRender = ChunkIndex != TargetIndex.Y || RegionIndex != TargetIndex.X || TargetIndex == FIntVector::NoneValue;
+					const bool bForceRender = ULFPGridLibrary::IsGridLocationValid(VoxelPos + LFPMarchingRenderConstantData::FaceDirection[FaceDirectionIndex].Up, DataSize) == false;
 
-					const bool TargetVoxelValid = DataComponent->GetDataTag(TargetIndex.X, TargetIndex.Y, TargetIndex.Z).MatchesTag(HandleTag);
+					const bool TargetVoxelValid = TargetIndex.GetMin() != INDEX_NONE && DataComponent->GetDataTag(TargetIndex.X, TargetIndex.Y, TargetIndex.Z).MatchesTag(HandleTag);
 
 					// Check Is Border
 					if ( bForceRender && TargetVoxelValid )
 					{
-						CreateFace(VoxelIndex, FaceDirectionIndex);
+						CreateFace(DataIndex, FaceDirectionIndex);
 					}
 				}
 			}
@@ -445,6 +467,7 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 	const FVector  MeshGapSize  = MeshFullSize * 2.0f;
 
 	const FIntVector& DataSize = PassData.DataSize;
+	//const FIntVector& DataOffset = PassData.DataOffset;
 
 	const FIntVector& CacheDataSize = DataSize + FIntVector(2);
 
@@ -548,6 +571,11 @@ TUniquePtr< FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarchi
 				}
 			}
 		}
+
+		UE::Geometry::FMergeCoincidentMeshEdges Welder(&MeshData);
+		Welder.MergeVertexTolerance = 1.0f;
+		Welder.OnlyUniquePairs      = false;
+		Welder.Apply();
 
 		MeshData.CompactInPlace(nullptr);
 	}
@@ -922,7 +950,7 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed( TUniquePtr< FL
 
 				delete MovedData;
 
-				OnMeshGenerated.Broadcast();
+				OnMeshGenerated.Broadcast(this);
 			}
 		}
 		);
@@ -1322,7 +1350,7 @@ void ULFPMarchingMeshComponent::OnNewDistanceFieldData_Async( TUniquePtr< FDista
 					return;
 				}
 
-				OnDistanceFieldGenerated.Broadcast();
+				OnDistanceFieldGenerated.Broadcast(this);
 
 				// the new distance field will be set when the scene proxy is re-created
 				MarkRenderStateDirty();
