@@ -6,6 +6,7 @@
 #include "Data/LFPMarchingMeshSet.h"
 
 #include "StaticMeshLODResourcesToDynamicMesh.h"
+#include "DynamicMesh/Operations/MergeCoincidentMeshEdges.h"
 #include "Library/LFPMarchingFunctionLibrary.h"
 #include "UObject/ObjectSaveContext.h"
 
@@ -44,6 +45,13 @@ void ULFPMarchingMeshSet::GenerateDynamicMeshList( )
 
 					UE::Geometry::FStaticMeshLODResourcesToDynamicMesh Converter;
 					Converter.Convert(LODData, ConvertOptions, NewMeshData);
+
+					UE::Geometry::FMergeCoincidentMeshEdges Welder(&NewMeshData);
+					Welder.MergeVertexTolerance = 1.0f;
+					Welder.OnlyUniquePairs      = false;
+					Welder.Apply();
+
+					NewMeshData.CompactInPlace(nullptr);
 				}
 			}
 		}

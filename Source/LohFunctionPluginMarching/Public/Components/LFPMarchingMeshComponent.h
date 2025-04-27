@@ -6,14 +6,14 @@
 #include "GameplayTagContainer.h"
 #include "MeshCardBuild.h"
 #include "Components/DynamicMeshComponent.h"
+#include "Subsystem/LFPMarchingWorldSubsystem.h"
 #include "LFPMarchingMeshComponent.generated.h"
 
 class ULFPMarchingData;
 
 struct FLFPMarchingRendererFaceDirection
 {
-	FLFPMarchingRendererFaceDirection( FIntVector F , FIntVector R , FIntVector U ) :
-		Forward(F), Right(R), Up(U)
+	FLFPMarchingRendererFaceDirection ( FIntVector F , FIntVector R , FIntVector U ) : Forward ( F ), Right ( R ), Up ( U )
 	{
 	}
 
@@ -21,232 +21,220 @@ struct FLFPMarchingRendererFaceDirection
 
 public:
 
-	FORCEINLINE void SetAxis( FVector3f& X , FVector3f& Y , FVector3f& Z ) const
+	FORCEINLINE void SetAxis ( FVector3f& X , FVector3f& Y , FVector3f& Z ) const
 	{
-		X = FVector3f(Forward);
-		Y = FVector3f(Right);
-		Z = FVector3f(Up);
+		X = FVector3f ( Forward );
+		Y = FVector3f ( Right );
+		Z = FVector3f ( Up );
 	}
 };
 
 namespace LFPMarchingRenderConstantData
 {
-	static const TArray< FRotator > VertexRotationList =
-		{
-			FRotator(0.0f, 0.0f, 0.0f)
-			, FRotator(90.0f, 0.0f, 0.0f)
-			, FRotator(90.0f, 270.0f, 0.0f)
-			, FRotator(180.0f, 0.0f, 0.0f)
-			, FRotator(90.0f, 180.0f, 0.0f)
-			, FRotator(90.0f, 90.0f, 0.0f)
-		};
+	static const TArray < FRotator > VertexRotationList =
+	{
+		FRotator ( 0.0f , 0.0f , 0.0f ) , FRotator ( 90.0f , 0.0f , 0.0f ) , FRotator ( 90.0f , 270.0f , 0.0f ) , FRotator ( 180.0f , 0.0f , 0.0f ) , FRotator ( 90.0f , 180.0f , 0.0f ) , FRotator ( 90.0f , 90.0f , 0.0f )
+	};
 
-	static const TArray< FLFPMarchingRendererFaceDirection > FaceDirection = {
-			FLFPMarchingRendererFaceDirection(FIntVector(1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, 0, 1))
-			, FLFPMarchingRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(0, 1, 0), FIntVector(-1, 0, 0))
-			, FLFPMarchingRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(1, 0, 0), FIntVector(0, 1, 0))
-			, FLFPMarchingRendererFaceDirection(FIntVector(-1, 0, 0), FIntVector(0, 1, 0), FIntVector(0, 0, -1))
-			, FLFPMarchingRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(0, -1, 0), FIntVector(1, 0, 0))
-			, FLFPMarchingRendererFaceDirection(FIntVector(0, 0, 1), FIntVector(-1, 0, 0), FIntVector(0, -1, 0))
-		};
+	static const TArray < FLFPMarchingRendererFaceDirection > FaceDirection = {
+		FLFPMarchingRendererFaceDirection ( FIntVector ( 1 , 0 , 0 ) , FIntVector ( 0 , 1 , 0 ) , FIntVector ( 0 , 0 , 1 ) ) , FLFPMarchingRendererFaceDirection ( FIntVector ( 0 , 0 , 1 ) , FIntVector ( 0 , 1 , 0 ) , FIntVector ( -1 , 0 , 0 ) ) , FLFPMarchingRendererFaceDirection ( FIntVector ( 0 , 0 , 1 ) , FIntVector ( 1 , 0 , 0 ) , FIntVector ( 0 , 1 , 0 ) ) , FLFPMarchingRendererFaceDirection ( FIntVector ( -1 , 0 , 0 ) , FIntVector ( 0 , 1 , 0 ) , FIntVector ( 0 , 0 , -1 ) ) , FLFPMarchingRendererFaceDirection ( FIntVector ( 0 , 0 , 1 ) , FIntVector ( 0 , -1 , 0 ) , FIntVector ( 1 , 0 , 0 ) ) , FLFPMarchingRendererFaceDirection ( FIntVector ( 0 , 0 , 1 ) , FIntVector ( -1 , 0 , 0 ) , FIntVector ( 0 , -1 , 0 ) )
+	};
 
-	static const TArray< FIntVector > FaceLoopDirectionList = {
-			FIntVector(0, 1, 2)
-			, FIntVector(2, 1, 0)
-			, FIntVector(2, 0, 1)
-			, FIntVector(0, 1, 2)
-			, FIntVector(2, 1, 0)
-			, FIntVector(2, 0, 1)
-		};
+	static const TArray < FIntVector > FaceLoopDirectionList = {
+		FIntVector ( 0 , 1 , 2 ) , FIntVector ( 2 , 1 , 0 ) , FIntVector ( 2 , 0 , 1 ) , FIntVector ( 0 , 1 , 2 ) , FIntVector ( 2 , 1 , 0 ) , FIntVector ( 2 , 0 , 1 )
+	};
 
-	static const TArray< int32 > SurfaceDirectionID = {
-			5
-			, 0
-			, 3
-			, 4
-			, 1
-			, 2
-		};
+	static const TArray < int32 > SurfaceDirectionID = {
+		5 , 0 , 3 , 4 , 1 , 2
+	};
 };
 
+USTRUCT ( )
 struct FLFPMarchingPassData
 {
+	GENERATED_BODY ( )
+
 public:
 
 	bool       bNeedCollision              = false;
 	bool       bIsChunkFaceCullingDisable  = false;
 	bool       bIsRegionFaceCullingDisable = false;
-	FVector    MeshFullSize                = FVector();
-	FIntVector DataSize                    = FIntVector();
-	FIntVector DataOffset                  = FIntVector();
+	FVector    MeshFullSize                = FVector ( );
+	FIntVector DataSize                    = FIntVector ( );
+	FIntVector DataOffset                  = FIntVector ( );
 	float      BoundExpand                 = 0.0f;
-	FDateTime  StartTime                   = FDateTime();
+	FDateTime  StartTime                   = FDateTime ( );
 
-	ULFPMarchingData* RenderSetting = nullptr;
+	UPROPERTY ( )
+	TObjectPtr < ULFPMarchingData > RenderSetting = nullptr;
 };
 
+USTRUCT ( )
 struct FLFPMarchingThreadData
 {
-public:
+	GENERATED_BODY ( )
 
-	bool bIsValid = false;
-
-	FDynamicMesh3 MeshData = FDynamicMesh3();
-
-	TArray< FLumenCardBuildData > LumenCardData = TArray< FLumenCardBuildData >();
-	FBox                          LumenBound    = FBox();
-
-	TArray< FKBoxElem > CollisionBoxElems;
-
-	FDateTime StartTime = FDateTime();
-
-public:
-
-	FORCEINLINE bool IsValid( ) const
+	FLFPMarchingThreadData ( )
 	{
-		return bIsValid;
 	}
+
+public:
+
+	FDynamicMesh3 MeshData = FDynamicMesh3 ( );
+
+	TArray < FLumenCardBuildData > LumenCardData = TArray < FLumenCardBuildData > ( );
+	FBox                           LumenBound    = FBox ( );
+
+	TArray < FKBoxElem > CollisionBoxElems;
+
+	FDateTime StartTime = FDateTime ( );
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLFPOnMarchingMeshGenerateEvent, UDynamicMeshComponent*, Component);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPOnMarchingMeshGenerateEvent , UDynamicMeshComponent* , Component );
 
-UCLASS(ClassGroup=(Custom), EditInlineNew, meta=(BlueprintSpawnableComponent))
+UCLASS ( ClassGroup=(Custom) , EditInlineNew , meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingMeshComponent : public UDynamicMeshComponent
 {
-	GENERATED_BODY()
+	GENERATED_BODY ( )
 
 public:
 
 	// Sets default values for this component's properties
-	ULFPMarchingMeshComponent( );
+	ULFPMarchingMeshComponent ( );
 
 protected:
 
 	// Called when the game starts
-	virtual void BeginPlay( ) override;
+	virtual void BeginPlay ( ) override;
+
+	virtual void EndPlay ( const EEndPlayReason::Type EndPlayReason ) override;
 
 public:
 
 	// Called every frame
-	virtual void TickComponent( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
+	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 
 public:
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY ( BlueprintAssignable )
 	FLFPOnMarchingMeshGenerateEvent OnMeshRebuilding;
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY ( BlueprintAssignable )
 	FLFPOnMarchingMeshGenerateEvent OnMeshGenerated;
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY ( BlueprintAssignable )
 	FLFPOnMarchingMeshGenerateEvent OnDistanceFieldRebuilding;
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY ( BlueprintAssignable )
 	FLFPOnMarchingMeshGenerateEvent OnDistanceFieldGenerated;
 
 protected:
 
-	UPROPERTY(EditAnywhere, Category="Setting")
-	TObjectPtr< ULFPMarchingData > RenderSetting = nullptr;
+	UPROPERTY ( EditAnywhere , Category="Setting" )
+	TObjectPtr < ULFPMarchingData > RenderSetting = nullptr;
 
-	UPROPERTY(EditAnywhere, Category="Setting")
+	UPROPERTY ( EditAnywhere , Category="Setting" )
 	FGameplayTag HandleTag = FGameplayTag::EmptyTag;
 
-	UPROPERTY(EditAnywhere, Category="Setting")
+	UPROPERTY ( EditAnywhere , Category="Setting" )
 	float DistanceFieldResolutionScale = 1.0f;
 
-	UPROPERTY(EditAnywhere, Category="Setting")
+	UPROPERTY ( EditAnywhere , Category="Setting" )
 	float BoundExpand = 25.0f;
 
-	UPROPERTY(EditAnywhere, Category="Setting")
+	UPROPERTY ( EditAnywhere , Category="Setting" )
 	bool bForceTwoSide = true;
 
-	UPROPERTY(EditAnywhere, Category="Setting")
+	UPROPERTY ( EditAnywhere , Category="Setting" )
 	bool bOverrideBoxCollision = true;
 
 protected:
 
-	UPROPERTY(Transient)
-	TObjectPtr< class ULFPGridTagDataComponent > DataComponent = nullptr;
+	UPROPERTY ( Transient )
+	TObjectPtr < class ULFPGridTagDataComponent > DataComponent = nullptr;
 
-	UPROPERTY(Transient)
+	UPROPERTY ( Transient )
 	int32 RegionIndex = INDEX_NONE;
 
-	UPROPERTY(Transient)
+	UPROPERTY ( Transient )
 	int32 ChunkIndex = INDEX_NONE;
 
-	UPROPERTY(Transient)
+	UPROPERTY ( Transient )
 	int32 SectionIndex = INDEX_NONE;
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE FIntVector GetDataOffset( ) const;
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE FIntVector GetDataOffset ( ) const;
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE FIntVector GetDataSize( ) const;
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE FIntVector GetDataSize ( ) const;
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE int32 GetDataNum( ) const;
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE int32 GetDataNum ( ) const;
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE FVector GetMeshSize( ) const;
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE FVector GetMeshSize ( ) const;
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE bool IsDataComponentValid( ) const;
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE bool IsDataComponentValid ( ) const;
 
-	UFUNCTION(BlueprintCallable, Category="LFPMarchingMeshComponent")
-	FORCEINLINE void GetFaceCullingSetting( bool& bIsChunkFaceCullingDisable , bool& bIsRegionFaceCullingDisable ) const;
-
-protected:
-
-	UFUNCTION()
-	FORCEINLINE uint8 GetMarchingID( const FIntVector& Offset ) const;
-
-public:
-
-	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
-	void Initialize( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate );
-
-	UFUNCTION(BlueprintCallable, Category="LFPVoxelRender")
-	void Uninitialize( );
-
-public:
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRender")
-	void ClearRender( );
-
-	UFUNCTION(BlueprintCallable, Category = "LFPVoxelRender")
-	bool UpdateRender( const bool bIsRebuild );
+	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
+	FORCEINLINE void GetFaceCullingSetting ( bool& bIsChunkFaceCullingDisable , bool& bIsRegionFaceCullingDisable ) const;
 
 protected:
 
-	virtual void RebuildPhysicsData( ) override;
+	UFUNCTION ( )
+	FORCEINLINE uint8 GetMarchingID ( const FIntVector& Offset ) const;
+
+public:
+
+	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
+	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate );
+
+	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
+	void Uninitialize ( );
+
+public:
+
+	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
+	void ClearRender ( );
+
+	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
+	bool UpdateRender ( const bool bIsRebuild );
+
+protected:
+
+	virtual void RebuildPhysicsData ( ) override;
 
 protected:
 
 	// Add Mesh Fill
-	virtual void UpdateDistanceField( ) override;
+	virtual void UpdateDistanceField ( ) override;
 
 protected:
 
-	virtual FPrimitiveSceneProxy* CreateSceneProxy( ) override;
+	virtual FPrimitiveSceneProxy* CreateSceneProxy ( ) override;
 
 private:
 
-	FLFPMarchingThreadData LocalThreadData = FLFPMarchingThreadData();
+	std::atomic < bool > bUpdateLocalThreadData = false;
 
-	TAsyncComponentDataComputeQueue< FLFPMarchingThreadData > MeshComputeQueue;
+	TSharedPtr < FLFPMarchingThreadData , ESPMode::ThreadSafe > LocalThreadData = nullptr;
 
-	static TUniquePtr< FLFPMarchingThreadData > ComputeNewMarchingMesh_TaskFunction( FProgressCancel& Progress , const TBitArray< >& SolidList , const FLFPMarchingPassData& PassData );
+	TAsyncMarchingData MeshComputeData = TAsyncMarchingData ( this );
 
-	void ComputeNewMarchingMesh_Completed( TUniquePtr< FLFPMarchingThreadData > ThreadData );
+	static TUniquePtr < FLFPMarchingThreadData > ComputeNewMarchingMesh_TaskFunction ( FProgressCancel& Progress , const TBitArray < >& SolidList , const FLFPMarchingPassData& PassData );
+
+	void ComputeNewMarchingMesh_Completed ( TUniquePtr < FLFPMarchingThreadData > ThreadData );
 
 private:
+
+	TAsyncMarchingData DistanceFieldComputeData = TAsyncMarchingData ( this );
 
 	// Modify to use ParallelFor
-	static TUniquePtr< FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2( FProgressCancel& Progress , const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
+	static TUniquePtr < FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2 ( FProgressCancel& Progress , const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
 
 	// Add Safety
-	virtual void OnNewDistanceFieldData_Async( TUniquePtr< FDistanceFieldVolumeData > NewData ) override;
+	virtual void OnNewDistanceFieldData_Async ( TUniquePtr < FDistanceFieldVolumeData > NewData ) override;
 };
