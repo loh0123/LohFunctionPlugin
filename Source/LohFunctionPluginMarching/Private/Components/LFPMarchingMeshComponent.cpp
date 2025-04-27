@@ -1129,62 +1129,62 @@ TUniquePtr < FDistanceFieldVolumeData > ULFPMarchingMeshComponent::ComputeNewDis
 
 			// compute bricks now
 			ParallelFor ( BricksToCompute.Num ( ) , [&] ( const int32 BrickIndex )
-			              {
-				              FDistanceFieldBrick& Brick                        = BricksToCompute [ BrickIndex ];
-				              const FVector3f      BrickIndirectionMarchingSize = Brick.VolumeBounds.GetSize ( ) / FVector3f ( Brick.IndirectionSize );
-				              const FVector3f      DistanceFieldMarchingSize    = BrickIndirectionMarchingSize / FVector3f ( DistanceField::UniqueDataBrickSize );
-				              const FVector3f      BrickMinPosition             = Brick.VolumeBounds.Min + FVector3f ( Brick.BrickCoordinate ) * BrickIndirectionMarchingSize;
+			{
+				FDistanceFieldBrick& Brick                        = BricksToCompute [ BrickIndex ];
+				const FVector3f      BrickIndirectionMarchingSize = Brick.VolumeBounds.GetSize ( ) / FVector3f ( Brick.IndirectionSize );
+				const FVector3f      DistanceFieldMarchingSize    = BrickIndirectionMarchingSize / FVector3f ( DistanceField::UniqueDataBrickSize );
+				const FVector3f      BrickMinPosition             = Brick.VolumeBounds.Min + FVector3f ( Brick.BrickCoordinate ) * BrickIndirectionMarchingSize;
 
-				              Brick.DistanceFieldVolume.Empty ( DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize );
-				              Brick.DistanceFieldVolume.AddZeroed ( DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize );
+				Brick.DistanceFieldVolume.Empty ( DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize );
+				Brick.DistanceFieldVolume.AddZeroed ( DistanceField::BrickSize * DistanceField::BrickSize * DistanceField::BrickSize );
 
-				              for ( int32 ZIndex = 0 ; ZIndex < DistanceField::BrickSize ; ZIndex++ )
-				              {
-					              if ( Progress.Cancelled ( ) ) { return; }
+				for ( int32 ZIndex = 0 ; ZIndex < DistanceField::BrickSize ; ZIndex++ )
+				{
+					if ( Progress.Cancelled ( ) ) { return; }
 
-					              for ( int32 YIndex = 0 ; YIndex < DistanceField::BrickSize ; YIndex++ )
-					              {
-						              if ( Progress.Cancelled ( ) ) { return; }
+					for ( int32 YIndex = 0 ; YIndex < DistanceField::BrickSize ; YIndex++ )
+					{
+						if ( Progress.Cancelled ( ) ) { return; }
 
-						              for ( int32 XIndex = 0 ; XIndex < DistanceField::BrickSize ; XIndex++ )
-						              {
-							              const FVector3f MarchingPosition = FVector3f ( XIndex , YIndex , ZIndex ) * DistanceFieldMarchingSize + BrickMinPosition;
-							              const int32     Index            = ( ZIndex * DistanceField::BrickSize * DistanceField::BrickSize + YIndex * DistanceField::BrickSize + XIndex );
+						for ( int32 XIndex = 0 ; XIndex < DistanceField::BrickSize ; XIndex++ )
+						{
+							const FVector3f MarchingPosition = FVector3f ( XIndex , YIndex , ZIndex ) * DistanceFieldMarchingSize + BrickMinPosition;
+							const int32     Index            = ( ZIndex * DistanceField::BrickSize * DistanceField::BrickSize + YIndex * DistanceField::BrickSize + XIndex );
 
-							              float MinLocalSpaceDistance = LocalSpaceTraceDistance;
+							float MinLocalSpaceDistance = LocalSpaceTraceDistance;
 
-							              double NearestDistSqr    = 0;
-							              int32  NearestTriangleID = Spatial.FindNearestTriangle ( FVector3d ( MarchingPosition ) , NearestDistSqr ,
-							                                                                      UE::Geometry::IMeshSpatial::FQueryOptions ( LocalSpaceTraceDistance ) );
-							              if ( NearestTriangleID != IndexConstants::InvalidID )
-							              {
-								              const float ClosestDistance = FMath::Sqrt ( NearestDistSqr );
-								              MinLocalSpaceDistance       = FMath::Min ( MinLocalSpaceDistance , ClosestDistance );
+							double NearestDistSqr    = 0;
+							int32  NearestTriangleID = Spatial.FindNearestTriangle ( FVector3d ( MarchingPosition ) , NearestDistSqr ,
+							                                                        UE::Geometry::IMeshSpatial::FQueryOptions ( LocalSpaceTraceDistance ) );
+							if ( NearestTriangleID != IndexConstants::InvalidID )
+							{
+								const float ClosestDistance = FMath::Sqrt ( NearestDistSqr );
+								MinLocalSpaceDistance       = FMath::Min ( MinLocalSpaceDistance , ClosestDistance );
 
-								              if ( WindingTree.IsInside ( FVector3d ( MarchingPosition ) , 0.5 ) )
-								              {
-									              MinLocalSpaceDistance *= -1;
-								              }
-							              }
-							              else
-							              {
-								              // no closest point...
-								              MinLocalSpaceDistance = LocalSpaceTraceDistance;
-							              }
+								if ( WindingTree.IsInside ( FVector3d ( MarchingPosition ) , 0.5 ) )
+								{
+									MinLocalSpaceDistance *= -1;
+								}
+							}
+							else
+							{
+								// no closest point...
+								MinLocalSpaceDistance = LocalSpaceTraceDistance;
+							}
 
-							              // Transform to the tracing shader's Volume space
-							              const float VolumeSpaceDistance = MinLocalSpaceDistance * LocalToVolumeScale;
-							              // Transform to the Distance Field texture's space
-							              const float RescaledDistance = ( VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y ) / DistanceFieldToVolumeScaleBias.X;
-							              check ( DistanceField::DistanceFieldFormat == PF_G8 );
-							              const uint8 QuantizedDistance       = FMath::Clamp < int32 > ( FMath::FloorToInt ( RescaledDistance * 255.0f + .5f ) , 0 , 255 );
-							              Brick.DistanceFieldVolume [ Index ] = QuantizedDistance;
-							              Brick.BrickMaxDistance              = FMath::Max ( Brick.BrickMaxDistance , QuantizedDistance );
-							              Brick.BrickMinDistance              = FMath::Min ( Brick.BrickMinDistance , QuantizedDistance );
-						              }                        // X iteration 
-					              }                            // Y iteration
-				              }                                // Z iteration
-			              } , EParallelForFlags::Unbalanced ); // Bricks iteration
+							// Transform to the tracing shader's Volume space
+							const float VolumeSpaceDistance = MinLocalSpaceDistance * LocalToVolumeScale;
+							// Transform to the Distance Field texture's space
+							const float RescaledDistance = ( VolumeSpaceDistance - DistanceFieldToVolumeScaleBias.Y ) / DistanceFieldToVolumeScaleBias.X;
+							check ( DistanceField::DistanceFieldFormat == PF_G8 );
+							const uint8 QuantizedDistance       = FMath::Clamp < int32 > ( FMath::FloorToInt ( RescaledDistance * 255.0f + .5f ) , 0 , 255 );
+							Brick.DistanceFieldVolume [ Index ] = QuantizedDistance;
+							Brick.BrickMaxDistance              = FMath::Max ( Brick.BrickMaxDistance , QuantizedDistance );
+							Brick.BrickMinDistance              = FMath::Min ( Brick.BrickMinDistance , QuantizedDistance );
+						}                        // X iteration 
+					}                            // Y iteration
+				}                                // Z iteration
+			} , EParallelForFlags::Unbalanced ); // Bricks iteration
 
 			if ( Progress.Cancelled ( ) )
 			{

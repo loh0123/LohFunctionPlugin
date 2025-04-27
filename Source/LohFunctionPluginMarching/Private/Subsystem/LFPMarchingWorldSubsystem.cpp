@@ -76,22 +76,11 @@ UE::Tasks::FTask ULFPMarchingWorldSubsystem::LaunchJobInternal ( FMarchingComput
 		                           JobPtr->JobWork ( *JobPtr->Progress );
 		                           JobPtr->bHasCompleted = true;
 
-		                           AsyncTask (
-		                                      ENamedThreads::GameThread ,
-		                                      [this] ( )
-		                                      {
-			                                      if ( IsValid ( this ) == false )
-			                                      {
-				                                      return;
-			                                      }
-
-			                                      if ( bIsShuttingDown == false )
-			                                      {
-				                                      OnJobCompleted ( );
-			                                      }
-		                                      }
-		                                     );
+		                           if ( bIsShuttingDown == false )
+		                           {
+			                           OnJobCompleted ( );
+		                           }
 	                           } ,
-	                           LowLevelTasks::ETaskPriority::BackgroundNormal ,
+	                           LowLevelTasks::ETaskPriority::BackgroundHigh ,
 	                           UE::Tasks::EExtendedTaskPriority::None );
 }

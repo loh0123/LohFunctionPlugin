@@ -42,11 +42,11 @@ protected:
 
 public:
 
-	uint8 MaxAsyncJob = 32;
+	uint8 MaxAsyncJob = 16;
 
 	FCriticalSection PendingJobsLock;
 
-	bool bIsShuttingDown = false;
+	std::atomic < bool > bIsShuttingDown = false;
 
 	TArray < TSharedPtr < FMarchingComputeJob > > PendingJobs;
 };
@@ -82,6 +82,13 @@ struct TAsyncMarchingData
 			LastPendingJobs.Pin ( )->bCancelled = true;
 		}
 
-		LastPendingJobs = Subsystem->LaunchJob ( DebugName , JobWork );
+		if ( Subsystem->bIsShuttingDown == false )
+		{
+			LastPendingJobs = Subsystem->LaunchJob ( DebugName , JobWork );
+		}
+		else
+		{
+			LastPendingJobs = nullptr;
+		}
 	}
 };
