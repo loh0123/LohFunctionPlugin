@@ -22,6 +22,18 @@ TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const T
 		return TWeakPtr < FMarchingComputeJob > ( );
 	}
 
+	{
+		FScopeLock RemovePending ( &PendingJobsLock );
+		for ( int32 JobIndex = 0 ; JobIndex < PendingJobs.Num ( ) ; ++JobIndex )
+		{
+			if ( const TSharedPtr < FMarchingComputeJob >& Job = PendingJobs [ JobIndex ] ; Job->bHasCompleted )
+			{
+				PendingJobs.RemoveAtSwap ( JobIndex , 1 , EAllowShrinking::No );
+				JobIndex -= 1; // rerun the index again to launch the job
+			}
+		}
+	}
+
 	// set up the new job
 	TSharedPtr < FMarchingComputeJob > NewJob = MakeShared < FMarchingComputeJob > ( );
 	FMarchingComputeJob*               JobPtr = NewJob.Get ( );
@@ -29,12 +41,7 @@ TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const T
 	NewJob->Progress->CancelF                 = [this, JobPtr] ( ) { return bIsShuttingDown || JobPtr->bCancelled; };
 	NewJob->DebugName                         = DebugName;
 	NewJob->JobWork                           = JobWork;
-
-	if ( PendingJobs.Num ( ) < MaxAsyncJob )
-	{
-		// launch it
-		NewJob->Task = LaunchJobInternal ( NewJob.Get ( ) );
-	}
+	NewJob->Task                              = LaunchJobInternal ( NewJob.Get ( ) );
 
 	// add a new job
 	FScopeLock                       AddJob ( &PendingJobsLock );
@@ -43,44 +50,29 @@ TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const T
 	return ResultData;
 }
 
-void ULFPMarchingWorldSubsystem::OnJobCompleted ( )
-{
-	if ( !ensure ( bIsShuttingDown == false ) )
-	{
-		return;
-	}
-
-	FScopeLock RemovePending ( &PendingJobsLock );
-	for ( int32 JobIndex = 0 ; JobIndex < PendingJobs.Num ( ) && JobIndex < MaxAsyncJob ; ++JobIndex )
-	{
-		const TSharedPtr < FMarchingComputeJob >& Job = PendingJobs [ JobIndex ];
-
-		if ( Job->bHasCompleted )
-		{
-			PendingJobs.RemoveAtSwap ( JobIndex , 1 , EAllowShrinking::No );
-			JobIndex -= 1; // rerun the index again to launch the job
-		}
-		else if ( Job->Task.IsValid ( ) == false )
-		{
-			// launch it
-			Job->Task = LaunchJobInternal ( Job.Get ( ) );
-		}
-	}
-}
-
 UE::Tasks::FTask ULFPMarchingWorldSubsystem::LaunchJobInternal ( FMarchingComputeJob* JobPtr )
 {
-	return UE::Tasks::Launch ( *JobPtr->DebugName ,
-	                           [this, JobPtr] ( )
-	                           {
-		                           JobPtr->JobWork ( *JobPtr->Progress );
-		                           JobPtr->bHasCompleted = true;
-
-		                           if ( bIsShuttingDown == false )
+	if ( PendingJobs.Num ( ) < MaxAsyncJob )
+	{
+		return UE::Tasks::Launch ( *JobPtr->DebugName ,
+		                           [this, JobPtr] ( )
 		                           {
-			                           OnJobCompleted ( );
-		                           }
-	                           } ,
-	                           LowLevelTasks::ETaskPriority::BackgroundHigh ,
-	                           UE::Tasks::EExtendedTaskPriority::None );
+			                           JobPtr->JobWork ( *JobPtr->Progress );
+			                           JobPtr->bHasCompleted = true;
+		                           } ,
+		                           LowLevelTasks::ETaskPriority::BackgroundHigh );
+	}
+	else
+	{
+		const int32 CurrentReqJobIndex = PendingJobs.Num ( ) % MaxAsyncJob;
+
+		return UE::Tasks::Launch ( *JobPtr->DebugName ,
+		                           [this, JobPtr] ( )
+		                           {
+			                           JobPtr->JobWork ( *JobPtr->Progress );
+			                           JobPtr->bHasCompleted = true;
+		                           } ,
+		                           PendingJobs [ CurrentReqJobIndex ]->Task ,
+		                           LowLevelTasks::ETaskPriority::BackgroundHigh );
+	}
 }

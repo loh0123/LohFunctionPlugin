@@ -34,8 +34,6 @@ public:
 
 	TWeakPtr < FMarchingComputeJob > LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress ) >& JobWork );
 
-	void OnJobCompleted ( );
-
 protected:
 
 	FORCEINLINE UE::Tasks::FTask LaunchJobInternal ( FMarchingComputeJob* JobPtr );
@@ -46,7 +44,7 @@ public:
 
 	FCriticalSection PendingJobsLock;
 
-	std::atomic < bool > bIsShuttingDown = false;
+	bool bIsShuttingDown = false;
 
 	TArray < TSharedPtr < FMarchingComputeJob > > PendingJobs;
 };
