@@ -3,6 +3,24 @@
 
 #include "Subsystem/LFPMarchingWorldSubsystem.h"
 
+void ULFPMarchingWorldSubsystem::Initialize ( FSubsystemCollectionBase& Collection )
+{
+	Super::Initialize ( Collection );
+}
+
+void ULFPMarchingWorldSubsystem::Tick ( float DeltaTime )
+{
+	Super::Tick ( DeltaTime );
+
+	if ( GameThreadJobQueue.IsEmpty ( ) == false )
+	{
+		TFunction < void  ( ) > GameThreadJob;
+		GameThreadJobQueue.Dequeue ( GameThreadJob );
+
+		GameThreadJob ( );
+	}
+}
+
 void ULFPMarchingWorldSubsystem::Deinitialize ( )
 {
 	Super::Deinitialize ( );
@@ -15,10 +33,18 @@ void ULFPMarchingWorldSubsystem::Deinitialize ( )
 	}
 
 	PendingJobs.Empty ( );
+	GameThreadJobQueue.Empty ( );
 }
 
-TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress ) >& JobWork )
+TStatId ULFPMarchingWorldSubsystem::GetStatId ( ) const
 {
+	RETURN_QUICK_DECLARE_CYCLE_STAT ( ULFPMarchingWorldSubsystem , STATGROUP_Tickables );
+}
+
+TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork )
+{
+	check ( IsInGameThread ( ) ); // Must In Game Thread
+
 	if ( !ensure ( bIsShuttingDown == false ) )
 	{
 		return TWeakPtr < FMarchingComputeJob > ( );
@@ -54,27 +80,11 @@ TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const T
 
 UE::Tasks::FTask ULFPMarchingWorldSubsystem::LaunchJobInternal ( FMarchingComputeJob* JobPtr )
 {
-	if ( PendingJobs.Num ( ) < MaxAsyncJob )
-	{
-		return UE::Tasks::Launch ( *JobPtr->DebugName ,
-		                           [this, JobPtr] ( )
-		                           {
-			                           JobPtr->JobWork ( *JobPtr->Progress );
-			                           JobPtr->bHasCompleted = true;
-		                           } ,
-		                           LowLevelTasks::ETaskPriority::BackgroundHigh );
-	}
-	else
-	{
-		const int32 CurrentReqJobIndex = PendingJobs.Num ( ) % MaxAsyncJob;
-
-		return UE::Tasks::Launch ( *JobPtr->DebugName ,
-		                           [this, JobPtr] ( )
-		                           {
-			                           JobPtr->JobWork ( *JobPtr->Progress );
-			                           JobPtr->bHasCompleted = true;
-		                           } ,
-		                           PendingJobs [ CurrentReqJobIndex ]->Task ,
-		                           LowLevelTasks::ETaskPriority::BackgroundHigh );
-	}
+	return UE::Tasks::Launch ( *JobPtr->DebugName ,
+	                           [this, JobPtr] ( )
+	                           {
+		                           JobPtr->JobWork ( *JobPtr->Progress , GameThreadJobQueue );
+		                           JobPtr->bHasCompleted = true;
+	                           } ,
+	                           LowLevelTasks::ETaskPriority::BackgroundHigh );
 }

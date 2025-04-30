@@ -226,7 +226,7 @@ private:
 
 	static TUniquePtr < FLFPMarchingThreadData > ComputeNewMarchingMesh_TaskFunction ( FProgressCancel& Progress , const TBitArray < >& SolidList , const FLFPMarchingPassData& PassData );
 
-	void ComputeNewMarchingMesh_Completed ( TUniquePtr < FLFPMarchingThreadData > ThreadData );
+	void ComputeNewMarchingMesh_Completed ( TUniquePtr < FLFPMarchingThreadData > ThreadData , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob );
 
 private:
 
@@ -236,5 +236,5 @@ private:
 	static TUniquePtr < FDistanceFieldVolumeData > ComputeNewDistanceField_TaskFunctionV2 ( FProgressCancel& Progress , const FDynamicMesh3& Mesh , const bool bGenerateAsIfTwoSided , const float CurrentDistanceFieldResolutionScale );
 
 	// Add Safety
-	virtual void OnNewDistanceFieldData_Async ( TUniquePtr < FDistanceFieldVolumeData > NewData ) override;
+	void ComputeNewDistanceFieldData_Completed ( TUniquePtr < FDistanceFieldVolumeData > NewData , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob );
 };

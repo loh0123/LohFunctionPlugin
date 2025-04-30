@@ -14,25 +14,33 @@ struct FMarchingComputeJob
 	bool                           bCancelled    = false;
 	bool                           bHasCompleted = false;
 
-	FString                                           DebugName = "";
-	TFunction < void  ( FProgressCancel& Progress ) > JobWork   = nullptr;
+	FString                                                                                                                  DebugName = "";
+	TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) > JobWork   = nullptr;
 };
 
 /**
  * 
  */
 UCLASS ( )
-class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingWorldSubsystem : public UWorldSubsystem
+class LOHFUNCTIONPLUGINMARCHING_API ULFPMarchingWorldSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY ( )
 
 public:
 
+	virtual void Initialize ( FSubsystemCollectionBase& Collection ) override;
+
+	virtual void Tick ( float DeltaTime ) override;
+
 	virtual void Deinitialize ( ) override;
 
 public:
 
-	TWeakPtr < FMarchingComputeJob > LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress ) >& JobWork );
+	virtual TStatId GetStatId ( ) const override;
+
+public:
+
+	TWeakPtr < FMarchingComputeJob > LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork );
 
 protected:
 
@@ -40,7 +48,7 @@ protected:
 
 public:
 
-	uint8 MaxAsyncJob = 16;
+	TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc > GameThreadJobQueue;
 
 	FCriticalSection PendingJobsLock;
 
@@ -69,7 +77,7 @@ struct TAsyncMarchingData
 
 	TObjectPtr < UObject > Outer = nullptr;
 
-	void LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress ) >& JobWork )
+	void LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork )
 	{
 		check ( Outer );
 
