@@ -13,6 +13,8 @@ void ULFPMarchingWorldSubsystem::Deinitialize ( )
 	{
 		UE::Tasks::Wait ( { PendingJobs [ k ]->Task } );
 	}
+
+	PendingJobs.Empty ( );
 }
 
 TWeakPtr < FMarchingComputeJob > ULFPMarchingWorldSubsystem::LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress ) >& JobWork )
