@@ -12,7 +12,7 @@ void ULFPMarchingWorldSubsystem::Tick ( float DeltaTime )
 {
 	Super::Tick ( DeltaTime );
 
-	if ( GameThreadJobQueue.IsEmpty ( ) == false )
+	for ( int32 JobIndex = 0 ; GameThreadJobQueue.IsEmpty ( ) == false && JobIndex < 5 ; ++JobIndex )
 	{
 		TFunction < void  ( ) > GameThreadJob;
 		GameThreadJobQueue.Dequeue ( GameThreadJob );
