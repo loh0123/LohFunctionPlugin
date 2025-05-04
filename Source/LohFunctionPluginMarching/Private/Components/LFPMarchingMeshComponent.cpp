@@ -5,7 +5,6 @@
 #include "DynamicMeshEditor.h"
 #include "MeshCardBuild.h"
 #include "MeshSimplification.h"
-#include "MeshSimplification.h"
 #include "Components/LFPGridTagDataComponent.h"
 #include "Data/LFPGridSetting.h"
 #include "Data/LFPMarchingData.h"
@@ -59,25 +58,13 @@ void ULFPMarchingMeshComponent::TickComponent ( float DeltaTime , ELevelTick Tic
 	// ...
 }
 
-FIntVector ULFPMarchingMeshComponent::GetDataOffset ( ) const
-{
-	if ( IsDataComponentValid ( ) && RenderSetting->GetSectionGridSize ( ).GetMin ( ) >= 1 )
-	{
-		const FIntVector Offset = ULFPGridLibrary::ToGridLocation ( SectionIndex , RenderSetting->GetSectionGridSize ( ) );
-
-		return GetDataSize ( ) * Offset;
-	}
-
-	return FIntVector::NoneValue;
-}
-
 FIntVector ULFPMarchingMeshComponent::GetDataSize ( ) const
 {
 	if ( IsDataComponentValid ( ) )
 	{
 		const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting ( );
 
-		return FIntVector::DivideAndRoundUp ( GridSetting->GetDataGridSize ( ) , RenderSetting->GetSectionGridSize ( ) );
+		return IsValid ( GridSetting ) ? GridSetting->GetDataGridSize ( ) : FIntVector::NoneValue;
 	}
 
 	return FIntVector::NoneValue;
@@ -158,12 +145,11 @@ uint8 ULFPMarchingMeshComponent::GetMarchingID ( const FIntVector& Offset ) cons
 	return 0;
 }
 
-void ULFPMarchingMeshComponent::Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate )
+void ULFPMarchingMeshComponent::Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bDeferUpdate )
 {
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
-	SectionIndex  = NewSectionIndex;
 
 	ClearRender ( );
 
@@ -213,9 +199,8 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild , const boo
 		return false;
 	}
 
-	const FIntVector& CacheDataSize   = GetDataSize ( ) + FIntVector ( 2 );
-	const FIntVector& CacheDataOffset = GetDataOffset ( );
-	const int32       CacheDataIndex  = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
+	const FIntVector& CacheDataSize  = GetDataSize ( ) + FIntVector ( 2 );
+	const int32       CacheDataIndex = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
 
 	TBitArray < > CacheDataList = TBitArray ( false , CacheDataIndex );
 	{
@@ -223,7 +208,7 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild , const boo
 		/* Generate Marching Mesh Data */
 		for ( int32 SolidIndex = 0 ; SolidIndex < CacheDataIndex ; ++SolidIndex )
 		{
-			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation ( SolidIndex , CacheDataSize ) + CacheDataOffset - FIntVector ( 1 );
+			const FIntVector CheckOffset = ULFPGridLibrary::ToGridLocation ( SolidIndex , CacheDataSize ) - FIntVector ( 1 );
 			const FIntVector CheckIndex  = DataComponent->AddOffsetToGridIndex ( FIntVector ( RegionIndex , ChunkIndex , 0 ) , CheckOffset );
 
 			if ( CheckIndex.GetMin ( ) == INDEX_NONE )
@@ -257,7 +242,6 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild , const boo
 
 	PassData.MeshFullSize   = GetMeshSize ( );
 	PassData.DataSize       = GetDataSize ( );
-	PassData.DataOffset     = GetDataOffset ( );
 	PassData.bSimplify      = bSimplify;
 	PassData.LODIndex       = LODIndex;
 	PassData.BoundExpand    = BoundExpand;
@@ -346,8 +330,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 
 	// Fill Mesh Hole
 	{
-		const FIntVector& DataSize   = GetDataSize ( );
-		const FIntVector& DataOffset = GetDataOffset ( );
+		const FIntVector& DataSize = GetDataSize ( );
 
 		const int32 DataNum = GetDataNum ( );
 
@@ -391,7 +374,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 		/* Generate Voxel Mesh Data */
 		for ( int32 DataIndex = 0 ; DataIndex < DataNum ; ++DataIndex )
 		{
-			const FIntVector VoxelPos       = ULFPGridLibrary::ToGridLocation ( DataIndex , DataSize ) + DataOffset;
+			const FIntVector VoxelPos       = ULFPGridLibrary::ToGridLocation ( DataIndex , DataSize );
 			const FIntVector VoxelDataIndex = DataComponent->AddOffsetToGridIndex ( FIntVector ( RegionIndex , ChunkIndex , 0 ) , VoxelPos );
 
 			const FGameplayTag& SelfVoxelTag = DataComponent->GetDataTag ( VoxelDataIndex.X , VoxelDataIndex.Y , VoxelDataIndex.Z );

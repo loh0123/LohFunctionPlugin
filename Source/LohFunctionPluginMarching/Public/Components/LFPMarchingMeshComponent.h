@@ -63,7 +63,6 @@ public:
 	int32      LODIndex                    = 0;
 	FVector    MeshFullSize                = FVector ( );
 	FIntVector DataSize                    = FIntVector ( );
-	FIntVector DataOffset                  = FIntVector ( );
 	float      BoundExpand                 = 0.0f;
 	FDateTime  StartTime                   = FDateTime ( );
 
@@ -161,13 +160,7 @@ protected:
 	UPROPERTY ( Transient )
 	int32 ChunkIndex = INDEX_NONE;
 
-	UPROPERTY ( Transient )
-	int32 SectionIndex = INDEX_NONE;
-
 public:
-
-	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
-	FORCEINLINE FIntVector GetDataOffset ( ) const;
 
 	UFUNCTION ( BlueprintCallable , Category="LFPMarchingMeshComponent" )
 	FORCEINLINE FIntVector GetDataSize ( ) const;
@@ -192,7 +185,7 @@ protected:
 public:
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
-	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const int32 NewSectionIndex , const bool bDeferUpdate );
+	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bDeferUpdate );
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
 	void Uninitialize ( );
