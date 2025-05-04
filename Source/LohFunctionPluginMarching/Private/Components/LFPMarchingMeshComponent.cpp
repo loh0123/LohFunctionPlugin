@@ -4,6 +4,8 @@
 
 #include "DynamicMeshEditor.h"
 #include "MeshCardBuild.h"
+#include "MeshSimplification.h"
+#include "MeshSimplification.h"
 #include "Components/LFPGridTagDataComponent.h"
 #include "Data/LFPGridSetting.h"
 #include "Data/LFPMarchingData.h"
@@ -192,7 +194,7 @@ void ULFPMarchingMeshComponent::ClearRender ( )
 	} );
 }
 
-bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild )
+bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild , const bool bSimplify , const int32 LODIndex )
 {
 	if ( IsDataComponentValid ( ) == false )
 	{
@@ -256,6 +258,8 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild )
 	PassData.MeshFullSize   = GetMeshSize ( );
 	PassData.DataSize       = GetDataSize ( );
 	PassData.DataOffset     = GetDataOffset ( );
+	PassData.bSimplify      = bSimplify;
+	PassData.LODIndex       = LODIndex;
 	PassData.BoundExpand    = BoundExpand;
 	PassData.StartTime      = FDateTime::UtcNow ( );
 	PassData.bNeedCollision = IsCollisionEnabled ( ) && CollisionType != CTF_UseComplexAsSimple && bOverrideBoxCollision;
@@ -521,8 +525,7 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 			MeshData.EnableAttributes ( );
 		}
 
-		const ULFPMarchingMeshSet*      MeshAsset       = PassData.RenderSetting->GetMeshSet ( );
-		const TArray < FDynamicMesh3 >& DynamicMeshList = MeshAsset->GetDynamicMeshList ( );
+		const ULFPMarchingMeshSet* MeshAsset = PassData.RenderSetting->GetMeshSet ( );
 
 		TArray < uint8 > MarchingIDList;
 		{
@@ -562,7 +565,12 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 
 				if ( const FLFPMarchingMeshMappingData& MeshMappingData = MeshAsset->GetMappingData ( DualMarchingID ) ; MeshMappingData.MeshID != INDEX_NONE )
 				{
-					const FDynamicMesh3& AppendMesh = DynamicMeshList [ MeshMappingData.MeshID ];
+					const FDynamicMesh3* AppendMesh = MeshAsset->GetDynamicMesh ( MeshMappingData.MeshID , PassData.LODIndex );
+
+					if ( AppendMesh == nullptr )
+					{
+						continue;
+					}
 
 					const FTransform AppendTransform (
 					                                  MeshMappingData.GetRotation ( ) ,
@@ -572,7 +580,7 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 
 					UE::Geometry::FTransformSRT3d    XForm ( AppendTransform );
 					UE::Geometry::FMeshIndexMappings TmpMappings;
-					Editor.AppendMesh ( &AppendMesh , TmpMappings ,
+					Editor.AppendMesh ( AppendMesh , TmpMappings ,
 					                    [&XForm] ( const int32 VID , const FVector3d& Position ) { return XForm.TransformPosition ( Position ); } ,
 					                    [&XForm] ( const int32 NID , const FVector3d& Normal ) { return XForm.TransformNormal ( Normal ); } ,
 					                    XForm.GetDeterminant ( ) < 0 );
@@ -584,6 +592,16 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 		Welder.MergeVertexTolerance = 1.0f;
 		Welder.OnlyUniquePairs      = false;
 		Welder.Apply ( );
+
+		if ( PassData.bSimplify )
+		{
+			UE::Geometry::FQEMSimplification Simplifier ( &MeshData );
+
+			constexpr float AngleThreshold = 0.001;
+
+			Simplifier.CollapseMode = UE::Geometry::FQEMSimplification::ESimplificationCollapseModes::MinimalQuadricPositionError;
+			Simplifier.SimplifyToMinimalPlanar ( AngleThreshold );
+		}
 
 		MeshData.CompactInPlace ( nullptr );
 	}

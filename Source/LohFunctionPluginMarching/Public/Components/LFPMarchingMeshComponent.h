@@ -59,6 +59,8 @@ public:
 	bool       bNeedCollision              = false;
 	bool       bIsChunkFaceCullingDisable  = false;
 	bool       bIsRegionFaceCullingDisable = false;
+	bool       bSimplify                   = false;
+	int32      LODIndex                    = 0;
 	FVector    MeshFullSize                = FVector ( );
 	FIntVector DataSize                    = FIntVector ( );
 	FIntVector DataOffset                  = FIntVector ( );
@@ -201,7 +203,7 @@ public:
 	void ClearRender ( );
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
-	bool UpdateRender ( const bool bIsRebuild );
+	bool UpdateRender ( const bool bIsRebuild , const bool bSimplify = false , const int32 LODIndex = 0 );
 
 protected:
 

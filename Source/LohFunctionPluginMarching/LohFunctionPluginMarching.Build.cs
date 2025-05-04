@@ -45,7 +45,8 @@ public class LohFunctionPluginMarching : ModuleRules
 				"Slate",
 				"SlateCore",
 				"LohFunctionPlugin",
-				"MeshConversionEngineTypes"
+				"MeshConversionEngineTypes",
+				"DynamicMesh"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);
