@@ -40,12 +40,15 @@ void ULFPMarchingMeshComponent::EndPlay ( const EEndPlayReason::Type EndPlayReas
 {
 	Super::EndPlay ( EndPlayReason );
 
+	ClearRender ( );
+
 	LocalThreadData.Reset ( );
 	CurrentDistanceField.Reset ( );
 
 	if ( IsValid ( MeshBodySetup ) )
 	{
 		MeshBodySetup->InvalidatePhysicsData ( );
+		MeshBodySetup->MarkAsGarbage ( );
 		MeshBodySetup = nullptr;
 	}
 }
