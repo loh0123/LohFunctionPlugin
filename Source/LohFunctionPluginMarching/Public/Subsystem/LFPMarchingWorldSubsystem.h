@@ -77,7 +77,21 @@ struct TAsyncMarchingData
 
 	TObjectPtr < UObject > Outer = nullptr;
 
-	void LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork )
+	FORCEINLINE void CancelJob ( )
+	{
+		check ( Outer );
+
+		ULFPMarchingWorldSubsystem* Subsystem = Outer->GetWorld ( )->GetSubsystem < ULFPMarchingWorldSubsystem > ( );
+
+		if ( LastPendingJobs.IsValid ( ) )
+		{
+			LastPendingJobs.Pin ( )->bCancelled = true;
+		}
+
+		LastPendingJobs = nullptr;
+	}
+
+	FORCEINLINE void LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork )
 	{
 		check ( Outer );
 

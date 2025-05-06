@@ -145,17 +145,15 @@ uint8 ULFPMarchingMeshComponent::GetMarchingID ( const FIntVector& Offset ) cons
 	return 0;
 }
 
-void ULFPMarchingMeshComponent::Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bDeferUpdate )
+void ULFPMarchingMeshComponent::Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bClearMesh )
 {
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
 
-	ClearRender ( );
-
-	if ( IsDataComponentValid ( ) && bDeferUpdate == false )
+	if ( bClearMesh )
 	{
-		UpdateRender ( true );
+		ClearRender ( );
 	}
 }
 
@@ -168,11 +166,14 @@ void ULFPMarchingMeshComponent::Uninitialize ( )
 
 void ULFPMarchingMeshComponent::ClearRender ( )
 {
+	MeshComputeData.CancelJob ( );
+	DistanceFieldComputeData.CancelJob ( );
+
 	LocalThreadData.Reset ( );
 
 	AggGeom.EmptyElements ( );
 
-	UpdateCollision ( false );
+	InvalidatePhysicsData ( );
 
 	EditMesh ( [] ( FDynamicMesh3& Mesh )
 	{
@@ -180,14 +181,9 @@ void ULFPMarchingMeshComponent::ClearRender ( )
 	} );
 }
 
-bool ULFPMarchingMeshComponent::UpdateRender ( const bool bIsRebuild , const bool bSimplify , const int32 LODIndex )
+bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int32 LODIndex )
 {
 	if ( IsDataComponentValid ( ) == false )
-	{
-		return false;
-	}
-
-	if ( bIsRebuild == false && LocalThreadData.IsValid ( ) )
 	{
 		return false;
 	}
@@ -295,7 +291,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 		return;
 	}
 
-	OnDistanceFieldGenerated.Broadcast ( this );
+	OnDistanceFieldRebuilding.Broadcast ( this );
 
 	// For safety, run the distance field compute on a (geometry-only) copy of the mesh
 	FDynamicMesh3 GeoOnlyCopy;
