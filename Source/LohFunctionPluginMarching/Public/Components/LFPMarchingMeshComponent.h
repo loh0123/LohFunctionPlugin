@@ -75,10 +75,6 @@ struct FLFPMarchingThreadData
 {
 	GENERATED_BODY ( )
 
-	FLFPMarchingThreadData ( )
-	{
-	}
-
 public:
 
 	FDynamicMesh3 MeshData = FDynamicMesh3 ( );
@@ -197,6 +193,11 @@ public:
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
 	bool UpdateRender ( const bool bSimplify = false , const int32 LODIndex = 0 );
+
+public:
+
+	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
+	void SetDistanceFieldResolution ( const float NewResolutionScale , const bool bDeferUpdate = false );
 
 protected:
 

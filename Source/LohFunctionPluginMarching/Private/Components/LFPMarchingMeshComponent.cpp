@@ -263,6 +263,16 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int3
 	return true;
 }
 
+void ULFPMarchingMeshComponent::SetDistanceFieldResolution ( const float NewResolutionScale , const bool bDeferUpdate )
+{
+	DistanceFieldResolutionScale = NewResolutionScale;
+
+	if ( bDeferUpdate == false )
+	{
+		UpdateDistanceField ( );
+	}
+}
+
 void ULFPMarchingMeshComponent::RebuildPhysicsData ( )
 {
 	if ( IsValid ( DataComponent ) == false )
