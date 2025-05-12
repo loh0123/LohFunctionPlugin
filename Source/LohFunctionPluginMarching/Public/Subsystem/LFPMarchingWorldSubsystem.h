@@ -48,7 +48,7 @@ protected:
 
 public:
 
-	TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc > GameThreadJobQueue;
+	TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc > LazyGameThreadJobQueue;
 
 	FCriticalSection PendingJobsLock;
 
@@ -75,11 +75,11 @@ struct TAsyncMarchingData
 
 	TWeakPtr < FMarchingComputeJob > LastPendingJobs = nullptr;
 
-	TObjectPtr < UObject > Outer = nullptr;
+	TWeakObjectPtr < UObject > Outer = nullptr;
 
 	FORCEINLINE void CancelJob ( )
 	{
-		check ( Outer );
+		check ( Outer.IsExplicitlyNull() == false );
 
 		ULFPMarchingWorldSubsystem* Subsystem = Outer->GetWorld ( )->GetSubsystem < ULFPMarchingWorldSubsystem > ( );
 
@@ -93,7 +93,7 @@ struct TAsyncMarchingData
 
 	FORCEINLINE void LaunchJob ( const TCHAR* DebugName , const TFunction < void  ( FProgressCancel& Progress , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob ) >& JobWork )
 	{
-		check ( Outer );
+		check ( Outer.IsExplicitlyNull() == false );
 
 		ULFPMarchingWorldSubsystem* Subsystem = Outer->GetWorld ( )->GetSubsystem < ULFPMarchingWorldSubsystem > ( );
 

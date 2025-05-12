@@ -214,9 +214,11 @@ protected:
 
 private:
 
-	std::atomic < bool > bUpdateLocalThreadData = false;
+	std::atomic < bool > bUpdatingThreadData = false;
 
-	TSharedPtr < FLFPMarchingThreadData , ESPMode::ThreadSafe > LocalThreadData = nullptr;
+	FCriticalSection ThreadDataLock;
+
+	TSharedPtr < FLFPMarchingThreadData > LocalThreadData = nullptr;
 
 	TAsyncMarchingData MeshComputeData = TAsyncMarchingData ( this );
 
@@ -225,6 +227,8 @@ private:
 	void ComputeNewMarchingMesh_Completed ( TUniquePtr < FLFPMarchingThreadData > ThreadData , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob );
 
 private:
+
+	std::atomic < bool > bUpdatingDistanceFieldData = false;
 
 	TAsyncMarchingData DistanceFieldComputeData = TAsyncMarchingData ( this );
 

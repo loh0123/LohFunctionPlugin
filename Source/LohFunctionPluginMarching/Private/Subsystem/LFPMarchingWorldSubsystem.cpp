@@ -12,10 +12,10 @@ void ULFPMarchingWorldSubsystem::Tick ( float DeltaTime )
 {
 	Super::Tick ( DeltaTime );
 
-	for ( int32 JobIndex = 0 ; GameThreadJobQueue.IsEmpty ( ) == false && JobIndex < 5 ; ++JobIndex )
+	for ( int32 JobIndex = 0 ; LazyGameThreadJobQueue.IsEmpty ( ) == false && JobIndex < 5 ; ++JobIndex )
 	{
 		TFunction < void  ( ) > GameThreadJob;
-		GameThreadJobQueue.Dequeue ( GameThreadJob );
+		LazyGameThreadJobQueue.Dequeue ( GameThreadJob );
 
 		GameThreadJob ( );
 	}
@@ -33,7 +33,7 @@ void ULFPMarchingWorldSubsystem::Deinitialize ( )
 	}
 
 	PendingJobs.Empty ( );
-	GameThreadJobQueue.Empty ( );
+	LazyGameThreadJobQueue.Empty ( );
 }
 
 TStatId ULFPMarchingWorldSubsystem::GetStatId ( ) const
@@ -83,7 +83,7 @@ UE::Tasks::FTask ULFPMarchingWorldSubsystem::LaunchJobInternal ( FMarchingComput
 	return UE::Tasks::Launch ( *JobPtr->DebugName ,
 	                           [this, JobPtr] ( )
 	                           {
-		                           JobPtr->JobWork ( *JobPtr->Progress , GameThreadJobQueue );
+		                           JobPtr->JobWork ( *JobPtr->Progress , LazyGameThreadJobQueue );
 		                           JobPtr->bHasCompleted = true;
 	                           } ,
 	                           LowLevelTasks::ETaskPriority::BackgroundHigh );

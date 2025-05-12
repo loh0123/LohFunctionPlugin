@@ -42,9 +42,6 @@ void ULFPMarchingMeshComponent::EndPlay ( const EEndPlayReason::Type EndPlayReas
 
 	ClearRender ( );
 
-	LocalThreadData.Reset ( );
-	CurrentDistanceField.Reset ( );
-
 	if ( IsValid ( MeshBodySetup ) )
 	{
 		MeshBodySetup->InvalidatePhysicsData ( );
@@ -172,7 +169,13 @@ void ULFPMarchingMeshComponent::ClearRender ( )
 	MeshComputeData.CancelJob ( );
 	DistanceFieldComputeData.CancelJob ( );
 
-	LocalThreadData.Reset ( );
+	{
+		FScopeLock TDLock ( &ThreadDataLock );
+		FScopeLock DFLock ( &DistanceFieldLock );
+
+		LocalThreadData.Reset ( );
+		CurrentDistanceField.Reset ( );
+	}
 
 	AggGeom.EmptyElements ( );
 
@@ -231,7 +234,11 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int3
 		}
 	}
 
-	LocalThreadData.Reset ( );
+	{
+		FScopeLock Lock ( &ThreadDataLock );
+
+		LocalThreadData.Reset ( );
+	}
 
 	OnMeshRebuilding.Broadcast ( this );
 
@@ -282,9 +289,13 @@ void ULFPMarchingMeshComponent::RebuildPhysicsData ( )
 		return;
 	}
 
-	if ( bOverrideBoxCollision && IsCollisionEnabled ( ) && CollisionType != CTF_UseComplexAsSimple && LocalThreadData.IsValid ( ) )
 	{
-		AggGeom.BoxElems = LocalThreadData->CollisionBoxElems;
+		FScopeLock Lock ( &ThreadDataLock );
+
+		if ( bOverrideBoxCollision && IsCollisionEnabled ( ) && CollisionType != CTF_UseComplexAsSimple && LocalThreadData.IsValid ( ) )
+		{
+			AggGeom.BoxElems = LocalThreadData->CollisionBoxElems;
+		}
 	}
 
 	Super::RebuildPhysicsData ( );
@@ -292,16 +303,20 @@ void ULFPMarchingMeshComponent::RebuildPhysicsData ( )
 
 void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 {
-	if ( DistanceFieldMode == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || LocalThreadData.IsValid ( ) == false || IsDataComponentValid ( ) == false || GetDynamicMesh ( )->IsEmpty ( ) )
 	{
-		FScopeLock JobLock ( &DistanceFieldComputeQueue.PendingJobsLock );
+		FScopeLock Lock ( &ThreadDataLock );
 
-		for ( TUniquePtr < TAsyncComponentDataComputeQueue < FDistanceFieldVolumeData >::FComputeJob >& PendingJob : DistanceFieldComputeQueue.PendingJobs )
+		if ( DistanceFieldMode == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || LocalThreadData.IsValid ( ) == false || IsDataComponentValid ( ) == false || GetDynamicMesh ( )->IsEmpty ( ) )
 		{
-			PendingJob->bCancelled = true;
-		}
+			FScopeLock JobLock ( &DistanceFieldComputeQueue.PendingJobsLock );
 
-		return;
+			for ( TUniquePtr < TAsyncComponentDataComputeQueue < FDistanceFieldVolumeData >::FComputeJob >& PendingJob : DistanceFieldComputeQueue.PendingJobs )
+			{
+				PendingJob->bCancelled = true;
+			}
+
+			return;
+		}
 	}
 
 	OnDistanceFieldRebuilding.Broadcast ( this );
@@ -434,21 +449,29 @@ FPrimitiveSceneProxy* ULFPMarchingMeshComponent::CreateSceneProxy ( )
 		return NewProxy;
 	}
 
-	if ( GetDistanceFieldMode ( ) == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || CurrentDistanceField.IsValid ( ) == false )
 	{
-		return NewProxy;
+		FScopeLock Lock ( &DistanceFieldLock );
+
+		if ( GetDistanceFieldMode ( ) == EDynamicMeshComponentDistanceFieldMode::NoDistanceField || CurrentDistanceField.IsValid ( ) == false )
+		{
+			return NewProxy;
+		}
 	}
 
 	// Hijack The Data And Force Edit It
 	FCardRepresentationData* LumenCard = const_cast < FCardRepresentationData* > ( NewProxy->GetMeshCardRepresentation ( ) );
 
-	if ( LumenCard == nullptr || LocalThreadData.IsValid ( ) == false )
 	{
-		return NewProxy;
-	}
+		FScopeLock Lock ( &ThreadDataLock );
 
-	LumenCard->MeshCardsBuildData.Bounds        = LocalThreadData->LumenBound;
-	LumenCard->MeshCardsBuildData.CardBuildData = LocalThreadData->LumenCardData;
+		if ( LumenCard == nullptr || LocalThreadData.IsValid ( ) == false )
+		{
+			return NewProxy;
+		}
+
+		LumenCard->MeshCardsBuildData.Bounds        = LocalThreadData->LumenBound;
+		LumenCard->MeshCardsBuildData.CardBuildData = LocalThreadData->LumenCardData;
+	}
 
 	return NewProxy;
 }
@@ -927,18 +950,23 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 		return;
 	}
 
-	if ( ThreadData.IsValid ( ) )
+	// Write Data
 	{
-		LocalThreadData = TSharedPtr < FLFPMarchingThreadData > ( ThreadData.Release ( ) );
-	}
-	else
-	{
-		LocalThreadData.Reset ( );
+		FScopeLock Lock ( &ThreadDataLock );
+
+		if ( ThreadData.IsValid ( ) )
+		{
+			LocalThreadData = TSharedPtr < FLFPMarchingThreadData > ( ThreadData.Release ( ) );
+		}
+		else
+		{
+			LocalThreadData.Reset ( );
+		}
 	}
 
-	if ( bUpdateLocalThreadData == false )
+	if ( bUpdatingThreadData == false )
 	{
-		bUpdateLocalThreadData = true;
+		bUpdatingThreadData = true;
 
 		GameThreadJob.Enqueue ( [this] ( )
 		{
@@ -947,24 +975,28 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 				return;
 			}
 
-			bUpdateLocalThreadData = false;
+			bUpdatingThreadData = false;
 
-			if ( LocalThreadData.IsValid ( ) == false )
 			{
-				EditMesh ( [] ( FDynamicMesh3& Mesh )
+				FScopeLock Lock ( &ThreadDataLock );
+
+				if ( LocalThreadData.IsValid ( ) == false )
 				{
-					Mesh.Clear ( );
-				} );
-			}
-			else
-			{
-				//const float CompactMetric = LocalThreadData->MeshData.CompactMetric ( );
+					EditMesh ( [] ( FDynamicMesh3& Mesh )
+					{
+						Mesh.Clear ( );
+					} );
+				}
+				else
+				{
+					//const float CompactMetric = LocalThreadData->MeshData.CompactMetric ( );
 
-				SetMesh ( MoveTemp ( LocalThreadData->MeshData ) );
+					SetMesh ( MoveTemp ( LocalThreadData->MeshData ) );
 
-				//UE_LOG ( LogTemp , Warning , TEXT("Marching Data Time Use : %d ms : Compact %f") , (int32)(FDateTime::UtcNow() - LocalThreadData->StartTime).GetTotalMilliseconds() , CompactMetric );
+					//UE_LOG ( LogTemp , Warning , TEXT("Marching Data Time Use : %d ms : Compact %f") , (int32)(FDateTime::UtcNow() - LocalThreadData->StartTime).GetTotalMilliseconds() , CompactMetric );
 
-				OnMeshGenerated.Broadcast ( this );
+					OnMeshGenerated.Broadcast ( this );
+				}
 			}
 		} );
 	}
@@ -1340,11 +1372,18 @@ void ULFPMarchingMeshComponent::ComputeNewDistanceFieldData_Completed ( TUniqueP
 		return;
 	}
 
-	DistanceFieldLock.Lock ( );
-	CurrentDistanceField = TSharedPtr < FDistanceFieldVolumeData > ( NewData.Release ( ) );
-	if ( GetCurrentSceneProxy ( ) != nullptr )
+	// Write Data
+	{
+		FScopeLock Lock ( &DistanceFieldLock );
+
+		CurrentDistanceField = TSharedPtr < FDistanceFieldVolumeData > ( NewData.Release ( ) );
+	}
+
+	if ( bUpdatingDistanceFieldData == false )
 	{
 		// mark render state dirty on the game thread to ensure it updates at a safe time (e.g., cannot update when bPostTickComponentUpdate == true)
+		bUpdatingDistanceFieldData = true;
+
 		GameThreadJob.Enqueue (
 		                       [this] ( )
 		                       {
@@ -1353,12 +1392,16 @@ void ULFPMarchingMeshComponent::ComputeNewDistanceFieldData_Completed ( TUniqueP
 				                       return;
 			                       }
 
+			                       bUpdatingDistanceFieldData = false;
+
 			                       OnDistanceFieldGenerated.Broadcast ( this );
 
 			                       // the new distance field will be set when the scene proxy is re-created
-			                       MarkRenderStateDirty ( );
+			                       if ( GetCurrentSceneProxy ( ) != nullptr )
+			                       {
+				                       MarkRenderStateDirty ( );
+			                       }
 		                       }
 		                      );
 	}
-	DistanceFieldLock.Unlock ( );
 }
