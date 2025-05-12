@@ -145,16 +145,11 @@ uint8 ULFPMarchingMeshComponent::GetMarchingID ( const FIntVector& Offset ) cons
 	return 0;
 }
 
-void ULFPMarchingMeshComponent::Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bClearMesh )
+void ULFPMarchingMeshComponent::Initialize ( ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex )
 {
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
-
-	if ( bClearMesh )
-	{
-		ClearRender ( );
-	}
 }
 
 void ULFPMarchingMeshComponent::Uninitialize ( )
@@ -191,6 +186,8 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int3
 {
 	if ( IsDataComponentValid ( ) == false )
 	{
+		ClearRender ( );
+
 		return false;
 	}
 

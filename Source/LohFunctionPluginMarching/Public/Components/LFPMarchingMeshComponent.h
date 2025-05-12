@@ -181,7 +181,7 @@ protected:
 public:
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
-	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex , const bool bClearMesh );
+	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex  );
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
 	void Uninitialize ( );
