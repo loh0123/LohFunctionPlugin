@@ -953,7 +953,7 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 
 		if ( ThreadData.IsValid ( ) )
 		{
-			LocalThreadData = TSharedPtr < FLFPMarchingThreadData > ( ThreadData.Release ( ) );
+			LocalThreadData = MakeShareable ( ThreadData.Release ( ) );
 		}
 		else
 		{
@@ -1373,7 +1373,7 @@ void ULFPMarchingMeshComponent::ComputeNewDistanceFieldData_Completed ( TUniqueP
 	{
 		FScopeLock Lock ( &DistanceFieldLock );
 
-		CurrentDistanceField = TSharedPtr < FDistanceFieldVolumeData > ( NewData.Release ( ) );
+		CurrentDistanceField = MakeShareable ( NewData.Release ( ) );
 	}
 
 	if ( bUpdatingDistanceFieldData == false )
