@@ -49,6 +49,11 @@
       "Name": "LohFunctionPluginVoxel",
       "Type": "Runtime",
       "LoadingPhase": "Default"
+    },
+    {
+      "Name": "LohFunctionPluginMultiLevel",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
     }
   ],
   "Plugins": [
