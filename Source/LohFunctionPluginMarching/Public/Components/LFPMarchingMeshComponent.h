@@ -60,7 +60,6 @@ public:
 	bool       bIsChunkFaceCullingDisable  = false;
 	bool       bIsRegionFaceCullingDisable = false;
 	bool       bSimplify                   = false;
-	int32      LODIndex                    = 0;
 	FVector    MeshFullSize                = FVector ( );
 	FIntVector DataSize                    = FIntVector ( );
 	float      BoundExpand                 = 0.0f;
@@ -181,7 +180,7 @@ protected:
 public:
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
-	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex  );
+	void Initialize ( class ULFPGridTagDataComponent* NewDataComponent , const int32 NewRegionIndex , const int32 NewChunkIndex );
 
 	UFUNCTION ( BlueprintCallable , Category="LFPVoxelRender" )
 	void Uninitialize ( );
@@ -192,7 +191,7 @@ public:
 	void ClearRender ( );
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPVoxelRender" )
-	bool UpdateRender ( const bool bSimplify = false , const int32 LODIndex = 0 );
+	bool UpdateRender ( const bool bSimplify = false );
 
 public:
 

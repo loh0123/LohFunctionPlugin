@@ -13,6 +13,7 @@
 #include "DynamicMesh/Operations/MergeCoincidentMeshEdges.h"
 #include "Library/LFPMarchingFunctionLibrary.h"
 #include "Math/LFPGridLibrary.h"
+#include "Operations/MeshPlaneCut.h"
 #include "Render/LFPRenderLibrary.h"
 #include "Runtime/GeometryFramework/Private/Components/DynamicMeshSceneProxy.h"
 #include "Spatial/FastWinding.h"
@@ -86,7 +87,7 @@ FVector ULFPMarchingMeshComponent::GetMeshSize ( ) const
 {
 	if ( IsDataComponentValid ( ) )
 	{
-		return RenderSetting->GetMarchingSize ( ) * 0.5f;
+		return RenderSetting->GetMarchingSize ( );
 	}
 
 	return FVector ( 0.0f );
@@ -101,7 +102,7 @@ bool ULFPMarchingMeshComponent::IsDataComponentValid ( ) const
 
 	const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting ( );
 
-	if ( IsValid ( GridSetting ) == false || IsValid ( RenderSetting->GetMeshSet ( ) ) == false || RenderSetting->GetMeshSet ( )->IsDynamicMeshListValid ( ) == false )
+	if ( IsValid ( GridSetting ) == false )
 	{
 		return false;
 	}
@@ -182,7 +183,7 @@ void ULFPMarchingMeshComponent::ClearRender ( )
 	} );
 }
 
-bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int32 LODIndex )
+bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify )
 {
 	if ( IsDataComponentValid ( ) == false )
 	{
@@ -246,7 +247,6 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify , const int3
 	PassData.MeshFullSize   = GetMeshSize ( );
 	PassData.DataSize       = GetDataSize ( );
 	PassData.bSimplify      = bSimplify;
-	PassData.LODIndex       = LODIndex;
 	PassData.BoundExpand    = BoundExpand;
 	PassData.StartTime      = FDateTime::UtcNow ( );
 	PassData.bNeedCollision = IsCollisionEnabled ( ) && CollisionType != CTF_UseComplexAsSimple && bOverrideBoxCollision;
@@ -355,7 +355,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 
 		const int32 DataNum = GetDataNum ( );
 
-		const FVector MeshFullSize = GetMeshSize ( ) * 2.0f;
+		const FVector MeshFullSize = GetMeshSize ( );
 		const FVector MeshHalfSize = MeshFullSize * 0.5f;
 
 		const FVector MeshBoundFullSize = MeshFullSize * FVector ( DataSize );
@@ -487,12 +487,9 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 	NewMeshData->StartTime = PassData.StartTime;
 
 	const FVector& MeshFullSize = PassData.MeshFullSize;
-	const FVector  MeshHalfSize = MeshFullSize * 0.5f;
-	const FVector  MeshGapSize  = MeshFullSize * 2.0f;
+	const FVector  MeshGapSize  = MeshFullSize;
 
-	const FIntVector& DataSize = PassData.DataSize;
-	//const FIntVector& DataOffset = PassData.DataOffset;
-
+	const FIntVector& DataSize      = PassData.DataSize;
 	const FIntVector& CacheDataSize = DataSize + FIntVector ( 2 );
 
 	const FVector MeshBoundFullSize = MeshGapSize * FVector ( DataSize );
@@ -537,7 +534,7 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 			MeshData.EnableAttributes ( );
 		}
 
-		const ULFPMarchingMeshSet* MeshAsset = PassData.RenderSetting->GetMeshSet ( );
+		const TObjectPtr < ULFPMarchingData >& MeshAsset = PassData.RenderSetting;
 
 		TArray < uint8 > MarchingIDList;
 		{
@@ -558,46 +555,51 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 		{
 			const FIntVector MarchingGridLocation = ULFPGridLibrary::ToGridLocation ( MarchingIndex , MarchingSize );
 			const FVector    MarchingMeshLocation = ( MeshGapSize * FVector ( MarchingGridLocation ) ) - MeshBoundHalfSize;
+			const uint8      MarchingID           = MarchingIDList [ MarchingIndex ];
 
 			if ( Progress.Cancelled ( ) )
 			{
 				return nullptr;
 			}
 
-			for ( int32 MarchingPartIndex = 0 ; MarchingPartIndex < 8 ; ++MarchingPartIndex )
+			if ( const FLFPMarchingMeshMappingDataV2& MeshMappingData = MeshAsset->GetMappingData ( MarchingID ) ; MeshMappingData.MeshID != INDEX_NONE )
 			{
-				const FIntVector PartLocation     = ULFPGridLibrary::ToGridLocation ( MarchingPartIndex , FIntVector ( 2 ) );
-				const FIntVector RealGridPosition = ( MarchingGridLocation - FIntVector ( 1 ) ) + PartLocation;
-				const uint8      DualMarchingID   = ULFPMarchingFunctionLibrary::CalculateDualGridMarchingID ( MarchingIDList [ MarchingIndex ] , MarchingPartIndex );
+				const FDynamicMesh3* AppendMesh = MeshAsset->GetDynamicMesh ( MeshMappingData.MeshID );
 
-				if ( ULFPGridLibrary::IsGridLocationValid ( RealGridPosition , DataSize ) == false )
+				if ( AppendMesh == nullptr )
 				{
 					continue;
 				}
 
-				if ( const FLFPMarchingMeshMappingData& MeshMappingData = MeshAsset->GetMappingData ( DualMarchingID ) ; MeshMappingData.MeshID != INDEX_NONE )
-				{
-					const FDynamicMesh3* AppendMesh = MeshAsset->GetDynamicMesh ( MeshMappingData.MeshID , PassData.LODIndex );
+				const FTransform AppendTransform (
+				                                  MeshMappingData.GetRotation ( ) ,
+				                                  MarchingMeshLocation ,
+				                                  FVector ( 1.0f )
+				                                 );
 
-					if ( AppendMesh == nullptr )
-					{
-						continue;
-					}
-
-					const FTransform AppendTransform (
-					                                  MeshMappingData.GetRotation ( ) ,
-					                                  ( MarchingMeshLocation + ( FVector ( PartLocation ) * MeshFullSize ) - MeshHalfSize ) ,
-					                                  FVector ( 1.0f )
-					                                 );
-
-					UE::Geometry::FTransformSRT3d    XForm ( AppendTransform );
-					UE::Geometry::FMeshIndexMappings TmpMappings;
-					Editor.AppendMesh ( AppendMesh , TmpMappings ,
-					                    [&XForm] ( const int32 VID , const FVector3d& Position ) { return XForm.TransformPosition ( Position ); } ,
-					                    [&XForm] ( const int32 NID , const FVector3d& Normal ) { return XForm.TransformNormal ( Normal ); } ,
-					                    XForm.GetDeterminant ( ) < 0 );
-				}
+				UE::Geometry::FTransformSRT3d    XForm ( AppendTransform );
+				UE::Geometry::FMeshIndexMappings TmpMappings;
+				Editor.AppendMesh ( AppendMesh , TmpMappings ,
+				                    [&XForm] ( const int32 VID , const FVector3d& Position ) { return XForm.TransformPosition ( Position ); } ,
+				                    [&XForm] ( const int32 NID , const FVector3d& Normal ) { return XForm.TransformNormal ( Normal ); } ,
+				                    XForm.GetDeterminant ( ) < 0 );
 			}
+		}
+
+		const FVector EdgeDirectionList [ 6 ] =
+		{
+			FVector ( 1 , 0 , 0 ) ,
+			FVector ( 0 , 1 , 0 ) ,
+			FVector ( 0 , 0 , 1 ) ,
+			FVector ( -1 , 0 , 0 ) ,
+			FVector ( 0 , -1 , 0 ) ,
+			FVector ( 0 , 0 , -1 )
+		};
+
+		for ( const FVector& EdgeDirection : EdgeDirectionList )
+		{
+			UE::Geometry::FMeshPlaneCut Cut ( &MeshData , EdgeDirection * MeshBoundHalfSize , EdgeDirection );
+			Cut.Cut ( );
 		}
 
 		UE::Geometry::FMergeCoincidentMeshEdges Welder ( &MeshData );
@@ -666,37 +668,37 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 			{
 				case 0 :
 				case 3 : LumenBox = FBox3f (
-				                            FVector3f ( CurrentLocalBounds.Min.X , CurrentLocalBounds.Min.Y , ( CoverIndex.X * MeshFullSize.Z * 2 ) - MeshBoundHalfSize.Z - BoundExpand ) ,
-				                            FVector3f ( CurrentLocalBounds.Max.X , CurrentLocalBounds.Max.Y , ( CoverIndex.Y * MeshFullSize.Z * 2 ) - MeshBoundHalfSize.Z + BoundExpand )
+				                            FVector3f ( CurrentLocalBounds.Min.X , CurrentLocalBounds.Min.Y , ( CoverIndex.X * MeshFullSize.Z ) - MeshBoundHalfSize.Z - BoundExpand ) ,
+				                            FVector3f ( CurrentLocalBounds.Max.X , CurrentLocalBounds.Max.Y , ( CoverIndex.Y * MeshFullSize.Z ) - MeshBoundHalfSize.Z + BoundExpand )
 				                           );
 
 					if ( DirectionIndex == 0 )
 					{
-						LumenBox = LumenBox.ShiftBy ( FVector3f ( 0.0f , 0.0f , MeshFullSize.Z ) * 2.0f );
+						LumenBox = LumenBox.ShiftBy ( FVector3f ( 0.0f , 0.0f , MeshFullSize.Z ) );
 					}
 					break;
 
 				case 1 :
 				case 4 : LumenBox = FBox3f (
-				                            FVector3f ( ( CoverIndex.X * MeshFullSize.X * 2 ) - MeshBoundHalfSize.X - BoundExpand , CurrentLocalBounds.Min.Y , CurrentLocalBounds.Min.Z ) ,
-				                            FVector3f ( ( CoverIndex.Y * MeshFullSize.X * 2 ) - MeshBoundHalfSize.X + BoundExpand , CurrentLocalBounds.Max.Y , CurrentLocalBounds.Max.Z )
+				                            FVector3f ( ( CoverIndex.X * MeshFullSize.X ) - MeshBoundHalfSize.X - BoundExpand , CurrentLocalBounds.Min.Y , CurrentLocalBounds.Min.Z ) ,
+				                            FVector3f ( ( CoverIndex.Y * MeshFullSize.X ) - MeshBoundHalfSize.X + BoundExpand , CurrentLocalBounds.Max.Y , CurrentLocalBounds.Max.Z )
 				                           );
 
 					if ( DirectionIndex == 4 )
 					{
-						LumenBox = LumenBox.ShiftBy ( FVector3f ( MeshFullSize.X , 0.0f , 0.0f ) * 2.0f );
+						LumenBox = LumenBox.ShiftBy ( FVector3f ( MeshFullSize.X , 0.0f , 0.0f ) );
 					}
 					break;
 
 				case 2 :
 				case 5 : LumenBox = FBox3f (
-				                            FVector3f ( CurrentLocalBounds.Min.X , ( CoverIndex.X * MeshFullSize.Y * 2 ) - MeshBoundHalfSize.Y - BoundExpand , CurrentLocalBounds.Min.Z ) ,
-				                            FVector3f ( CurrentLocalBounds.Max.X , ( CoverIndex.Y * MeshFullSize.Y * 2 ) - MeshBoundHalfSize.Y + BoundExpand , CurrentLocalBounds.Max.Z )
+				                            FVector3f ( CurrentLocalBounds.Min.X , ( CoverIndex.X * MeshFullSize.Y ) - MeshBoundHalfSize.Y - BoundExpand , CurrentLocalBounds.Min.Z ) ,
+				                            FVector3f ( CurrentLocalBounds.Max.X , ( CoverIndex.Y * MeshFullSize.Y ) - MeshBoundHalfSize.Y + BoundExpand , CurrentLocalBounds.Max.Z )
 				                           );
 
 					if ( DirectionIndex == 2 )
 					{
-						LumenBox = LumenBox.ShiftBy ( FVector3f ( 0.0f , MeshFullSize.Y , 0.0f ) * 2.0f );
+						LumenBox = LumenBox.ShiftBy ( FVector3f ( 0.0f , MeshFullSize.Y , 0.0f ) );
 					}
 					break;
 				default : break;
@@ -937,7 +939,8 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 		return nullptr;
 	}
 
-	return NewMeshData;
+	return
+		NewMeshData;
 }
 
 void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < FLFPMarchingThreadData > ThreadData , TQueue < TFunction < void  ( ) > , EQueueMode::Mpsc >& GameThreadJob )
