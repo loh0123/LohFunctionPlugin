@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LFPMarchingMeshSet.h"
+#include "Components/BaseDynamicMeshComponent.h"
 #include "LFPMarchingData.generated.h"
 
 USTRUCT ( BlueprintType )
@@ -56,7 +56,7 @@ public:
 
 public:
 
-	FORCEINLINE bool operator== ( const FLFPMarchingSingleMeshData& other ) const
+	FORCEINLINE bool operator== ( const FLFPMarchingSingleMeshDataV2& other ) const
 	{
 		return other.Mesh == Mesh;
 	}
