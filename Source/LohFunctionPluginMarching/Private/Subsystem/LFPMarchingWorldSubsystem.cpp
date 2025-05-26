@@ -12,13 +12,18 @@ void ULFPMarchingWorldSubsystem::Tick ( float DeltaTime )
 {
 	Super::Tick ( DeltaTime );
 
-	for ( int32 JobIndex = 0 ; LazyGameThreadJobQueue.IsEmpty ( ) == false && JobIndex < 5 ; ++JobIndex )
+	const int32 PreFrame = FMath::Floor ( 1.0f / PreDeltaTime );
+	const int32 JobCount = FMath::Max ( 1 , PreFrame / 10 );
+
+	for ( int32 JobIndex = 0 ; LazyGameThreadJobQueue.IsEmpty ( ) == false && JobIndex < JobCount ; ++JobIndex )
 	{
 		TFunction < void  ( ) > GameThreadJob;
 		LazyGameThreadJobQueue.Dequeue ( GameThreadJob );
 
 		GameThreadJob ( );
 	}
+
+	PreDeltaTime = DeltaTime;
 }
 
 void ULFPMarchingWorldSubsystem::Deinitialize ( )

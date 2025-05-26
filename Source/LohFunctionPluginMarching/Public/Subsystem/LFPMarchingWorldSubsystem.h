@@ -55,6 +55,8 @@ public:
 	bool bIsShuttingDown = false;
 
 	TArray < TSharedPtr < FMarchingComputeJob > > PendingJobs;
+
+	float PreDeltaTime = 0.001f;
 };
 
 struct TAsyncMarchingData
