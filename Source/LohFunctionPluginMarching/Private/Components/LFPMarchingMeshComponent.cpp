@@ -191,19 +191,13 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify )
 		return false;
 	}
 
-	// Complete Empty No Need Render
-	if ( DataComponent->GetDataTagList ( RegionIndex , ChunkIndex ).IsEmpty ( ) )
-	{
-		ClearRender ( );
-		return false;
-	}
-
 	const FIntVector& CacheDataSize  = GetDataSize ( ) + FIntVector ( 2 );
 	const int32       CacheDataIndex = CacheDataSize.X * CacheDataSize.Y * CacheDataSize.Z;
 
+	int32 ValidCount = 0;
+
 	TBitArray < > CacheDataList = TBitArray ( false , CacheDataIndex );
 	{
-		int32 ValidCount = 0;
 		/* Generate Marching Mesh Data */
 		for ( int32 SolidIndex = 0 ; SolidIndex < CacheDataIndex ; ++SolidIndex )
 		{
@@ -222,13 +216,13 @@ bool ULFPMarchingMeshComponent::UpdateRender ( const bool bSimplify )
 				ValidCount += 1;
 			}
 		}
+	}
 
-		// Inside Other Chunk So Don't Need To Render
-		if ( CacheDataIndex == ValidCount )
-		{
-			ClearRender ( );
-			return false;
-		}
+	// Complete Empty No Need Render Or Inside Other Chunk So Don't Need To Render
+	if ( ValidCount == 0 || CacheDataIndex == ValidCount )
+	{
+		ClearRender ( );
+		return false;
 	}
 
 	{
@@ -319,6 +313,7 @@ void ULFPMarchingMeshComponent::UpdateDistanceField ( )
 
 	// For safety, run the distance field compute on a (geometry-only) copy of the mesh
 	FDynamicMesh3 GeoOnlyCopy;
+
 	// Compute whether the mesh uses mainly two-sided materials before, as this is the only info the distance field compute needs from the mesh attributes
 	bool bMostlyTwoSided = bForceTwoSide;
 	ProcessMesh ( [&] ( const FDynamicMesh3& ReadMesh )
