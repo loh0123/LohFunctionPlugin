@@ -19,6 +19,9 @@ public:
 public:
 
 	UPROPERTY ( )
+	TSoftObjectPtr < UWorld > LevelPath = nullptr;
+
+	UPROPERTY ( )
 	TObjectPtr < UWorld > LoadedWorld = nullptr;
 
 	UPROPERTY ( )
@@ -42,6 +45,9 @@ public:
 
 	UFUNCTION ( BlueprintCallable , Category = Default )
 	ULFPMultiLevelHandler* LoadMultiLevel ( const TSoftObjectPtr < UWorld > Level );
+
+	UFUNCTION ( BlueprintCallable , Category = Default )
+	void UnloadMultiLevel ( ULFPMultiLevelHandler* LevelHandler );
 
 private:
 

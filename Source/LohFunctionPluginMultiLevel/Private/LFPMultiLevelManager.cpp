@@ -29,65 +29,7 @@ void ULFPMultiLevelManager::Deinitialize ( )
 
 	for ( TObjectPtr < ULFPMultiLevelHandler >& Handler : MultiLevelHandlerList )
 	{
-		if ( Handler->LoadedWorld )
-		{
-			GEngine->DestroyWorldContext ( Handler->LoadedWorld );
-		}
-
-		if ( UWorld* HandleWorld = Handler->LoadedWorld ; IsValid ( HandleWorld ) && HandleWorld->bIsTearingDown == false )
-		{
-			// Notify listeners that all levels will be removed before we start tearing down the world.
-			FWorldDelegates::PreLevelRemovedFromWorld.Broadcast ( nullptr , HandleWorld );
-			HandleWorld->BeginTearingDown ( );
-
-			// Force mark all streaming levels for stream out
-			HandleWorld->bIsLevelStreamingFrozen = false;
-			HandleWorld->SetShouldForceUnloadStreamingLevels ( true );
-
-			// Make sure there are no pending visibility requests.
-			HandleWorld->FlushLevelStreaming ( EFlushLevelStreamingType::Visibility );
-
-			// send a message that all levels are going away (NULL means every sublevel is being removed
-			// without a call to RemoveFromWorld for each)
-			//if (WorldContext.World()->GetNumLevels() > 1)
-			{
-				// TODO: Consider actually broadcasting for each level?
-				FWorldDelegates::LevelRemovedFromWorld.Broadcast ( nullptr , HandleWorld );
-			}
-
-			HandleWorld->EndPlay ( EEndPlayReason::Destroyed );
-
-			// Do this after destroying pawns/playercontrollers, in case that spawns new things (e.g. dropped weapons)
-			HandleWorld->CleanupWorld ( );
-
-			HandleWorld->RemoveFromRoot ( );
-
-			// mark everything else contained in the world to be deleted
-			for ( auto LevelIt ( HandleWorld->GetLevelIterator ( ) ) ; LevelIt ; ++LevelIt )
-			{
-				const ULevel* Level = *LevelIt;
-				if ( Level )
-				{
-					CastChecked < UWorld > ( Level->GetOuter ( ) )->MarkObjectsPendingKill ( );
-				}
-			}
-
-			for ( ULevelStreaming* LevelStreaming : HandleWorld->GetStreamingLevels ( ) )
-			{
-				// If an unloaded levelstreaming still has a loaded level we need to mark its objects to be deleted as well
-				if ( LevelStreaming->GetLoadedLevel ( ) && ( !LevelStreaming->ShouldBeLoaded ( ) || !LevelStreaming->ShouldBeVisible ( ) ) )
-				{
-					CastChecked < UWorld > ( LevelStreaming->GetLoadedLevel ( )->GetOuter ( ) )->MarkObjectsPendingKill ( );
-				}
-			}
-
-			// Stop all audio to remove references to current level.
-			if ( FAudioDevice* AudioDevice = HandleWorld->GetAudioDeviceRaw ( ) )
-			{
-				AudioDevice->Flush ( HandleWorld );
-				AudioDevice->SetTransientPrimaryVolume ( 1.0f );
-			}
-		}
+		UnloadMultiLevel ( Handler );
 	}
 
 	MultiLevelHandlerList.Empty ( );
@@ -100,6 +42,18 @@ void ULFPMultiLevelManager::Initialize ( FSubsystemCollectionBase& Collection )
 
 ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObjectPtr < UWorld > Level )
 {
+	if ( const int32 HandlerIndex = MultiLevelHandlerList.IndexOfByPredicate ( [&] ( const ULFPMultiLevelHandler* Handler ) { return Handler->LevelPath == Level; } ) ; HandlerIndex != INDEX_NONE )
+	{
+		if ( IsValid ( MultiLevelHandlerList [ HandlerIndex ]->LoadedWorld ) )
+		{
+			return MultiLevelHandlerList [ HandlerIndex ];
+		}
+		else
+		{
+			MultiLevelHandlerList.RemoveAtSwap ( HandlerIndex );
+		}
+	}
+
 	FWorldContext& OriginWorldContext = GEngine->GetWorldContextFromWorldChecked ( GetWorld ( ) );
 	FWorldContext& WorldContext       = GEngine->CreateNewWorldContext ( OriginWorldContext.WorldType );
 
@@ -154,8 +108,6 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 			// See if the level is already in memory
 			WorldPackage = FindPackage ( nullptr , *URL.Map );
 
-			bool bPackageAlreadyLoaded = ( WorldPackage != nullptr );
-
 			// If the level isn't already in memory, load level from disk
 			if ( WorldPackage == nullptr )
 			{
@@ -200,6 +152,7 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 		ULFPMultiLevelHandler* NewHandler = NewObject < ULFPMultiLevelHandler > ( this );
 
 		NewHandler->LoadedWorld = NewWorld;
+		NewHandler->LevelPath   = Level;
 
 		MultiLevelHandlerList.Add ( NewHandler );
 
@@ -208,6 +161,7 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 
 		WorldContext.SetCurrentWorld ( NewWorld );
 		WorldContext.LastURL      = URL;
+		WorldContext.LastURL.Map  = OriginalURLMap;
 		WorldContext.GameViewport = OriginWorldContext.GameViewport;
 
 		WorldContext.OwningGameInstance = GetWorld ( )->GetGameInstance ( );
@@ -293,5 +247,74 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 		}
 
 		return NewHandler;
+	}
+}
+
+void ULFPMultiLevelManager::UnloadMultiLevel ( ULFPMultiLevelHandler* LevelHandler )
+{
+	if ( IsValid ( LevelHandler ) == false )
+	{
+		return;
+	}
+
+	if ( LevelHandler->LoadedWorld )
+	{
+		GEngine->DestroyWorldContext ( LevelHandler->LoadedWorld );
+	}
+
+	if ( UWorld* HandleWorld = LevelHandler->LoadedWorld ; IsValid ( HandleWorld ) && HandleWorld->bIsTearingDown == false )
+	{
+		// Notify listeners that all levels will be removed before we start tearing down the world.
+		FWorldDelegates::PreLevelRemovedFromWorld.Broadcast ( nullptr , HandleWorld );
+		HandleWorld->BeginTearingDown ( );
+
+		// Force mark all streaming levels for stream out
+		HandleWorld->bIsLevelStreamingFrozen = false;
+		HandleWorld->SetShouldForceUnloadStreamingLevels ( true );
+
+		// Make sure there are no pending visibility requests.
+		HandleWorld->FlushLevelStreaming ( EFlushLevelStreamingType::Visibility );
+
+		// send a message that all levels are going away (NULL means every sublevel is being removed
+		// without a call to RemoveFromWorld for each)
+		//if (WorldContext.World()->GetNumLevels() > 1)
+		{
+			FWorldDelegates::LevelRemovedFromWorld.Broadcast ( nullptr , HandleWorld );
+		}
+
+		HandleWorld->EndPlay ( EEndPlayReason::Destroyed );
+
+		// Do this after destroying pawns/playercontrollers, in case that spawns new things (e.g. dropped weapons)
+		HandleWorld->CleanupWorld ( );
+
+		HandleWorld->RemoveFromRoot ( );
+
+		// mark everything else contained in the world to be deleted
+		for ( auto LevelIt ( HandleWorld->GetLevelIterator ( ) ) ; LevelIt ; ++LevelIt )
+		{
+			const ULevel* Level = *LevelIt;
+			if ( Level )
+			{
+				CastChecked < UWorld > ( Level->GetOuter ( ) )->MarkObjectsPendingKill ( );
+			}
+		}
+
+		for ( ULevelStreaming* LevelStreaming : HandleWorld->GetStreamingLevels ( ) )
+		{
+			// If an unloaded levelstreaming still has a loaded level we need to mark its objects to be deleted as well
+			if ( LevelStreaming->GetLoadedLevel ( ) && ( !LevelStreaming->ShouldBeLoaded ( ) || !LevelStreaming->ShouldBeVisible ( ) ) )
+			{
+				CastChecked < UWorld > ( LevelStreaming->GetLoadedLevel ( )->GetOuter ( ) )->MarkObjectsPendingKill ( );
+			}
+		}
+
+		// Stop all audio to remove references to current level.
+		if ( FAudioDevice* AudioDevice = HandleWorld->GetAudioDeviceRaw ( ) )
+		{
+			AudioDevice->Flush ( HandleWorld );
+			AudioDevice->SetTransientPrimaryVolume ( 1.0f );
+		}
+
+		LevelHandler->LoadedWorld = nullptr;
 	}
 }
