@@ -629,6 +629,7 @@ TUniquePtr < FLFPMarchingThreadData > ULFPMarchingMeshComponent::ComputeNewMarch
 			Simplifier.SimplifyToMinimalPlanar ( AngleThreshold );
 		}
 
+		MeshData.RemoveUnusedVertices ( );
 		MeshData.CompactInPlace ( nullptr );
 	}
 
@@ -965,7 +966,7 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 	// Write Data
 	{
 		FScopeLock Lock ( &ThreadDataLock );
-
+	
 		if ( ThreadData.IsValid ( ) )
 		{
 			LocalThreadData = MakeShareable ( ThreadData.Release ( ) );
@@ -1004,6 +1005,8 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 					//const float CompactMetric = LocalThreadData->MeshData.CompactMetric ( );
 
 					SetMesh ( MoveTemp ( LocalThreadData->MeshData ) );
+
+					LocalThreadData->MeshData.Clear ( );
 
 					//UE_LOG ( LogTemp , Warning , TEXT("Marching Data Time Use : %d ms : Compact %f") , (int32)(FDateTime::UtcNow() - LocalThreadData->StartTime).GetTotalMilliseconds() , CompactMetric );
 
