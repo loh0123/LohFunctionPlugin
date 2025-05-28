@@ -64,7 +64,14 @@ FIntVector ULFPMarchingMeshComponent::GetDataSize ( ) const
 	{
 		const ULFPGridSetting* GridSetting = DataComponent->GetGridSetting ( );
 
-		return IsValid ( GridSetting ) ? GridSetting->GetDataGridSize ( ) : FIntVector::NoneValue;
+		FIntVector DataGridSize = GridSetting->GetDataGridSize ( );
+
+		if ( bFullZRender )
+		{
+			DataGridSize.Z *= GridSetting->GetChunkGridSize ( ).Z;
+		}
+
+		return IsValid ( GridSetting ) ? DataGridSize : FIntVector::NoneValue;
 	}
 
 	return FIntVector::NoneValue;
@@ -150,6 +157,17 @@ void ULFPMarchingMeshComponent::Initialize ( ULFPGridTagDataComponent* NewDataCo
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
+
+	if ( bFullZRender && IsValid ( DataComponent ) )
+	{
+		const FIntVector ChunkGridSize     = DataComponent->GetGridSetting ( )->GetChunkGridSize ( );
+		const int32      ChunkIndexMaxSize = ChunkGridSize.X * ChunkGridSize.Y;
+
+		if ( ChunkIndex >= ChunkIndexMaxSize )
+		{
+			ChunkIndex = 0;
+		}
+	}
 }
 
 void ULFPMarchingMeshComponent::Uninitialize ( )

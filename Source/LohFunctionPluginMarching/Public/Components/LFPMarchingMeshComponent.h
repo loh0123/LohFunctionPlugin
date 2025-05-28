@@ -144,6 +144,9 @@ protected:
 	UPROPERTY ( EditAnywhere , Category="Setting" )
 	bool bOverrideBoxCollision = true;
 
+	UPROPERTY ( EditAnywhere , Category="Setting" )
+	bool bFullZRender = false;
+
 protected:
 
 	UPROPERTY ( Transient )
