@@ -6,7 +6,7 @@
 #include "Math/LFPGridLibrary.h"
 
 // Sets default values for this component's properties
-ULFPGridTagDataComponent::ULFPGridTagDataComponent( )
+ULFPGridTagDataComponent::ULFPGridTagDataComponent ( )
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -16,87 +16,138 @@ ULFPGridTagDataComponent::ULFPGridTagDataComponent( )
 }
 
 // Called when the game starts
-void ULFPGridTagDataComponent::BeginPlay( )
+void ULFPGridTagDataComponent::BeginPlay ( )
 {
-	if ( IsValid(GridSetting) )
+	if ( IsValid ( GridSetting ) )
 	{
-		DataIndexSize   = GridSetting->GetDataIndexSize();
-		ChunkIndexSize  = GridSetting->GetChunkIndexSize();
-		RegionIndexSize = GridSetting->GetRegionIndexSize();
+		DataIndexSize   = GridSetting->GetDataIndexSize ( );
+		ChunkIndexSize  = GridSetting->GetChunkIndexSize ( );
+		RegionIndexSize = GridSetting->GetRegionIndexSize ( );
 	}
 
-	Super::BeginPlay();
+	Super::BeginPlay ( );
 }
 
 // Called every frame
-void ULFPGridTagDataComponent::TickComponent( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
+void ULFPGridTagDataComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
 
 	// ...
 }
 
-ULFPGridSetting* ULFPGridTagDataComponent::GetGridSetting( ) const
+ULFPGridSetting* ULFPGridTagDataComponent::GetGridSetting ( ) const
 {
 	return GridSetting;
 }
 
-FIntVector ULFPGridTagDataComponent::ToGridPosition( const FIntVector GridIndex , const bool bRound ) const
+FIntVector ULFPGridTagDataComponent::ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound ) const
 {
-	if ( IsValid(GridSetting) == false )
+	if ( IsValid ( GridSetting ) == false )
 	{
-		return FIntVector();
+		return FIntVector ( );
 	}
 
-	const FIntVector RegionPos(ULFPGridLibrary::ToGridLocation(GridIndex.X, GridSetting->GetRegionGridSize(), bRound));
-	const FIntVector ChuckPos(ULFPGridLibrary::ToGridLocation(GridIndex.Y, GridSetting->GetChunkGridSize(), bRound));
-	const FIntVector GridPos(ULFPGridLibrary::ToGridLocation(GridIndex.Z, GridSetting->GetDataGridSize(), bRound));
+	const FIntVector RegionPos ( ULFPGridLibrary::ToGridLocation ( ChunkGridIndex.X , GridSetting->GetRegionGridSize ( ) , bRound ) );
+	const FIntVector ChuckPos ( ULFPGridLibrary::ToGridLocation ( ChunkGridIndex.Y , GridSetting->GetChunkGridSize ( ) , bRound ) );
 
-	return (RegionPos * GridSetting->GetChunkGridSize() * GridSetting->GetDataGridSize()) + (ChuckPos * GridSetting->GetDataGridSize()) + GridPos;
+	return ( RegionPos * GridSetting->GetChunkGridSize ( ) ) + ChuckPos;
 }
 
-FIntVector ULFPGridTagDataComponent::ToGridIndex( FIntVector GridPosition , const bool bRound ) const
+FIntPoint ULFPGridTagDataComponent::ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound ) const
 {
 	auto DivideVector = [&] ( const FIntVector& A , const FIntVector& B )
 	{
-		return FIntVector(A.X / B.X, A.Y / B.Y, A.Z / B.Z);
+		return FIntVector ( A.X / B.X , A.Y / B.Y , A.Z / B.Z );
 	};
 
-	const FIntVector TotalSize(GridSetting->GetRegionGridSize() * GridSetting->GetChunkGridSize() * GridSetting->GetDataGridSize());
+	const FIntVector TotalSize ( GridSetting->GetRegionGridSize ( ) * GridSetting->GetChunkGridSize ( ) );
 
 	if ( bRound )
 	{
-		GridPosition.X %= TotalSize.X;
-		GridPosition.Y %= TotalSize.Y;
-		GridPosition.Z %= TotalSize.Z;
+		ChunkGridPosition.X %= TotalSize.X;
+		ChunkGridPosition.Y %= TotalSize.Y;
+		ChunkGridPosition.Z %= TotalSize.Z;
 
-		if ( GridPosition.X < 0 )
+		if ( ChunkGridPosition.X < 0 )
 		{
-			GridPosition.X += TotalSize.X;
+			ChunkGridPosition.X += TotalSize.X;
 		}
-		if ( GridPosition.Y < 0 )
+		if ( ChunkGridPosition.Y < 0 )
 		{
-			GridPosition.Y += TotalSize.Y;
+			ChunkGridPosition.Y += TotalSize.Y;
 		}
-		if ( GridPosition.Z < 0 )
+		if ( ChunkGridPosition.Z < 0 )
 		{
-			GridPosition.Z += TotalSize.Z;
+			ChunkGridPosition.Z += TotalSize.Z;
 		}
 	}
-	else if ( ULFPGridLibrary::IsGridLocationValid(GridPosition, TotalSize) == false )
+	else if ( ULFPGridLibrary::IsGridLocationValid ( ChunkGridPosition , TotalSize ) == false )
+	{
+		return FIntPoint::NoneValue;
+	}
+
+	const FIntVector RegionPos ( DivideVector ( ChunkGridPosition , GridSetting->GetChunkGridSize ( ) ) );
+
+	return FIntPoint ( ULFPGridLibrary::ToGridIndex ( RegionPos , GridSetting->GetRegionGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( ChunkGridPosition , GridSetting->GetChunkGridSize ( ) , true ) );
+}
+
+FIntVector ULFPGridTagDataComponent::ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound ) const
+{
+	if ( IsValid ( GridSetting ) == false )
+	{
+		return FIntVector ( );
+	}
+
+	const FIntVector RegionPos ( ULFPGridLibrary::ToGridLocation ( DataGridIndex.X , GridSetting->GetRegionGridSize ( ) , bRound ) );
+	const FIntVector ChuckPos ( ULFPGridLibrary::ToGridLocation ( DataGridIndex.Y , GridSetting->GetChunkGridSize ( ) , bRound ) );
+	const FIntVector GridPos ( ULFPGridLibrary::ToGridLocation ( DataGridIndex.Z , GridSetting->GetDataGridSize ( ) , bRound ) );
+
+	return ( RegionPos * GridSetting->GetChunkGridSize ( ) * GridSetting->GetDataGridSize ( ) ) + ( ChuckPos * GridSetting->GetDataGridSize ( ) ) + GridPos;
+}
+
+FIntVector ULFPGridTagDataComponent::ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound ) const
+{
+	auto DivideVector = [&] ( const FIntVector& A , const FIntVector& B )
+	{
+		return FIntVector ( A.X / B.X , A.Y / B.Y , A.Z / B.Z );
+	};
+
+	const FIntVector TotalSize ( GridSetting->GetRegionGridSize ( ) * GridSetting->GetChunkGridSize ( ) * GridSetting->GetDataGridSize ( ) );
+
+	if ( bRound )
+	{
+		DataGridPosition.X %= TotalSize.X;
+		DataGridPosition.Y %= TotalSize.Y;
+		DataGridPosition.Z %= TotalSize.Z;
+
+		if ( DataGridPosition.X < 0 )
+		{
+			DataGridPosition.X += TotalSize.X;
+		}
+		if ( DataGridPosition.Y < 0 )
+		{
+			DataGridPosition.Y += TotalSize.Y;
+		}
+		if ( DataGridPosition.Z < 0 )
+		{
+			DataGridPosition.Z += TotalSize.Z;
+		}
+	}
+	else if ( ULFPGridLibrary::IsGridLocationValid ( DataGridPosition , TotalSize ) == false )
 	{
 		return FIntVector::NoneValue;
 	}
 
-	const FIntVector RegionPos(DivideVector(GridPosition, GridSetting->GetChunkGridSize() * GridSetting->GetDataGridSize()));
-	const FIntVector ChuckPos(DivideVector(GridPosition, GridSetting->GetDataGridSize()));
+	const FIntVector RegionPos ( DivideVector ( DataGridPosition , GridSetting->GetChunkGridSize ( ) * GridSetting->GetDataGridSize ( ) ) );
+	const FIntVector ChuckPos ( DivideVector ( DataGridPosition , GridSetting->GetDataGridSize ( ) ) );
 
-	return FIntVector(ULFPGridLibrary::ToGridIndex(RegionPos, GridSetting->GetRegionGridSize()), ULFPGridLibrary::ToGridIndex(ChuckPos, GridSetting->GetChunkGridSize()), ULFPGridLibrary::ToGridIndex(GridPosition, GridSetting->GetDataGridSize(), true));
+	return FIntVector ( ULFPGridLibrary::ToGridIndex ( RegionPos , GridSetting->GetRegionGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( ChuckPos , GridSetting->GetChunkGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( DataGridPosition , GridSetting->GetDataGridSize ( ) , true ) );
 }
 
-FIntVector ULFPGridTagDataComponent::AddOffsetToGridIndex( FIntVector GridIndex , const FIntVector Offset , const bool bRound ) const
+FIntVector ULFPGridTagDataComponent::AddOffsetToGridIndex ( FIntVector GridIndex , const FIntVector Offset , const bool bRound ) const
 {
-	GridIndex = ToGridPosition(GridIndex, bRound);
+	GridIndex = ToDataGridPosition ( GridIndex , bRound );
 	GridIndex += Offset;
-	return ToGridIndex(GridIndex, bRound);
+	return ToDataGridIndex ( GridIndex , bRound );
 }

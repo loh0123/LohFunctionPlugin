@@ -550,7 +550,13 @@ public:
 UENUM ( BlueprintType )
 enum class ELFPPrimitiveDataType : uint8
 {
-	LFP_None UMETA ( DisplayName = "None" ) , LFP_Int UMETA ( DisplayName = "Int" ) , LFP_Float UMETA ( DisplayName = "Float" ) , LFP_Double UMETA ( DisplayName = "Double" ) , LFP_Boolean UMETA ( DisplayName = "Boolean" ) , LFP_String UMETA ( DisplayName = "String" ) ,
+	LFP_None UMETA ( DisplayName = "None" ) ,
+	LFP_Int UMETA ( DisplayName = "Int" ) ,
+	LFP_Float UMETA ( DisplayName = "Float" ) ,
+	LFP_Double UMETA ( DisplayName = "Double" ) ,
+	LFP_Boolean UMETA ( DisplayName = "Boolean" ) ,
+	LFP_String UMETA ( DisplayName = "String" ) ,
+	LFP_List UMETA ( DisplayName = "List" ) ,
 };
 
 USTRUCT ( BlueprintType )
@@ -605,6 +611,13 @@ public:
 		DataList.SetNum ( NewData.Len ( ) );
 
 		StringToBytes ( NewData , DataList.GetData ( ) , DataList.Num ( ) );
+	}
+
+	FLFPPrimitiveData ( const TArray < uint8 >& NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_List;
+
+		DataList = NewData;
 	}
 
 private:
@@ -720,6 +733,11 @@ public:
 		}
 
 		return BytesToString ( DataList.GetData ( ) , DataList.Num ( ) );
+	}
+
+	FORCEINLINE const TArray < uint8 >& AsList ( ) const
+	{
+		return DataList;
 	}
 
 	FORCEINLINE bool operator== ( const FLFPPrimitiveData& other ) const

@@ -66,11 +66,6 @@ FIntVector ULFPMarchingMeshComponent::GetDataSize ( ) const
 
 		FIntVector DataGridSize = GridSetting->GetDataGridSize ( );
 
-		if ( bFullZRender )
-		{
-			DataGridSize.Z *= GridSetting->GetChunkGridSize ( ).Z;
-		}
-
 		return IsValid ( GridSetting ) ? DataGridSize : FIntVector::NoneValue;
 	}
 
@@ -157,17 +152,6 @@ void ULFPMarchingMeshComponent::Initialize ( ULFPGridTagDataComponent* NewDataCo
 	DataComponent = NewDataComponent;
 	RegionIndex   = NewRegionIndex;
 	ChunkIndex    = NewChunkIndex;
-
-	if ( bFullZRender && IsValid ( DataComponent ) )
-	{
-		const FIntVector ChunkGridSize     = DataComponent->GetGridSetting ( )->GetChunkGridSize ( );
-		const int32      ChunkIndexMaxSize = ChunkGridSize.X * ChunkGridSize.Y;
-
-		if ( ChunkIndex >= ChunkIndexMaxSize )
-		{
-			ChunkIndex = 0;
-		}
-	}
 }
 
 void ULFPMarchingMeshComponent::Uninitialize ( )
@@ -966,7 +950,7 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 	// Write Data
 	{
 		FScopeLock Lock ( &ThreadDataLock );
-	
+
 		if ( ThreadData.IsValid ( ) )
 		{
 			LocalThreadData = MakeShareable ( ThreadData.Release ( ) );
@@ -1003,6 +987,8 @@ void ULFPMarchingMeshComponent::ComputeNewMarchingMesh_Completed ( TUniquePtr < 
 				else
 				{
 					//const float CompactMetric = LocalThreadData->MeshData.CompactMetric ( );
+
+					//UE_LOG ( LogTemp , Warning , TEXT("Marching Data : %s") , *LocalThreadData->MeshData.MeshInfoString ( ) );
 
 					SetMesh ( MoveTemp ( LocalThreadData->MeshData ) );
 
