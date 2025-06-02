@@ -176,7 +176,11 @@ void ULFPMarchingMeshComponent::ClearRender ( )
 
 	AggGeom.EmptyElements ( );
 
-	InvalidatePhysicsData ( );
+	if ( IsValid ( GetBodySetup ( ) ) )
+	{
+		InvalidatePhysicsData ( );
+		GetBodySetup ( )->ClearPhysicsMeshes ( );
+	}
 
 	EditMesh ( [] ( FDynamicMesh3& Mesh )
 	{
