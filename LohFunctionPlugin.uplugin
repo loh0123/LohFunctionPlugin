@@ -41,25 +41,9 @@
       "LoadingPhase": "PreLoadingScreen"
     },
     {
-      "Name": "LohFunctionPluginMarching",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
-      "Name": "LohFunctionPluginVoxel",
-      "Type": "Runtime",
-      "LoadingPhase": "Default"
-    },
-    {
       "Name": "LohFunctionPluginMultiLevel",
       "Type": "Runtime",
       "LoadingPhase": "Default"
-    }
-  ],
-  "Plugins": [
-    {
-      "Name": "GeometryProcessing",
-      "Enabled": true
     }
   ]
 }

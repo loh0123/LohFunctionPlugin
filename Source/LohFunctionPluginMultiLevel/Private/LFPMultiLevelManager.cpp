@@ -9,6 +9,7 @@
 #include "AI/NavigationSystemBase.h"
 #include "Components/ActorComponent.h"
 
+
 TArray < AActor* > ULFPMultiLevelHandler::GetCaptureActorList ( ) const
 {
 	TArray < AActor* > ReturnList;
@@ -62,6 +63,7 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 
 	const FString OriginalURLMap = URL.Map;
 	URL.Map                      = UWorld::RemovePIEPrefix ( URL.Map );
+
 
 	// send a callback message
 	FCoreUObjectDelegates::PreLoadMapWithContext.Broadcast ( WorldContext , URL.Map );
@@ -207,8 +209,9 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 
 		// Initialize gameplay for the level.
 		{
-			FRegisterComponentContext Context ( WorldContext.World ( ) );
-			WorldContext.World ( )->InitializeActorsForPlay ( URL , true , &Context );
+			//FRegisterComponentContext Context ( WorldContext.World ( ) );
+			//WorldContext.World ( )->InitializeActorsForPlay ( URL , true , &Context );
+			WorldContext.World ( )->InitializeActorsForPlay ( URL , true );
 		}
 
 		// calling it after InitializeActorsForPlay has been called to have all potential bounding boxed initialized
@@ -218,6 +221,7 @@ ULFPMultiLevelHandler* ULFPMultiLevelManager::LoadMultiLevel ( const TSoftObject
 		{
 			GEngine->XRSystem->OnBeginPlay ( WorldContext );
 		}
+
 		WorldContext.World ( )->BeginPlay ( );
 
 		PostLoadMapCaller.Broadcast ( WorldContext.World ( ) );

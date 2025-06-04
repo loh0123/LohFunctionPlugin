@@ -10,15 +10,17 @@ public class LohFunctionPluginMultiLevel : ModuleRules
 			new string[]
 			{
 				"Core",
-				"Engine"
+				"CoreUObject"
 			}
 		);
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"CoreUObject",
 				"Engine",
+				"InputCore",
 				"Slate",
 				"SlateCore"
 			}
