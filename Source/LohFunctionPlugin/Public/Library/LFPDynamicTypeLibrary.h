@@ -940,6 +940,10 @@ public:
 	                             FLFPPrimitiveData& Data , const FString Value );
 
 	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	static TArray < uint8 > GetDataAsList ( UPARAM ( ref )
+		FLFPPrimitiveData& Data );
+
+	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
 	static void ClearData ( UPARAM ( ref )
 		FLFPPrimitiveData& Data );
 
