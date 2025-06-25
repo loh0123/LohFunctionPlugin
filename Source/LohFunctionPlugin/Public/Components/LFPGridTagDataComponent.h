@@ -6,7 +6,7 @@
 #include "LFPChunkedTagDataComponent.h"
 #include "LFPGridTagDataComponent.generated.h"
 
-UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
+UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) , HideCategories=("Setting|IndexSize") )
 class LOHFUNCTIONPLUGIN_API ULFPGridTagDataComponent : public ULFPChunkedTagDataComponent
 {
 	GENERATED_BODY ( )
