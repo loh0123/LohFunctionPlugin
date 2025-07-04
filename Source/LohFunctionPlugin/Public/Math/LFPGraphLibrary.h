@@ -156,6 +156,7 @@ public: // Graph Creation
 		const FIntVector GridSize ,
 		const int32      SeparateAmount ,
 		const int32      MinSize ,
+		const int32      MinConnectionArea ,
 		const float      SeparateXChance ,
 		const float      SeparateYChance ,
 		const float      SeparateZChance
@@ -171,10 +172,9 @@ public: // Maze Generation
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPMathLibrary | Maze" )
 	static FLFPGraphMazeListData GenerateMazeData (
-		UPARAM ( Ref )
-		FLFPGraphPointListData& GraphData ,
-		const int32             RoomStartIndex ,
-		const FRandomStream&    Seed
+		const FLFPGraphPointListData& GraphData ,
+		const int32                   RoomStartIndex ,
+		const FRandomStream&          Seed
 		);
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPMathLibrary | Maze" )

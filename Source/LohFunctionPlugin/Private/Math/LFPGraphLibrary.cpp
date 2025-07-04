@@ -14,6 +14,7 @@ void ULFPGraphLibrary::CreateSeparateGraphSection (
 	const FIntVector        GridSize ,
 	const int32             SeparateAmount ,
 	const int32             MinSize ,
+	const int32             MinConnectionArea ,
 	const float             SeparateXChance ,
 	const float             SeparateYChance ,
 	const float             SeparateZChance )
@@ -36,15 +37,15 @@ void ULFPGraphLibrary::CreateSeparateGraphSection (
 		++SeparateIndex
 	)
 	{
-		// Random Swap
-		for ( int32 ArrayIndex = 0 ; ArrayIndex < NextSeparateAreaList.Num ( ) ; ++ArrayIndex )
-		{
-			NextSeparateAreaList.Swap ( ArrayIndex , RandomSeed.RandHelper ( NextSeparateAreaList.Num ( ) - 1 ) );
-		}
-
 		for ( int32 AxesIndex = 0 ; AxesIndex < 3 ; ++AxesIndex )
 		{
-			TArray < FLFPGraphAreaSize > CurrentSeparateAreaList = NextSeparateAreaList;
+			// Random Swap
+			for ( int32 ArrayIndex = 0 ; ArrayIndex < NextSeparateAreaList.Num ( ) ; ++ArrayIndex )
+			{
+				NextSeparateAreaList.Swap ( ArrayIndex , RandomSeed.RandHelper ( NextSeparateAreaList.Num ( ) - 1 ) );
+			}
+			
+			const TArray < FLFPGraphAreaSize > CurrentSeparateAreaList = NextSeparateAreaList;
 			NextSeparateAreaList.Reset ( );
 
 			int32 SeparateCount = FMath::CeilToInt ( AxesChanceList [ AxesIndex ] * static_cast < float > ( CurrentSeparateAreaList.Num ( ) ) );
@@ -57,8 +58,6 @@ void ULFPGraphLibrary::CreateSeparateGraphSection (
 				}
 				else
 				{
-					SeparateCount -= 1;
-
 					const int32 AreaSize = IterationData.GetSize ( ) [ AxesIndex ];
 					const int32 CutRange = AreaSize - MinAreaSize - 1;
 
@@ -84,6 +83,8 @@ void ULFPGraphLibrary::CreateSeparateGraphSection (
 					{
 						NextSeparateAreaList.Add ( IterationData );
 					}
+
+					SeparateCount -= 1;
 				}
 			}
 		}
@@ -113,9 +114,9 @@ void ULFPGraphLibrary::CreateSeparateGraphSection (
 				auto& CompareData = OutResult.PointList [ CompareIndex ];
 				{
 					if (
-						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( 1.0 , 0.0 , 0.0 ) ) ) ||
-						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( 0.0 , 1.0 , 0.0 ) ) ) ||
-						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( 0.0 , 0.0 , 1.0 ) ) )
+						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( 1.0 , -MinConnectionArea , -MinConnectionArea ) ) ) ||
+						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( -MinConnectionArea , 1.0 , -MinConnectionArea ) ) ) ||
+						CurrentData.PointData.Intersect ( CompareData.PointData.ExpandBy ( FVector ( -MinConnectionArea , -MinConnectionArea , 1.0 ) ) )
 					)
 					{
 						CurrentData.ConnectedGraphIndexList.Add ( CompareIndex );
@@ -182,7 +183,7 @@ void ULFPGraphLibrary::CreateGridGraph ( FLFPGraphPointListData& OutResult , con
 	}
 }
 
-FLFPGraphMazeListData ULFPGraphLibrary::GenerateMazeData ( FLFPGraphPointListData& GraphData , const int32 RoomStartIndex , const FRandomStream& Seed )
+FLFPGraphMazeListData ULFPGraphLibrary::GenerateMazeData ( const FLFPGraphPointListData& GraphData , const int32 RoomStartIndex , const FRandomStream& Seed )
 {
 	FLFPGraphMazeListData ResultData = GraphData;
 
