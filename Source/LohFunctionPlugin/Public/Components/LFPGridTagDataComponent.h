@@ -29,27 +29,10 @@ public:
 protected:
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category="Setting" )
-	TObjectPtr < class ULFPGridSetting > GridSetting = nullptr;
+	TObjectPtr < class ULFPChunkedIndexTranslator > GridSetting = nullptr;
 
 public:
 
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	class ULFPGridSetting* GetGridSetting ( ) const;
-
-public:
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const;
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntPoint ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const;
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const;
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const;
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector AddOffsetToGridIndex ( FIntVector GridIndex , const FIntVector Offset , const bool bRound = false ) const;
+	UFUNCTION ( BlueprintCallable , Category = "LFPGridTagDataComponent" )
+	ULFPChunkedIndexTranslator* GetGridSetting ( ) const;
 };
