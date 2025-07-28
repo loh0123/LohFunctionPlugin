@@ -35,9 +35,15 @@ public:
 
 public:
 
-	virtual FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const override;
-	virtual FIntPoint  ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const override;
-	virtual FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const override;
-	virtual FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const override;
-	virtual FIntVector AddOffsetToGridIndex ( FIntVector GridIndex , const FIntVector Offset , const bool bRound = false ) const override;
+	FORCEINLINE FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const;
+	FORCEINLINE FIntPoint  ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const;
+	FORCEINLINE FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const;
+	FORCEINLINE FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const;
+
+public:
+
+	virtual FIntVector GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult ) const override;
+	virtual FIntVector GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult ) const override;
+	virtual FIntPoint  AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound = false ) const override;
+	virtual FIntVector AddOffsetToDataGridIndex ( const FIntVector DataGridIndex , const FIntVector Offset , const bool bRound = false ) const override;
 };

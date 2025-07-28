@@ -44,18 +44,27 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	virtual FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const { return FIntVector ( ); }
+	//UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	//virtual FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const { return FIntVector ( ); }
+	//
+	//UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	//virtual FIntPoint ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const { return FIntPoint ( ); }
+	//
+	//UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	//virtual FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const { return FIntVector ( ); }
+	//
+	//UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	//virtual FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const { return FIntVector ( ); }
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	virtual FIntPoint ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const { return FIntPoint ( ); }
+	virtual FIntVector GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult = true ) const { return FIntVector ( ); }
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	virtual FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const { return FIntVector ( ); }
+	virtual FIntVector GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult = true ) const { return FIntVector ( ); }
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	virtual FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const { return FIntVector ( ); }
+	virtual FIntPoint AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound = false ) const { return FIntPoint ( ); }
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	virtual FIntVector AddOffsetToGridIndex ( FIntVector GridIndex , const FIntVector Offset , const bool bRound = false ) const { return FIntVector ( ); }
+	virtual FIntVector AddOffsetToDataGridIndex ( const FIntVector DataGridIndex , const FIntVector Offset , const bool bRound = false ) const { return FIntVector ( ); }
 };
