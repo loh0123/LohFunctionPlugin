@@ -35,13 +35,6 @@ public:
 
 public:
 
-	FORCEINLINE FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const;
-	FORCEINLINE FIntPoint  ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const;
-	FORCEINLINE FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const;
-	FORCEINLINE FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const;
-
-public:
-
 	virtual FIntVector GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult ) const override;
 	virtual FIntVector GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult ) const override;
 	virtual FIntPoint  AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound = false ) const override;
