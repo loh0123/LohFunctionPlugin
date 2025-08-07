@@ -17,9 +17,9 @@ ULFPGridTagDataComponent::ULFPGridTagDataComponent ( )
 // Called when the game starts
 void ULFPGridTagDataComponent::BeginPlay ( )
 {
-	DataIndexSize   = GetDataIndexSize ( );
-	ChunkIndexSize  = GetChunkIndexSize ( );
-	RegionIndexSize = GetRegionIndexSize ( );
+	DataIndexSize   = DataGridSize.X * DataGridSize.Y * DataGridSize.Z;
+	ChunkIndexSize  = ChunkGridSize.X * ChunkGridSize.Y * ChunkGridSize.Z;
+	RegionIndexSize = RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z;
 
 	Super::BeginPlay ( );
 }
