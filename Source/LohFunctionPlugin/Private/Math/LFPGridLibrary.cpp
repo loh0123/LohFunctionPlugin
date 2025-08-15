@@ -15,38 +15,43 @@ bool ULFPGridLibrary::IsOnGridEdge ( const FIntVector& Location , const FIntVect
 	return Location.GetMin ( ) == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
 }
 
-TArray <FIntVector> ULFPGridLibrary::GetGridEdgeDirection ( const FIntVector& Location , const FIntVector& GridSize )
+TArray < FIntVector > ULFPGridLibrary::GetGridEdgeDirection ( const FIntVector& Location , const FIntVector& GridSize )
 {
-	TArray <FIntVector> ReturnList;
+	TArray < FIntVector > ReturnList;
 
-	if ( Location.X == GridSize.X - 1 )
-	{
-		ReturnList.Add ( FIntVector ( 1 , 0 , 0 ) );
-	}
+	const TPair < bool , FIntVector > EdgeMapXList [ 3 ] = { { Location.X == 0 , FIntVector ( -1 , 0 , 0 ) } , { true , FIntVector ( 0 , 0 , 0 ) } , { Location.X == GridSize.X - 1 , FIntVector ( 1 , 0 , 0 ) } };
+	const TPair < bool , FIntVector > EdgeMapYList [ 3 ] = { { Location.Y == 0 , FIntVector ( 0 , -1 , 0 ) } , { true , FIntVector ( 0 , 0 , 0 ) } , { Location.Y == GridSize.Y - 1 , FIntVector ( 0 , 1 , 0 ) } };
+	const TPair < bool , FIntVector > EdgeMapZList [ 3 ] = { { Location.Z == 0 , FIntVector ( 0 , 0 , -1 ) } , { true , FIntVector ( 0 , 0 , 0 ) } , { Location.Z == GridSize.Z - 1 , FIntVector ( 0 , 0 , 1 ) } };
 
-	if ( Location.Y == GridSize.Y - 1 )
+	for ( const auto& EdgeMapX : EdgeMapXList )
 	{
-		ReturnList.Add ( FIntVector ( 0 , 1 , 0 ) );
-	}
+		if ( EdgeMapX.Key == false )
+		{
+			continue;
+		}
 
-	if ( Location.Z == GridSize.Z - 1 )
-	{
-		ReturnList.Add ( FIntVector ( 0 , 0 , 1 ) );
-	}
+		for ( const auto& EdgeMapY : EdgeMapYList )
+		{
+			if ( EdgeMapY.Key == false )
+			{
+				continue;
+			}
 
-	if ( Location.X == 0 )
-	{
-		ReturnList.Add ( FIntVector ( -1 , 0 , 0 ) );
-	}
+			for ( const auto& EdgeMapZ : EdgeMapZList )
+			{
+				if ( EdgeMapZ.Key == false )
+				{
+					continue;
+				}
 
-	if ( Location.Y == 0 )
-	{
-		ReturnList.Add ( FIntVector ( 0 , -1 , 0 ) );
-	}
+				const FIntVector EdgeDirection = EdgeMapX.Value + EdgeMapY.Value + EdgeMapZ.Value;
 
-	if ( Location.Z == 0 )
-	{
-		ReturnList.Add ( FIntVector ( 0 , 0 , -1 ) );
+				if ( EdgeDirection != FIntVector::ZeroValue )
+				{
+					ReturnList.Add ( EdgeDirection );
+				}
+			}
+		}
 	}
 
 	return ReturnList;
@@ -81,9 +86,9 @@ int32 ULFPGridLibrary::ToGridIndex ( FIntVector Location , const FIntVector& Gri
 	return Location.X + ( Location.Y * GridSize.X ) + ( Location.Z * ( GridSize.X * GridSize.Y ) );
 }
 
-TArray <int32> ULFPGridLibrary::ToGridIndexList ( const TArray <FIntVector>& GridLocations , const FIntVector Offset , const FIntVector& GridSize )
+TArray < int32 > ULFPGridLibrary::ToGridIndexList ( const TArray < FIntVector >& GridLocations , const FIntVector Offset , const FIntVector& GridSize )
 {
-	TArray <int32> ReturnData;
+	TArray < int32 > ReturnData;
 
 	for ( const FIntVector Item : GridLocations )
 	{
@@ -125,9 +130,9 @@ FIntVector ULFPGridLibrary::ToGridLocation ( int32 Index , const FIntVector& Gri
 	return ReturnData;
 }
 
-TArray <FIntVector> ULFPGridLibrary::ToGridLocationList ( const TArray <int32>& Indexs , const int32 Offset , const FIntVector& GridSize )
+TArray < FIntVector > ULFPGridLibrary::ToGridLocationList ( const TArray < int32 >& Indexs , const int32 Offset , const FIntVector& GridSize )
 {
-	TArray <FIntVector> ReturnData;
+	TArray < FIntVector > ReturnData;
 
 	int32 GridArratSize = GridSize.X * GridSize.Y * GridSize.Z;
 
@@ -144,9 +149,9 @@ TArray <FIntVector> ULFPGridLibrary::ToGridLocationList ( const TArray <int32>& 
 	return ReturnData;
 }
 
-TArray <int32> ULFPGridLibrary::SectionGridIndex ( const FIntVector SectionSize , const TSet <int32>& IgnoreIndexs , const FIntVector& GridSize )
+TArray < int32 > ULFPGridLibrary::SectionGridIndex ( const FIntVector SectionSize , const TSet < int32 >& IgnoreIndexs , const FIntVector& GridSize )
 {
-	TArray <int32> ReturnData;
+	TArray < int32 > ReturnData;
 
 	if ( SectionSize.GetMin ( ) <= 0 )
 	{
@@ -177,9 +182,9 @@ TArray <int32> ULFPGridLibrary::SectionGridIndex ( const FIntVector SectionSize 
 	return ReturnData;
 }
 
-TArray <int32> ULFPGridLibrary::RandomSectionGridIndex ( const int32 Amount , const FIntVector SectionSize , const TSet <int32>& IgnoreIndexs , const FRandomStream& Seed , const FIntVector& GridSize )
+TArray < int32 > ULFPGridLibrary::RandomSectionGridIndex ( const int32 Amount , const FIntVector SectionSize , const TSet < int32 >& IgnoreIndexs , const FRandomStream& Seed , const FIntVector& GridSize )
 {
-	TArray <int32> ReturnData;
+	TArray < int32 > ReturnData;
 
 	if ( SectionSize.GetMin ( ) <= 0 )
 	{
@@ -187,7 +192,7 @@ TArray <int32> ULFPGridLibrary::RandomSectionGridIndex ( const int32 Amount , co
 	}
 
 	// Setup Unvist List
-	TArray <int32> UnVisit;
+	TArray < int32 > UnVisit;
 	// Reserve List To Fill Faster
 	UnVisit.Reserve ( GridSize.X * GridSize.Y * GridSize.Z );
 	// Fill Unvisit List With Index
@@ -223,10 +228,10 @@ TArray <int32> ULFPGridLibrary::RandomSectionGridIndex ( const int32 Amount , co
 	return ReturnData;
 }
 
-TArray <int32> ULFPGridLibrary::GetGridAreaIndex ( const int32 Index , const FIntVector Offset , const FIntVector AreaSize , const FIntVector& GridSize )
+TArray < int32 > ULFPGridLibrary::GetGridAreaIndex ( const int32 Index , const FIntVector Offset , const FIntVector AreaSize , const FIntVector& GridSize )
 {
-	FIntVector     StartLoc = ToGridLocation ( Index , GridSize ) + Offset;
-	TArray <int32> ReturnData;
+	FIntVector       StartLoc = ToGridLocation ( Index , GridSize ) + Offset;
+	TArray < int32 > ReturnData;
 
 	ReturnData.Reserve ( ( ( AreaSize.X * AreaSize.Y * AreaSize.Z ) * 2 ) + 1 );
 
