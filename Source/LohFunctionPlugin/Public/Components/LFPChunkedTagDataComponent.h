@@ -402,9 +402,94 @@ public:
 	FName CompressionName = NAME_Oodle;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams ( FLFPChunkedTagData_TagChanged , const int32 , RegionIndex , const int32 , ChunkIndex , const int32 , DataIndex , const FGameplayTag& , OldTag , const FGameplayTag& , NewTag );
+USTRUCT ( BlueprintType )
+struct FLFPTagChangeEvent
+{
+	GENERATED_BODY ( )
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams ( FLFPChunkedTagData_MetaChanged , const int32 , RegionIndex , const int32 , ChunkIndex , const int32 , DataIndex , const FGameplayTag& , MetaTag , const FLFPPrimitiveData& , OldMetaData , const FLFPPrimitiveData& , NewMetaData );
+	FLFPTagChangeEvent ( ) = default;
+
+	FLFPTagChangeEvent
+	(
+		const int32         InRegionIndex ,
+		const int32         InChunkIndex ,
+		const int32         InDataIndex ,
+		const FGameplayTag& InOldTag ,
+		const FGameplayTag& InNewTag
+		) : RegionIndex ( InRegionIndex )
+		    , ChunkIndex ( InChunkIndex )
+		    , DataIndex ( InDataIndex )
+		    , OldTag ( InOldTag )
+		    , NewTag ( InNewTag )
+	{
+	}
+
+public:
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 RegionIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 ChunkIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 DataIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FGameplayTag OldTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FGameplayTag NewTag = FGameplayTag::EmptyTag;
+};
+
+USTRUCT ( BlueprintType )
+struct FLFPMetaChangeEvent
+{
+	GENERATED_BODY ( )
+
+	FLFPMetaChangeEvent ( ) = default;
+
+	FLFPMetaChangeEvent
+	(
+		const int32              InRegionIndex ,
+		const int32              InChunkIndex ,
+		const int32              InDataIndex ,
+		const FGameplayTag&      InMetaTag ,
+		const FLFPPrimitiveData& InOldMetaData ,
+		const FLFPPrimitiveData& InNewMetaData
+		) : RegionIndex ( InRegionIndex )
+		    , ChunkIndex ( InChunkIndex )
+		    , DataIndex ( InDataIndex )
+		    , MetaTag ( InMetaTag )
+		    , OldMetaData ( InOldMetaData )
+		    , NewMetaData ( InNewMetaData )
+	{
+	}
+
+public:
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 RegionIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 ChunkIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 DataIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FGameplayTag MetaTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FLFPPrimitiveData OldMetaData = FLFPPrimitiveData ( );
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedTagData_TagChanged , const TArray<FLFPTagChangeEvent>& , ChangeList );
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedTagData_MetaChanged , const TArray<FLFPMetaChangeEvent>& , ChangeList );
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams ( FLFPChunkedTagData_Initialization , const int32 , RegionIndex , const int32 , ChunkIndex );
 
@@ -547,6 +632,34 @@ public:
 
 	UFUNCTION ( BlueprintPure )
 	int32 GetRegionIndexSize ( ) const;
+
+private:
+
+	UFUNCTION ( )
+	void AddTagChangeEvent ( const FLFPTagChangeEvent& NewEvent );
+
+	UFUNCTION ( )
+	void AddMetaChangeEvent ( const FLFPMetaChangeEvent& NewEvent );
+
+	UFUNCTION ( )
+	void BroadcastTagChangeEvent ( );
+
+	UFUNCTION ( )
+	void BroadcastMetaChangeEvent ( );
+
+private:
+
+	UPROPERTY ( Transient )
+	TArray < FLFPTagChangeEvent > TagChangeEventList;
+
+	UPROPERTY ( Transient )
+	TArray < FLFPMetaChangeEvent > MetaChangeEventList;
+
+	UPROPERTY ( Transient )
+	FTimerHandle TagChangeEventHandle;
+
+	UPROPERTY ( Transient )
+	FTimerHandle MetaChangeEventHandle;
 
 public:
 
