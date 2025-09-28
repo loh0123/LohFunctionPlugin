@@ -551,16 +551,16 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
 	TArray < FGameplayTag > GetDataTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
 	FGameplayTag GetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewDataTag") )
 	void SetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag );
 
-	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
+	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe , AutoCreateRefTerm="DataMetaTag") )
 	FLFPPrimitiveData GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
@@ -571,7 +571,7 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
 	FGameplayTag GetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewChunkTag") )
@@ -588,7 +588,7 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
 	FGameplayTag GetRegionTag ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewRegionTag") )
@@ -605,32 +605,32 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	bool IsRegionIndexValid ( const int32 RegionIndex ) const;
 
 public:
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	bool IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintCallable )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	bool IsRegionInitialized ( const int32 RegionIndex ) const;
 
 public:
 
-	UFUNCTION ( BlueprintPure )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	int32 GetDataIndexSize ( ) const;
 
-	UFUNCTION ( BlueprintPure )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	int32 GetChunkIndexSize ( ) const;
 
-	UFUNCTION ( BlueprintPure )
+	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
 	int32 GetRegionIndexSize ( ) const;
 
 private:
