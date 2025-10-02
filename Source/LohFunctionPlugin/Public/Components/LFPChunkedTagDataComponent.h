@@ -551,10 +551,10 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintCallable )
 	TArray < FGameplayTag > GetDataTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintCallable )
 	FGameplayTag GetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewDataTag") )
@@ -571,7 +571,7 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintCallable )
 	FGameplayTag GetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewChunkTag") )
@@ -588,7 +588,7 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintCallable )
 	FGameplayTag GetRegionTag ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewRegionTag") )
@@ -605,32 +605,32 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	bool IsRegionIndexValid ( const int32 RegionIndex ) const;
 
 public:
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	bool IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	bool IsRegionInitialized ( const int32 RegionIndex ) const;
 
 public:
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	int32 GetDataIndexSize ( ) const;
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	int32 GetChunkIndexSize ( ) const;
 
-	UFUNCTION ( BlueprintPure , meta=(BlueprintThreadSafe) )
+	UFUNCTION ( BlueprintPure )
 	int32 GetRegionIndexSize ( ) const;
 
 private:
