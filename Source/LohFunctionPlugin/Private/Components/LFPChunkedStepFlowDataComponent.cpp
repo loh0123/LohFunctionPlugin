@@ -6,32 +6,28 @@
 #include "Serialization/ArchiveLoadCompressedProxy.h"
 #include "Serialization/ArchiveSaveCompressedProxy.h"
 
-FLFPStepFlowCellData ULFPChunkedStepFlowDataLibrary::MakeFlowCellData ( const ELFPStepFlowSetting FlowSetting , const FIntVector FlowVector , const int32 FlowPressure )
+DEFINE_LOG_CATEGORY ( LogChunkedStepFlowDataComponent );
+
+FLFPStepFlowCellData ULFPChunkedStepFlowDataLibrary::MakeFlowCellData ( const FIntVector FlowVector , const int32 FlowResistant )
 {
 	FLFPStepFlowCellData ResultData;
 
-	ResultData.FlowSetting  = FlowSetting;
-	ResultData.FlowVectorX  = FlowVector.X;
-	ResultData.FlowVectorY  = FlowVector.Y;
-	ResultData.FlowVectorZ  = FlowVector.Z;
-	ResultData.FlowPressure = FlowPressure;
+	ResultData.SetFlowVectorComponent ( 0 , FlowVector.X );
+	ResultData.SetFlowVectorComponent ( 1 , FlowVector.Y );
+	ResultData.SetFlowVectorComponent ( 2 , FlowVector.Z );
+	ResultData.SetFlowResistant ( FlowResistant );
 
 	return ResultData;
 }
 
-ELFPStepFlowSetting ULFPChunkedStepFlowDataLibrary::GetFlowCellSetting ( const FLFPStepFlowCellData& CellData )
-{
-	return CellData.FlowSetting;
-}
-
 FIntVector ULFPChunkedStepFlowDataLibrary::GetFlowCellVelocity ( const FLFPStepFlowCellData& CellData )
 {
-	return FIntVector ( CellData.FlowVectorX , CellData.FlowVectorY , CellData.FlowVectorZ );
+	return CellData.GetFlowVector ( );
 }
 
-int32 ULFPChunkedStepFlowDataLibrary::GetFlowCellPressure ( const FLFPStepFlowCellData& CellData )
+int32 ULFPChunkedStepFlowDataLibrary::GetFlowCellResistant ( const FLFPStepFlowCellData& CellData )
 {
-	return CellData.FlowPressure;
+	return CellData.GetFlowResistant ( );
 }
 
 
@@ -40,7 +36,7 @@ ULFPChunkedStepFlowDataComponent::ULFPChunkedStepFlowDataComponent ( )
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -77,7 +73,7 @@ void ULFPChunkedStepFlowDataComponent::LoadRegion ( const int32 RegionIndex , co
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -97,7 +93,7 @@ void ULFPChunkedStepFlowDataComponent::SaveRegion ( const int32 RegionIndex , FL
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -114,7 +110,7 @@ void ULFPChunkedStepFlowDataComponent::InitializeChunk ( const int32 RegionIndex
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -122,7 +118,7 @@ void ULFPChunkedStepFlowDataComponent::InitializeChunk ( const int32 RegionIndex
 
 	if ( IsChunkInitialized ( RegionIndex , ChunkIndex ) )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Log , TEXT("%hs : Chunk ( %i ) on Region ( %i ) already initialized") , __FUNCTION__ , ChunkIndex , RegionIndex );
 
 		return;
@@ -135,7 +131,7 @@ void ULFPChunkedStepFlowDataComponent::DeinitializeChunk ( const int32 RegionInd
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -148,7 +144,7 @@ void ULFPChunkedStepFlowDataComponent::InitializeRegion ( const int32 RegionInde
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -156,7 +152,7 @@ void ULFPChunkedStepFlowDataComponent::InitializeRegion ( const int32 RegionInde
 
 	if ( IsRegionInitialized ( RegionIndex ) )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Log , TEXT("%hs : Region ( %i ) already initialized") , __FUNCTION__ , RegionIndex );
 
 		return;
@@ -169,7 +165,7 @@ void ULFPChunkedStepFlowDataComponent::DeinitializeRegion ( const int32 RegionIn
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
 
 		return;
@@ -192,7 +188,7 @@ FLFPStepFlowCellData ULFPChunkedStepFlowDataComponent::GetData ( const int32 Reg
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
 
 		return FLFPStepFlowCellData ( );
@@ -205,7 +201,7 @@ void ULFPChunkedStepFlowDataComponent::SetData ( const int32 RegionIndex , const
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
-		UE_LOG ( LogChunkedFlowDataComponent
+		UE_LOG ( LogChunkedStepFlowDataComponent
 		         , Warning , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
 
 		return;
@@ -220,7 +216,7 @@ void ULFPChunkedStepFlowDataComponent::SetData ( const int32 RegionIndex , const
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
 
-	AddFLowChangeEvent ( FLFPStepFlowChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData ) );
+	AddFlowChangeEvent ( FLFPStepFlowChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData ) );
 }
 
 bool ULFPChunkedStepFlowDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
@@ -263,7 +259,7 @@ int32 ULFPChunkedStepFlowDataComponent::GetRegionIndexSize ( ) const
 	return RegionIndexSize;
 }
 
-void ULFPChunkedStepFlowDataComponent::AddFLowChangeEvent ( const FLFPStepFlowChangeEvent& NewEvent )
+void ULFPChunkedStepFlowDataComponent::AddFlowChangeEvent ( const FLFPStepFlowChangeEvent& NewEvent )
 {
 	FlowChangeEventList.Add ( NewEvent );
 

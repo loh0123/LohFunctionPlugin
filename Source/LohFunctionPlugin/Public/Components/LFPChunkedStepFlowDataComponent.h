@@ -6,16 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "LFPChunkedStepFlowDataComponent.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN ( LogChunkedFlowDataComponent , Log , All );
-
-UENUM ( BlueprintType , meta=( Bitflags , UseEnumValuesAsMaskValuesInEditor=true ) )
-enum class ELFPStepFlowSetting : uint8
-{
-	LFP_None         = 0 UMETA ( DisplayName = "None" , Hidden ) ,
-	LFP_Inaccessible = 1 << 0 UMETA ( DisplayName = "Inaccessible" ) ,
-};
-
-ENUM_CLASS_FLAGS ( ELFPStepFlowSetting );
+DECLARE_LOG_CATEGORY_EXTERN ( LogChunkedStepFlowDataComponent , Log , All );
 
 USTRUCT ( BlueprintType )
 struct FLFPStepFlowCellData
@@ -24,26 +15,50 @@ struct FLFPStepFlowCellData
 
 	FLFPStepFlowCellData ( ) = default;
 
-public:
+private:
 
 	UPROPERTY ( )
-	ELFPStepFlowSetting FlowSetting = ELFPStepFlowSetting::LFP_None;
+	int16 FlowVectorX = 0;
 
 	UPROPERTY ( )
-	int8 FlowVectorX = 0;
+	int16 FlowVectorY = 0;
 
 	UPROPERTY ( )
-	int8 FlowVectorY = 0;
+	int16 FlowVectorZ = 0;
 
 	UPROPERTY ( )
-	int8 FlowVectorZ = 0;
-
-	UPROPERTY ( )
-	int16 FlowPressure = 0;
+	int16 FlowResistant = 0;
 
 public:
 
-	FORCEINLINE const int8& GetFlowVectorComponent ( const int32 ComponentIndex ) const
+	FORCEINLINE int32 GetFlowX ( ) const
+	{
+		return FlowVectorX;
+	}
+
+	FORCEINLINE int32 GetFlowY ( ) const
+	{
+		return FlowVectorY;
+	}
+
+	FORCEINLINE int32 GetFlowZ ( ) const
+	{
+		return FlowVectorZ;
+	}
+
+	FORCEINLINE int32 GetFlowResistant ( ) const
+	{
+		return FlowResistant;
+	}
+
+	FORCEINLINE FIntVector GetFlowVector ( ) const
+	{
+		return FIntVector ( FlowVectorX , FlowVectorY , FlowVectorZ );
+	}
+
+public:
+
+	FORCEINLINE int32 GetFlowVectorComponent ( const int32 ComponentIndex ) const
 	{
 		switch ( ComponentIndex )
 		{
@@ -56,32 +71,33 @@ public:
 			default : checkf ( false , TEXT ( "Invalid ComponentIndex" ) );
 		}
 
-		// This is an error and is not supposed to hit
-		return FlowVectorX;
+		return 0;
 	}
 
-	FORCEINLINE int8& GetFlowVectorComponent ( const int32 ComponentIndex )
+	FORCEINLINE void SetFlowVectorComponent ( const int32 ComponentIndex , const int32 NewValue )
 	{
 		switch ( ComponentIndex )
 		{
-			case 0 : return FlowVectorX;
+			case 0 : FlowVectorX = FMath::Clamp ( NewValue , INT16_MIN , INT16_MAX );
 				break;
-			case 1 : return FlowVectorY;
+			case 1 : FlowVectorY = FMath::Clamp ( NewValue , INT16_MIN , INT16_MAX );
 				break;
-			case 2 : return FlowVectorZ;
+			case 2 : FlowVectorZ = FMath::Clamp ( NewValue , INT16_MIN , INT16_MAX );
 				break;
 			default : checkf ( false , TEXT ( "Invalid ComponentIndex" ) );
 		}
+	}
 
-		// This is an error and is not supposed to hit
-		return FlowVectorX;
+	FORCEINLINE void AddFlowVectorComponent ( const int32 ComponentIndex , const int32 AddValue )
+	{
+		SetFlowVectorComponent ( ComponentIndex , GetFlowVectorComponent ( ComponentIndex ) + AddValue );
 	}
 
 public:
 
-	FORCEINLINE bool IsFlowable ( ) const
+	FORCEINLINE void SetFlowResistant ( const int32 NewValue )
 	{
-		return ( FlowSetting & ELFPStepFlowSetting::LFP_Inaccessible ) == ELFPStepFlowSetting::LFP_None;
+		FlowResistant = FMath::Clamp ( NewValue , INT16_MIN , INT16_MAX );
 	}
 
 public:
@@ -89,11 +105,10 @@ public:
 	FORCEINLINE bool operator== ( const FLFPStepFlowCellData& Other ) const
 	{
 		return
-			FlowSetting == Other.FlowSetting
-			&& FlowVectorX == Other.FlowVectorX
+			FlowVectorX == Other.FlowVectorX
 			&& FlowVectorY == Other.FlowVectorY
 			&& FlowVectorZ == Other.FlowVectorZ
-			&& FlowPressure == Other.FlowPressure;
+			&& FlowResistant == Other.FlowResistant;
 	}
 };
 
@@ -213,6 +228,10 @@ public:
 
 		return ChunkList [ ChunkIndex ];
 	}
+
+public:
+
+	FORCEINLINE bool IsFlowable ( ) const { return IsInitialized ( ); }
 };
 
 USTRUCT ( BlueprintType )
@@ -280,16 +299,13 @@ class ULFPChunkedStepFlowDataLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPChunkedFlowDataLibrary" )
-	static FLFPStepFlowCellData MakeFlowCellData ( const ELFPStepFlowSetting FlowSetting , const FIntVector FlowVector , const int32 FlowPressure );
-
-	UFUNCTION ( BlueprintCallable , Category = "LFPChunkedFlowDataLibrary" )
-	static ELFPStepFlowSetting GetFlowCellSetting ( const FLFPStepFlowCellData& CellData );
+	static FLFPStepFlowCellData MakeFlowCellData ( const FIntVector FlowVector , const int32 FlowResistant );
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPChunkedFlowDataLibrary" )
 	static FIntVector GetFlowCellVelocity ( const FLFPStepFlowCellData& CellData );
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPChunkedFlowDataLibrary" )
-	static int32 GetFlowCellPressure ( const FLFPStepFlowCellData& CellData );
+	static int32 GetFlowCellResistant ( const FLFPStepFlowCellData& CellData );
 };
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
@@ -388,7 +404,7 @@ public:
 private:
 
 	UFUNCTION ( )
-	void AddFLowChangeEvent ( const FLFPStepFlowChangeEvent& NewEvent );
+	void AddFlowChangeEvent ( const FLFPStepFlowChangeEvent& NewEvent );
 
 	UFUNCTION ( )
 	void BroadcastFlowChangeEvent ( );
