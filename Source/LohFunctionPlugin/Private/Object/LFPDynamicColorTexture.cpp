@@ -25,7 +25,7 @@ void ULFPDynamicColorTexture::Init ( const FIntPoint Size , const TextureFilter 
 	ColorTexture->CompressionSettings = TC_VectorDisplacementmap;
 	ColorTexture->SRGB                = bSRGB;
 	ColorTexture->Filter              = Filter;
-	ColorTexture->UpdateResource ( );
+	ColorTexture->UpdateResourceWithParams ( UTexture::EUpdateResourceFlags::None );
 
 	TextureRegion = MakeUnique < FUpdateTextureRegion2D > ( 0 , 0 , 0 , 0 , Size.X , Size.Y );
 	Upload ( );
@@ -40,10 +40,13 @@ void ULFPDynamicColorTexture::SetPixelColor ( const int32 X , const int32 Y , co
 
 	const int32 ListIndex = ( X + Y * ColorTexture->GetSizeX ( ) ) * 4;
 
-	ColorList [ ListIndex ]     = NewColor.B;
-	ColorList [ ListIndex + 1 ] = NewColor.G;
-	ColorList [ ListIndex + 2 ] = NewColor.R;
-	ColorList [ ListIndex + 3 ] = NewColor.A;
+	if ( ColorList.IsValidIndex ( ListIndex ) && ColorList.IsValidIndex ( ListIndex + 3 ) )
+	{
+		ColorList [ ListIndex ]     = NewColor.B;
+		ColorList [ ListIndex + 1 ] = NewColor.G;
+		ColorList [ ListIndex + 2 ] = NewColor.R;
+		ColorList [ ListIndex + 3 ] = NewColor.A;
+	}
 }
 
 void ULFPDynamicColorTexture::Upload ( )

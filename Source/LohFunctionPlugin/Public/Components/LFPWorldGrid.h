@@ -13,10 +13,7 @@
 UENUM ( BlueprintType )
 enum class ELFPGridType : uint8
 {
-	Rectangular UMETA ( DisplayName = "Rectangular" )
-	, Hexagon UMETA ( DisplayName = "Hexagon" )
-	, Triangle UMETA ( DisplayName = "Triangle" )
-	,
+	Rectangular UMETA ( DisplayName = "Rectangular" ) , Hexagon UMETA ( DisplayName = "Hexagon" ) , Triangle UMETA ( DisplayName = "Triangle" ) ,
 };
 
 UCLASS ( ClassGroup=(LFPlugin) , meta=(BlueprintSpawnableComponent) )
@@ -61,8 +58,8 @@ public:
 	FVector GetVolumeSize ( const bool bHalfVolume ) const
 	{
 		return FVector ( GridSize ) * ( GridGap * ( bHalfVolume
-			                                            ? 0.5
-			                                            : 1.0 ) );
+		                                            ? 0.5
+		                                            : 1.0 ) );
 	}
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )

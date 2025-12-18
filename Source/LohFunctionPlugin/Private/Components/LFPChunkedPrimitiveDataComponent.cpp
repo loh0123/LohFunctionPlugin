@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/LFPChunkedByteListDataComponent.h"
+#include "Components/LFPChunkedPrimitiveDataComponent.h"
 
 #include "Serialization/ArchiveLoadCompressedProxy.h"
 #include "Serialization/ArchiveSaveCompressedProxy.h"
@@ -10,7 +10,7 @@ DEFINE_LOG_CATEGORY ( LogChunkedByteListDataComponent );
 
 
 // Sets default values for this component's properties
-ULFPChunkedByteListDataComponent::ULFPChunkedByteListDataComponent ( )
+ULFPChunkedPrimitiveDataComponent::ULFPChunkedPrimitiveDataComponent ( )
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -21,7 +21,7 @@ ULFPChunkedByteListDataComponent::ULFPChunkedByteListDataComponent ( )
 
 
 // Called when the game starts
-void ULFPChunkedByteListDataComponent::BeginPlay ( )
+void ULFPChunkedPrimitiveDataComponent::BeginPlay ( )
 {
 	Super::BeginPlay ( );
 
@@ -30,26 +30,24 @@ void ULFPChunkedByteListDataComponent::BeginPlay ( )
 
 
 // Called every frame
-void ULFPChunkedByteListDataComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
+void ULFPChunkedPrimitiveDataComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
 
 	// ...
 }
 
-void ULFPChunkedByteListDataComponent::SetSize ( const FIntVector& NewSize , const int32 NewByteSize )
+void ULFPChunkedPrimitiveDataComponent::SetSize ( const FIntVector& NewSize )
 {
 	RegionIndexSize = NewSize.X;
 	ChunkIndexSize  = NewSize.Y;
 	DataIndexSize   = NewSize.Z;
 
-	DataByteSize = NewByteSize;
-
 	RegionDataList.Reset ( );
 	RegionDataList.SetNum ( RegionIndexSize );
 }
 
-void ULFPChunkedByteListDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedByteListSerializeData& LoadData )
+void ULFPChunkedPrimitiveDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedPrimitiveSerializeData& LoadData )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -59,16 +57,16 @@ void ULFPChunkedByteListDataComponent::LoadRegion ( const int32 RegionIndex , co
 	}
 
 	// Clear region
-	RegionDataList [ RegionIndex ] = FLFPByteListRegionData ( );
+	RegionDataList [ RegionIndex ] = FLFPPrimitiveRegionData ( );
 
 	FArchiveLoadCompressedProxy Proxy ( LoadData.DataList , LoadData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
 
-	FLFPByteListRegionData& RegionData = RegionDataList [ RegionIndex ];
+	FLFPPrimitiveRegionData& RegionData = RegionDataList [ RegionIndex ];
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
 }
 
-void ULFPChunkedByteListDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChunkedByteListSerializeData& SaveData )
+void ULFPChunkedPrimitiveDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChunkedPrimitiveSerializeData& SaveData )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -79,12 +77,12 @@ void ULFPChunkedByteListDataComponent::SaveRegion ( const int32 RegionIndex , FL
 
 	FArchiveSaveCompressedProxy Proxy ( SaveData.DataList , SaveData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
 
-	FLFPByteListRegionData& RegionData = RegionDataList [ RegionIndex ];
+	FLFPPrimitiveRegionData& RegionData = RegionDataList [ RegionIndex ];
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
 }
 
-void ULFPChunkedByteListDataComponent::InitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
+void ULFPChunkedPrimitiveDataComponent::InitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
@@ -100,10 +98,10 @@ void ULFPChunkedByteListDataComponent::InitializeChunk ( const int32 RegionIndex
 		return;
 	}
 
-	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).InitializeChunkData ( DataIndexSize , DataByteSize );
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).InitializeChunkData ( DataIndexSize );
 }
 
-void ULFPChunkedByteListDataComponent::DeinitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
+void ULFPChunkedPrimitiveDataComponent::DeinitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
@@ -115,7 +113,7 @@ void ULFPChunkedByteListDataComponent::DeinitializeChunk ( const int32 RegionInd
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).DeinitializeChunkData ( );
 }
 
-void ULFPChunkedByteListDataComponent::InitializeRegion ( const int32 RegionIndex )
+void ULFPChunkedPrimitiveDataComponent::InitializeRegion ( const int32 RegionIndex )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -134,7 +132,7 @@ void ULFPChunkedByteListDataComponent::InitializeRegion ( const int32 RegionInde
 	RegionDataList [ RegionIndex ].InitializeRegionData ( ChunkIndexSize );
 }
 
-void ULFPChunkedByteListDataComponent::DeinitializeRegion ( const int32 RegionIndex )
+void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionIndex )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -146,17 +144,17 @@ void ULFPChunkedByteListDataComponent::DeinitializeRegion ( const int32 RegionIn
 	RegionDataList [ RegionIndex ].DeinitializeRegionData ( );
 }
 
-TArray < uint8 > ULFPChunkedByteListDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+const FLFPPrimitiveData& ULFPChunkedPrimitiveDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex , DataByteSize );
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 }
 
-TArray < uint8 > ULFPChunkedByteListDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
+TArray < FLFPPrimitiveData > ULFPChunkedPrimitiveDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataList ( );
 }
 
-TArray < uint8 > ULFPChunkedByteListDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
@@ -165,10 +163,10 @@ TArray < uint8 > ULFPChunkedByteListDataComponent::GetData ( const int32 RegionI
 		return TArray < uint8 > ( );
 	}
 
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex , DataByteSize );
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 }
 
-void ULFPChunkedByteListDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const TArray < uint8 >& NewData )
+void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData )
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
@@ -177,54 +175,54 @@ void ULFPChunkedByteListDataComponent::SetData ( const int32 RegionIndex , const
 		return;
 	}
 
-	if ( NewData == RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex , DataByteSize ) )
+	if ( NewData == RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) )
 	{
 		return;
 	}
 
-	const TArray < uint8 > OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex , DataByteSize );
+	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 
-	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , DataByteSize , NewData );
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
 
 	OnDataChanged.Broadcast ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData );
 }
 
-bool ULFPChunkedByteListDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+bool ULFPChunkedPrimitiveDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
-	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsDataIndexValid ( DataIndex , DataByteSize );
+	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsDataIndexValid ( DataIndex );
 }
 
-bool ULFPChunkedByteListDataComponent::IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const
+bool ULFPChunkedPrimitiveDataComponent::IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex );
 }
 
-bool ULFPChunkedByteListDataComponent::IsRegionIndexValid ( const int32 RegionIndex ) const
+bool ULFPChunkedPrimitiveDataComponent::IsRegionIndexValid ( const int32 RegionIndex ) const
 {
 	return RegionDataList.IsValidIndex ( RegionIndex );
 }
 
-bool ULFPChunkedByteListDataComponent::IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const
+bool ULFPChunkedPrimitiveDataComponent::IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	return IsChunkIndexValid ( RegionIndex , ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsInitialized ( );
 }
 
-bool ULFPChunkedByteListDataComponent::IsRegionInitialized ( const int32 RegionIndex ) const
+bool ULFPChunkedPrimitiveDataComponent::IsRegionInitialized ( const int32 RegionIndex ) const
 {
 	return IsRegionIndexValid ( RegionIndex ) && RegionDataList [ RegionIndex ].IsInitialized ( );
 }
 
-int32 ULFPChunkedByteListDataComponent::GetDataIndexSize ( ) const
+int32 ULFPChunkedPrimitiveDataComponent::GetDataIndexSize ( ) const
 {
 	return DataIndexSize;
 }
 
-int32 ULFPChunkedByteListDataComponent::GetChunkIndexSize ( ) const
+int32 ULFPChunkedPrimitiveDataComponent::GetChunkIndexSize ( ) const
 {
 	return ChunkIndexSize;
 }
 
-int32 ULFPChunkedByteListDataComponent::GetRegionIndexSize ( ) const
+int32 ULFPChunkedPrimitiveDataComponent::GetRegionIndexSize ( ) const
 {
 	return RegionIndexSize;
 }

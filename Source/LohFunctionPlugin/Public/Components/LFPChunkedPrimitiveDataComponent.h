@@ -4,92 +4,98 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "LFPChunkedByteListDataComponent.generated.h"
+#include "Library/LFPDynamicTypeLibrary.h"
+#include "LFPChunkedPrimitiveDataComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN ( LogChunkedByteListDataComponent , Log , All );
 
 USTRUCT ( )
-struct FLFPByteListChunkData
+struct FLFPPrimitiveChunkData
 {
 	GENERATED_BODY ( )
 
-	FLFPByteListChunkData ( ) = default;
+	FLFPPrimitiveChunkData ( ) = default;
 
 private:
 
 	UPROPERTY ( )
-	TArray < uint8 > DataByteList = TArray < uint8 > ( );
+	TArray < FLFPPrimitiveData > PrimitiveList = TArray < FLFPPrimitiveData > ( );
+
+	UPROPERTY ( )
+	FLFPPrimitiveData ChunkPrimitiveData = FLFPPrimitiveData ( );
 
 public:
 
-	FORCEINLINE void InitializeChunkData ( const int32 NewDataIndexSize , const int32 ByteSize )
+	FORCEINLINE void InitializeChunkData ( const int32 NewDataIndexSize )
 	{
-		DataByteList.SetNumZeroed ( NewDataIndexSize * ByteSize );
+		PrimitiveList.SetNumZeroed ( NewDataIndexSize );
 	}
 
 	FORCEINLINE void DeinitializeChunkData ( )
 	{
-		DataByteList.Empty ( );
+		PrimitiveList.Empty ( );
 	}
 
 public:
 
 	FORCEINLINE bool IsInitialized ( ) const
 	{
-		return DataByteList.IsEmpty ( ) == false;
+		return PrimitiveList.IsEmpty ( ) == false;
 	}
 
-	FORCEINLINE bool IsDataIndexValid ( const int32 DataIndex , const int32 ByteSize ) const
+	FORCEINLINE bool IsDataIndexValid ( const int32 DataIndex ) const
 	{
-		return DataByteList.IsValidIndex ( ( DataIndex * ByteSize ) + ( ByteSize - 1 ) );
-	}
-
-public:
-
-	FORCEINLINE TArray < uint8 > GetData ( const int32 DataIndex , const int32 ByteSize ) const
-	{
-		check ( IsDataIndexValid ( DataIndex,ByteSize ) );
-
-		TArray < uint8 > ResultList = TArray < uint8 > ( );
-
-		ResultList.SetNumUninitialized ( ByteSize );
-
-		for ( int32 ByteIndex = 0 ; ByteIndex < ByteSize ; ByteIndex++ )
-		{
-			ResultList [ ByteIndex ] = DataByteList [ DataIndex + ByteIndex ];
-		}
-
-		return ResultList;
-	}
-
-	FORCEINLINE void SetData ( const int32 DataIndex , const int32 ByteSize , const TArray < uint8 >& NewData )
-	{
-		check ( IsDataIndexValid ( DataIndex,ByteSize ) );
-		check ( NewData.Num ( ) == ByteSize );
-
-		for ( int32 ByteIndex = 0 ; ByteIndex < ByteSize ; ByteIndex++ )
-		{
-			DataByteList [ DataIndex + ByteIndex ] = NewData [ ByteIndex ];
-		}
+		return PrimitiveList.IsValidIndex ( DataIndex );
 	}
 
 public:
 
-	FORCEINLINE const TArray < uint8 >& GetDataList ( ) const
+	FORCEINLINE const FLFPPrimitiveData& GetData ( const int32 DataIndex ) const
 	{
-		return DataByteList;
+		check ( IsDataIndexValid ( DataIndex ) );
+
+		return PrimitiveList [ DataIndex ];
+	}
+
+	FORCEINLINE void SetData ( const int32 DataIndex , const FLFPPrimitiveData& NewData )
+	{
+		check ( IsDataIndexValid ( DataIndex ) );
+
+		PrimitiveList [ DataIndex ] = NewData;
+	}
+
+public:
+
+	FORCEINLINE const FLFPPrimitiveData& GetChunkData ( ) const
+	{
+		return ChunkPrimitiveData;
+	}
+
+	FORCEINLINE void SetChunkData ( const FLFPPrimitiveData& NewData )
+	{
+		ChunkPrimitiveData = NewData;
+	}
+
+public:
+
+	FORCEINLINE const TArray < FLFPPrimitiveData >& GetDataList ( ) const
+	{
+		return PrimitiveList;
 	}
 };
 
 USTRUCT ( )
-struct FLFPByteListRegionData
+struct FLFPPrimitiveRegionData
 {
 	GENERATED_BODY ( )
 
 private:
 
 	UPROPERTY ( )
-	TArray < FLFPByteListChunkData > ChunkList = TArray < FLFPByteListChunkData > ( );
+	TArray < FLFPPrimitiveChunkData > ChunkList = TArray < FLFPPrimitiveChunkData > ( );
+
+	UPROPERTY ( )
+	FLFPPrimitiveData RegionPrimitiveData = FLFPPrimitiveData ( );
 
 public:
 
@@ -118,7 +124,7 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPByteListChunkData& GetChunk ( const int32 ChunkIndex ) const
+	FORCEINLINE const FLFPPrimitiveChunkData& GetChunk ( const int32 ChunkIndex ) const
 	{
 		checkf ( ChunkList.IsValidIndex ( ChunkIndex ) ,
 		         TEXT(
@@ -128,7 +134,7 @@ public:
 		return ChunkList [ ChunkIndex ];
 	}
 
-	FORCEINLINE FLFPByteListChunkData& GetChunk ( const int32 ChunkIndex )
+	FORCEINLINE FLFPPrimitiveChunkData& GetChunk ( const int32 ChunkIndex )
 	{
 		checkf ( ChunkList.IsValidIndex ( ChunkIndex ) ,
 		         TEXT(
@@ -136,11 +142,23 @@ public:
 		         ) );
 
 		return ChunkList [ ChunkIndex ];
+	}
+
+public:
+
+	FORCEINLINE const FLFPPrimitiveData& GetRegionData ( ) const
+	{
+		return RegionPrimitiveData;
+	}
+
+	FORCEINLINE void SetRegionData ( const FLFPPrimitiveData& NewData )
+	{
+		RegionPrimitiveData = NewData;
 	}
 };
 
 USTRUCT ( BlueprintType )
-struct FLFPChunkedByteListSerializeData
+struct FLFPChunkedPrimitiveSerializeData
 {
 	GENERATED_BODY ( )
 
@@ -153,17 +171,17 @@ public:
 	FName CompressionName = NAME_Oodle;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams ( FLFPChunkedByteListData_DataChanged , const int32 , RegionIndex , const int32 , ChunkIndex , const int32 , DataIndex , const TArray<uint8>& , OldData , const TArray<uint8>& , NewData );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams ( FLFPChunkedPrimitiveData_DataChanged , const int32 , RegionIndex , const int32 , ChunkIndex , const int32 , DataIndex , const FLFPPrimitiveData& , OldData , const FLFPPrimitiveData& , NewData );
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPChunkedByteListDataComponent : public UActorComponent
+class LOHFUNCTIONPLUGIN_API ULFPChunkedPrimitiveDataComponent : public UActorComponent
 {
 	GENERATED_BODY ( )
 
 public:
 
 	// Sets default values for this component's properties
-	ULFPChunkedByteListDataComponent ( );
+	ULFPChunkedPrimitiveDataComponent ( );
 
 protected:
 
@@ -178,15 +196,15 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	void SetSize ( const FIntVector& NewSize , const int32 NewByteSize );
+	void SetSize ( const FIntVector& NewSize );
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedByteListSerializeData& LoadData );
+	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedPrimitiveSerializeData& LoadData );
 
 	UFUNCTION ( BlueprintCallable )
-	void SaveRegion ( const int32 RegionIndex , FLFPChunkedByteListSerializeData& SaveData );
+	void SaveRegion ( const int32 RegionIndex , FLFPChunkedPrimitiveSerializeData& SaveData );
 
 public:
 
@@ -205,18 +223,18 @@ public:
 public:
 
 	// Faster version of get data ID without check
-	FORCEINLINE TArray < uint8 > GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE const FLFPPrimitiveData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	TArray < uint8 > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	TArray < FLFPPrimitiveData > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	TArray < uint8 > GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FLFPPrimitiveData GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const TArray < uint8 >& NewData );
+	void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData );
 
 public:
 
@@ -251,17 +269,12 @@ public:
 public:
 
 	UPROPERTY ( BlueprintAssignable )
-	FLFPChunkedByteListData_DataChanged OnDataChanged;
+	FLFPChunkedPrimitiveData_DataChanged OnDataChanged;
 
 private:
 
 	UPROPERTY ( )
-	TArray < FLFPByteListRegionData > RegionDataList = TArray < FLFPByteListRegionData > ( );
-
-protected:
-
-	UPROPERTY ( EditAnywhere , Category = "Setting" )
-	int32 DataByteSize = 1;
+	TArray < FLFPPrimitiveRegionData > RegionDataList = TArray < FLFPPrimitiveRegionData > ( );
 
 protected:
 

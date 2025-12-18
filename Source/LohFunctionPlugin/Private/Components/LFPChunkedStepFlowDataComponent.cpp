@@ -181,6 +181,14 @@ const FLFPStepFlowCellData& ULFPChunkedStepFlowDataComponent::GetData_Checked ( 
 
 TArray < FLFPStepFlowCellData > ULFPChunkedStepFlowDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedStepFlowDataComponent
+		         , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
+
+		return TArray < FLFPStepFlowCellData > ( );
+	}
+
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataList ( );
 }
 

@@ -1,11 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Components/LFPGridTagDataComponent.h"
+
+#include "Components/LFPChunkedGridPositionComponent.h"
 
 #include "Math/LFPGridLibrary.h"
 
+
 // Sets default values for this component's properties
-ULFPGridTagDataComponent::ULFPGridTagDataComponent ( )
+ULFPChunkedGridPositionComponent::ULFPChunkedGridPositionComponent ( )
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -14,40 +16,66 @@ ULFPGridTagDataComponent::ULFPGridTagDataComponent ( )
 	// ...
 }
 
-// Called when the game starts
-void ULFPGridTagDataComponent::BeginPlay ( )
-{
-	DataIndexSize   = DataGridSize.X * DataGridSize.Y * DataGridSize.Z;
-	ChunkIndexSize  = ChunkGridSize.X * ChunkGridSize.Y * ChunkGridSize.Z;
-	RegionIndexSize = RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z;
 
+// Called when the game starts
+void ULFPChunkedGridPositionComponent::BeginPlay ( )
+{
 	Super::BeginPlay ( );
+
+	// ...
 }
 
+
 // Called every frame
-void ULFPGridTagDataComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
+void ULFPChunkedGridPositionComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
 
 	// ...
 }
 
-const FIntVector& ULFPGridTagDataComponent::GetDataGridSize ( ) const
+void ULFPChunkedGridPositionComponent::SetSize ( const FIntVector& NewRegionSize , const FIntVector& NewChunkSize , const FIntVector& NewDataSize )
+{
+	RegionGridSize = NewRegionSize;
+	ChunkGridSize  = NewChunkSize;
+	DataGridSize   = NewDataSize;
+}
+
+FIntVector ULFPChunkedGridPositionComponent::GetChunkedGridSize ( ) const
+{
+	return FIntVector (
+	                   RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z ,
+	                   ChunkGridSize.X * ChunkGridSize.Y * ChunkGridSize.Z ,
+	                   DataGridSize.X * DataGridSize.Y * DataGridSize.Z
+	                  );
+}
+
+const FIntVector& ULFPChunkedGridPositionComponent::GetDataGridSize ( ) const
 {
 	return DataGridSize;
 }
 
-const FIntVector& ULFPGridTagDataComponent::GetChunkGridSize ( ) const
+const FIntVector& ULFPChunkedGridPositionComponent::GetChunkGridSize ( ) const
 {
 	return ChunkGridSize;
 }
 
-const FIntVector& ULFPGridTagDataComponent::GetRegionGridSize ( ) const
+const FIntVector& ULFPChunkedGridPositionComponent::GetRegionGridSize ( ) const
 {
 	return RegionGridSize;
 }
 
-FIntVector ULFPGridTagDataComponent::ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound ) const
+bool ULFPChunkedGridPositionComponent::IsIsolateRegion ( ) const
+{
+	return bIsolateRegion;
+}
+
+bool ULFPChunkedGridPositionComponent::IsIsolateChunk ( ) const
+{
+	return bIsolateChunk;
+}
+
+FIntVector ULFPChunkedGridPositionComponent::ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound ) const
 {
 	const FIntVector RegionPos ( ULFPGridLibrary::ToGridLocation ( ChunkGridIndex.X , GetRegionGridSize ( ) , bRound ) );
 	const FIntVector ChuckPos ( ULFPGridLibrary::ToGridLocation ( ChunkGridIndex.Y , GetChunkGridSize ( ) , bRound ) );
@@ -55,7 +83,7 @@ FIntVector ULFPGridTagDataComponent::ToChunkGridPosition ( const FIntPoint Chunk
 	return ( RegionPos * GetChunkGridSize ( ) ) + ChuckPos;
 }
 
-FIntPoint ULFPGridTagDataComponent::ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound ) const
+FIntPoint ULFPChunkedGridPositionComponent::ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound ) const
 {
 	auto DivideVector = [&] ( const FIntVector& A , const FIntVector& B )
 	{
@@ -93,7 +121,7 @@ FIntPoint ULFPGridTagDataComponent::ToChunkGridIndex ( FIntVector ChunkGridPosit
 	return FIntPoint ( ULFPGridLibrary::ToGridIndex ( RegionPos , GetRegionGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( ChunkGridPosition , GetChunkGridSize ( ) , true ) );
 }
 
-FIntVector ULFPGridTagDataComponent::ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound ) const
+FIntVector ULFPChunkedGridPositionComponent::ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound ) const
 {
 	const FIntVector RegionPos ( ULFPGridLibrary::ToGridLocation ( DataGridIndex.X , GetRegionGridSize ( ) , bRound ) );
 	const FIntVector ChuckPos ( ULFPGridLibrary::ToGridLocation ( DataGridIndex.Y , GetChunkGridSize ( ) , bRound ) );
@@ -102,7 +130,7 @@ FIntVector ULFPGridTagDataComponent::ToDataGridPosition ( const FIntVector DataG
 	return ( RegionPos * GetChunkGridSize ( ) * GetDataGridSize ( ) ) + ( ChuckPos * GetDataGridSize ( ) ) + GridPos;
 }
 
-FIntVector ULFPGridTagDataComponent::ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound ) const
+FIntVector ULFPChunkedGridPositionComponent::ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound ) const
 {
 	auto DivideVector = [&] ( const FIntVector& A , const FIntVector& B )
 	{
@@ -141,26 +169,70 @@ FIntVector ULFPGridTagDataComponent::ToDataGridIndex ( FIntVector DataGridPositi
 	return FIntVector ( ULFPGridLibrary::ToGridIndex ( RegionPos , GetRegionGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( ChuckPos , GetChunkGridSize ( ) ) , ULFPGridLibrary::ToGridIndex ( DataGridPosition , GetDataGridSize ( ) , true ) );
 }
 
-FIntVector ULFPGridTagDataComponent::GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult ) const
+FIntVector ULFPChunkedGridPositionComponent::GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult ) const
 {
+	if ( IsIsolateRegion ( ) && ChunkGridIndexA.X != ChunkGridIndexB.X )
+	{
+		return FIntVector::ZeroValue;
+	}
+
+	if ( IsIsolateChunk ( ) && ChunkGridIndexA.Y != ChunkGridIndexB.Y )
+	{
+		return FIntVector::ZeroValue;
+	}
+
 	const FIntVector Total = ToChunkGridPosition ( ChunkGridIndexA ) - ToChunkGridPosition ( ChunkGridIndexB );
 
 	return bAbsResult ? FIntVector ( FMath::Abs ( Total.X ) , FMath::Abs ( Total.Y ) , FMath::Abs ( Total.Z ) ) : Total;
 }
 
-FIntVector ULFPGridTagDataComponent::GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult ) const
+FIntVector ULFPChunkedGridPositionComponent::GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult ) const
 {
+	if ( IsIsolateRegion ( ) && DataGridIndexA.X != DataGridIndexB.X )
+	{
+		return FIntVector::ZeroValue;
+	}
+
+	if ( IsIsolateChunk ( ) && DataGridIndexA.Y != DataGridIndexB.Y )
+	{
+		return FIntVector::ZeroValue;
+	}
+
 	const FIntVector Total = ToDataGridPosition ( DataGridIndexA ) - ToDataGridPosition ( DataGridIndexB );
 
 	return bAbsResult ? FIntVector ( FMath::Abs ( Total.X ) , FMath::Abs ( Total.Y ) , FMath::Abs ( Total.Z ) ) : Total;
 }
 
-FIntPoint ULFPGridTagDataComponent::AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound ) const
+FIntPoint ULFPChunkedGridPositionComponent::AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound ) const
 {
-	return ToChunkGridIndex ( ToChunkGridPosition ( ChunkGridIndex , bRound ) + Offset , bRound );
+	const FIntPoint Result = ToChunkGridIndex ( ToChunkGridPosition ( ChunkGridIndex , bRound ) + Offset , bRound );
+
+	if ( IsIsolateRegion ( ) && ChunkGridIndex.X != Result.X )
+	{
+		return FIntPoint::NoneValue;
+	}
+
+	if ( IsIsolateChunk ( ) && ChunkGridIndex.Y != Result.Y )
+	{
+		return FIntPoint::NoneValue;
+	}
+
+	return Result;
 }
 
-FIntVector ULFPGridTagDataComponent::AddOffsetToDataGridIndex ( const FIntVector DataGridIndex , const FIntVector Offset , const bool bRound ) const
+FIntVector ULFPChunkedGridPositionComponent::AddOffsetToDataGridIndex ( const FIntVector DataGridIndex , const FIntVector Offset , const bool bRound ) const
 {
+	const FIntVector Result = ToDataGridIndex ( ToDataGridPosition ( DataGridIndex , bRound ) + Offset , bRound );
+
+	if ( IsIsolateRegion ( ) && DataGridIndex.X != Result.X )
+	{
+		return FIntVector::NoneValue;
+	}
+
+	if ( IsIsolateChunk ( ) && DataGridIndex.Y != Result.Y )
+	{
+		return FIntVector::NoneValue;
+	}
+
 	return ToDataGridIndex ( ToDataGridPosition ( DataGridIndex , bRound ) + Offset , bRound );
 }

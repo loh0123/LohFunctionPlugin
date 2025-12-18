@@ -557,6 +557,7 @@ enum class ELFPPrimitiveDataType : uint8
 	LFP_Boolean UMETA ( DisplayName = "Boolean" ) ,
 	LFP_String UMETA ( DisplayName = "String" ) ,
 	LFP_List UMETA ( DisplayName = "List" ) ,
+	LFP_Struct UMETA ( DisplayName = "Struct" ) ,
 };
 
 USTRUCT ( BlueprintType )
@@ -618,6 +619,15 @@ public:
 		Type = ELFPPrimitiveDataType::LFP_List;
 
 		DataList = NewData;
+	}
+
+	template < typename T >
+	FLFPPrimitiveData ( T NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Struct;
+
+		FMemoryWriter Writer ( DataList , true );
+		Writer << NewData;
 	}
 
 private:
@@ -738,6 +748,20 @@ public:
 	FORCEINLINE const TArray < uint8 >& AsList ( ) const
 	{
 		return DataList;
+	}
+
+	template < typename T >
+	FORCEINLINE T AsStruct ( ) const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Struct )
+		{
+			return T ( );
+		}
+
+		T             ResultStruct;
+		FMemoryReader Reader ( DataList , true );
+		Reader << ResultStruct;
+		return ResultStruct;
 	}
 
 	FORCEINLINE bool operator== ( const FLFPPrimitiveData& other ) const

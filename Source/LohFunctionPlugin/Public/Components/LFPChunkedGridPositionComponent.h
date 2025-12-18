@@ -3,18 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LFPChunkedTagDataComponent.h"
-#include "LFPGridTagDataComponent.generated.h"
+#include "Components/SceneComponent.h"
+#include "LFPChunkedGridPositionComponent.generated.h"
 
-UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) , HideCategories=("Setting|IndexSize") )
-class LOHFUNCTIONPLUGIN_API ULFPGridTagDataComponent : public ULFPChunkedTagDataComponent
+
+UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
+class LOHFUNCTIONPLUGIN_API ULFPChunkedGridPositionComponent : public USceneComponent
 {
 	GENERATED_BODY ( )
 
 public:
 
 	// Sets default values for this component's properties
-	ULFPGridTagDataComponent ( );
+	ULFPChunkedGridPositionComponent ( );
 
 protected:
 
@@ -29,6 +30,16 @@ public:
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	void SetSize ( const FIntVector& NewRegionSize , const FIntVector& NewChunkSize , const FIntVector& NewDataSize );
+
+public:
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	FIntVector GetChunkedGridSize ( ) const;
+
+public:
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
 	const FIntVector& GetDataGridSize ( ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
@@ -36,6 +47,14 @@ public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
 	const FIntVector& GetRegionGridSize ( ) const;
+
+public:
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	bool IsIsolateRegion ( ) const;
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	bool IsIsolateChunk ( ) const;
 
 public:
 
@@ -75,4 +94,12 @@ protected:
 
 	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Setting|GridSize" )
 	FIntVector RegionGridSize = FIntVector ( 1 );
+
+protected:
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Setting" )
+	bool bIsolateRegion = false;
+
+	UPROPERTY ( EditAnywhere , BlueprintReadOnly , Category = "Setting" )
+	bool bIsolateChunk = false;
 };

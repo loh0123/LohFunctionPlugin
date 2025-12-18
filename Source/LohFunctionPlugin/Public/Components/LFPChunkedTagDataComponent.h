@@ -516,6 +516,11 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
+	void SetSize ( const FIntVector& NewSize );
+
+public:
+
+	UFUNCTION ( BlueprintCallable )
 	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData );
 
 	UFUNCTION ( BlueprintCallable )

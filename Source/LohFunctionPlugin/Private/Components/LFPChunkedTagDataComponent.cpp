@@ -36,6 +36,16 @@ void ULFPChunkedTagDataComponent::TickComponent ( float DeltaTime , ELevelTick T
 	// ...
 }
 
+void ULFPChunkedTagDataComponent::SetSize ( const FIntVector& NewSize )
+{
+	RegionIndexSize = NewSize.X;
+	ChunkIndexSize  = NewSize.Y;
+	DataIndexSize   = NewSize.Z;
+
+	RegionDataList.Reset ( );
+	RegionDataList.SetNum ( RegionIndexSize );
+}
+
 ////////////////////////////
 
 void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData )
