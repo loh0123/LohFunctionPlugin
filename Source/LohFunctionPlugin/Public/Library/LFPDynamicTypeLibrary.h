@@ -551,6 +551,7 @@ UENUM ( BlueprintType )
 enum class ELFPPrimitiveDataType : uint8
 {
 	LFP_None UMETA ( DisplayName = "None" ) ,
+	LFP_Byte UMETA ( DisplayName = "Byte" ) ,
 	LFP_Int UMETA ( DisplayName = "Int" ) ,
 	LFP_Float UMETA ( DisplayName = "Float" ) ,
 	LFP_Double UMETA ( DisplayName = "Double" ) ,
@@ -568,6 +569,15 @@ struct LOHFUNCTIONPLUGIN_API FLFPPrimitiveData
 public:
 
 	FLFPPrimitiveData ( ) = default;
+
+	FLFPPrimitiveData ( const uint8 NewData )
+	{
+		Type = ELFPPrimitiveDataType::LFP_Byte;
+
+		DataList.SetNum ( 1 );
+
+		*( reinterpret_cast < int32* > ( DataList.GetData ( ) ) ) = NewData;
+	}
 
 	FLFPPrimitiveData ( const int32 NewData )
 	{
@@ -649,6 +659,7 @@ public:
 
 		switch ( Type )
 		{
+			case ELFPPrimitiveDataType::LFP_Byte : return FString::FromInt ( AsByte ( ) );
 			case ELFPPrimitiveDataType::LFP_Int : return FString::FromInt ( AsInt ( ) );
 			case ELFPPrimitiveDataType::LFP_Float : return FString::SanitizeFloat ( AsFloat ( ) );
 			case ELFPPrimitiveDataType::LFP_Double : return FString::SanitizeFloat ( AsDouble ( ) );
@@ -684,11 +695,21 @@ public:
 		return DataList;
 	}
 
+	FORCEINLINE uint8 AsByte ( ) const
+	{
+		if ( Type != ELFPPrimitiveDataType::LFP_Byte )
+		{
+			return 0;
+		}
+
+		return *DataList.GetData ( );
+	}
+
 	FORCEINLINE int32 AsInt ( ) const
 	{
 		if ( Type != ELFPPrimitiveDataType::LFP_Int )
 		{
-			return INDEX_NONE;
+			return 0;
 		}
 
 		return *( reinterpret_cast < const int32* > ( DataList.GetData ( ) ) );
@@ -718,6 +739,7 @@ public:
 	{
 		switch ( Type )
 		{
+			case ELFPPrimitiveDataType::LFP_Byte : return AsByte ( );
 			case ELFPPrimitiveDataType::LFP_Int : return AsInt ( );
 			case ELFPPrimitiveDataType::LFP_Float : return AsFloat ( );
 			case ELFPPrimitiveDataType::LFP_Double : return AsDouble ( );
