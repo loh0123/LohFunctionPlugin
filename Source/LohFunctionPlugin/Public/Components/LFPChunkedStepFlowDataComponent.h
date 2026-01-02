@@ -9,7 +9,7 @@
 DECLARE_LOG_CATEGORY_EXTERN ( LogChunkedStepFlowDataComponent , Log , All );
 
 USTRUCT ( BlueprintType )
-struct FLFPStepFlowCellData
+struct LOHFUNCTIONPLUGIN_API FLFPStepFlowCellData
 {
 	GENERATED_BODY ( )
 
@@ -358,7 +358,7 @@ public:
 public:
 
 	// Faster version of get data ID without check
-	FORCEINLINE const FLFPStepFlowCellData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	const FLFPStepFlowCellData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 public:
 

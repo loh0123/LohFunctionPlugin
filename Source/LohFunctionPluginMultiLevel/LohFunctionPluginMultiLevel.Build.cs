@@ -22,7 +22,8 @@ public class LohFunctionPluginMultiLevel : ModuleRules
 				"Engine",
 				"InputCore",
 				"Slate",
-				"SlateCore"
+				"SlateCore", 
+				"HeadMountedDisplay"
 			}
 		);
 	}

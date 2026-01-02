@@ -3,7 +3,6 @@
 
 #include "Library/LFPStepFlowLibrary.h"
 
-#include "VREditorMode.h"
 #include "Components/LFPChunkedGridPositionComponent.h"
 #include "Components/LFPChunkedStepFlowDataComponent.h"
 #include "Object/LFPStepFlowModifier.h"
@@ -380,7 +379,7 @@ FLFPStepFlowCellData ULFPStepFlowLibrary::CalculateAdventOnData (
 
 			constexpr float CellSize = INT8_MAX; // How far to travel one cell
 
-			VelNor *= Step;
+			VelNor    *= Step;
 			VelLenght /= CellSize;
 			VelLenght = FMath::Clamp ( VelLenght , -1 , 1 );
 
