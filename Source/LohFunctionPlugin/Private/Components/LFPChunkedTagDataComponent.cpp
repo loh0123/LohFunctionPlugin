@@ -79,6 +79,8 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChu
 	FArchiveSaveCompressedProxy Proxy ( SaveData.DataList , SaveData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
 
 	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+	
+	RegionData.CleanEmptyMetaData (  );
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
 }

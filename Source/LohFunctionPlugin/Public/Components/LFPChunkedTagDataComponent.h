@@ -40,6 +40,13 @@ public:
 
 public:
 
+	FORCEINLINE bool IsEmpty ( ) const
+	{
+		return MetaList.IsEmpty ( );
+	}
+
+public:
+
 	FORCEINLINE int32 GetDataIndex ( ) const
 	{
 		return DataIndex;
@@ -259,9 +266,16 @@ public:
 			         "DataIndex is invalid, call InitializeChunkData first. Resize Chunk data after initialized is not allow"
 		         ) );
 
-		if ( FLFPTaggedMetaData* MetaDataPtr = DataMetaList.FindByKey ( DataIndex ) ; MetaDataPtr != nullptr )
+		if ( const int32 MetaDataIndex = DataMetaList.IndexOfByKey ( DataIndex ) ; MetaDataIndex != INDEX_NONE )
 		{
-			MetaDataPtr->RemoveMetaData ( MetaTag );
+			FLFPTaggedMetaData& MetaDataPtr = DataMetaList [ MetaDataIndex ];
+
+			MetaDataPtr.RemoveMetaData ( MetaTag );
+
+			if ( MetaDataPtr.IsEmpty ( ) )
+			{
+				DataMetaList.RemoveAtSwap ( MetaDataIndex );
+			}
 		}
 	}
 
@@ -269,10 +283,11 @@ public:
 
 	FORCEINLINE void CleanEmptyMetaData ( )
 	{
-		for ( FLFPTaggedMetaData& GridMeta : DataMetaList )
+		DataMetaList.RemoveAllSwap ( [] ( FLFPTaggedMetaData& MetaData )
 		{
-			GridMeta.CleanEmptyMetaData ( );
-		}
+			MetaData.CleanEmptyMetaData ( );
+			return MetaData.IsEmpty ( );
+		} );
 
 		ChunkMetaList.CleanEmptyItem ( );
 	}

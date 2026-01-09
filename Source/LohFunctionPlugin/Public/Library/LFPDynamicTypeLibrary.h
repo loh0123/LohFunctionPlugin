@@ -923,6 +923,11 @@ public:
 		return MappingList.Contains ( ItemTag );
 	}
 
+	FORCEINLINE bool IsEmpty ( ) const
+	{
+		return MappingList.IsEmpty ( );
+	}
+
 public:
 
 	FORCEINLINE bool operator== ( const FLFPPrimitiveDataTagArray& other ) const
