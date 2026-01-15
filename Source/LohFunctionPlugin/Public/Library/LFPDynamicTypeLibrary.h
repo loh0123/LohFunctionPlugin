@@ -786,6 +786,11 @@ public:
 		return ResultStruct;
 	}
 
+	FORCEINLINE double IsNum ( ) const
+	{
+		return Type == ELFPPrimitiveDataType::LFP_Byte || Type == ELFPPrimitiveDataType::LFP_Int || Type == ELFPPrimitiveDataType::LFP_Float || Type == ELFPPrimitiveDataType::LFP_Double;
+	}
+
 	FORCEINLINE bool operator== ( const FLFPPrimitiveData& other ) const
 	{
 		return Type == other.Type && DataList == other.DataList;
