@@ -187,6 +187,72 @@ void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , cons
 	OnDataChanged.Broadcast ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData );
 }
 
+FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
+
+		return TArray < uint8 > ( );
+	}
+
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData )
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
+
+		return;
+	}
+
+	if ( NewData == RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( ) )
+	{
+		return;
+	}
+
+	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkData ( NewData );
+
+	OnDataChanged.Broadcast ( RegionIndex , ChunkIndex , INDEX_NONE , OldData , NewData );
+}
+
+FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
+
+		return TArray < uint8 > ( );
+	}
+
+	return RegionDataList [ RegionIndex ].GetRegionData ( );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
+
+		return;
+	}
+
+	if ( NewData == RegionDataList [ RegionIndex ].GetRegionData ( ) )
+	{
+		return;
+	}
+
+	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetRegionData ( );
+
+	RegionDataList [ RegionIndex ].SetRegionData ( NewData );
+
+	OnDataChanged.Broadcast ( RegionIndex , INDEX_NONE , INDEX_NONE , OldData , NewData );
+}
+
 bool ULFPChunkedPrimitiveDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsDataIndexValid ( DataIndex );

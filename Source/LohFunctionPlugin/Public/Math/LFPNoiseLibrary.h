@@ -9,104 +9,113 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LFPNoiseLibrary.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT ( BlueprintType )
 struct FLFPNoiseMixTable
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY ( )
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseMixTable")
-	FVector Multiply = FVector(1.0f);
+	FLFPNoiseMixTable ( )
+	{
+	}
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseMixTable")
+	FLFPNoiseMixTable ( const FVector& Multiply , const float MixValue ) : Multiply ( Multiply ), MixValue ( MixValue )
+	{
+	}
+
+public:
+
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNoiseMixTable" )
+	FVector Multiply = FVector ( 1.0f );
+
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNoiseMixTable" )
 	float MixValue = 1.0f;
 };
 
-USTRUCT(BlueprintType)
+USTRUCT ( BlueprintType )
 struct FLFPNoiseTable
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY ( )
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNoiseTable")
-	TArray< float > NoiseData;
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNoiseTable" )
+	TArray < float > NoiseData;
 };
 
-USTRUCT(BlueprintType)
+USTRUCT ( BlueprintType )
 struct FLFPNearbyVectorData
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY ( )
 
-	FLFPNearbyVectorData( )
+	FLFPNearbyVectorData ( )
 	{
 	}
 
-	FLFPNearbyVectorData( const float Dis , const FIntVector Vec , const FVector& Point ) :
-		NearbyDistance(Dis), NearbyVector(Vec), NearbyPoint(Point)
+	FLFPNearbyVectorData ( const float Dis , const FIntVector Vec , const FVector& Point ) : NearbyDistance ( Dis ), NearbyVector ( Vec ), NearbyPoint ( Point )
 	{
 	}
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNearbyVectorData" )
 	float NearbyDistance = -1.0f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
-	FIntVector NearbyVector = FIntVector(-1);
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNearbyVectorData" )
+	FIntVector NearbyVector = FIntVector ( -1 );
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "LFPNearbyVectorData")
-	FVector NearbyPoint = FVector(0);
+	UPROPERTY ( BlueprintReadWrite , EditAnywhere , Category = "LFPNearbyVectorData" )
+	FVector NearbyPoint = FVector ( 0 );
 
-	FORCEINLINE bool operator<( const FLFPNearbyVectorData& Other ) const { return NearbyDistance < Other.NearbyDistance; }
+	FORCEINLINE bool operator< ( const FLFPNearbyVectorData& Other ) const { return NearbyDistance < Other.NearbyDistance; }
 
-	FORCEINLINE bool operator<( const float& Other ) const { return NearbyDistance < Other; }
+	FORCEINLINE bool operator< ( const float& Other ) const { return NearbyDistance < Other; }
 };
 
 /**
  *
  */
-UCLASS(meta = (BlueprintThreadSafe))
+UCLASS ( meta = (BlueprintThreadSafe) )
 class LOHFUNCTIONPLUGIN_API ULFPNoiseLibrary : public UBlueprintFunctionLibrary
 {
-	GENERATED_BODY()
+	GENERATED_BODY ( )
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "LFPMathLibrary | Noise")
-	static FLFPNoiseTable CreateNoiseTable( const FRandomStream& Seed );
+	UFUNCTION ( BlueprintCallable , Category = "LFPMathLibrary | Noise" )
+	static FLFPNoiseTable CreateNoiseTable ( const FRandomStream& Seed );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static float GetFloatNoise( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static float GetFloatNoise ( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector GetVectorNoise( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector GetVectorNoise ( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector GetDirectionNoise( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector GetDirectionNoise ( const FLFPNoiseTable& NoiseTable , const FIntVector Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static float GetLerpNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static float GetLerpNoise ( const FLFPNoiseTable& NoiseTable , const FVector& Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector GetLerpVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector GetLerpVectorNoise ( const FLFPNoiseTable& NoiseTable , const FVector& Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector GetLerpDirectionNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector GetLerpDirectionNoise ( const FLFPNoiseTable& NoiseTable , const FVector& Location );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static float MixLerpNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray< FLFPNoiseMixTable >& MixTable );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static float MixLerpNoise ( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray < FLFPNoiseMixTable >& MixTable );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector MixLerpVector( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray< FLFPNoiseMixTable >& MixTable );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector MixLerpVector ( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray < FLFPNoiseMixTable >& MixTable );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FVector MixLerpDirection( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray< FLFPNoiseMixTable >& MixTable );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FVector MixLerpDirection ( const FLFPNoiseTable& NoiseTable , const FVector& Location , const TArray < FLFPNoiseMixTable >& MixTable );
 
 private:
 
-	static FLFPNearbyVectorData VectorAlgo( const FLFPNoiseTable& NoiseTable , const FIntVector& CurrentLocation , const FVector& Location , const float ValuePower , const float ClampRange , const bool bIgnoreZ );
+	static FLFPNearbyVectorData VectorAlgo ( const FLFPNoiseTable& NoiseTable , const FIntVector& CurrentLocation , const FVector& Location , const float ValuePower , const float ClampRange , const bool bIgnoreZ );
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static FLFPNearbyVectorData GetNearbyVectorNoise( const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ValuePower = 1.0f , const bool bCompareSecondary = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static FLFPNearbyVectorData GetNearbyVectorNoise ( const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ValuePower = 1.0f , const bool bCompareSecondary = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
 
-	UFUNCTION(BlueprintPure, Category = "LFPMathLibrary | Noise")
-	static void GetNearbyVectorNoiseList( TArray< FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ValuePower = 1.0f , const bool bSort = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
+	UFUNCTION ( BlueprintPure , Category = "LFPMathLibrary | Noise" )
+	static void GetNearbyVectorNoiseList ( TArray < FLFPNearbyVectorData >& ReturnData , const FLFPNoiseTable& NoiseTable , const FVector& Location , const float ValuePower = 1.0f , const bool bSort = false , const float ClampRange = 1.0f , const bool bIgnoreZ = false );
 };

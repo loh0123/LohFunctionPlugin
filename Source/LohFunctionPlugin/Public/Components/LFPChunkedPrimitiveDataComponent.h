@@ -236,6 +236,18 @@ public:
 	UFUNCTION ( BlueprintCallable )
 	void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData );
 
+	UFUNCTION ( BlueprintCallable )
+	FLFPPrimitiveData GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+
+	UFUNCTION ( BlueprintCallable )
+	void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData );
+
+	UFUNCTION ( BlueprintCallable )
+	FLFPPrimitiveData GetRegionData ( const int32 RegionIndex ) const;
+
+	UFUNCTION ( BlueprintCallable )
+	void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData );
+
 public:
 
 	UFUNCTION ( BlueprintCallable )
