@@ -69,7 +69,7 @@ private:
 		{
 			DataList.Empty ( );
 
-			UE_LOG ( LFPDynamicIntStaticArray , Verbose , TEXT( "FLFPCompactIntArray : Resize Bit From %d To %d" ) , ElementBitSize , NewSize );
+			//UE_LOG ( LFPDynamicIntStaticArray , Verbose , TEXT( "FLFPCompactIntArray : Resize Bit From %d To %d" ) , ElementBitSize , NewSize );
 
 			ElementBitSize = NewSize;
 
@@ -87,7 +87,7 @@ private:
 
 		ElementBitSize = NewSize;
 
-		UE_LOG ( LFPDynamicIntStaticArray , Verbose , TEXT( "FLFPCompactIntArray : Resize Bit From %d To %d" ) , OldElementBitSize , ElementBitSize );
+		//UE_LOG ( LFPDynamicIntStaticArray , Verbose , TEXT( "FLFPCompactIntArray : Resize Bit From %d To %d" ) , OldElementBitSize , ElementBitSize );
 
 		const int32 ChuckBitSize = FMath::DivideAndRoundUp ( IndexSize , static_cast < uint32 > ( 32 ) );
 

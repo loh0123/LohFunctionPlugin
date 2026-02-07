@@ -3,12 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SceneComponent.h"
 #include "LFPChunkedGridPositionComponent.generated.h"
 
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
-class LOHFUNCTIONPLUGIN_API ULFPChunkedGridPositionComponent : public USceneComponent
+class LOHFUNCTIONPLUGIN_API ULFPChunkedGridPositionComponent : public UActorComponent
 {
 	GENERATED_BODY ( )
 
@@ -29,8 +28,11 @@ public:
 
 public:
 
-	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
+	UFUNCTION ( BlueprintCallable , Category = "LFPGridTagDataComponent | Setter" )
 	void SetSize ( const FIntVector& NewRegionSize , const FIntVector& NewChunkSize , const FIntVector& NewDataSize );
+
+	UFUNCTION ( BlueprintCallable , Category = "LFPGridTagDataComponent | Setter" )
+	void SetIsolation ( const bool bRegion , const bool bChunk );
 
 public:
 

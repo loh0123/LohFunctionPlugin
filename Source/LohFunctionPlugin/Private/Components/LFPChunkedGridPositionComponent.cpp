@@ -41,6 +41,12 @@ void ULFPChunkedGridPositionComponent::SetSize ( const FIntVector& NewRegionSize
 	DataGridSize   = NewDataSize;
 }
 
+void ULFPChunkedGridPositionComponent::SetIsolation ( const bool bRegion , const bool bChunk )
+{
+	bIsolateRegion = bRegion;
+	bIsolateChunk  = bChunk;
+}
+
 FIntVector ULFPChunkedGridPositionComponent::GetChunkedGridSize ( ) const
 {
 	return FIntVector (
