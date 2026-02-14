@@ -171,7 +171,47 @@ public:
 	FName CompressionName = NAME_Oodle;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams ( FLFPChunkedPrimitiveData_DataChanged , const int32 , RegionIndex , const int32 , ChunkIndex , const int32 , DataIndex , const FLFPPrimitiveData& , OldData , const FLFPPrimitiveData& , NewData );
+USTRUCT ( BlueprintType )
+struct FLFPMetaMapChangeEvent
+{
+	GENERATED_BODY ( )
+
+	FLFPMetaMapChangeEvent ( ) = default;
+
+	FLFPMetaMapChangeEvent
+	(
+		const int32              InRegionIndex ,
+		const int32              InChunkIndex ,
+		const int32              InDataIndex ,
+		const FLFPPrimitiveData& InOldData ,
+		const FLFPPrimitiveData& InNewData
+		) : RegionIndex ( InRegionIndex )
+		    , ChunkIndex ( InChunkIndex )
+		    , DataIndex ( InDataIndex )
+		    , OldData ( InOldData )
+		    , NewData ( InNewData )
+	{
+	}
+
+public:
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 RegionIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 ChunkIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	int32 DataIndex = INDEX_NONE;
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FLFPPrimitiveData OldData = FLFPPrimitiveData ( );
+
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	FLFPPrimitiveData NewData = FLFPPrimitiveData ( );
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedPrimitiveData_DataChanged , const TArray<FLFPMetaMapChangeEvent>& , ChangeList );
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPChunkedPrimitiveDataComponent : public UActorComponent
@@ -277,6 +317,22 @@ public:
 
 	UFUNCTION ( BlueprintPure )
 	int32 GetRegionIndexSize ( ) const;
+
+private:
+
+	UFUNCTION ( )
+	void AddDataChangeEvent ( const FLFPMetaMapChangeEvent& NewEvent );
+
+	UFUNCTION ( )
+	void BroadcastDataChangeEvent ( );
+
+private:
+
+	UPROPERTY ( Transient )
+	TArray < FLFPMetaMapChangeEvent > DataChangeEventList;
+
+	UPROPERTY ( Transient )
+	FTimerHandle DataChangeEventHandle;
 
 public:
 

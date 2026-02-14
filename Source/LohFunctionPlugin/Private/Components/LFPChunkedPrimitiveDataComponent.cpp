@@ -184,7 +184,7 @@ void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , cons
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
 
-	OnDataChanged.Broadcast ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData );
+	AddDataChangeEvent ( FLFPMetaMapChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData ) );
 }
 
 FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
@@ -217,7 +217,7 @@ void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex ,
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkData ( NewData );
 
-	OnDataChanged.Broadcast ( RegionIndex , ChunkIndex , INDEX_NONE , OldData , NewData );
+	AddDataChangeEvent ( FLFPMetaMapChangeEvent ( RegionIndex , ChunkIndex , INDEX_NONE , OldData , NewData ) );
 }
 
 FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
@@ -250,7 +250,7 @@ void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex 
 
 	RegionDataList [ RegionIndex ].SetRegionData ( NewData );
 
-	OnDataChanged.Broadcast ( RegionIndex , INDEX_NONE , INDEX_NONE , OldData , NewData );
+	AddDataChangeEvent ( FLFPMetaMapChangeEvent ( RegionIndex , INDEX_NONE , INDEX_NONE , OldData , NewData ) );
 }
 
 bool ULFPChunkedPrimitiveDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
@@ -291,4 +291,32 @@ int32 ULFPChunkedPrimitiveDataComponent::GetChunkIndexSize ( ) const
 int32 ULFPChunkedPrimitiveDataComponent::GetRegionIndexSize ( ) const
 {
 	return RegionIndexSize;
+}
+
+void ULFPChunkedPrimitiveDataComponent::AddDataChangeEvent ( const FLFPMetaMapChangeEvent& NewEvent )
+{
+	if ( IsValid ( GetWorld ( ) ) == false )
+	{
+		return;
+	}
+
+	DataChangeEventList.Add ( NewEvent );
+
+	if ( DataChangeEventHandle.IsValid ( ) )
+	{
+		return;
+	}
+
+	if ( DataChangeEventHandle.IsValid ( ) == false )
+	{
+		DataChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent );
+	}
+}
+
+void ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent ( )
+{
+	OnDataChanged.Broadcast ( DataChangeEventList );
+
+	DataChangeEventList.Empty ( );
+	DataChangeEventHandle.Invalidate ( );
 }

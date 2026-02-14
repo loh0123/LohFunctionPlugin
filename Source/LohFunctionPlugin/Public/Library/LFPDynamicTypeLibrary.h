@@ -636,7 +636,7 @@ public:
 	{
 		Type = ELFPPrimitiveDataType::LFP_Struct;
 
-		FMemoryWriter Writer ( DataList , true );
+		FMemoryWriter Writer ( DataList );
 		Writer << NewData;
 	}
 
@@ -781,7 +781,7 @@ public:
 		}
 
 		T             ResultStruct;
-		FMemoryReader Reader ( DataList , true );
+		FMemoryReader Reader ( DataList );
 		Reader << ResultStruct;
 		return ResultStruct;
 	}

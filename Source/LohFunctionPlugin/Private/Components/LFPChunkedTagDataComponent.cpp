@@ -79,8 +79,8 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChu
 	FArchiveSaveCompressedProxy Proxy ( SaveData.DataList , SaveData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
 
 	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
-	
-	RegionData.CleanEmptyMetaData (  );
+
+	RegionData.CleanEmptyMetaData ( );
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
 }
@@ -554,7 +554,10 @@ void ULFPChunkedTagDataComponent::AddTagChangeEvent ( const FLFPTagChangeEvent& 
 		return;
 	}
 
-	TagChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedTagDataComponent::BroadcastTagChangeEvent );
+	if ( TagChangeEventHandle.IsValid ( ) == false )
+	{
+		TagChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedTagDataComponent::BroadcastTagChangeEvent );
+	}
 }
 
 void ULFPChunkedTagDataComponent::AddMetaChangeEvent ( const FLFPMetaChangeEvent& NewEvent )
@@ -571,7 +574,10 @@ void ULFPChunkedTagDataComponent::AddMetaChangeEvent ( const FLFPMetaChangeEvent
 		return;
 	}
 
-	MetaChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedTagDataComponent::BroadcastTagChangeEvent );
+	if ( MetaChangeEventHandle.IsValid ( ) == false )
+	{
+		MetaChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedTagDataComponent::BroadcastTagChangeEvent );
+	}
 }
 
 void ULFPChunkedTagDataComponent::BroadcastTagChangeEvent ( )
