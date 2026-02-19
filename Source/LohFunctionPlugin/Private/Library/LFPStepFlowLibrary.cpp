@@ -88,7 +88,7 @@ FLFPStepFlowNeighbourCellData ULFPStepFlowLibrary::GetNeighbourFlowData ( const 
 	// Get Self-Flow Velocity
 	for ( int32 ComponentIndex = 3 ; ComponentIndex < 6 ; ++ComponentIndex )
 	{
-		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] , false );
+		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] );
 
 		if ( DataComponent->IsDataIndexValid ( CheckIndex.X , CheckIndex.Y , CheckIndex.Z ) == false )
 		{
@@ -102,7 +102,7 @@ FLFPStepFlowNeighbourCellData ULFPStepFlowLibrary::GetNeighbourFlowData ( const 
 	// Get Flow Velocity
 	for ( int32 ComponentIndex = 0 ; ComponentIndex < 3 ; ++ComponentIndex )
 	{
-		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] , false );
+		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] );
 
 		if ( DataComponent->IsDataIndexValid ( CheckIndex.X , CheckIndex.Y , CheckIndex.Z ) == false )
 		{
@@ -118,7 +118,7 @@ FLFPStepFlowNeighbourCellData ULFPStepFlowLibrary::GetNeighbourFlowData ( const 
 	// Get Flow Resistant
 	for ( int32 ComponentIndex = 0 ; ComponentIndex < 6 ; ++ComponentIndex )
 	{
-		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] , false );
+		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] );
 
 		if ( DataComponent->IsDataIndexValid ( CheckIndex.X , CheckIndex.Y , CheckIndex.Z ) == false )
 		{
@@ -296,7 +296,7 @@ FLFPStepFlowCellData ULFPStepFlowLibrary::CalculateVelocityOnData (
 	// Get Flow Velocity
 	for ( int32 ComponentIndex = 0 ; ComponentIndex < 3 ; ++ComponentIndex )
 	{
-		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] , false );
+		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] );
 
 		if ( DataComponent->IsDataIndexValid ( CheckIndex.X , CheckIndex.Y , CheckIndex.Z ) == false )
 		{
@@ -362,7 +362,7 @@ FLFPStepFlowCellData ULFPStepFlowLibrary::CalculateAdventOnData (
 	// Get Flow Velocity
 	for ( int32 ComponentIndex = 0 ; ComponentIndex < 3 ; ++ComponentIndex )
 	{
-		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] , false );
+		const FIntVector CheckIndex = PositionComponent->AddOffsetToDataGridIndex ( CurrentIndex , CheckPos [ ComponentIndex ] );
 
 		if ( DataComponent->IsDataIndexValid ( CheckIndex.X , CheckIndex.Y , CheckIndex.Z ) == false )
 		{

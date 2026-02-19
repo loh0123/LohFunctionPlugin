@@ -37,54 +37,54 @@ public:
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector GetChunkedGridSize ( ) const;
+	FORCEINLINE FIntVector GetChunkedGridSize ( ) const;
 
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	const FIntVector& GetDataGridSize ( ) const;
+	const FORCEINLINE FIntVector& GetDataGridSize ( ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	const FIntVector& GetChunkGridSize ( ) const;
+	const FORCEINLINE FIntVector& GetChunkGridSize ( ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	const FIntVector& GetRegionGridSize ( ) const;
+	const FORCEINLINE FIntVector& GetRegionGridSize ( ) const;
 
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	bool IsIsolateRegion ( ) const;
+	FORCEINLINE bool IsIsolateRegion ( ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	bool IsIsolateChunk ( ) const;
+	FORCEINLINE bool IsIsolateChunk ( ) const;
 
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToChunkGridPosition ( const FIntPoint ChunkGridIndex , const bool bRound = false ) const;
+	FORCEINLINE FIntVector ToChunkGridPosition ( const FIntPoint& ChunkGridIndex ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntPoint ToChunkGridIndex ( FIntVector ChunkGridPosition , const bool bRound = false ) const;
+	FORCEINLINE FIntPoint ToChunkGridIndex ( FIntVector ChunkGridPosition ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToDataGridPosition ( const FIntVector DataGridIndex , const bool bRound = false ) const;
+	FORCEINLINE FIntVector ToDataGridPosition ( const FIntVector& DataGridIndex ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridTagDataComponent | Getter" )
-	FIntVector ToDataGridIndex ( FIntVector DataGridPosition , const bool bRound = false ) const;
+	FORCEINLINE FIntVector ToDataGridIndex ( FIntVector DataGridPosition ) const;
 
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPChunkedIndexTranslator | Getter" )
-	FIntVector GetDistanceToChunkGridIndex ( const FIntPoint ChunkGridIndexA , const FIntPoint ChunkGridIndexB , const bool bAbsResult = true ) const;
+	FORCEINLINE FIntVector GetDistanceToChunkGridIndex ( const FIntPoint& ChunkGridIndexA , const FIntPoint& ChunkGridIndexB , const bool bAbsResult = true ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPChunkedIndexTranslator | Getter" )
-	FIntVector GetDistanceToDataGridIndex ( const FIntVector DataGridIndexA , const FIntVector DataGridIndexB , const bool bAbsResult = true ) const;
+	FORCEINLINE FIntVector GetDistanceToDataGridIndex ( const FIntVector& DataGridIndexA , const FIntVector& DataGridIndexB , const bool bAbsResult = true ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPChunkedIndexTranslator | Getter" )
-	FIntPoint AddOffsetToChunkGridIndex ( const FIntPoint ChunkGridIndex , const FIntVector Offset , const bool bRound = false ) const;
+	FORCEINLINE FIntPoint AddOffsetToChunkGridIndex ( const FIntPoint& ChunkGridIndex , const FIntVector& Offset ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPChunkedIndexTranslator | Getter" )
-	FIntVector AddOffsetToDataGridIndex ( const FIntVector DataGridIndex , const FIntVector Offset , const bool bRound = false ) const;
+	FORCEINLINE FIntVector AddOffsetToDataGridIndex ( const FIntVector& DataGridIndex , const FIntVector& Offset ) const;
 
 protected:
 

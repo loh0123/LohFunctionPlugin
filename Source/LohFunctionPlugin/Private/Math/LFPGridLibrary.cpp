@@ -5,16 +5,6 @@
 
 #include "Math/LFPGridLibrary.h"
 
-bool ULFPGridLibrary::IsGridLocationValid ( const FIntVector& Location , const FIntVector& GridSize )
-{
-	return ( Location.GetMin ( ) >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z );
-}
-
-bool ULFPGridLibrary::IsOnGridEdge ( const FIntVector& Location , const FIntVector& GridSize )
-{
-	return Location.GetMin ( ) == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
-}
-
 TArray < FIntVector > ULFPGridLibrary::GetGridEdgeDirection ( const FIntVector& Location , const FIntVector& GridSize )
 {
 	TArray < FIntVector > ReturnList;
@@ -57,35 +47,6 @@ TArray < FIntVector > ULFPGridLibrary::GetGridEdgeDirection ( const FIntVector& 
 	return ReturnList;
 }
 
-int32 ULFPGridLibrary::ToGridIndex ( FIntVector Location , const FIntVector& GridSize , const bool bRoundLocation )
-{
-	if ( bRoundLocation )
-	{
-		Location.X %= GridSize.X;
-		Location.Y %= GridSize.Y;
-		Location.Z %= GridSize.Z;
-
-		if ( Location.X < 0 )
-		{
-			Location.X += GridSize.X;
-		}
-		if ( Location.Y < 0 )
-		{
-			Location.Y += GridSize.Y;
-		}
-		if ( Location.Z < 0 )
-		{
-			Location.Z += GridSize.Z;
-		}
-	}
-	else if ( IsGridLocationValid ( Location , GridSize ) == false )
-	{
-		return INDEX_NONE;
-	}
-
-	return Location.X + ( Location.Y * GridSize.X ) + ( Location.Z * ( GridSize.X * GridSize.Y ) );
-}
-
 TArray < int32 > ULFPGridLibrary::ToGridIndexList ( const TArray < FIntVector >& GridLocations , const FIntVector Offset , const FIntVector& GridSize )
 {
 	TArray < int32 > ReturnData;
@@ -99,33 +60,6 @@ TArray < int32 > ULFPGridLibrary::ToGridIndexList ( const TArray < FIntVector >&
 
 		ReturnData.Add ( ToGridIndex ( Item + Offset , GridSize ) );
 	}
-
-	return ReturnData;
-}
-
-FIntVector ULFPGridLibrary::ToGridLocation ( int32 Index , const FIntVector& GridSize , const bool bRoundIndex )
-{
-	FIntVector ReturnData = FIntVector ( INDEX_NONE );
-
-	const int32 TotalSize = ( GridSize.X * GridSize.Y * GridSize.Z );
-
-	if ( bRoundIndex )
-	{
-		Index %= TotalSize;
-
-		if ( Index < 0 )
-		{
-			Index += TotalSize;
-		}
-	}
-	else if ( Index < 0 || Index >= TotalSize )
-	{
-		return ReturnData;
-	}
-
-	ReturnData.Z = Index / ( GridSize.X * GridSize.Y );
-	ReturnData.Y = ( Index / GridSize.X ) - ( ReturnData.Z * GridSize.Y );
-	ReturnData.X = Index % GridSize.X;
 
 	return ReturnData;
 }

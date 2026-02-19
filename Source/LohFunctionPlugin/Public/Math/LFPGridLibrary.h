@@ -20,22 +20,50 @@ class LOHFUNCTIONPLUGIN_API ULFPGridLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	static bool IsGridLocationValid ( const FIntVector& Location , const FIntVector& GridSize );
+	static FORCEINLINE bool IsGridLocationValid ( const FIntVector& Location , const FIntVector& GridSize )
+	{
+		return ( Location.GetMin ( ) >= 0 && Location.X < GridSize.X && Location.Y < GridSize.Y && Location.Z < GridSize.Z );
+	}
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	static bool IsOnGridEdge ( const FIntVector& Location , const FIntVector& GridSize );
+	static FORCEINLINE bool IsOnGridEdge ( const FIntVector& Location , const FIntVector& GridSize )
+	{
+		return Location.GetMin ( ) == 0 || Location.X == GridSize.X - 1 || Location.Y == GridSize.Y - 1 || Location.Z == GridSize.Z - 1;
+	}
+
+public:
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
+	static FORCEINLINE int32 ToGridIndex ( const FIntVector& Location , const FIntVector& GridSize )
+	{
+		if ( IsGridLocationValid ( Location , GridSize ) == false )
+		{
+			return INDEX_NONE;
+		}
+
+		return Location.X + ( Location.Y * GridSize.X ) + ( Location.Z * ( GridSize.X * GridSize.Y ) );
+	}
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
+	static FORCEINLINE FIntVector ToGridLocation ( const int32 Index , const FIntVector& GridSize )
+	{
+		if ( Index < 0 || Index >= GridSize.X * GridSize.Y * GridSize.Z )
+		{
+			return FIntVector::NoneValue;
+		}
+
+		const int32 ZValue = Index / ( GridSize.X * GridSize.Y );
+
+		return FIntVector ( Index % GridSize.X , ( Index / GridSize.X ) - ( ZValue * GridSize.Y ) , ZValue );
+	}
+
+public:
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
 	static TArray < FIntVector > GetGridEdgeDirection ( const FIntVector& Location , const FIntVector& GridSize );
 
-	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
-	static int32 ToGridIndex ( FIntVector Location , const FIntVector& GridSize , const bool bRoundLocation = false );
-
 	UFUNCTION ( BlueprintCallable , Category = "LFPGridLibrary" )
 	static TArray < int32 > ToGridIndexList ( const TArray < FIntVector >& GridLocations , const FIntVector Offset , const FIntVector& GridSize );
-
-	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
-	static FIntVector ToGridLocation ( int32 Index , const FIntVector& GridSize , const bool bRoundIndex = false );
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPGridLibrary" )
 	static TArray < FIntVector > ToGridLocationList ( const TArray < int32 >& Indexs , const int32 Offset , const FIntVector& GridSize );
@@ -48,4 +76,31 @@ public:
 
 	UFUNCTION ( BlueprintCallable , Category = "LFPGridLibrary" )
 	static TArray < int32 > GetGridAreaIndex ( const int32 Index , const FIntVector Offset , const FIntVector AreaSize , const FIntVector& GridSize );
+
+public:
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
+	static FORCEINLINE int32 RoundGridIndex ( int32 Index , const FIntVector& GridSize )
+	{
+		const int32 TotalSize = ( GridSize.X * GridSize.Y * GridSize.Z );
+
+		Index %= TotalSize;
+		Index += Index < 0 ? TotalSize : 0;
+
+		return Index;
+	}
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridLibrary" )
+	static FORCEINLINE FIntVector RoundGridLocation ( FIntVector Location , const FIntVector& GridSize )
+	{
+		Location.X %= GridSize.X;
+		Location.Y %= GridSize.Y;
+		Location.Z %= GridSize.Z;
+
+		Location.X += Location.X < 0 ? GridSize.X : 0;
+		Location.Y += Location.Y < 0 ? GridSize.Y : 0;
+		Location.Z += Location.Z < 0 ? GridSize.Z : 0;
+
+		return Location;
+	}
 };

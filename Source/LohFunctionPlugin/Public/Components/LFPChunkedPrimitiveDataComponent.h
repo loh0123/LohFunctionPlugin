@@ -172,13 +172,13 @@ public:
 };
 
 USTRUCT ( BlueprintType )
-struct FLFPMetaMapChangeEvent
+struct FLFPChunkedPrimitiveChangeEvent
 {
 	GENERATED_BODY ( )
 
-	FLFPMetaMapChangeEvent ( ) = default;
+	FLFPChunkedPrimitiveChangeEvent ( ) = default;
 
-	FLFPMetaMapChangeEvent
+	FLFPChunkedPrimitiveChangeEvent
 	(
 		const int32              InRegionIndex ,
 		const int32              InChunkIndex ,
@@ -211,7 +211,7 @@ public:
 	FLFPPrimitiveData NewData = FLFPPrimitiveData ( );
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedPrimitiveData_DataChanged , const TArray<FLFPMetaMapChangeEvent>& , ChangeList );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedPrimitiveData_DataChanged , const TArray<FLFPChunkedPrimitiveChangeEvent>& , ChangeList );
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPChunkedPrimitiveDataComponent : public UActorComponent
@@ -268,36 +268,36 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	TArray < FLFPPrimitiveData > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE TArray < FLFPPrimitiveData > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FLFPPrimitiveData GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE FLFPPrimitiveData GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData );
 
 	UFUNCTION ( BlueprintCallable )
-	FLFPPrimitiveData GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE FLFPPrimitiveData GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData );
 
 	UFUNCTION ( BlueprintCallable )
-	FLFPPrimitiveData GetRegionData ( const int32 RegionIndex ) const;
+	FORCEINLINE FLFPPrimitiveData GetRegionData ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData );
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	bool IsRegionIndexValid ( const int32 RegionIndex ) const;
+	FORCEINLINE bool IsRegionIndexValid ( const int32 RegionIndex ) const;
 
 public:
 
@@ -321,15 +321,15 @@ public:
 private:
 
 	UFUNCTION ( )
-	void AddDataChangeEvent ( const FLFPMetaMapChangeEvent& NewEvent );
+	FORCEINLINE void AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent );
 
 	UFUNCTION ( )
-	void BroadcastDataChangeEvent ( );
+	FORCEINLINE void BroadcastDataChangeEvent ( );
 
 private:
 
 	UPROPERTY ( Transient )
-	TArray < FLFPMetaMapChangeEvent > DataChangeEventList;
+	TArray < FLFPChunkedPrimitiveChangeEvent > DataChangeEventList;
 
 	UPROPERTY ( Transient )
 	FTimerHandle DataChangeEventHandle;
