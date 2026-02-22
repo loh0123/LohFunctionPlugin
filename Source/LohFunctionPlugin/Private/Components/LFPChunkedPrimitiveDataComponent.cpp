@@ -295,17 +295,7 @@ int32 ULFPChunkedPrimitiveDataComponent::GetRegionIndexSize ( ) const
 
 void ULFPChunkedPrimitiveDataComponent::AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent )
 {
-	if ( IsValid ( GetWorld ( ) ) == false )
-	{
-		return;
-	}
-
 	DataChangeEventList.Add ( NewEvent );
-
-	if ( DataChangeEventHandle.IsValid ( ) )
-	{
-		return;
-	}
 
 	if ( DataChangeEventHandle.IsValid ( ) == false )
 	{
@@ -317,6 +307,6 @@ void ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent ( )
 {
 	OnDataChanged.Broadcast ( DataChangeEventList );
 
-	DataChangeEventList.Empty ( );
+	DataChangeEventList.Reset ( );
 	DataChangeEventHandle.Invalidate ( );
 }

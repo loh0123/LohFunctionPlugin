@@ -542,17 +542,7 @@ int32 ULFPChunkedTagDataComponent::GetRegionIndexSize ( ) const
 
 void ULFPChunkedTagDataComponent::AddTagChangeEvent ( const FLFPTagChangeEvent& NewEvent )
 {
-	if ( IsValid ( GetWorld ( ) ) == false )
-	{
-		return;
-	}
-
 	TagChangeEventList.Add ( NewEvent );
-
-	if ( TagChangeEventHandle.IsValid ( ) )
-	{
-		return;
-	}
 
 	if ( TagChangeEventHandle.IsValid ( ) == false )
 	{
@@ -562,17 +552,7 @@ void ULFPChunkedTagDataComponent::AddTagChangeEvent ( const FLFPTagChangeEvent& 
 
 void ULFPChunkedTagDataComponent::AddMetaChangeEvent ( const FLFPMetaChangeEvent& NewEvent )
 {
-	if ( IsValid ( GetWorld ( ) ) == false )
-	{
-		return;
-	}
-
 	MetaChangeEventList.Add ( NewEvent );
-
-	if ( TagChangeEventHandle.IsValid ( ) )
-	{
-		return;
-	}
 
 	if ( MetaChangeEventHandle.IsValid ( ) == false )
 	{
@@ -584,7 +564,7 @@ void ULFPChunkedTagDataComponent::BroadcastTagChangeEvent ( )
 {
 	OnTagChanged.Broadcast ( TagChangeEventList );
 
-	TagChangeEventList.Empty ( );
+	TagChangeEventList.Reset ( );
 	TagChangeEventHandle.Invalidate ( );
 }
 
@@ -592,6 +572,6 @@ void ULFPChunkedTagDataComponent::BroadcastMetaChangeEvent ( )
 {
 	OnMetaChanged.Broadcast ( MetaChangeEventList );
 
-	MetaChangeEventList.Empty ( );
+	MetaChangeEventList.Reset ( );
 	MetaChangeEventHandle.Invalidate ( );
 }

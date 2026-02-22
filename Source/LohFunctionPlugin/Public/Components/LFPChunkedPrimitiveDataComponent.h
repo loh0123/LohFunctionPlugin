@@ -50,6 +50,13 @@ public:
 
 public:
 
+	FORCEINLINE FLFPPrimitiveData& GetData_Ref ( const int32 DataIndex )
+	{
+		check ( IsDataIndexValid ( DataIndex ) );
+
+		return PrimitiveList [ DataIndex ];
+	}
+
 	FORCEINLINE const FLFPPrimitiveData& GetData ( const int32 DataIndex ) const
 	{
 		check ( IsDataIndexValid ( DataIndex ) );
@@ -265,6 +272,9 @@ public:
 	// Faster version of get data ID without check
 	FORCEINLINE const FLFPPrimitiveData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
+	template < typename FuncBody >
+	FORCEINLINE void SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body );
+
 public:
 
 	UFUNCTION ( BlueprintCallable )
@@ -355,3 +365,15 @@ protected:
 	UPROPERTY ( EditAnywhere , Category = "Setting|IndexSize" )
 	int32 RegionIndexSize = 1;
 };
+
+template < typename FuncBody >
+void ULFPChunkedPrimitiveDataComponent::SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body )
+{
+	check ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) )
+
+	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+
+	Body ( RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData_Ref ( DataIndex ) );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) ) );
+}

@@ -574,45 +574,40 @@ public:
 	{
 		Type = ELFPPrimitiveDataType::LFP_Byte;
 
-		DataList.SetNum ( 1 );
-
-		*( reinterpret_cast < int32* > ( DataList.GetData ( ) ) ) = NewData;
+		DataList.SetNum ( sizeof ( uint8 ) );
+		memcpy ( DataList.GetData ( ) , &NewData , sizeof ( uint8 ) );
 	}
 
 	FLFPPrimitiveData ( const int32 NewData )
 	{
 		Type = ELFPPrimitiveDataType::LFP_Int;
 
-		DataList.SetNum ( 4 );
-
-		*( reinterpret_cast < int32* > ( DataList.GetData ( ) ) ) = NewData;
+		DataList.SetNum ( sizeof ( int32 ) );
+		memcpy ( DataList.GetData ( ) , &NewData , sizeof ( int32 ) );
 	}
 
 	FLFPPrimitiveData ( const float NewData )
 	{
 		Type = ELFPPrimitiveDataType::LFP_Float;
 
-		DataList.SetNum ( 4 );
-
-		*( reinterpret_cast < float* > ( DataList.GetData ( ) ) ) = NewData;
+		DataList.SetNum ( sizeof ( float ) );
+		memcpy ( DataList.GetData ( ) , &NewData , sizeof ( float ) );
 	}
 
 	FLFPPrimitiveData ( const double NewData )
 	{
 		Type = ELFPPrimitiveDataType::LFP_Double;
 
-		DataList.SetNum ( 8 );
-
-		*( reinterpret_cast < double* > ( DataList.GetData ( ) ) ) = NewData;
+		DataList.SetNum ( sizeof ( double ) );
+		memcpy ( DataList.GetData ( ) , &NewData , sizeof ( double ) );
 	}
 
 	FLFPPrimitiveData ( const bool NewData )
 	{
 		Type = ELFPPrimitiveDataType::LFP_Boolean;
 
-		DataList.SetNum ( 1 );
-
-		*( reinterpret_cast < bool* > ( DataList.GetData ( ) ) ) = NewData;
+		DataList.SetNum ( sizeof ( bool ) );
+		memcpy ( DataList.GetData ( ) , &NewData , sizeof ( double ) );
 	}
 
 	FLFPPrimitiveData ( const FString& NewData )
@@ -629,6 +624,14 @@ public:
 		Type = ELFPPrimitiveDataType::LFP_List;
 
 		DataList = NewData;
+	}
+
+	FLFPPrimitiveData ( const void* NewDataPtr , const uint32 Size )
+	{
+		Type = ELFPPrimitiveDataType::LFP_List;
+
+		DataList.SetNumUninitialized ( Size );
+		memcpy ( DataList.GetData ( ) , NewDataPtr , Size );
 	}
 
 	template < typename T >
@@ -685,9 +688,19 @@ public:
 		return Type != ELFPPrimitiveDataType::LFP_None;
 	}
 
+	FORCEINLINE bool IsValid ( ) const
+	{
+		return Type != ELFPPrimitiveDataType::LFP_None;
+	}
+
 	FORCEINLINE ELFPPrimitiveDataType GetDataType ( ) const
 	{
 		return Type;
+	}
+
+	FORCEINLINE TArray < uint8 >& GetData_Ref ( )
+	{
+		return DataList;
 	}
 
 	FORCEINLINE const TArray < uint8 >& GetData ( ) const
