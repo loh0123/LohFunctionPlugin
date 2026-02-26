@@ -698,12 +698,7 @@ public:
 		return Type;
 	}
 
-	FORCEINLINE TArray < uint8 >& GetData_Ref ( )
-	{
-		return DataList;
-	}
-
-	FORCEINLINE const TArray < uint8 >& GetData ( ) const
+	FORCEINLINE TArray < uint8 >& GetData ( )
 	{
 		return DataList;
 	}

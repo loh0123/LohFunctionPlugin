@@ -273,7 +273,7 @@ public:
 	FORCEINLINE const FLFPPrimitiveData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	template < typename FuncBody >
-	FORCEINLINE void SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body );
+	FORCEINLINE void SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body , const bool bSendEvent = true );
 
 public:
 
@@ -284,19 +284,19 @@ public:
 	FORCEINLINE FLFPPrimitiveData GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
 	FORCEINLINE FLFPPrimitiveData GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
 	FORCEINLINE FLFPPrimitiveData GetRegionData ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData );
+	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
 
 public:
 
@@ -367,13 +367,27 @@ protected:
 };
 
 template < typename FuncBody >
-void ULFPChunkedPrimitiveDataComponent::SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body )
+void ULFPChunkedPrimitiveDataComponent::SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body , const bool bSendEvent )
 {
 	check ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) )
 
 	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 
-	Body ( RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData_Ref ( DataIndex ) );
+	FLFPChunkedPrimitiveChangeEvent BroadcastData = FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , FLFPPrimitiveData ( ) , FLFPPrimitiveData ( ) );
 
-	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) ) );
+	FLFPPrimitiveData& DataRef = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData_Ref ( DataIndex );
+
+	if ( bSendEvent )
+	{
+		BroadcastData.OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+	}
+
+	Body ( DataRef );
+
+	if ( bSendEvent )
+	{
+		BroadcastData.NewData = DataRef;
+
+		AddDataChangeEvent ( BroadcastData );
+	}
 }

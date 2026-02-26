@@ -166,7 +166,7 @@ FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetData ( const int32 Regio
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData )
+void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
@@ -180,11 +180,18 @@ void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , cons
 		return;
 	}
 
-	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      ChunkIndex ,
+		                                                      DataIndex ,
+		                                                      RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) ,
+		                                                      NewData )
+		                   );
+	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
-
-	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , OldData , NewData ) );
 }
 
 FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
@@ -199,7 +206,7 @@ FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData )
+void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
@@ -213,11 +220,18 @@ void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex ,
 		return;
 	}
 
-	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      ChunkIndex ,
+		                                                      INDEX_NONE ,
+		                                                      RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( ) ,
+		                                                      NewData )
+		                   );
+	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkData ( NewData );
-
-	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , INDEX_NONE , OldData , NewData ) );
 }
 
 FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
@@ -232,7 +246,7 @@ FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32
 	return RegionDataList [ RegionIndex ].GetRegionData ( );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData )
+void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -246,11 +260,18 @@ void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex 
 		return;
 	}
 
-	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetRegionData ( );
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      INDEX_NONE ,
+		                                                      INDEX_NONE ,
+		                                                      RegionDataList [ RegionIndex ].GetRegionData ( ) ,
+		                                                      NewData )
+		                   );
+	}
 
 	RegionDataList [ RegionIndex ].SetRegionData ( NewData );
-
-	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent ( RegionIndex , INDEX_NONE , INDEX_NONE , OldData , NewData ) );
 }
 
 bool ULFPChunkedPrimitiveDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const

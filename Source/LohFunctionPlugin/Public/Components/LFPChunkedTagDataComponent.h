@@ -567,7 +567,7 @@ public:
 	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const;
 
 	// Set meta by data meta index from mapping
-	FORCEINLINE void SetDataMeta_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta );
+	FORCEINLINE void SetDataMeta_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent = true );
 
 public:
 
@@ -578,13 +578,13 @@ public:
 	FGameplayTag GetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewDataTag") )
-	void SetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag );
+	void SetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe , AutoCreateRefTerm="DataMetaTag") )
 	FLFPPrimitiveData GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
-	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta );
+	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
 	void RemoveDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag );
@@ -595,13 +595,13 @@ public:
 	FGameplayTag GetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewChunkTag") )
-	void SetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& NewChunkTag );
+	void SetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& NewChunkTag , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
 	FLFPPrimitiveData GetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
-	void SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FLFPPrimitiveData& NewChunkMeta );
+	void SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FLFPPrimitiveData& NewChunkMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
 	void RemoveChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag );
@@ -612,13 +612,13 @@ public:
 	FGameplayTag GetRegionTag ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewRegionTag") )
-	void SetRegionTag ( const int32 RegionIndex , const FGameplayTag& NewRegionTag );
+	void SetRegionTag ( const int32 RegionIndex , const FGameplayTag& NewRegionTag , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
 	FLFPPrimitiveData GetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
-	void SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FLFPPrimitiveData& NewRegionMeta );
+	void SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FLFPPrimitiveData& NewRegionMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
 	void RemoveRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag );
