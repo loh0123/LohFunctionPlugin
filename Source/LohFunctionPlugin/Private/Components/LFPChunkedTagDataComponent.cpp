@@ -65,6 +65,15 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          INDEX_NONE ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChunkedTagSerializeData& SaveData )
@@ -83,6 +92,15 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChu
 	RegionData.CleanEmptyMetaData ( );
 
 	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          INDEX_NONE ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 ////////////////////////////
@@ -106,6 +124,15 @@ void ULFPChunkedTagDataComponent::InitializeChunk ( const int32 RegionIndex , co
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).InitializeChunkData ( DataIndexSize , FillTag );
 
 	OnInitialized.Broadcast ( RegionIndex , ChunkIndex );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          ChunkIndex ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
@@ -120,6 +147,15 @@ void ULFPChunkedTagDataComponent::DeinitializeChunk ( const int32 RegionIndex , 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).DeinitializeChunkData ( );
 
 	OnUninitialized.Broadcast ( RegionIndex , ChunkIndex );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          ChunkIndex ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedTagDataComponent::InitializeRegion ( const int32 RegionIndex )
@@ -141,6 +177,15 @@ void ULFPChunkedTagDataComponent::InitializeRegion ( const int32 RegionIndex )
 	RegionDataList [ RegionIndex ].InitializeRegionData ( ChunkIndexSize );
 
 	OnInitialized.Broadcast ( RegionIndex , INDEX_NONE );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          INDEX_NONE ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedTagDataComponent::DeinitializeRegion ( const int32 RegionIndex )
@@ -155,6 +200,15 @@ void ULFPChunkedTagDataComponent::DeinitializeRegion ( const int32 RegionIndex )
 	RegionDataList [ RegionIndex ].DeinitializeRegionData ( );
 
 	OnUninitialized.Broadcast ( RegionIndex , INDEX_NONE );
+
+	AddMetaChangeEvent ( FLFPMetaChangeEvent (
+	                                          RegionIndex ,
+	                                          INDEX_NONE ,
+	                                          INDEX_NONE ,
+	                                          FGameplayTag::EmptyTag ,
+	                                          FLFPPrimitiveData ( ) ,
+	                                          FLFPPrimitiveData ( ) )
+	                   );
 }
 
 ////////////////////////////

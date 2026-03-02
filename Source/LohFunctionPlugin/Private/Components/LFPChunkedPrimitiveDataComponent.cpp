@@ -99,6 +99,14 @@ void ULFPChunkedPrimitiveDataComponent::InitializeChunk ( const int32 RegionInde
 	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).InitializeChunkData ( DataIndexSize );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      ChunkIndex ,
+	                                                      INDEX_NONE ,
+	                                                      FLFPPrimitiveData ( ) ,
+	                                                      FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedPrimitiveDataComponent::DeinitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
@@ -111,6 +119,14 @@ void ULFPChunkedPrimitiveDataComponent::DeinitializeChunk ( const int32 RegionIn
 	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).DeinitializeChunkData ( );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      ChunkIndex ,
+	                                                      INDEX_NONE ,
+	                                                      FLFPPrimitiveData ( ) ,
+	                                                      FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedPrimitiveDataComponent::InitializeRegion ( const int32 RegionIndex )
@@ -130,6 +146,14 @@ void ULFPChunkedPrimitiveDataComponent::InitializeRegion ( const int32 RegionInd
 	}
 
 	RegionDataList [ RegionIndex ].InitializeRegionData ( ChunkIndexSize );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      INDEX_NONE ,
+	                                                      INDEX_NONE ,
+	                                                      FLFPPrimitiveData ( ) ,
+	                                                      FLFPPrimitiveData ( ) )
+	                   );
 }
 
 void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionIndex )
@@ -142,6 +166,14 @@ void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionI
 	}
 
 	RegionDataList [ RegionIndex ].DeinitializeRegionData ( );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      INDEX_NONE ,
+	                                                      INDEX_NONE ,
+	                                                      FLFPPrimitiveData ( ) ,
+	                                                      FLFPPrimitiveData ( ) )
+	                   );
 }
 
 const FLFPPrimitiveData& ULFPChunkedPrimitiveDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
