@@ -19,16 +19,16 @@ struct FLFPPrimitiveChunkData
 private:
 
 	UPROPERTY ( )
-	TArray < FLFPPrimitiveData > PrimitiveList = TArray < FLFPPrimitiveData > ( );
+	TArray < FInstancedStruct > PrimitiveList = TArray < FInstancedStruct > ( );
 
 	UPROPERTY ( )
-	FLFPPrimitiveData ChunkPrimitiveData = FLFPPrimitiveData ( );
+	FInstancedStruct ChunkPrimitiveData = FInstancedStruct ( );
 
 public:
 
 	FORCEINLINE void InitializeChunkData ( const int32 NewDataIndexSize )
 	{
-		PrimitiveList.SetNumZeroed ( NewDataIndexSize );
+		PrimitiveList.SetNum ( NewDataIndexSize );
 	}
 
 	FORCEINLINE void DeinitializeChunkData ( )
@@ -50,21 +50,21 @@ public:
 
 public:
 
-	FORCEINLINE FLFPPrimitiveData& GetData_Ref ( const int32 DataIndex )
+	FORCEINLINE FInstancedStruct& GetData_Ref ( const int32 DataIndex )
 	{
 		check ( IsDataIndexValid ( DataIndex ) );
 
 		return PrimitiveList [ DataIndex ];
 	}
 
-	FORCEINLINE const FLFPPrimitiveData& GetData ( const int32 DataIndex ) const
+	FORCEINLINE const FInstancedStruct& GetData ( const int32 DataIndex ) const
 	{
 		check ( IsDataIndexValid ( DataIndex ) );
 
 		return PrimitiveList [ DataIndex ];
 	}
 
-	FORCEINLINE void SetData ( const int32 DataIndex , const FLFPPrimitiveData& NewData )
+	FORCEINLINE void SetData ( const int32 DataIndex , const FInstancedStruct& NewData )
 	{
 		check ( IsDataIndexValid ( DataIndex ) );
 
@@ -73,19 +73,19 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData& GetChunkData ( ) const
+	FORCEINLINE const FInstancedStruct& GetChunkData ( ) const
 	{
 		return ChunkPrimitiveData;
 	}
 
-	FORCEINLINE void SetChunkData ( const FLFPPrimitiveData& NewData )
+	FORCEINLINE void SetChunkData ( const FInstancedStruct& NewData )
 	{
 		ChunkPrimitiveData = NewData;
 	}
 
 public:
 
-	FORCEINLINE const TArray < FLFPPrimitiveData >& GetDataList ( ) const
+	FORCEINLINE const TArray < FInstancedStruct >& GetDataList ( ) const
 	{
 		return PrimitiveList;
 	}
@@ -102,7 +102,7 @@ private:
 	TArray < FLFPPrimitiveChunkData > ChunkList = TArray < FLFPPrimitiveChunkData > ( );
 
 	UPROPERTY ( )
-	FLFPPrimitiveData RegionPrimitiveData = FLFPPrimitiveData ( );
+	FInstancedStruct RegionPrimitiveData = FInstancedStruct ( );
 
 public:
 
@@ -153,12 +153,12 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData& GetRegionData ( ) const
+	FORCEINLINE const FInstancedStruct& GetRegionData ( ) const
 	{
 		return RegionPrimitiveData;
 	}
 
-	FORCEINLINE void SetRegionData ( const FLFPPrimitiveData& NewData )
+	FORCEINLINE void SetRegionData ( const FInstancedStruct& NewData )
 	{
 		RegionPrimitiveData = NewData;
 	}
@@ -187,11 +187,11 @@ struct FLFPChunkedPrimitiveChangeEvent
 
 	FLFPChunkedPrimitiveChangeEvent
 	(
-		const int32              InRegionIndex ,
-		const int32              InChunkIndex ,
-		const int32              InDataIndex ,
-		const FLFPPrimitiveData& InOldData ,
-		const FLFPPrimitiveData& InNewData
+		const int32             InRegionIndex ,
+		const int32             InChunkIndex ,
+		const int32             InDataIndex ,
+		const FInstancedStruct& InOldData ,
+		const FInstancedStruct& InNewData
 		) : RegionIndex ( InRegionIndex )
 		    , ChunkIndex ( InChunkIndex )
 		    , DataIndex ( InDataIndex )
@@ -212,10 +212,10 @@ public:
 	int32 DataIndex = INDEX_NONE;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	FLFPPrimitiveData OldData = FLFPPrimitiveData ( );
+	FInstancedStruct OldData = FInstancedStruct ( );
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	FLFPPrimitiveData NewData = FLFPPrimitiveData ( );
+	FInstancedStruct NewData = FInstancedStruct ( );
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedPrimitiveData_DataChanged , const TArray<FLFPChunkedPrimitiveChangeEvent>& , ChangeList );
@@ -270,7 +270,7 @@ public:
 public:
 
 	// Faster version of get data ID without check
-	FORCEINLINE const FLFPPrimitiveData& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE const FInstancedStruct& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	template < typename FuncBody >
 	FORCEINLINE void SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body , const bool bSendEvent = true );
@@ -278,25 +278,25 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE TArray < FLFPPrimitiveData > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE TArray < FInstancedStruct > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE FLFPPrimitiveData GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	const FInstancedStruct& GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
+	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE FLFPPrimitiveData GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	const FInstancedStruct& GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
+	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE FLFPPrimitiveData GetRegionData ( const int32 RegionIndex ) const;
+	const FInstancedStruct& GetRegionData ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent = true );
+	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 public:
 
@@ -364,6 +364,10 @@ protected:
 
 	UPROPERTY ( EditAnywhere , Category = "Setting|IndexSize" )
 	int32 RegionIndexSize = 1;
+
+private:
+
+	static const FInstancedStruct EmptyStruct;
 };
 
 template < typename FuncBody >
@@ -371,11 +375,11 @@ void ULFPChunkedPrimitiveDataComponent::SetData_Template ( const int32 RegionInd
 {
 	check ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) )
 
-	const FLFPPrimitiveData OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+	const FInstancedStruct OldData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 
-	FLFPChunkedPrimitiveChangeEvent BroadcastData = FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , FLFPPrimitiveData ( ) , FLFPPrimitiveData ( ) );
+	FLFPChunkedPrimitiveChangeEvent BroadcastData = FLFPChunkedPrimitiveChangeEvent ( RegionIndex , ChunkIndex , DataIndex , FInstancedStruct ( ) , FInstancedStruct ( ) );
 
-	FLFPPrimitiveData& DataRef = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData_Ref ( DataIndex );
+	FInstancedStruct& DataRef = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData_Ref ( DataIndex );
 
 	if ( bSendEvent )
 	{

@@ -8,82 +8,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Library/LFPDynamicTypeLibrary.h"
+#include "StructUtils/InstancedStruct.h"
 #include "LFPChunkedTagDataComponent.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN ( LogChunkedTagDataComponent , Log , All );
-
-USTRUCT ( )
-struct FLFPTaggedMetaData
-{
-	GENERATED_BODY ( )
-
-	FLFPTaggedMetaData ( ) = default;
-
-	explicit FLFPTaggedMetaData ( int32 DataIndex ) : DataIndex ( DataIndex )
-	{
-	}
-
-private:
-
-	UPROPERTY ( )
-	int32 DataIndex = INDEX_NONE;
-
-	UPROPERTY ( )
-	FLFPPrimitiveDataTagArray MetaList = FLFPPrimitiveDataTagArray ( );
-
-public:
-
-	FORCEINLINE bool operator== ( const int32 FindingIndex ) const
-	{
-		return DataIndex == FindingIndex;
-	}
-
-public:
-
-	FORCEINLINE bool IsEmpty ( ) const
-	{
-		return MetaList.IsEmpty ( );
-	}
-
-public:
-
-	FORCEINLINE int32 GetDataIndex ( ) const
-	{
-		return DataIndex;
-	}
-
-	FORCEINLINE void SetDataIndex ( const int32 NewDataIndex )
-	{
-		DataIndex = NewDataIndex;
-	}
-
-public:
-
-	FORCEINLINE const TArray < FGameplayTag >& GetMetaDataTagList ( ) const
-	{
-		return MetaList.GetMappingList ( );
-	}
-
-	FORCEINLINE const FLFPPrimitiveData* GetMetaData ( const FGameplayTag& MetaTag ) const
-	{
-		return MetaList.GetItemConst ( MetaTag );
-	}
-
-	FORCEINLINE FLFPPrimitiveData& GetOrAddMetaData ( const FGameplayTag& MetaTag )
-	{
-		return MetaList.GetOrAddItem ( MetaTag );
-	}
-
-	FORCEINLINE void RemoveMetaData ( const FGameplayTag& MetaTag )
-	{
-		MetaList.RemoveItem ( MetaTag );
-	}
-
-	FORCEINLINE void CleanEmptyMetaData ( )
-	{
-		MetaList.CleanEmptyItem ( );
-	}
-};
 
 USTRUCT ( )
 struct FLFPTaggedChunkData
@@ -98,19 +26,20 @@ private:
 	FGameplayTag ChunkTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY ( )
-	FLFPPrimitiveDataTagArray ChunkMetaList = FLFPPrimitiveDataTagArray ( );
+	FLFPInstancedStructTagArray ChunkMetaList = FLFPInstancedStructTagArray ( );
 
 	UPROPERTY ( )
 	FLFPTagTrackerStaticArray DataTagList = FLFPTagTrackerStaticArray ( );
 
 	UPROPERTY ( )
-	TArray < FLFPTaggedMetaData > DataMetaList = TArray < FLFPTaggedMetaData > ( );
+	TArray < FLFPInstancedStructTagArray > DataMetaList = TArray < FLFPInstancedStructTagArray > ( );
 
 public:
 
 	FORCEINLINE void InitializeChunkData ( const int32 NewDataIndexSize , const FGameplayTag& FillTag )
 	{
 		DataTagList = FLFPTagTrackerStaticArray ( NewDataIndexSize );
+		DataMetaList.SetNum ( NewDataIndexSize );
 
 		if ( FillTag.IsValid ( ) )
 		{
@@ -146,12 +75,12 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData* GetChunkMeta ( const FGameplayTag& MetaTag ) const
+	FORCEINLINE const FInstancedStruct* GetChunkMeta ( const FGameplayTag& MetaTag ) const
 	{
 		return ChunkMetaList.GetItemConst ( MetaTag );
 	}
 
-	FORCEINLINE FLFPPrimitiveData& GetOrAddChunkMeta ( const FGameplayTag& MetaTag )
+	FORCEINLINE FInstancedStruct& GetOrAddChunkMeta ( const FGameplayTag& MetaTag )
 	{
 		return ChunkMetaList.GetOrAddItem ( MetaTag );
 	}
@@ -196,28 +125,14 @@ public:
 		return DataTagList.GetItemList ( );
 	}
 
-	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList ( const int32 DataIndex ) const
+	FORCEINLINE const FLFPInstancedStructTagArray* GetDataMetaList ( const int32 DataIndex ) const
 	{
-		return DataMetaList.FindByKey ( DataIndex );
+		return DataMetaList.IsValidIndex ( DataIndex ) ? &DataMetaList [ DataIndex ] : nullptr;
 	}
 
-	FORCEINLINE FLFPTaggedMetaData* GetDataMetaList_Mutable ( const int32 DataIndex )
+	FORCEINLINE FLFPInstancedStructTagArray* GetDataMetaList ( const int32 DataIndex )
 	{
-		return DataMetaList.FindByKey ( DataIndex );
-	}
-
-	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList_Direct ( const int32 DataMetaIndex ) const
-	{
-		return DataMetaList.IsValidIndex ( DataMetaIndex )
-		       ? &DataMetaList [ DataMetaIndex ]
-		       : nullptr;
-	}
-
-	FORCEINLINE FLFPTaggedMetaData* GetDataMetaList_Direct_Mutable ( const int32 DataMetaIndex )
-	{
-		return DataMetaList.IsValidIndex ( DataMetaIndex )
-		       ? &DataMetaList [ DataMetaIndex ]
-		       : nullptr;
+		return DataMetaList.IsValidIndex ( DataIndex ) ? &DataMetaList [ DataIndex ] : nullptr;
 	}
 
 public:
@@ -229,63 +144,43 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData* GetDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag ) const
+	FORCEINLINE const FInstancedStruct* GetDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag ) const
 	{
 		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
 		         TEXT(
 			         "DataIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
 		         ) );
 
-		if ( const int32 MetaDataIndex = DataMetaList.IndexOfByKey ( DataIndex ) ; MetaDataIndex != INDEX_NONE )
-		{
-			return DataMetaList [ MetaDataIndex ].GetMetaData ( MetaTag );
-		}
-
-		return nullptr;
+		return DataMetaList [ DataIndex ].GetItemConst ( MetaTag );
 	}
 
-	FORCEINLINE FLFPPrimitiveData& GetOrAddDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag )
+	FORCEINLINE FInstancedStruct& GetOrAddDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag )
 	{
 		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
 		         TEXT(
 			         "DataIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
 		         ) );
 
-		if ( const int32 MetaDataIndex = DataMetaList.IndexOfByKey ( DataIndex ) ; MetaDataIndex != INDEX_NONE )
-		{
-			return DataMetaList [ MetaDataIndex ].GetOrAddMetaData ( MetaTag );
-		}
-
-		return DataMetaList.Add_GetRef ( FLFPTaggedMetaData ( DataIndex ) ).GetOrAddMetaData ( MetaTag );
+		return DataMetaList [ DataIndex ].GetOrAddItem ( MetaTag );
 	}
 
 	FORCEINLINE void RemoveDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag )
 	{
 		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
 		         TEXT(
-			         "DataIndex is invalid, call InitializeChunkData first. Resize Chunk data after initialized is not allow"
+			         "DataIndex is invalid, call InitializeChunkData first. Resize Chunk data after initialized is not allowed"
 		         ) );
 
-		if ( const int32 MetaDataIndex = DataMetaList.IndexOfByKey ( DataIndex ) ; MetaDataIndex != INDEX_NONE )
-		{
-			FLFPTaggedMetaData& MetaDataPtr = DataMetaList [ MetaDataIndex ];
-
-			MetaDataPtr.RemoveMetaData ( MetaTag );
-
-			if ( MetaDataPtr.IsEmpty ( ) )
-			{
-				DataMetaList.RemoveAtSwap ( MetaDataIndex );
-			}
-		}
+		DataMetaList [ DataIndex ].RemoveItem ( MetaTag );
 	}
 
 public:
 
 	FORCEINLINE void CleanEmptyMetaData ( )
 	{
-		DataMetaList.RemoveAllSwap ( [] ( FLFPTaggedMetaData& MetaData )
+		DataMetaList.RemoveAllSwap ( [] ( FLFPInstancedStructTagArray& MetaData )
 		{
-			MetaData.CleanEmptyMetaData ( );
+			MetaData.CleanEmptyItem ( );
 			return MetaData.IsEmpty ( );
 		} );
 
@@ -304,7 +199,7 @@ private:
 	FGameplayTag RegionTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY ( )
-	FLFPPrimitiveDataTagArray RegionMetaList = FLFPPrimitiveDataTagArray ( );
+	FLFPInstancedStructTagArray RegionMetaList = FLFPInstancedStructTagArray ( );
 
 	UPROPERTY ( )
 	TArray < FLFPTaggedChunkData > ChunkList = TArray < FLFPTaggedChunkData > ( );
@@ -341,12 +236,12 @@ public:
 
 public:
 
-	FORCEINLINE const FLFPPrimitiveData* GetRegionMeta ( const FGameplayTag& MetaTag ) const
+	FORCEINLINE const FInstancedStruct* GetRegionMeta ( const FGameplayTag& MetaTag ) const
 	{
 		return RegionMetaList.GetItemConst ( MetaTag );
 	}
 
-	FORCEINLINE FLFPPrimitiveData& GetOrAddRegionMeta ( const FGameplayTag& MetaTag )
+	FORCEINLINE FInstancedStruct& GetOrAddRegionMeta ( const FGameplayTag& MetaTag )
 	{
 		return RegionMetaList.GetOrAddItem ( MetaTag );
 	}
@@ -429,13 +324,11 @@ struct FLFPTagChangeEvent
 		const int32         InRegionIndex ,
 		const int32         InChunkIndex ,
 		const int32         InDataIndex ,
-		const FGameplayTag& InOldTag ,
-		const FGameplayTag& InNewTag
+		const FGameplayTag& InOldTag
 		) : RegionIndex ( InRegionIndex )
 		    , ChunkIndex ( InChunkIndex )
 		    , DataIndex ( InDataIndex )
 		    , OldTag ( InOldTag )
-		    , NewTag ( InNewTag )
 	{
 	}
 
@@ -452,9 +345,6 @@ public:
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
 	FGameplayTag OldTag = FGameplayTag::EmptyTag;
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	FGameplayTag NewTag = FGameplayTag::EmptyTag;
 };
 
 USTRUCT ( BlueprintType )
@@ -466,18 +356,16 @@ struct FLFPMetaChangeEvent
 
 	FLFPMetaChangeEvent
 	(
-		const int32              InRegionIndex ,
-		const int32              InChunkIndex ,
-		const int32              InDataIndex ,
-		const FGameplayTag&      InMetaTag ,
-		const FLFPPrimitiveData& InOldMetaData ,
-		const FLFPPrimitiveData& InNewMetaData
+		const int32             InRegionIndex ,
+		const int32             InChunkIndex ,
+		const int32             InDataIndex ,
+		const FGameplayTag&     InMetaTag ,
+		const FInstancedStruct& InOldMetaData
 		) : RegionIndex ( InRegionIndex )
 		    , ChunkIndex ( InChunkIndex )
 		    , DataIndex ( InDataIndex )
 		    , MetaTag ( InMetaTag )
 		    , OldMetaData ( InOldMetaData )
-		    , NewMetaData ( InNewMetaData )
 	{
 	}
 
@@ -495,11 +383,8 @@ public:
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
 	FGameplayTag MetaTag = FGameplayTag::EmptyTag;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	FLFPPrimitiveData OldMetaData = FLFPPrimitiveData ( );
-
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default , Transient )
+	FInstancedStruct OldMetaData = FInstancedStruct ( );
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam ( FLFPChunkedTagData_TagChanged , const TArray<FLFPTagChangeEvent>& , ChangeList );
@@ -564,10 +449,7 @@ public:
 	FORCEINLINE int32 GetDataMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	// Get existing All Meta Tag in data 
-	FORCEINLINE const FLFPTaggedMetaData* GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const;
-
-	// Set meta by data meta index from mapping
-	FORCEINLINE void SetDataMeta_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent = true );
+	FORCEINLINE const FLFPInstancedStructTagArray* GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 public:
 
@@ -580,11 +462,12 @@ public:
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewDataTag") )
 	void SetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag , const bool bSendEvent = true );
 
-	UFUNCTION ( BlueprintCallable , meta=(BlueprintThreadSafe , AutoCreateRefTerm="DataMetaTag") )
-	FLFPPrimitiveData GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const;
+	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
+	const FInstancedStruct& GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
-	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent = true );
+	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FInstancedStruct& NewDataMeta , const bool bSendEvent = true );
+	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FConstStructView NewDataMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
 	void RemoveDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag );
@@ -598,10 +481,10 @@ public:
 	void SetChunkTag ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& NewChunkTag , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
-	FLFPPrimitiveData GetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const;
+	const FInstancedStruct& GetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
-	void SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FLFPPrimitiveData& NewChunkMeta , const bool bSendEvent = true );
+	void SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FInstancedStruct& NewChunkMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="ChunkMetaTag") )
 	void RemoveChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag );
@@ -615,10 +498,10 @@ public:
 	void SetRegionTag ( const int32 RegionIndex , const FGameplayTag& NewRegionTag , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
-	FLFPPrimitiveData GetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const;
+	const FInstancedStruct& GetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const;
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
-	void SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FLFPPrimitiveData& NewRegionMeta , const bool bSendEvent = true );
+	void SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FInstancedStruct& NewRegionMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="RegionMetaTag") )
 	void RemoveRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag );
@@ -710,4 +593,8 @@ protected:
 
 	UPROPERTY ( EditAnywhere , Category = "Setting|IndexSize" )
 	int32 RegionIndexSize = 1;
+
+private:
+
+	static const FInstancedStruct EmptyStruct;
 };

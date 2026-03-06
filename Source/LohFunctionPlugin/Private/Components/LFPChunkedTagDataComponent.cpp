@@ -7,6 +7,7 @@
 
 #include "Serialization/ArchiveLoadCompressedProxy.h"
 #include "Serialization/ArchiveSaveCompressedProxy.h"
+#include "StructUtils/StructView.h"
 
 DEFINE_LOG_CATEGORY ( LogChunkedTagDataComponent );
 
@@ -71,8 +72,8 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 	                                          INDEX_NONE ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -98,8 +99,8 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChu
 	                                          INDEX_NONE ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -130,8 +131,8 @@ void ULFPChunkedTagDataComponent::InitializeChunk ( const int32 RegionIndex , co
 	                                          ChunkIndex ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -153,8 +154,8 @@ void ULFPChunkedTagDataComponent::DeinitializeChunk ( const int32 RegionIndex , 
 	                                          ChunkIndex ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -183,8 +184,8 @@ void ULFPChunkedTagDataComponent::InitializeRegion ( const int32 RegionIndex )
 	                                          INDEX_NONE ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -206,8 +207,8 @@ void ULFPChunkedTagDataComponent::DeinitializeRegion ( const int32 RegionIndex )
 	                                          INDEX_NONE ,
 	                                          INDEX_NONE ,
 	                                          FGameplayTag::EmptyTag ,
-	                                          FLFPPrimitiveData ( ) ,
-	                                          FLFPPrimitiveData ( ) )
+	                                          FInstancedStruct ( )
+	                                         )
 	                   );
 }
 
@@ -223,38 +224,11 @@ int32 ULFPChunkedTagDataComponent::GetDataMeta_MappingNum ( const int32 RegionIn
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMetaNum ( );
 }
 
-const FLFPTaggedMetaData* ULFPChunkedTagDataComponent::GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex ) const
+const FLFPInstancedStructTagArray* ULFPChunkedTagDataComponent::GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	check ( IsChunkIndexValid(RegionIndex, ChunkIndex) );
 
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMetaList_Direct ( MappingIndex );
-}
-
-void ULFPChunkedTagDataComponent::SetDataMeta_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 MappingIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent )
-{
-	check ( IsChunkIndexValid(RegionIndex, ChunkIndex) );
-
-	FLFPTaggedMetaData* DataMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMetaList_Direct_Mutable ( MappingIndex );
-
-	check ( DataMetaPtr != nullptr );
-
-	if ( bSendEvent )
-	{
-		const FLFPPrimitiveData* OldMetaPtr = DataMetaPtr->GetMetaData ( DataMetaTag );
-
-		AddMetaChangeEvent ( FLFPMetaChangeEvent (
-		                                          RegionIndex ,
-		                                          ChunkIndex ,
-		                                          DataMetaPtr->GetDataIndex ( ) ,
-		                                          DataMetaTag ,
-		                                          OldMetaPtr != nullptr
-		                                          ? *OldMetaPtr
-		                                          : FLFPPrimitiveData ( ) ,
-		                                          NewDataMeta )
-		                   );
-	}
-
-	DataMetaPtr->GetOrAddMetaData ( DataMetaTag ) = NewDataMeta;
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMetaList ( DataIndex );
 }
 
 TArray < FGameplayTag > ULFPChunkedTagDataComponent::GetDataTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const
@@ -303,32 +277,32 @@ void ULFPChunkedTagDataComponent::SetDataTag ( const int32 RegionIndex , const i
 		                                        RegionIndex ,
 		                                        ChunkIndex ,
 		                                        DataIndex ,
-		                                        RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataTag ( DataIndex ) ,
-		                                        NewDataTag )
+		                                        RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataTag ( DataIndex )
+		                                       )
 		                  );
 	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetDataTag ( DataIndex , NewDataTag );
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const
+const FInstancedStruct& ULFPChunkedTagDataComponent::GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
 		UE_LOG ( LogChunkedTagDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
 
-		return FLFPPrimitiveData ( );
+		return EmptyStruct;
 	}
 
-	if ( const FLFPPrimitiveData* MetaData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag ) ; MetaData != nullptr )
+	if ( const FInstancedStruct* MetaData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag ) ; MetaData != nullptr )
 	{
 		return *MetaData;
 	}
 
-	return FLFPPrimitiveData ( );
+	return EmptyStruct;
 }
 
-void ULFPChunkedTagDataComponent::SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FLFPPrimitiveData& NewDataMeta , const bool bSendEvent )
+void ULFPChunkedTagDataComponent::SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FInstancedStruct& NewDataMeta , const bool bSendEvent )
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
@@ -339,7 +313,7 @@ void ULFPChunkedTagDataComponent::SetDataMeta ( const int32 RegionIndex , const 
 
 	if ( bSendEvent )
 	{
-		const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag );
+		const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag );
 
 		AddMetaChangeEvent ( FLFPMetaChangeEvent (
 		                                          RegionIndex ,
@@ -348,8 +322,36 @@ void ULFPChunkedTagDataComponent::SetDataMeta ( const int32 RegionIndex , const 
 		                                          DataMetaTag ,
 		                                          OldMetaPtr != nullptr
 		                                          ? *OldMetaPtr
-		                                          : FLFPPrimitiveData ( ) ,
-		                                          NewDataMeta )
+		                                          : FInstancedStruct ( )
+		                                         )
+		                   );
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetOrAddDataMeta ( DataIndex , DataMetaTag ) = NewDataMeta;
+}
+
+void ULFPChunkedTagDataComponent::SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FConstStructView NewDataMeta , const bool bSendEvent )
+{
+	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
+	{
+		UE_LOG ( LogChunkedTagDataComponent , Warning , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
+
+		return;
+	}
+
+	if ( bSendEvent )
+	{
+		const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag );
+
+		AddMetaChangeEvent ( FLFPMetaChangeEvent (
+		                                          RegionIndex ,
+		                                          ChunkIndex ,
+		                                          DataIndex ,
+		                                          DataMetaTag ,
+		                                          OldMetaPtr != nullptr
+		                                          ? *OldMetaPtr
+		                                          : FInstancedStruct ( )
+		                                         )
 		                   );
 	}
 
@@ -365,20 +367,20 @@ void ULFPChunkedTagDataComponent::RemoveDataMeta ( const int32 RegionIndex , con
 		return;
 	}
 
-	const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag );
+	const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataMeta ( DataIndex , DataMetaTag );
 
 	if ( OldMetaPtr == nullptr )
 	{
 		return;
 	}
 
-	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
-	                                  ? *OldMetaPtr
-	                                  : FLFPPrimitiveData ( );
+	const FInstancedStruct OldMeta = OldMetaPtr != nullptr
+	                                 ? *OldMetaPtr
+	                                 : FInstancedStruct ( );
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).RemoveDataMeta ( DataIndex , DataMetaTag );
 
-	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , ChunkIndex , DataIndex , DataMetaTag , OldMeta , FLFPPrimitiveData ( ) ) );
+	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , ChunkIndex , DataIndex , DataMetaTag , OldMeta ) );
 }
 
 ////////////////////////////
@@ -415,32 +417,32 @@ void ULFPChunkedTagDataComponent::SetChunkTag ( const int32 RegionIndex , const 
 		                                        RegionIndex ,
 		                                        ChunkIndex ,
 		                                        INDEX_NONE ,
-		                                        RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkTag ( ) ,
-		                                        NewChunkTag )
+		                                        RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkTag ( )
+		                                       )
 		                  );
 	}
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkTag ( NewChunkTag );
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const
+const FInstancedStruct& ULFPChunkedTagDataComponent::GetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag ) const
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
 		UE_LOG ( LogChunkedTagDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
 
-		return FLFPPrimitiveData ( );
+		return EmptyStruct;
 	}
 
-	if ( const FLFPPrimitiveData* MetaData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag ) ; MetaData != nullptr )
+	if ( const FInstancedStruct* MetaData = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag ) ; MetaData != nullptr )
 	{
 		return *MetaData;
 	}
 
-	return FLFPPrimitiveData ( );
+	return EmptyStruct;
 }
 
-void ULFPChunkedTagDataComponent::SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FLFPPrimitiveData& NewChunkMeta , const bool bSendEvent )
+void ULFPChunkedTagDataComponent::SetChunkMeta ( const int32 RegionIndex , const int32 ChunkIndex , const FGameplayTag& ChunkMetaTag , const FInstancedStruct& NewChunkMeta , const bool bSendEvent )
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
@@ -451,7 +453,7 @@ void ULFPChunkedTagDataComponent::SetChunkMeta ( const int32 RegionIndex , const
 
 	if ( bSendEvent )
 	{
-		const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag );
+		const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag );
 
 		AddMetaChangeEvent ( FLFPMetaChangeEvent (
 		                                          RegionIndex ,
@@ -460,8 +462,7 @@ void ULFPChunkedTagDataComponent::SetChunkMeta ( const int32 RegionIndex , const
 		                                          ChunkMetaTag ,
 		                                          OldMetaPtr != nullptr
 		                                          ? *OldMetaPtr
-		                                          : FLFPPrimitiveData ( ) ,
-		                                          NewChunkMeta )
+		                                          : FInstancedStruct ( ) )
 		                   );
 	}
 
@@ -477,20 +478,20 @@ void ULFPChunkedTagDataComponent::RemoveChunkMeta ( const int32 RegionIndex , co
 		return;
 	}
 
-	const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag );
+	const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkMeta ( ChunkMetaTag );
 
 	if ( OldMetaPtr == nullptr )
 	{
 		return;
 	}
 
-	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
-	                                  ? *OldMetaPtr
-	                                  : FLFPPrimitiveData ( );
+	const FInstancedStruct OldMeta = OldMetaPtr != nullptr
+	                                 ? *OldMetaPtr
+	                                 : FInstancedStruct ( );
 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).RemoveChunkMeta ( ChunkMetaTag );
 
-	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , ChunkIndex , INDEX_NONE , ChunkMetaTag , OldMeta , FLFPPrimitiveData ( ) ) );
+	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , ChunkIndex , INDEX_NONE , ChunkMetaTag , OldMeta ) );
 }
 
 ////////////////////////////
@@ -527,8 +528,8 @@ void ULFPChunkedTagDataComponent::SetRegionTag ( const int32 RegionIndex , const
 		                                        RegionIndex ,
 		                                        INDEX_NONE ,
 		                                        INDEX_NONE ,
-		                                        RegionDataList [ RegionIndex ].GetRegionTag ( ) ,
-		                                        NewRegionTag )
+		                                        RegionDataList [ RegionIndex ].GetRegionTag ( )
+		                                       )
 		                  );
 	}
 
@@ -536,24 +537,24 @@ void ULFPChunkedTagDataComponent::SetRegionTag ( const int32 RegionIndex , const
 	RegionDataList [ RegionIndex ].SetRegionTag ( NewRegionTag );
 }
 
-FLFPPrimitiveData ULFPChunkedTagDataComponent::GetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const
+const FInstancedStruct& ULFPChunkedTagDataComponent::GetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag ) const
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
 		UE_LOG ( LogChunkedTagDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
 
-		return FLFPPrimitiveData ( );
+		return EmptyStruct;
 	}
 
-	if ( const FLFPPrimitiveData* MetaData = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag ) ; MetaData != nullptr )
+	if ( const FInstancedStruct* MetaData = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag ) ; MetaData != nullptr )
 	{
 		return *MetaData;
 	}
 
-	return FLFPPrimitiveData ( );
+	return EmptyStruct;
 }
 
-void ULFPChunkedTagDataComponent::SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FLFPPrimitiveData& NewRegionMeta , const bool bSendEvent )
+void ULFPChunkedTagDataComponent::SetRegionMeta ( const int32 RegionIndex , const FGameplayTag& RegionMetaTag , const FInstancedStruct& NewRegionMeta , const bool bSendEvent )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -564,7 +565,7 @@ void ULFPChunkedTagDataComponent::SetRegionMeta ( const int32 RegionIndex , cons
 
 	if ( bSendEvent )
 	{
-		const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag );
+		const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag );
 
 		AddMetaChangeEvent ( FLFPMetaChangeEvent (
 		                                          RegionIndex ,
@@ -573,8 +574,8 @@ void ULFPChunkedTagDataComponent::SetRegionMeta ( const int32 RegionIndex , cons
 		                                          RegionMetaTag ,
 		                                          OldMetaPtr != nullptr
 		                                          ? *OldMetaPtr
-		                                          : FLFPPrimitiveData ( ) ,
-		                                          NewRegionMeta )
+		                                          : FInstancedStruct ( )
+		                                         )
 		                   );
 	}
 
@@ -590,20 +591,20 @@ void ULFPChunkedTagDataComponent::RemoveRegionMeta ( const int32 RegionIndex , c
 		return;
 	}
 
-	const FLFPPrimitiveData* OldMetaPtr = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag );
+	const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetRegionMeta ( RegionMetaTag );
 
 	if ( OldMetaPtr == nullptr )
 	{
 		return;
 	}
 
-	const FLFPPrimitiveData OldMeta = OldMetaPtr != nullptr
-	                                  ? *OldMetaPtr
-	                                  : FLFPPrimitiveData ( );
+	const FInstancedStruct OldMeta = OldMetaPtr != nullptr
+	                                 ? *OldMetaPtr
+	                                 : FInstancedStruct ( );
 
 	RegionDataList [ RegionIndex ].RemoveRegionMeta ( RegionMetaTag );
 
-	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , INDEX_NONE , INDEX_NONE , RegionMetaTag , OldMeta , FLFPPrimitiveData ( ) ) );
+	AddMetaChangeEvent ( FLFPMetaChangeEvent ( RegionIndex , INDEX_NONE , INDEX_NONE , RegionMetaTag , OldMeta ) );
 }
 
 ////////////////////////////
@@ -683,3 +684,5 @@ void ULFPChunkedTagDataComponent::BroadcastMetaChangeEvent ( )
 	MetaChangeEventList.Reset ( );
 	MetaChangeEventHandle.Invalidate ( );
 }
+
+const FInstancedStruct ULFPChunkedTagDataComponent::EmptyStruct = FInstancedStruct ( );

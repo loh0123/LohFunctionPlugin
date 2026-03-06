@@ -104,8 +104,8 @@ void ULFPChunkedPrimitiveDataComponent::InitializeChunk ( const int32 RegionInde
 	                                                      RegionIndex ,
 	                                                      ChunkIndex ,
 	                                                      INDEX_NONE ,
-	                                                      FLFPPrimitiveData ( ) ,
-	                                                      FLFPPrimitiveData ( ) )
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
 	                   );
 }
 
@@ -124,8 +124,8 @@ void ULFPChunkedPrimitiveDataComponent::DeinitializeChunk ( const int32 RegionIn
 	                                                      RegionIndex ,
 	                                                      ChunkIndex ,
 	                                                      INDEX_NONE ,
-	                                                      FLFPPrimitiveData ( ) ,
-	                                                      FLFPPrimitiveData ( ) )
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
 	                   );
 }
 
@@ -151,8 +151,8 @@ void ULFPChunkedPrimitiveDataComponent::InitializeRegion ( const int32 RegionInd
 	                                                      RegionIndex ,
 	                                                      INDEX_NONE ,
 	                                                      INDEX_NONE ,
-	                                                      FLFPPrimitiveData ( ) ,
-	                                                      FLFPPrimitiveData ( ) )
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
 	                   );
 }
 
@@ -171,34 +171,34 @@ void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionI
 	                                                      RegionIndex ,
 	                                                      INDEX_NONE ,
 	                                                      INDEX_NONE ,
-	                                                      FLFPPrimitiveData ( ) ,
-	                                                      FLFPPrimitiveData ( ) )
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
 	                   );
 }
 
-const FLFPPrimitiveData& ULFPChunkedPrimitiveDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 }
 
-TArray < FLFPPrimitiveData > ULFPChunkedPrimitiveDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
+TArray < FInstancedStruct > ULFPChunkedPrimitiveDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataList ( );
 }
 
-FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
 		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
 
-		return TArray < uint8 > ( );
+		return EmptyStruct;
 	}
 
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
+void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FInstancedStruct& NewData , const bool bSendEvent )
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
 	{
@@ -226,19 +226,19 @@ void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , cons
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
 }
 
-FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
 		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
 
-		return TArray < uint8 > ( );
+		return EmptyStruct;
 	}
 
 	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
+void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FInstancedStruct& NewData , const bool bSendEvent )
 {
 	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
 	{
@@ -266,19 +266,19 @@ void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex ,
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkData ( NewData );
 }
 
-FLFPPrimitiveData ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
 		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
 
-		return TArray < uint8 > ( );
+		return EmptyStruct;
 	}
 
 	return RegionDataList [ RegionIndex ].GetRegionData ( );
 }
 
-void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FLFPPrimitiveData& NewData , const bool bSendEvent )
+void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FInstancedStruct& NewData , const bool bSendEvent )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -363,3 +363,5 @@ void ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent ( )
 	DataChangeEventList.Reset ( );
 	DataChangeEventHandle.Invalidate ( );
 }
+
+const FInstancedStruct ULFPChunkedPrimitiveDataComponent::EmptyStruct = FInstancedStruct ( );

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "StructUtils/InstancedStruct.h"
 #include "LFPDynamicTypeLibrary.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN ( LFPDynamicIntStaticArray , Log , All );
@@ -635,7 +636,7 @@ public:
 	}
 
 	template < typename T >
-	FLFPPrimitiveData ( T NewData )
+	explicit FLFPPrimitiveData ( T NewData )
 	{
 		Type = ELFPPrimitiveDataType::LFP_Struct;
 
@@ -949,6 +950,134 @@ public:
 	}
 };
 
+USTRUCT ( BlueprintType )
+struct LOHFUNCTIONPLUGIN_API FLFPInstancedStructTagArray
+{
+	GENERATED_BODY ( )
+
+private:
+
+	UPROPERTY ( )
+	TArray < FInstancedStruct > ItemList = { };
+
+	UPROPERTY ( )
+	TArray < FGameplayTag > MappingList = { };
+
+public:
+
+	/** Read / Write Function */
+
+	FORCEINLINE void AddItem ( const FGameplayTag& ItemTag , const FInstancedStruct& NewItem )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			ItemList [ ItemIndex ] = NewItem;
+		}
+		else if ( NewItem.IsValid ( ) )
+		{
+			ItemList.Add ( NewItem );
+			MappingList.Add ( ItemTag );
+		}
+	}
+
+	FORCEINLINE void RemoveItem ( const FGameplayTag& ItemTag )
+	{
+		if ( const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag ) ; ItemIndex != INDEX_NONE )
+		{
+			ItemList.RemoveAtSwap ( ItemIndex );
+			MappingList.RemoveAtSwap ( ItemIndex );
+		}
+	}
+
+	FORCEINLINE const TArray < FInstancedStruct >& GetItemList ( ) const
+	{
+		return ItemList;
+	}
+
+	FORCEINLINE const TArray < FGameplayTag >& GetMappingList ( ) const
+	{
+		return MappingList;
+	}
+
+	FORCEINLINE const FInstancedStruct* GetItemConst ( const FGameplayTag& ItemTag ) const
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return &ItemList [ ItemIndex ];
+		}
+
+		return nullptr;
+	}
+
+	FORCEINLINE FInstancedStruct* GetItem ( const FGameplayTag& ItemTag )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return &ItemList [ ItemIndex ];
+		}
+
+		return nullptr;
+	}
+
+	FORCEINLINE FInstancedStruct& GetOrAddItem ( const FGameplayTag& ItemTag )
+	{
+		const int32 ItemIndex = MappingList.IndexOfByKey ( ItemTag );
+
+		if ( ItemIndex != INDEX_NONE )
+		{
+			return ItemList [ ItemIndex ];
+		}
+
+		MappingList.Add ( ItemTag );
+
+		return ItemList.AddDefaulted_GetRef ( );
+	}
+
+	FORCEINLINE void CleanEmptyItem ( )
+	{
+		for ( int32 Index = MappingList.Num ( ) - 1 ; Index >= 0 ; Index-- )
+		{
+			if ( const FInstancedStruct& ItemData = ItemList [ Index ] ; ItemData.IsValid ( ) == false )
+			{
+				ItemList.RemoveAtSwap ( Index , EAllowShrinking::No );
+				MappingList.RemoveAtSwap ( Index , EAllowShrinking::No );
+			}
+		}
+
+		ItemList.Shrink ( );
+		MappingList.Shrink ( );
+	}
+
+	FORCEINLINE void Empty ( )
+	{
+		ItemList.Empty ( );
+		MappingList.Empty ( );
+	}
+
+	FORCEINLINE bool Contain ( const FGameplayTag& ItemTag ) const
+	{
+		return MappingList.Contains ( ItemTag );
+	}
+
+	FORCEINLINE bool IsEmpty ( ) const
+	{
+		return MappingList.IsEmpty ( );
+	}
+
+public:
+
+	FORCEINLINE bool operator== ( const FLFPInstancedStructTagArray& other ) const
+	{
+		return ItemList == other.ItemList && MappingList == other.MappingList;
+	}
+};
+
 UCLASS ( )
 class LOHFUNCTIONPLUGIN_API ULFPDynamicTypeLibrary : public UBlueprintFunctionLibrary
 {
@@ -971,47 +1100,47 @@ public:
 	UFUNCTION ( BlueprintPure , Category = "LohFunctionPluginLibrary | LFPIDTrackerStaticArray" )
 	static int32 GetID ( const FLFPIndexTrackerStaticArray& List , const int32 Index );
 
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static int32 GetDataAsInt ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static void SetDataAsInt ( UPARAM ( ref )
-	                           FLFPPrimitiveData& Data , const int32 Value );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static float GetDataAsFloat ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static void SetDataAsFloat ( UPARAM ( ref )
-	                             FLFPPrimitiveData& Data , const float Value );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static bool GetDataAsBool ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static void SetDataAsBool ( UPARAM ( ref )
-	                            FLFPPrimitiveData& Data , const bool Value );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static FString GetDataAsString ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static void SeDataAsString ( UPARAM ( ref )
-	                             FLFPPrimitiveData& Data , const FString Value );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static TArray < uint8 > GetDataAsList ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static void ClearData ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
-
-	UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
-	static FString ToString ( UPARAM ( ref )
-		FLFPPrimitiveData& Data );
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static int32 GetDataAsInt ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static void SetDataAsInt ( UPARAM ( ref )
+	//                           FLFPPrimitiveData& Data , const int32 Value );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static float GetDataAsFloat ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static void SetDataAsFloat ( UPARAM ( ref )
+	//                             FLFPPrimitiveData& Data , const float Value );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static bool GetDataAsBool ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static void SetDataAsBool ( UPARAM ( ref )
+	//                            FLFPPrimitiveData& Data , const bool Value );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static FString GetDataAsString ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static void SeDataAsString ( UPARAM ( ref )
+	//                             FLFPPrimitiveData& Data , const FString Value );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static TArray < uint8 > GetDataAsList ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static void ClearData ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
+	//
+	//UFUNCTION ( BlueprintCallable , Category = "LohFunctionPluginLibrary | LFPPrimitiveData" )
+	//static FString ToString ( UPARAM ( ref )
+	//	FLFPPrimitiveData& Data );
 };
