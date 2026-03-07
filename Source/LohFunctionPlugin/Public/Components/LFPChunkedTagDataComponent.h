@@ -29,31 +29,31 @@ private:
 	FLFPInstancedStructTagArray ChunkMetaList = FLFPInstancedStructTagArray ( );
 
 	UPROPERTY ( )
-	FLFPTagTrackerStaticArray DataTagList = FLFPTagTrackerStaticArray ( );
+	FLFPTagTrackerStaticArray CellTagList = FLFPTagTrackerStaticArray ( );
 
 	UPROPERTY ( )
-	TArray < FLFPInstancedStructTagArray > DataMetaList = TArray < FLFPInstancedStructTagArray > ( );
+	TArray < FLFPInstancedStructTagArray > CellMetaList = TArray < FLFPInstancedStructTagArray > ( );
 
 public:
 
-	FORCEINLINE void InitializeChunkData ( const int32 NewDataIndexSize , const FGameplayTag& FillTag )
+	FORCEINLINE void InitializeChunkData ( const int32 NewCellIndexSize , const FGameplayTag& FillTag )
 	{
-		DataTagList = FLFPTagTrackerStaticArray ( NewDataIndexSize );
-		DataMetaList.SetNum ( NewDataIndexSize );
+		CellTagList = FLFPTagTrackerStaticArray ( NewCellIndexSize );
+		CellMetaList.SetNum ( NewCellIndexSize );
 
 		if ( FillTag.IsValid ( ) )
 		{
-			for ( int32 Index = 0 ; Index < NewDataIndexSize ; ++Index )
+			for ( int32 Index = 0 ; Index < NewCellIndexSize ; ++Index )
 			{
-				SetDataTag ( Index , FillTag );
+				SetCellTag ( Index , FillTag );
 			}
 		}
 	}
 
 	FORCEINLINE void DeinitializeChunkData ( )
 	{
-		DataTagList = FLFPTagTrackerStaticArray ( );
-		DataMetaList.Empty ( );
+		CellTagList = FLFPTagTrackerStaticArray ( );
+		CellMetaList.Empty ( );
 	}
 
 public:
@@ -94,91 +94,91 @@ public:
 
 	FORCEINLINE bool IsInitialized ( ) const
 	{
-		return DataTagList.IsInitialized ( );
+		return CellTagList.IsInitialized ( );
 	}
 
-	FORCEINLINE bool IsDataIndexValid ( const int32 DataIndex ) const
+	FORCEINLINE bool IsCellIndexValid ( const int32 CellIndex ) const
 	{
-		return DataTagList.IsValidIndex ( DataIndex );
-	}
-
-public:
-
-	FORCEINLINE FGameplayTag GetDataTag ( const int32 DataIndex ) const
-	{
-		check ( DataTagList.IsValidIndex ( DataIndex ) );
-
-		return DataTagList.GetItem ( DataIndex );
-	}
-
-	FORCEINLINE void SetDataTag ( const int32 DataIndex , const FGameplayTag& NewDataTag )
-	{
-		check ( DataTagList.IsValidIndex ( DataIndex ) );
-
-		DataTagList.SetItem ( DataIndex , NewDataTag );
+		return CellTagList.IsValidIndex ( CellIndex );
 	}
 
 public:
 
-	FORCEINLINE const TArray < FGameplayTag >& GetDataTagList ( ) const
+	FORCEINLINE FGameplayTag GetCellTag ( const int32 CellIndex ) const
 	{
-		return DataTagList.GetItemList ( );
+		check ( CellTagList.IsValidIndex ( CellIndex ) );
+
+		return CellTagList.GetItem ( CellIndex );
 	}
 
-	FORCEINLINE const FLFPInstancedStructTagArray* GetDataMetaList ( const int32 DataIndex ) const
+	FORCEINLINE void SetCellTag ( const int32 CellIndex , const FGameplayTag& NewCellTag )
 	{
-		return DataMetaList.IsValidIndex ( DataIndex ) ? &DataMetaList [ DataIndex ] : nullptr;
-	}
+		check ( CellTagList.IsValidIndex ( CellIndex ) );
 
-	FORCEINLINE FLFPInstancedStructTagArray* GetDataMetaList ( const int32 DataIndex )
-	{
-		return DataMetaList.IsValidIndex ( DataIndex ) ? &DataMetaList [ DataIndex ] : nullptr;
-	}
-
-public:
-
-	FORCEINLINE int32 GetDataMetaNum ( ) const
-	{
-		return DataMetaList.Num ( );
+		CellTagList.SetItem ( CellIndex , NewCellTag );
 	}
 
 public:
 
-	FORCEINLINE const FInstancedStruct* GetDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag ) const
+	FORCEINLINE const TArray < FGameplayTag >& GetCellTagList ( ) const
 	{
-		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
+		return CellTagList.GetItemList ( );
+	}
+
+	FORCEINLINE const FLFPInstancedStructTagArray* GetCellMetaList ( const int32 CellIndex ) const
+	{
+		return CellMetaList.IsValidIndex ( CellIndex ) ? &CellMetaList [ CellIndex ] : nullptr;
+	}
+
+	FORCEINLINE FLFPInstancedStructTagArray* GetCellMetaList ( const int32 CellIndex )
+	{
+		return CellMetaList.IsValidIndex ( CellIndex ) ? &CellMetaList [ CellIndex ] : nullptr;
+	}
+
+public:
+
+	FORCEINLINE int32 GetCellMetaNum ( ) const
+	{
+		return CellMetaList.Num ( );
+	}
+
+public:
+
+	FORCEINLINE const FInstancedStruct* GetCellMeta ( const int32 CellIndex , const FGameplayTag& MetaTag ) const
+	{
+		checkf ( CellTagList.IsValidIndex ( CellIndex ) ,
 		         TEXT(
-			         "DataIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
+			         "CellIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
 		         ) );
 
-		return DataMetaList [ DataIndex ].GetItemConst ( MetaTag );
+		return CellMetaList [ CellIndex ].GetItemConst ( MetaTag );
 	}
 
-	FORCEINLINE FInstancedStruct& GetOrAddDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag )
+	FORCEINLINE FInstancedStruct& GetOrAddCellMeta ( const int32 CellIndex , const FGameplayTag& MetaTag )
 	{
-		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
+		checkf ( CellTagList.IsValidIndex ( CellIndex ) ,
 		         TEXT(
-			         "DataIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
+			         "CellIndex invalid, call InitializeChunkData first. Resize Chunk data after initialized not allow."
 		         ) );
 
-		return DataMetaList [ DataIndex ].GetOrAddItem ( MetaTag );
+		return CellMetaList [ CellIndex ].GetOrAddItem ( MetaTag );
 	}
 
-	FORCEINLINE void RemoveDataMeta ( const int32 DataIndex , const FGameplayTag& MetaTag )
+	FORCEINLINE void RemoveCellMeta ( const int32 CellIndex , const FGameplayTag& MetaTag )
 	{
-		checkf ( DataTagList.IsValidIndex ( DataIndex ) ,
+		checkf ( CellTagList.IsValidIndex ( CellIndex ) ,
 		         TEXT(
-			         "DataIndex is invalid, call InitializeChunkData first. Resize Chunk data after initialized is not allowed"
+			         "CellIndex is invalid, call InitializeChunkData first. Resize Chunk data after initialized is not allowed"
 		         ) );
 
-		DataMetaList [ DataIndex ].RemoveItem ( MetaTag );
+		CellMetaList [ CellIndex ].RemoveItem ( MetaTag );
 	}
 
 public:
 
 	FORCEINLINE void CleanEmptyMetaData ( )
 	{
-		DataMetaList.RemoveAllSwap ( [] ( FLFPInstancedStructTagArray& MetaData )
+		CellMetaList.RemoveAllSwap ( [] ( FLFPInstancedStructTagArray& MetaData )
 		{
 			MetaData.CleanEmptyItem ( );
 			return MetaData.IsEmpty ( );
@@ -323,11 +323,11 @@ struct FLFPTagChangeEvent
 	(
 		const int32         InRegionIndex ,
 		const int32         InChunkIndex ,
-		const int32         InDataIndex ,
+		const int32         InCellIndex ,
 		const FGameplayTag& InOldTag
 		) : RegionIndex ( InRegionIndex )
 		    , ChunkIndex ( InChunkIndex )
-		    , DataIndex ( InDataIndex )
+		    , CellIndex ( InCellIndex )
 		    , OldTag ( InOldTag )
 	{
 	}
@@ -341,7 +341,7 @@ public:
 	int32 ChunkIndex = INDEX_NONE;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	int32 DataIndex = INDEX_NONE;
+	int32 CellIndex = INDEX_NONE;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
 	FGameplayTag OldTag = FGameplayTag::EmptyTag;
@@ -358,12 +358,12 @@ struct FLFPMetaChangeEvent
 	(
 		const int32             InRegionIndex ,
 		const int32             InChunkIndex ,
-		const int32             InDataIndex ,
+		const int32             InCellIndex ,
 		const FGameplayTag&     InMetaTag ,
 		const FInstancedStruct& InOldMetaData
 		) : RegionIndex ( InRegionIndex )
 		    , ChunkIndex ( InChunkIndex )
-		    , DataIndex ( InDataIndex )
+		    , CellIndex ( InCellIndex )
 		    , MetaTag ( InMetaTag )
 		    , OldMetaData ( InOldMetaData )
 	{
@@ -378,7 +378,7 @@ public:
 	int32 ChunkIndex = INDEX_NONE;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
-	int32 DataIndex = INDEX_NONE;
+	int32 CellIndex = INDEX_NONE;
 
 	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
 	FGameplayTag MetaTag = FGameplayTag::EmptyTag;
@@ -443,34 +443,34 @@ public:
 public:
 
 	// Faster version of get data tag without check
-	FORCEINLINE FGameplayTag GetDataTag_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE FGameplayTag GetCellTag_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
 
 	// Get data index to data meta count
-	FORCEINLINE int32 GetDataMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE int32 GetCellMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	// Get existing All Meta Tag in data 
-	FORCEINLINE const FLFPInstancedStructTagArray* GetDataMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE const FLFPInstancedStructTagArray* GetCellMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	TArray < FGameplayTag > GetDataTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	TArray < FGameplayTag > GetCellTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FGameplayTag GetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FGameplayTag GetCellTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
 
-	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewDataTag") )
-	void SetDataTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& NewDataTag , const bool bSendEvent = true );
+	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="NewCellTag") )
+	void SetCellTag ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& NewCellTag , const bool bSendEvent = true );
 
-	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
-	const FInstancedStruct& GetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag ) const;
+	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="CellMetaTag") )
+	const FInstancedStruct& GetCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag ) const;
 
-	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
-	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FInstancedStruct& NewDataMeta , const bool bSendEvent = true );
-	void SetDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag , const FConstStructView NewDataMeta , const bool bSendEvent = true );
+	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="CellMetaTag") )
+	void SetCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , const FInstancedStruct& NewCellMeta , const bool bSendEvent = true );
+	void SetCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , const FConstStructView NewCellMeta , const bool bSendEvent = true );
 
-	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="DataMetaTag") )
-	void RemoveDataMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FGameplayTag& DataMetaTag );
+	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="CellMetaTag") )
+	void RemoveCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag );
 
 public:
 
@@ -509,7 +509,7 @@ public:
 public:
 
 	UFUNCTION ( BlueprintPure )
-	bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	bool IsCellIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
 
 	UFUNCTION ( BlueprintPure )
 	bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
@@ -528,7 +528,7 @@ public:
 public:
 
 	UFUNCTION ( BlueprintPure )
-	int32 GetDataIndexSize ( ) const;
+	int32 GetCellIndexSize ( ) const;
 
 	UFUNCTION ( BlueprintPure )
 	int32 GetChunkIndexSize ( ) const;
@@ -586,7 +586,7 @@ private:
 protected:
 
 	UPROPERTY ( EditAnywhere , Category = "Setting|IndexSize" )
-	int32 DataIndexSize = 1;
+	int32 CellIndexSize = 1;
 
 	UPROPERTY ( EditAnywhere , Category = "Setting|IndexSize" )
 	int32 ChunkIndexSize = 1;
