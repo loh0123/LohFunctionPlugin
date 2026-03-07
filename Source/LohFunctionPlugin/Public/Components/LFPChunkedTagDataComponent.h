@@ -178,11 +178,10 @@ public:
 
 	FORCEINLINE void CleanEmptyMetaData ( )
 	{
-		CellMetaList.RemoveAllSwap ( [] ( FLFPInstancedStructTagArray& MetaData )
+		for ( FLFPInstancedStructTagArray& CellMeta : CellMetaList )
 		{
-			MetaData.CleanEmptyItem ( );
-			return MetaData.IsEmpty ( );
-		} );
+			CellMeta.CleanEmptyItem ( );
+		}
 
 		ChunkMetaList.CleanEmptyItem ( );
 	}
@@ -305,11 +304,11 @@ struct FLFPChunkedTagSerializeData
 
 public:
 
-	UPROPERTY ( )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	TArray < uint8 > DataList = TArray < uint8 > ( );
 
-	UPROPERTY ( )
-	FName CompressionName = NAME_Oodle;
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
+	int32 UncompressionSize = INDEX_NONE;
 };
 
 USTRUCT ( BlueprintType )
@@ -334,16 +333,16 @@ struct FLFPTagChangeEvent
 
 public:
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 RegionIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 ChunkIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 CellIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	FGameplayTag OldTag = FGameplayTag::EmptyTag;
 };
 
@@ -371,19 +370,19 @@ struct FLFPMetaChangeEvent
 
 public:
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 RegionIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 ChunkIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	int32 CellIndex = INDEX_NONE;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	FGameplayTag MetaTag = FGameplayTag::EmptyTag;
 
-	UPROPERTY ( VisibleAnywhere , BlueprintReadOnly , Category=Default , Transient )
+	UPROPERTY ( BlueprintReadWrite , Category=Default )
 	FInstancedStruct OldMetaData = FInstancedStruct ( );
 };
 
@@ -424,7 +423,7 @@ public:
 	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData );
 
 	UFUNCTION ( BlueprintCallable )
-	void SaveRegion ( const int32 RegionIndex , FLFPChunkedTagSerializeData& SaveData );
+	void SaveRegion ( const int32 RegionIndex , UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData );
 
 public:
 
@@ -443,13 +442,24 @@ public:
 public:
 
 	// Faster version of get data tag without check
-	FORCEINLINE FGameplayTag GetCellTag_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
+	FORCEINLINE FGameplayTag GetCellTag_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const
+	{
+		return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellTag ( CellIndex );
+	}
 
 	// Get data index to data meta count
-	FORCEINLINE int32 GetCellMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE int32 GetCellMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const
+	{
+		return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellMetaNum ( );
+	}
 
 	// Get existing All Meta Tag in data 
-	FORCEINLINE const FLFPInstancedStructTagArray* GetCellMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const;
+	FORCEINLINE const FLFPInstancedStructTagArray* GetCellMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const
+	{
+		check ( IsChunkIndexValid(RegionIndex, ChunkIndex) );
+
+		return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellMetaList ( CellIndex );
+	}
 
 public:
 
@@ -552,10 +562,10 @@ private:
 
 private:
 
-	UPROPERTY ( Transient )
+	//UPROPERTY ( Transient )
 	TArray < FLFPTagChangeEvent > TagChangeEventList;
 
-	UPROPERTY ( Transient )
+	//UPROPERTY ( Transient )
 	TArray < FLFPMetaChangeEvent > MetaChangeEventList;
 
 	UPROPERTY ( Transient )
@@ -580,7 +590,7 @@ public:
 
 private:
 
-	UPROPERTY ( Transient )
+	//UPROPERTY ( Transient )
 	TArray < FLFPTaggedRegionData > RegionDataList = TArray < FLFPTaggedRegionData > ( );
 
 protected:

@@ -5,10 +5,9 @@
 
 #include "Components/LFPChunkedTagDataComponent.h"
 
-#include "Serialization/ArchiveLoadCompressedProxy.h"
-#include "Serialization/ArchiveSaveCompressedProxy.h"
-#include "StructUtils/StructView.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
+struct FObjectAndNameAsStringProxyArchive;
 DEFINE_LOG_CATEGORY ( LogChunkedTagDataComponent );
 
 // Sets default values for this component's properties
@@ -61,11 +60,19 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 	// Clear region
 	RegionDataList [ RegionIndex ] = FLFPTaggedRegionData ( );
 
-	FArchiveLoadCompressedProxy Proxy ( LoadData.DataList , LoadData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
+	TArray < uint8 > UncompressedData;
+	{
+		UncompressedData.SetNum ( LoadData.UncompressionSize );
+		FMemoryReader Proxy ( LoadData.DataList );
+		Proxy.SerializeCompressedNew ( UncompressedData.GetData ( ) , UncompressedData.Num ( ) );
+	}
+
+	FMemoryReader                      Proxy ( UncompressedData );
+	FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
 
 	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
 
-	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+	RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
 
 	AddMetaChangeEvent ( FLFPMetaChangeEvent (
 	                                          RegionIndex ,
@@ -77,7 +84,7 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 	                   );
 }
 
-void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChunkedTagSerializeData& SaveData )
+void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex ,UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -86,13 +93,25 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChu
 		return;
 	}
 
-	FArchiveSaveCompressedProxy Proxy ( SaveData.DataList , SaveData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
+	TArray < uint8 > UncompressedData;
+	{
+		FMemoryWriter                      Proxy ( UncompressedData );
+		FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
+		Archive.bResolveRedirectors = true;
 
-	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+		FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
 
-	RegionData.CleanEmptyMetaData ( );
+		RegionData.CleanEmptyMetaData ( );
 
-	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+		RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
+	}
+
+	SaveData.UncompressionSize = UncompressedData.Num ( );
+
+	{
+		FMemoryWriter DiskProxy ( SaveData.DataList );
+		DiskProxy.SerializeCompressedNew ( UncompressedData.GetData ( ) , UncompressedData.Num ( ) );
+	}
 
 	AddMetaChangeEvent ( FLFPMetaChangeEvent (
 	                                          RegionIndex ,
@@ -213,23 +232,6 @@ void ULFPChunkedTagDataComponent::DeinitializeRegion ( const int32 RegionIndex )
 }
 
 ////////////////////////////
-
-FGameplayTag ULFPChunkedTagDataComponent::GetCellTag_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const
-{
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellTag ( CellIndex );
-}
-
-int32 ULFPChunkedTagDataComponent::GetCellMeta_MappingNum ( const int32 RegionIndex , const int32 ChunkIndex ) const
-{
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellMetaNum ( );
-}
-
-const FLFPInstancedStructTagArray* ULFPChunkedTagDataComponent::GetCellMetaList_Direct ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex ) const
-{
-	check ( IsChunkIndexValid(RegionIndex, ChunkIndex) );
-
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellMetaList ( CellIndex );
-}
 
 TArray < FGameplayTag > ULFPChunkedTagDataComponent::GetCellTagList ( const int32 RegionIndex , const int32 ChunkIndex ) const
 {

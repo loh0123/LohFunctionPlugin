@@ -4,6 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "StructUtils/InstancedStruct.h"
+#include "StructUtils/InstancedStructContainer.h"
 #include "LFPDynamicTypeLibrary.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN ( LFPDynamicIntStaticArray , Log , All );
@@ -1077,6 +1078,15 @@ public:
 		return ItemList == other.ItemList && MappingList == other.MappingList;
 	}
 };
+
+//template < >
+//struct TStructOpsTypeTraits < FLFPInstancedStructTagArray > : public TStructOpsTypeTraitsBase2 < FLFPInstancedStructTagArray >
+//{
+//	enum
+//	{
+//		WithSerializer = true ,
+//	};
+//};
 
 UCLASS ( )
 class LOHFUNCTIONPLUGIN_API ULFPDynamicTypeLibrary : public UBlueprintFunctionLibrary

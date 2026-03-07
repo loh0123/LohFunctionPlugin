@@ -34,53 +34,6 @@ void ULFPChunkedGridPositionComponent::TickComponent ( float DeltaTime , ELevelT
 	// ...
 }
 
-void ULFPChunkedGridPositionComponent::SetSize ( const FIntVector& NewRegionSize , const FIntVector& NewChunkSize , const FIntVector& NewDataSize )
-{
-	RegionGridSize = NewRegionSize;
-	ChunkGridSize  = NewChunkSize;
-	DataGridSize   = NewDataSize;
-}
-
-void ULFPChunkedGridPositionComponent::SetIsolation ( const bool bRegion , const bool bChunk )
-{
-	bIsolateRegion = bRegion;
-	bIsolateChunk  = bChunk;
-}
-
-FIntVector ULFPChunkedGridPositionComponent::GetChunkedGridSize ( ) const
-{
-	return FIntVector (
-	                   RegionGridSize.X * RegionGridSize.Y * RegionGridSize.Z ,
-	                   ChunkGridSize.X * ChunkGridSize.Y * ChunkGridSize.Z ,
-	                   DataGridSize.X * DataGridSize.Y * DataGridSize.Z
-	                  );
-}
-
-const FIntVector& ULFPChunkedGridPositionComponent::GetDataGridSize ( ) const
-{
-	return DataGridSize;
-}
-
-const FIntVector& ULFPChunkedGridPositionComponent::GetChunkGridSize ( ) const
-{
-	return ChunkGridSize;
-}
-
-const FIntVector& ULFPChunkedGridPositionComponent::GetRegionGridSize ( ) const
-{
-	return RegionGridSize;
-}
-
-bool ULFPChunkedGridPositionComponent::IsIsolateRegion ( ) const
-{
-	return bIsolateRegion;
-}
-
-bool ULFPChunkedGridPositionComponent::IsIsolateChunk ( ) const
-{
-	return bIsolateChunk;
-}
-
 FIntVector ULFPChunkedGridPositionComponent::ToChunkGridPosition ( const FIntPoint& ChunkGridIndex ) const
 {
 	const FIntVector& RegionPos ( ULFPGridLibrary::ToGridLocation ( ChunkGridIndex.X , GetRegionGridSize ( ) ) );

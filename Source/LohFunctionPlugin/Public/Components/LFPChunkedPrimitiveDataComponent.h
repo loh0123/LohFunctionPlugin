@@ -270,7 +270,10 @@ public:
 public:
 
 	// Faster version of get data ID without check
-	FORCEINLINE const FInstancedStruct& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE const FInstancedStruct& GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+	{
+		return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+	}
 
 	template < typename FuncBody >
 	FORCEINLINE void SetData_Template ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FuncBody& Body , const bool bSendEvent = true );
@@ -278,63 +281,90 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE TArray < FInstancedStruct > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE TArray < FInstancedStruct > GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
+	{
+		return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataList ( );
+	}
 
 	UFUNCTION ( BlueprintCallable )
 	const FInstancedStruct& GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
+	void SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
 	const FInstancedStruct& GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
+	void SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable )
 	const FInstancedStruct& GetRegionData ( const int32 RegionIndex ) const;
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE void SetRegionData ( const int32 RegionIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
+	void SetRegionData ( const int32 RegionIndex , const FInstancedStruct& NewData , const bool bSendEvent = true );
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const;
+	FORCEINLINE bool IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+	{
+		return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsDataIndexValid ( DataIndex );
+	}
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE bool IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const
+	{
+		return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex );
+	}
 
 	UFUNCTION ( BlueprintCallable )
-	FORCEINLINE bool IsRegionIndexValid ( const int32 RegionIndex ) const;
+	FORCEINLINE bool IsRegionIndexValid ( const int32 RegionIndex ) const
+	{
+		return RegionDataList.IsValidIndex ( RegionIndex );
+	}
 
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	bool IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const;
+	FORCEINLINE bool IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const
+	{
+		return IsChunkIndexValid ( RegionIndex , ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsInitialized ( );
+	}
 
 	UFUNCTION ( BlueprintCallable )
-	bool IsRegionInitialized ( const int32 RegionIndex ) const;
+	FORCEINLINE bool IsRegionInitialized ( const int32 RegionIndex ) const
+	{
+		return IsRegionIndexValid ( RegionIndex ) && RegionDataList [ RegionIndex ].IsInitialized ( );
+	}
 
 public:
 
 	UFUNCTION ( BlueprintPure )
-	int32 GetDataIndexSize ( ) const;
+	FORCEINLINE int32 GetDataIndexSize ( ) const
+	{
+		return DataIndexSize;
+	}
 
 	UFUNCTION ( BlueprintPure )
-	int32 GetChunkIndexSize ( ) const;
+	FORCEINLINE int32 GetChunkIndexSize ( ) const
+	{
+		return ChunkIndexSize;
+	}
 
 	UFUNCTION ( BlueprintPure )
-	int32 GetRegionIndexSize ( ) const;
+	FORCEINLINE int32 GetRegionIndexSize ( ) const
+	{
+		return RegionIndexSize;
+	}
 
 private:
 
 	UFUNCTION ( )
-	FORCEINLINE void AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent );
+	void AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent );
 
 	UFUNCTION ( )
-	FORCEINLINE void BroadcastDataChangeEvent ( );
+	void BroadcastDataChangeEvent ( );
 
 private:
 

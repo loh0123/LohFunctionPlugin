@@ -176,16 +176,6 @@ void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionI
 	                   );
 }
 
-const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetData_Checked ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
-{
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
-}
-
-TArray < FInstancedStruct > ULFPChunkedPrimitiveDataComponent::GetDataList ( const int32 RegionIndex , const int32 ChunkIndex ) const
-{
-	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetDataList ( );
-}
-
 const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
 {
 	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
@@ -304,46 +294,6 @@ void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex 
 	}
 
 	RegionDataList [ RegionIndex ].SetRegionData ( NewData );
-}
-
-bool ULFPChunkedPrimitiveDataComponent::IsDataIndexValid ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
-{
-	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsDataIndexValid ( DataIndex );
-}
-
-bool ULFPChunkedPrimitiveDataComponent::IsChunkIndexValid ( const int32 RegionIndex , const int32 ChunkIndex ) const
-{
-	return RegionDataList.IsValidIndex ( RegionIndex ) && RegionDataList [ RegionIndex ].IsChunkIndexValid ( ChunkIndex );
-}
-
-bool ULFPChunkedPrimitiveDataComponent::IsRegionIndexValid ( const int32 RegionIndex ) const
-{
-	return RegionDataList.IsValidIndex ( RegionIndex );
-}
-
-bool ULFPChunkedPrimitiveDataComponent::IsChunkInitialized ( const int32 RegionIndex , const int32 ChunkIndex ) const
-{
-	return IsChunkIndexValid ( RegionIndex , ChunkIndex ) && RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).IsInitialized ( );
-}
-
-bool ULFPChunkedPrimitiveDataComponent::IsRegionInitialized ( const int32 RegionIndex ) const
-{
-	return IsRegionIndexValid ( RegionIndex ) && RegionDataList [ RegionIndex ].IsInitialized ( );
-}
-
-int32 ULFPChunkedPrimitiveDataComponent::GetDataIndexSize ( ) const
-{
-	return DataIndexSize;
-}
-
-int32 ULFPChunkedPrimitiveDataComponent::GetChunkIndexSize ( ) const
-{
-	return ChunkIndexSize;
-}
-
-int32 ULFPChunkedPrimitiveDataComponent::GetRegionIndexSize ( ) const
-{
-	return RegionIndexSize;
 }
 
 void ULFPChunkedPrimitiveDataComponent::AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent )
