@@ -420,10 +420,10 @@ public:
 public:
 
 	UFUNCTION ( BlueprintCallable )
-	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData );
+	void LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData , const APlayerController* PlayerController , const bool bIsNetData );
 
 	UFUNCTION ( BlueprintCallable )
-	void SaveRegion ( const int32 RegionIndex , UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData );
+	void SaveRegion ( const int32 RegionIndex , UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData , const APlayerController* PlayerController , const bool bIsNetData );
 
 public:
 

@@ -6,6 +6,7 @@
 #include "Components/LFPChunkedTagDataComponent.h"
 
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "UObject/UnrealTypePrivate.h"
 
 struct FObjectAndNameAsStringProxyArchive;
 DEFINE_LOG_CATEGORY ( LogChunkedTagDataComponent );
@@ -48,7 +49,7 @@ void ULFPChunkedTagDataComponent::SetSize ( const FIntVector& NewSize )
 
 ////////////////////////////
 
-void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData )
+void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedTagSerializeData& LoadData , const APlayerController* PlayerController , const bool bIsNetData )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -67,12 +68,30 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 		Proxy.SerializeCompressedNew ( UncompressedData.GetData ( ) , UncompressedData.Num ( ) );
 	}
 
-	FMemoryReader                      Proxy ( UncompressedData );
-	FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
+	if ( bIsNetData )
+	{
+		if ( IsValid ( PlayerController ) == false )
+		{
+			return;
+		}
 
-	FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+		UNetConnection* NetConn = PlayerController->GetNetConnection ( );
 
-	RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
+		FNetBitReader Proxy ( NetConn->PackageMap , UncompressedData.GetData ( ) , UncompressedData.Num ( ) );
+
+		FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+		RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+	}
+	else
+	{
+		FMemoryReader                      Proxy ( UncompressedData );
+		FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
+
+		FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+		RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
+	}
 
 	AddMetaChangeEvent ( FLFPMetaChangeEvent (
 	                                          RegionIndex ,
@@ -84,7 +103,7 @@ void ULFPChunkedTagDataComponent::LoadRegion ( const int32 RegionIndex , const F
 	                   );
 }
 
-void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex ,UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData )
+void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex ,UPARAM ( ref ) FLFPChunkedTagSerializeData& SaveData , const APlayerController* PlayerController , const bool bIsNetData )
 {
 	if ( IsRegionIndexValid ( RegionIndex ) == false )
 	{
@@ -95,15 +114,39 @@ void ULFPChunkedTagDataComponent::SaveRegion ( const int32 RegionIndex ,UPARAM (
 
 	TArray < uint8 > UncompressedData;
 	{
-		FMemoryWriter                      Proxy ( UncompressedData );
-		FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
-		Archive.bResolveRedirectors = true;
+		if ( bIsNetData )
+		{
+			if ( IsValid ( PlayerController ) == false )
+			{
+				return;
+			}
 
-		FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+			UNetConnection* NetConn = PlayerController->GetNetConnection ( );
 
-		RegionData.CleanEmptyMetaData ( );
+			FNetBitWriter Proxy ( NetConn->PackageMap , 1024 );
 
-		RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
+			FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+			RegionData.CleanEmptyMetaData ( );
+
+			RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+
+			UncompressedData = *Proxy.GetBuffer ( );
+		}
+		else
+		{
+			FMemoryWriter                      Proxy ( UncompressedData );
+			FObjectAndNameAsStringProxyArchive Archive ( Proxy , true );
+			Archive.bResolveRedirectors = true;
+
+			//FObjectWriter Archive ( UncompressedData );
+
+			FLFPTaggedRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+			RegionData.CleanEmptyMetaData ( );
+
+			RegionData.StaticStruct ( )->SerializeItem ( Archive , &RegionData , nullptr );
+		}
 	}
 
 	SaveData.UncompressionSize = UncompressedData.Num ( );
