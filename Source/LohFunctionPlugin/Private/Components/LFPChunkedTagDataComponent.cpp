@@ -403,6 +403,34 @@ void ULFPChunkedTagDataComponent::SetCellMeta ( const int32 RegionIndex , const 
 	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetOrAddCellMeta ( CellIndex , CellMetaTag ) = NewCellMeta;
 }
 
+void ULFPChunkedTagDataComponent::SetCellMeta_Move ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , FInstancedStruct&& NewCellMeta , const bool bSendEvent )
+{
+	if ( IsCellIndexValid ( RegionIndex , ChunkIndex , CellIndex ) == false )
+	{
+		UE_LOG ( LogChunkedTagDataComponent , Warning , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , CellIndex );
+
+		return;
+	}
+
+	if ( bSendEvent )
+	{
+		const FInstancedStruct* OldMetaPtr = RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetCellMeta ( CellIndex , CellMetaTag );
+
+		AddMetaChangeEvent ( FLFPMetaChangeEvent (
+		                                          RegionIndex ,
+		                                          ChunkIndex ,
+		                                          CellIndex ,
+		                                          CellMetaTag ,
+		                                          OldMetaPtr != nullptr
+		                                          ? *OldMetaPtr
+		                                          : FInstancedStruct ( )
+		                                         )
+		                   );
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetOrAddCellMeta ( CellIndex , CellMetaTag ) = MoveTemp ( NewCellMeta );
+}
+
 void ULFPChunkedTagDataComponent::RemoveCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag )
 {
 	if ( IsCellIndexValid ( RegionIndex , ChunkIndex , CellIndex ) == false )

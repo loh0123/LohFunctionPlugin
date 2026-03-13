@@ -478,6 +478,7 @@ public:
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="CellMetaTag") )
 	void SetCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , const FInstancedStruct& NewCellMeta , const bool bSendEvent = true );
 	void SetCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , const FConstStructView NewCellMeta , const bool bSendEvent = true );
+	void SetCellMeta_Move ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag , FInstancedStruct&& NewCellMeta , const bool bSendEvent = true );
 
 	UFUNCTION ( BlueprintCallable , meta=(AutoCreateRefTerm="CellMetaTag") )
 	void RemoveCellMeta ( const int32 RegionIndex , const int32 ChunkIndex , const int32 CellIndex , const FGameplayTag& CellMetaTag );
