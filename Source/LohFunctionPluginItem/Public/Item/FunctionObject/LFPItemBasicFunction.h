@@ -9,8 +9,19 @@
 #include "Item/FunctionObject/LFPItemInventoryFunction.h"
 #include "LFPItemBasicFunction.generated.h"
 
+USTRUCT ( BlueprintType )
+struct FLFPItemBasicData
+{
+	GENERATED_BODY ( )
+
+public:
+
+	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Stack" )
+	int32 StackCount = 1;
+};
+
 USTRUCT ( Blueprintable )
-struct FLFPItemBasicData : public FTableRowBase
+struct FLFPItemBasicTableData : public FTableRowBase
 {
 	GENERATED_BODY ( )
 
@@ -72,23 +83,29 @@ public:
 
 	FORCEINLINE int32 GetStackAmount ( const FLFPInventoryItem& CurrentData ) const
 	{
-		return FMath::Min ( ULFPItemFunctionLibrary::GetMetaData ( CurrentData , StackTag ).AsInt ( ) , 1 );
+		const auto RawBasicMetaData = CurrentData.GetMetaData ( StackTag );
+
+		const FLFPItemBasicData BasicMetaData = RawBasicMetaData == nullptr ? FLFPItemBasicData ( ) : RawBasicMetaData->Get < FLFPItemBasicData > ( );
+
+		return FMath::Min ( BasicMetaData.StackCount , 1 );
 	}
 
 	FORCEINLINE void SetStackAmount ( FLFPInventoryItem& CurrentData , const int32 NewStack ) const
 	{
-		FLFPPrimitiveData NewData = FLFPPrimitiveData ( );
+		const auto RawBasicMetaData = CurrentData.GetMetaData ( StackTag );
 
-		NewData = NewStack;
+		FLFPItemBasicData BasicMetaData = RawBasicMetaData == nullptr ? FLFPItemBasicData ( ) : RawBasicMetaData->Get < FLFPItemBasicData > ( );
 
-		ULFPItemFunctionLibrary::SetMetaData ( CurrentData , StackTag , NewData );
+		BasicMetaData.StackCount = NewStack;
+
+		CurrentData.AddMetaData ( StackTag , FInstancedStruct::Make ( BasicMetaData ) );
 	}
 
 	FORCEINLINE int32 ClampToMaxStack ( const int32 Stack ) const
 	{
 		return FMath::Max ( MaxStack != INDEX_NONE
-			                    ? FMath::Min ( MaxStack , Stack )
-			                    : Stack , 0 );
+		                    ? FMath::Min ( MaxStack , Stack )
+		                    : Stack , 0 );
 	}
 
 	FORCEINLINE const FGameplayTagContainer& GetAllowInventorySlotNameList ( ) const
@@ -134,17 +151,17 @@ public:
 
 	//// Process Modifier
 
-	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const override;
+	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
 
-	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const override;
+	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
 
 	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const override;
 
 	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const override;
 
-	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const override;
+	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
 
-	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex InventoryIndex ) const override;
+	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
 
 	//// Categorize Modifier
 
@@ -156,8 +173,8 @@ public:
 
 protected:
 
-	FORCEINLINE const FLFPItemBasicData* GetDataTableRow ( const FGameplayTag& RowTag ) const;
+	FORCEINLINE const FLFPItemBasicTableData* GetDataTableRow ( const FGameplayTag& RowTag ) const;
 
-	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LFPItemBasicFunction | Setting" , meta = ( RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemBasicData" ) )
-	TObjectPtr <UDataTable> ItemDataTable = nullptr;
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LFPItemBasicFunction | Setting" , meta = ( RowType = "LFPItemBasicData" ) )
+	TObjectPtr < UDataTable > ItemDataTable = nullptr;
 };

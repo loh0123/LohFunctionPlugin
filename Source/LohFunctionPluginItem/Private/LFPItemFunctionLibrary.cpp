@@ -15,10 +15,10 @@ bool ULFPItemFunctionLibrary::IsMetaDataSame ( const FLFPInventoryItem& ItemA , 
 	auto MetaDataB = ItemB.GetMetaData ( MetaTag );
 
 	return ( MetaDataA == nullptr
-		         ? FLFPPrimitiveData ( )
-		         : *MetaDataA ) == ( MetaDataB == nullptr
-			                             ? FLFPPrimitiveData ( )
-			                             : *MetaDataB );
+	         ? FInstancedStruct ( )
+	         : *MetaDataA ) == ( MetaDataB == nullptr
+	                             ? FInstancedStruct ( )
+	                             : *MetaDataB );
 }
 
 bool ULFPItemFunctionLibrary::ContainMetaData ( const FLFPInventoryItem& Item , const FGameplayTag MetaTag )
@@ -26,58 +26,58 @@ bool ULFPItemFunctionLibrary::ContainMetaData ( const FLFPInventoryItem& Item , 
 	return Item.ContainMetaData ( MetaTag );
 }
 
-bool ULFPItemFunctionLibrary::CheckMetaDataCost ( const FLFPInventoryItem& Item , const TMap <FGameplayTag , int32>& IntCostDataMap , const TMap <FGameplayTag , float>& FloatCostDataMap )
+//bool ULFPItemFunctionLibrary::CheckMetaDataCost ( const FLFPInventoryItem& Item , const TMap < FGameplayTag , int32 >& IntCostDataMap , const TMap < FGameplayTag , float >& FloatCostDataMap )
+//{
+//	for ( const auto& CostData : IntCostDataMap )
+//	{
+//		const auto MetaData = Item.GetMetaData ( CostData.Key );
+//
+//		if ( MetaData == nullptr )
+//		{
+//			return false;
+//		}
+//
+//		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
+//		{
+//			return false;
+//		}
+//
+//		if ( MetaData->AsInt ( ) < CostData.Value )
+//		{
+//			return false;
+//		}
+//	}
+//
+//	for ( const auto& CostData : FloatCostDataMap )
+//	{
+//		const auto MetaData = Item.GetMetaData ( CostData.Key );
+//
+//		if ( MetaData == nullptr )
+//		{
+//			return false;
+//		}
+//
+//		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
+//		{
+//			return false;
+//		}
+//
+//		if ( MetaData->AsFloat ( ) < CostData.Value )
+//		{
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
+
+const FInstancedStruct& ULFPItemFunctionLibrary::GetMetaData ( const FLFPInventoryItem& Item , const FGameplayTag MetaTag )
 {
-	for ( const auto& CostData : IntCostDataMap )
-	{
-		const auto MetaData = Item.GetMetaData ( CostData.Key );
-
-		if ( MetaData == nullptr )
-		{
-			return false;
-		}
-
-		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
-		{
-			return false;
-		}
-
-		if ( MetaData->AsInt ( ) < CostData.Value )
-		{
-			return false;
-		}
-	}
-
-	for ( const auto& CostData : FloatCostDataMap )
-	{
-		const auto MetaData = Item.GetMetaData ( CostData.Key );
-
-		if ( MetaData == nullptr )
-		{
-			return false;
-		}
-
-		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
-		{
-			return false;
-		}
-
-		if ( MetaData->AsFloat ( ) < CostData.Value )
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-FLFPPrimitiveData ULFPItemFunctionLibrary::GetMetaData ( const FLFPInventoryItem& Item , const FGameplayTag MetaTag )
-{
-	auto MetaData = Item.GetMetaData ( MetaTag );
+	const FInstancedStruct* MetaData = Item.GetMetaData ( MetaTag );
 
 	return MetaData != nullptr
-		       ? *MetaData
-		       : FLFPPrimitiveData ( );
+	       ? *MetaData
+	       : EmptyStruct;
 }
 
 FGameplayTag ULFPItemFunctionLibrary::GetItemTag ( const FLFPInventoryItem& Item )
@@ -85,7 +85,7 @@ FGameplayTag ULFPItemFunctionLibrary::GetItemTag ( const FLFPInventoryItem& Item
 	return Item.GetItemTag ( );
 }
 
-void ULFPItemFunctionLibrary::SetMetaData ( UPARAM ( ref ) FLFPInventoryItem& Item , const FGameplayTag MetaTag , const FLFPPrimitiveData& MetaData )
+void ULFPItemFunctionLibrary::SetMetaData ( UPARAM ( ref ) FLFPInventoryItem& Item , const FGameplayTag MetaTag , const FInstancedStruct& MetaData )
 {
 	Item.AddMetaData ( MetaTag , MetaData );
 }
@@ -95,95 +95,97 @@ void ULFPItemFunctionLibrary::SetItemTag ( UPARAM ( ref )FLFPInventoryItem& Item
 	Item.SetItemTag ( ItemTag );
 }
 
-void ULFPItemFunctionLibrary::ConsumeMetaDataCost ( UPARAM ( ref )FLFPInventoryItem& Item , const TMap <FGameplayTag , int32>& IntCostDataMap , const TMap <FGameplayTag , float>& FloatCostDataMap )
-{
-	for ( const auto& CostData : IntCostDataMap )
-	{
-		const auto MetaData = Item.GetMetaData ( CostData.Key );
+//void ULFPItemFunctionLibrary::ConsumeMetaDataCost ( UPARAM ( ref )FLFPInventoryItem& Item , const TMap <FGameplayTag , int32>& IntCostDataMap , const TMap <FGameplayTag , float>& FloatCostDataMap )
+//{
+//	for ( const auto& CostData : IntCostDataMap )
+//	{
+//		const auto MetaData = Item.GetMetaData ( CostData.Key );
+//
+//		if ( MetaData == nullptr )
+//		{
+//			continue;
+//		}
+//
+//		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
+//		{
+//			continue;
+//		}
+//
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = MetaData->AsInt ( ) - CostData.Value;
+//
+//		Item.AddMetaData ( CostData.Key , NewMetaData );
+//	}
+//
+//	for ( const auto& CostData : FloatCostDataMap )
+//	{
+//		const auto MetaData = Item.GetMetaData ( CostData.Key );
+//
+//		if ( MetaData == nullptr )
+//		{
+//			continue;
+//		}
+//
+//		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Float )
+//		{
+//			continue;
+//		}
+//
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = MetaData->AsFloat ( ) - CostData.Value;
+//
+//		Item.AddMetaData ( CostData.Key , NewMetaData );
+//	}
+//}
+//
+//void FLFPInventoryItem::AppendMetaDataInt ( const TMap <FGameplayTag , int32>& DataMap , const bool bUniqueOnly )
+//{
+//	for ( const auto& RawMetaData : DataMap )
+//	{
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = RawMetaData.Value;
+//
+//		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+//	}
+//}
+//
+//void FLFPInventoryItem::AppendMetaDataFloat ( const TMap <FGameplayTag , float>& DataMap , const bool bUniqueOnly )
+//{
+//	for ( const auto& RawMetaData : DataMap )
+//	{
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = RawMetaData.Value;
+//
+//		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+//	}
+//}
+//
+//void FLFPInventoryItem::AppendMetaDataString ( const TMap <FGameplayTag , FString>& DataMap , const bool bUniqueOnly )
+//{
+//	for ( const auto& RawMetaData : DataMap )
+//	{
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = RawMetaData.Value;
+//
+//		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+//	}
+//}
+//
+//void FLFPInventoryItem::AppendMetaDataBoolean ( const TMap <FGameplayTag , bool>& DataMap , const bool bUniqueOnly )
+//{
+//	for ( const auto& RawMetaData : DataMap )
+//	{
+//		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
+//
+//		NewMetaData = RawMetaData.Value;
+//
+//		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
+//	}
+//}
 
-		if ( MetaData == nullptr )
-		{
-			continue;
-		}
-
-		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Int )
-		{
-			continue;
-		}
-
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = MetaData->AsInt ( ) - CostData.Value;
-
-		Item.AddMetaData ( CostData.Key , NewMetaData );
-	}
-
-	for ( const auto& CostData : FloatCostDataMap )
-	{
-		const auto MetaData = Item.GetMetaData ( CostData.Key );
-
-		if ( MetaData == nullptr )
-		{
-			continue;
-		}
-
-		if ( MetaData->GetDataType ( ) != ELFPPrimitiveDataType::LFP_Float )
-		{
-			continue;
-		}
-
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = MetaData->AsFloat ( ) - CostData.Value;
-
-		Item.AddMetaData ( CostData.Key , NewMetaData );
-	}
-}
-
-void FLFPInventoryItem::AppendMetaDataInt ( const TMap <FGameplayTag , int32>& DataMap , const bool bUniqueOnly )
-{
-	for ( const auto& RawMetaData : DataMap )
-	{
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = RawMetaData.Value;
-
-		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
-	}
-}
-
-void FLFPInventoryItem::AppendMetaDataFloat ( const TMap <FGameplayTag , float>& DataMap , const bool bUniqueOnly )
-{
-	for ( const auto& RawMetaData : DataMap )
-	{
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = RawMetaData.Value;
-
-		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
-	}
-}
-
-void FLFPInventoryItem::AppendMetaDataString ( const TMap <FGameplayTag , FString>& DataMap , const bool bUniqueOnly )
-{
-	for ( const auto& RawMetaData : DataMap )
-	{
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = RawMetaData.Value;
-
-		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
-	}
-}
-
-void FLFPInventoryItem::AppendMetaDataBoolean ( const TMap <FGameplayTag , bool>& DataMap , const bool bUniqueOnly )
-{
-	for ( const auto& RawMetaData : DataMap )
-	{
-		FLFPPrimitiveData NewMetaData = FLFPPrimitiveData ( );
-
-		NewMetaData = RawMetaData.Value;
-
-		AddMetaData ( RawMetaData.Key , NewMetaData , bUniqueOnly );
-	}
-}
+FInstancedStruct ULFPItemFunctionLibrary::EmptyStruct = FInstancedStruct ( );
