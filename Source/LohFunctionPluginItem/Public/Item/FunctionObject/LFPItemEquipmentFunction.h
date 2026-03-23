@@ -18,7 +18,7 @@ struct LOHFUNCTIONPLUGINITEM_API FLFPItemEquipmentData : public FTableRowBase
 protected:
 
 	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Stack" )
-	TArray <FLFPInventoryIndex> AllowInventoryIndexList = TArray <FLFPInventoryIndex> ( );
+	TArray < FLFPInventoryIndex > AllowInventoryIndexList = TArray < FLFPInventoryIndex > ( );
 
 public:
 
@@ -28,13 +28,13 @@ public:
 		                                                    [&] ( const FLFPInventoryIndex& AllowInventoryIndex )
 		                                                    {
 			                                                    return
-					                                                    AllowInventoryIndex.SlotName == InventoryIndex.SlotName
-					                                                    &&
-					                                                    (
-						                                                    AllowInventoryIndex.SlotItemIndex < 0
-						                                                    ||
-						                                                    AllowInventoryIndex.SlotItemIndex == InventoryIndex.SlotItemIndex
-					                                                    );
+				                                                    AllowInventoryIndex.SlotName == InventoryIndex.SlotName
+				                                                    &&
+				                                                    (
+					                                                    AllowInventoryIndex.SlotItemIndex < 0
+					                                                    ||
+					                                                    AllowInventoryIndex.SlotItemIndex == InventoryIndex.SlotItemIndex
+				                                                    );
 		                                                    }
 		                                                   );
 	}
@@ -86,7 +86,7 @@ class LOHFUNCTIONPLUGINITEM_API ULFPItemEquipmentFunction : public ULFPItemInven
 
 public:
 
-	virtual void GetLifetimeReplicatedProps ( TArray <FLifetimeProperty>& OutLifetimeProps ) const override;
+	virtual void GetLifetimeReplicatedProps ( TArray < FLifetimeProperty >& OutLifetimeProps ) const override;
 
 	virtual void InitializeComponent ( ) override;
 
@@ -172,15 +172,15 @@ public:
 	// Event
 
 	UFUNCTION ( )
-	void OnInventoryUpdateItem ( const FLFPInventoryItemOperationData& ItemOperationData );
+	void OnInventoryUpdateItem ( const TArray < FLFPInventoryItemOperationData >& ItemOperationDataList );
 
 protected:
 
 	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LFPItemBasicFunction | Setting" , meta = (RequiredAssetDataTags = "RowStructure=/Script/LohFunctionPluginItem.LFPItemEquipmentData") )
-	TObjectPtr <UDataTable> ItemDataTable = nullptr;
+	TObjectPtr < UDataTable > ItemDataTable = nullptr;
 
 	UPROPERTY ( EditDefaultsOnly , Category = "LFPItemBasicFunction | Setting" , Replicated )
-	TArray <FLFPItemEquipmentSelector> SelectorList = TArray <FLFPItemEquipmentSelector> ( );
+	TArray < FLFPItemEquipmentSelector > SelectorList = TArray < FLFPItemEquipmentSelector > ( );
 
 	UPROPERTY ( EditDefaultsOnly , Category = "LFPItemBasicFunction | Setting" , meta = (Categories = "Item.SlotName") )
 	FGameplayTagContainer EquipmentSlotNameList = FGameplayTagContainer::EmptyContainer;

@@ -6,7 +6,7 @@
 #include "Item/FunctionObject/LFPItemEquipmentFunction.h"
 #include "Net/UnrealNetwork.h"
 
-void ULFPItemEquipmentFunction::GetLifetimeReplicatedProps ( TArray <FLifetimeProperty>& OutLifetimeProps ) const
+void ULFPItemEquipmentFunction::GetLifetimeReplicatedProps ( TArray < FLifetimeProperty >& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps ( OutLifetimeProps );
 
@@ -161,7 +161,6 @@ void ULFPItemEquipmentFunction::SendSelectorDelegateEvent ( const FGameplayTag& 
 		                                                         ELFPInventoryItemEventType::Inventory_None ,
 		                                                         FLFPInventoryIndex ( OldIndex , SlotName ) ,
 		                                                         OldEquipment ,
-		                                                         OldEquipment ,
 		                                                         EventTag
 		                                                        )
 		                        );
@@ -173,7 +172,6 @@ void ULFPItemEquipmentFunction::SendSelectorDelegateEvent ( const FGameplayTag& 
 		                       FLFPInventoryItemOperationData (
 		                                                       ELFPInventoryItemEventType::Inventory_None ,
 		                                                       FLFPInventoryIndex ( NewIndex , SlotName ) ,
-		                                                       NewEquipment ,
 		                                                       NewEquipment ,
 		                                                       EventTag
 		                                                      )
@@ -210,7 +208,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged ( const FGameplayTag& Slot
 				                                     return false;
 			                                     }
 
-			                                     OnUnequipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , SlotItem , EventTag ) );
+			                                     OnUnequipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , EventTag ) );
 
 			                                     return false;
 		                                     } );
@@ -229,7 +227,7 @@ void ULFPItemEquipmentFunction::SendSlotActiveChanged ( const FGameplayTag& Slot
 				                                     return false;
 			                                     }
 
-			                                     OnEquipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , SlotItem , EventTag ) );
+			                                     OnEquipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , EventTag ) );
 
 			                                     return false;
 		                                     } );
@@ -252,7 +250,6 @@ void ULFPItemEquipmentFunction::CLIENT_SendSelectorDelegateEvent_Implementation 
 		                                                         ELFPInventoryItemEventType::Inventory_None ,
 		                                                         FLFPInventoryIndex ( OldIndex , SlotName ) ,
 		                                                         OldEquipment ,
-		                                                         OldEquipment ,
 		                                                         EventTag
 		                                                        )
 		                        );
@@ -264,7 +261,6 @@ void ULFPItemEquipmentFunction::CLIENT_SendSelectorDelegateEvent_Implementation 
 		                       FLFPInventoryItemOperationData (
 		                                                       ELFPInventoryItemEventType::Inventory_None ,
 		                                                       FLFPInventoryIndex ( NewIndex , SlotName ) ,
-		                                                       NewEquipment ,
 		                                                       NewEquipment ,
 		                                                       EventTag
 		                                                      )
@@ -297,7 +293,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSlotActiveChanged_Implementation ( co
 				                                     return false;
 			                                     }
 
-			                                     OnUnequipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , SlotItem , EventTag ) );
+			                                     OnUnequipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , EventTag ) );
 
 			                                     return false;
 		                                     } );
@@ -316,7 +312,7 @@ void ULFPItemEquipmentFunction::CLIENT_SendSlotActiveChanged_Implementation ( co
 				                                     return false;
 			                                     }
 
-			                                     OnEquipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , SlotItem , EventTag ) );
+			                                     OnEquipItem.Broadcast ( FLFPInventoryItemOperationData ( ELFPInventoryItemEventType::Inventory_None , InventoryIndex , SlotItem , EventTag ) );
 
 			                                     return false;
 		                                     } );
@@ -334,7 +330,7 @@ const FLFPItemEquipmentData* ULFPItemEquipmentFunction::GetDataTableRow ( const 
 		return nullptr; // Item Not Exist
 	}
 
-	const FLFPItemEquipmentData* TableData = reinterpret_cast <FLFPItemEquipmentData*> ( TableRawData );
+	const FLFPItemEquipmentData* TableData = reinterpret_cast < FLFPItemEquipmentData* > ( TableRawData );
 
 	if ( TableData == nullptr )
 	{
@@ -492,33 +488,38 @@ int32 ULFPItemEquipmentFunction::GetSelectedIndex ( const FGameplayTag Slot ) co
 	return SelectorPtr->GetCurrentSelection ( );
 }
 
-void ULFPItemEquipmentFunction::OnInventoryUpdateItem ( const FLFPInventoryItemOperationData& ItemOperationData )
+void ULFPItemEquipmentFunction::OnInventoryUpdateItem ( const TArray < FLFPInventoryItemOperationData >& ItemOperationDataList )
 {
-	/* Skip Slot Name Because Not Process By This Module */
-	if ( IsEquipmentSlot ( ItemOperationData.InventoryIndex.SlotName ) == false )
+	for ( const FLFPInventoryItemOperationData& ItemOperationData : ItemOperationDataList )
 	{
-		return;
-	}
+		/* Skip Slot Name Because Not Process By This Module */
+		if ( IsEquipmentSlot ( ItemOperationData.InventoryIndex.SlotName ) == false )
+		{
+			return;
+		}
 
-	/* Slot Name Don't Trigger Event */
-	if ( IsSlotNameInactive ( ItemOperationData.InventoryIndex.SlotName ) )
-	{
-		return;
-	}
+		/* Slot Name Don't Trigger Event */
+		if ( IsSlotNameInactive ( ItemOperationData.InventoryIndex.SlotName ) )
+		{
+			return;
+		}
 
-	/* Not Currently Selected */
-	if ( IsSelectorSlot ( ItemOperationData.InventoryIndex.SlotName ) && IsIndexSelected ( ItemOperationData.InventoryIndex ) == false )
-	{
-		return;
-	}
+		/* Not Currently Selected */
+		if ( IsSelectorSlot ( ItemOperationData.InventoryIndex.SlotName ) && IsIndexSelected ( ItemOperationData.InventoryIndex ) == false )
+		{
+			return;
+		}
 
-	if ( ItemOperationData.OldData.IsValid ( ) )
-	{
-		OnUnequipItem.Broadcast ( ItemOperationData );
-	}
+		if ( ItemOperationData.OldData.IsValid ( ) )
+		{
+			OnUnequipItem.Broadcast ( ItemOperationData );
+		}
 
-	if ( ItemOperationData.NewData.IsValid ( ) )
-	{
-		OnEquipItem.Broadcast ( ItemOperationData );
+		const auto& NewData = GetOwner ( )->GetSlotItem ( ItemOperationData.InventoryIndex );
+
+		if ( NewData.IsValid ( ) )
+		{
+			OnEquipItem.Broadcast ( ItemOperationData );
+		}
 	}
 }

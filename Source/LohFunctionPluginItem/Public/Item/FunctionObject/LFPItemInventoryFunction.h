@@ -101,34 +101,34 @@ public:
 	// Process Modifier
 
 	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessAddItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const;
+	bool ProcessAddItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex );
 
-	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const { return true; }
-
-	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessRemoveItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const;
-
-	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const { return true; }
+	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) { return true; }
 
 	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessSwapItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
+	bool ProcessRemoveItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex );
 
-	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
-
-	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessMergeItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const;
-
-	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const { return true; }
+	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) { return true; }
 
 	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessUpdateItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const;
+	bool ProcessSwapItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex );
 
-	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const { return true; }
+	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) { return true; }
 
 	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
-	bool ProcessFindItem ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const;
+	bool ProcessMergeItem ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex );
 
-	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const { return true; }
+	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessUpdateItem ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex );
+
+	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) { return true; }
+
+	UFUNCTION ( BlueprintNativeEvent , Category = "LFPItemInventoryFunction | Modifier" )
+	bool ProcessFindItem ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex );
+
+	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) { return true; }
 
 	// Categorize Modifier
 

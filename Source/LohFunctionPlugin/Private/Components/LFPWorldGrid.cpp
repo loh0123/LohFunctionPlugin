@@ -27,20 +27,18 @@ void ULFPWorldGrid::TickComponent ( float DeltaTime , ELevelTick TickType , FAct
 	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
 }
 
-int32 ULFPWorldGrid::WorldLocationToIndex ( const FVector& Location ) const
+int32 ULFPWorldGrid::ComponentLocationToIndex ( const FVector& Location , const bool bWorldLocation ) const
 {
-	return ULFPGridLibrary::ToGridIndex ( WorldLocationToGridLocation ( Location ) , GridSize );
+	return ULFPGridLibrary::ToGridIndex ( ComponentLocationToGridLocation ( Location , bWorldLocation ) , GridSize );
 }
 
-FIntVector ULFPWorldGrid::WorldLocationToGridLocation ( const FVector& Location ) const
+FIntVector ULFPWorldGrid::ComponentLocationToGridLocation ( const FVector& Location , const bool bWorldLocation ) const
 {
 	// if (Location.GetMin() < 0.0f) return FIntVector(INT_MIN);
 
-	FVector LocalLocation = FVector(0.0f, 0.0f, 0.0f);
+	FVector LocalLocation = FVector ( 0.0f , 0.0f , 0.0f );
 
-	const FVector ComponentLocation = bCenterOrigin
-		                                  ? Location - GetComponentLocation ( ) + GetVolumeSize ( true )
-		                                  : Location - GetComponentLocation ( );
+	const FVector ComponentLocation = ( bCenterOrigin ? Location + GetVolumeSize ( true ) : Location ) - ( bWorldLocation ? GetComponentLocation ( ) : FVector ( 0 ) );
 
 	switch ( GridType )
 	{
@@ -59,7 +57,7 @@ FIntVector ULFPWorldGrid::WorldLocationToGridLocation ( const FVector& Location 
 	return FIntVector ( FMath::FloorToInt ( LocalLocation.X ) , FMath::FloorToInt ( LocalLocation.Y ) , FMath::FloorToInt ( LocalLocation.Z ) );
 }
 
-bool ULFPWorldGrid::GridLocationToWorldLocation ( const FIntVector Location , const bool AddHalfGap , FVector& ReturnLocation , FRotator& ReturnRotation ) const
+bool ULFPWorldGrid::GridLocationToComponentLocation ( const FIntVector Location , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const
 {
 	if ( !ULFPGridLibrary::IsGridLocationValid ( Location , GridSize ) )
 	{
@@ -73,8 +71,8 @@ bool ULFPWorldGrid::GridLocationToWorldLocation ( const FIntVector Location , co
 		case ELFPGridType::Rectangular : ReturnLocation = FVector ( Location.X * GridGap.X , Location.Y * GridGap.Y , Location.Z * GridGap.Z );
 			break;
 		case ELFPGridType::Hexagon : ReturnLocation = FVector ( Location.X * GridGap.X , ( Location.Y * GridGap.Y ) + ( ( Location.X + 1 ) % 2 == 1
-			                                                                                                                ? 0.0f
-			                                                                                                                : GridGap.Y * 0.5f ) , Location.Z * GridGap.Z );
+		                                                                                                                ? 0.0f
+		                                                                                                                : GridGap.Y * 0.5f ) , Location.Z * GridGap.Z );
 			break;
 		case ELFPGridType::Triangle : ReturnLocation = FVector ( Location.X * ( GridGap.X * 0.5 ) , Location.Y * GridGap.Y , Location.Z * GridGap.Z );
 			if ( ( Location.X + 1 ) % 2 == 0 ) { ReturnRotation = FRotator ( 0 , 180 , 0 ); }
@@ -86,14 +84,21 @@ bool ULFPWorldGrid::GridLocationToWorldLocation ( const FIntVector Location , co
 		ReturnLocation -= GetVolumeSize ( true ) - ( GridGap * 0.5 );
 	}
 
-	ReturnLocation += AddHalfGap
-		                  ? GetComponentLocation ( ) + ( GridGap * 0.5 )
-		                  : GetComponentLocation ( );
+	if ( bWorldLocation )
+	{
+		ReturnLocation += GetComponentLocation ( );
+		ReturnRotation += GetComponentRotation ( );
+	}
+
+	if ( bAddHalfGap )
+	{
+		ReturnLocation += GridGap * 0.5;
+	}
 
 	return true;
 }
 
-bool ULFPWorldGrid::IndexToWorldLocation ( const int32 Index , const bool AddHalfGap , FVector& ReturnLocation , FRotator& ReturnRotation ) const
+bool ULFPWorldGrid::IndexToComponentLocation ( const int32 Index , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const
 {
-	return GridLocationToWorldLocation ( ULFPGridLibrary::ToGridLocation ( Index , GridSize ) , AddHalfGap , ReturnLocation , ReturnRotation );
+	return GridLocationToComponentLocation ( ULFPGridLibrary::ToGridLocation ( Index , GridSize ) , bAddHalfGap , bWorldLocation , ReturnLocation , ReturnRotation );
 }

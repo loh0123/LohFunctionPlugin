@@ -37,6 +37,23 @@ int32 ULFPDynamicTypeLibrary::GetID ( const FLFPIndexTrackerStaticArray& List , 
 	return List.GetID ( Index );
 }
 
+void ULFPDynamicTypeLibrary::AddInstancedStructTag ( UPARAM ( ref ) FLFPInstancedStructTagArray& InData , const FInstancedStruct& NewData , const FGameplayTag& StructTag )
+{
+	InData.AddItem ( StructTag , NewData );
+}
+
+void ULFPDynamicTypeLibrary::RemoveInstancedStructTag ( FLFPInstancedStructTagArray& InData , const FGameplayTag& StructTag )
+{
+	InData.RemoveItem ( StructTag );
+}
+
+FInstancedStruct ULFPDynamicTypeLibrary::GetInstancedStructTag ( FLFPInstancedStructTagArray& InData , const FGameplayTag& StructTag )
+{
+	const FInstancedStruct* ItemPtr = InData.GetItemConst ( StructTag );
+	
+	return ItemPtr != nullptr ? *ItemPtr : FInstancedStruct ( );
+}
+
 //int32 ULFPDynamicTypeLibrary::GetDataAsInt ( UPARAM ( ref )
 //	FLFPPrimitiveData& Data )
 //{

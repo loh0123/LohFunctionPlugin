@@ -37,19 +37,19 @@ public:
 	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	int32 WorldLocationToIndex ( const FVector& Location ) const;
+	int32 ComponentLocationToIndex ( const FVector& Location , const bool bWorldLocation ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	FIntVector WorldLocationToGridLocation ( const FVector& Location ) const;
+	FIntVector ComponentLocationToGridLocation ( const FVector& Location , const bool bWorldLocation ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	bool IsWorldLocationValid ( const FVector& Location ) const { return ULFPGridLibrary::IsGridLocationValid ( WorldLocationToGridLocation ( Location ) , GridSize ); }
+	bool IsComponentLocationValid ( const FVector& Location , const bool bWorldLocation ) const { return ULFPGridLibrary::IsGridLocationValid ( ComponentLocationToGridLocation ( Location , bWorldLocation ) , GridSize ); }
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	bool GridLocationToWorldLocation ( const FIntVector Location , const bool AddHalfGap , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
+	bool GridLocationToComponentLocation ( const FIntVector Location , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
-	bool IndexToWorldLocation ( const int32 Index , const bool AddHalfGap , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
+	bool IndexToComponentLocation ( const int32 Index , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
 
 	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
 	int32 GetGridLength ( ) const { return GridSize.X * GridSize.Y * GridSize.Z; }

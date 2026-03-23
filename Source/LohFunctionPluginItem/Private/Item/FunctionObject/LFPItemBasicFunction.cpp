@@ -4,6 +4,8 @@
 // or copy at http://opensource.org/licenses/MIT)
 
 #include "Item/FunctionObject/LFPItemBasicFunction.h"
+
+#include "DataRegistrySubsystem.h"
 #include "LFPItemFunctionLibrary.h"
 
 bool ULFPItemBasicFunction::CanAddItem_Implementation ( const FLFPInventoryItem& ItemData ) const
@@ -39,7 +41,7 @@ bool ULFPItemBasicFunction::CanAddItemOnSlot_Implementation ( const FLFPInventor
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 	//////////////////////////////////////////////////
 
@@ -53,7 +55,7 @@ bool ULFPItemBasicFunction::CanAddItemOnSlot_Implementation ( const FLFPInventor
 		return false;
 	}
 
-	if ( TableData->DoItemReachMaxStack ( CurrentData ) )
+	if ( TableData->DoItemReachMaxStack ( CurrentData , BasicMetaTag , BasicStackTag ) )
 	{
 		return false;
 	}
@@ -74,7 +76,7 @@ bool ULFPItemBasicFunction::CanRemoveItemOnSlot_Implementation ( const FLFPInven
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 	//////////////////////////////////////////////////
 
@@ -123,7 +125,7 @@ bool ULFPItemBasicFunction::CanUpdateItemOnSlot_Implementation ( const FLFPInven
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 	//////////////////////////////////////////////////
 
@@ -143,7 +145,7 @@ bool ULFPItemBasicFunction::CanFindItemOnSlot_Implementation ( const FLFPInvento
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 	//////////////////////////////////////////////////
 
@@ -155,38 +157,36 @@ bool ULFPItemBasicFunction::CanFindItemOnSlot_Implementation ( const FLFPInvento
 	return true;
 }
 
-bool ULFPItemBasicFunction::ProcessAddItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const
+bool ULFPItemBasicFunction::ProcessAddItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex )
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicTableData* TableData = GetDataTableRow ( ProcessData.GetItemTag ( ) );
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 	//////////////////////////////////////////////////
 
 	// Process Stack Function ///////////////////////
 	const int32 CurrentStack = ItemData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ItemData )
+	                           ? TableData->GetStackAmount ( ItemData , BasicMetaTag )
 	                           : 0;
 	const int32 ProcessStack = ProcessData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ProcessData )
+	                           ? TableData->GetStackAmount ( ProcessData , BasicMetaTag )
 	                           : 0;
 
-	const int32 NextStack        = TableData->ClampToMaxStack ( CurrentStack + ProcessStack );
+	const int32 NextStack        = TableData->ClampToMaxStack ( CurrentStack + ProcessStack , BasicStackTag );
 	const int32 NextProcessStack = ( CurrentStack + ProcessStack ) - NextStack;
 
 	// Check Current Slot Is Empty
 	if ( ItemData.IsValid ( ) == false )
 	{
 		ItemData = ProcessData; // Override ItemData With ProcessData ( Meta Data Include ) This Give All Meta Data That Is Not Stack Into Inventory ( Only Doing This If The Slot Is Empty )
-
-		return false;
 	}
 
-	TableData->SetStackAmount ( ItemData , NextStack );           // Set Item Stack To Correct Number
-	TableData->SetStackAmount ( ProcessData , NextProcessStack ); // Decrease Stack On Process Data
+	TableData->SetStackAmount ( ItemData , BasicMetaTag , NextStack );           // Set Item Stack To Correct Number
+	TableData->SetStackAmount ( ProcessData , BasicMetaTag , NextProcessStack ); // Decrease Stack On Process Data
 	////////////////////////////////////////////////
 
 	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
@@ -198,24 +198,24 @@ bool ULFPItemBasicFunction::ProcessAddItem_Implementation ( UPARAM ( ref )FLFPIn
 	return NextProcessStack <= 0;
 }
 
-bool ULFPItemBasicFunction::ProcessRemoveItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const
+bool ULFPItemBasicFunction::ProcessRemoveItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex )
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicTableData* TableData = GetDataTableRow ( ProcessData.GetItemTag ( ) );
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 
 	//////////////////////////////////////////////////
 
 	// Process Stack Function ///////////////////////
 	const int32 CurrentStack = ItemData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ItemData )
+	                           ? TableData->GetStackAmount ( ItemData , BasicMetaTag )
 	                           : 0;
 	const int32 ProcessStack = ProcessData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ProcessData )
+	                           ? TableData->GetStackAmount ( ProcessData , BasicMetaTag )
 	                           : 0;
 
 	const int32 NextStack        = CurrentStack - ProcessStack;
@@ -223,8 +223,8 @@ bool ULFPItemBasicFunction::ProcessRemoveItem_Implementation ( UPARAM ( ref )FLF
 	                               ? FMath::Abs ( NextStack )
 	                               : 0;
 
-	TableData->SetStackAmount ( ItemData , NextStack );
-	TableData->SetStackAmount ( ProcessData , NextProcessStack );
+	TableData->SetStackAmount ( ItemData , BasicMetaTag , NextStack );
+	TableData->SetStackAmount ( ProcessData , BasicMetaTag , NextProcessStack );
 	////////////////////////////////////////////////
 
 	/* If Stack Is Going To Be Empty Than Clear Item */
@@ -242,7 +242,7 @@ bool ULFPItemBasicFunction::ProcessRemoveItem_Implementation ( UPARAM ( ref )FLF
 	return NextProcessStack <= 0;
 }
 
-bool ULFPItemBasicFunction::ProcessSwapItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref )FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const
+bool ULFPItemBasicFunction::ProcessSwapItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref )FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex )
 {
 	FLFPInventoryItem TempItem = FromItem;
 
@@ -252,34 +252,34 @@ bool ULFPItemBasicFunction::ProcessSwapItem_Implementation ( UPARAM ( ref )FLFPI
 	return true;
 }
 
-bool ULFPItemBasicFunction::ProcessMergeItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref )FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const
+bool ULFPItemBasicFunction::ProcessMergeItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref )FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex )
 {
 	return ProcessAddItem ( ToItem , FromItem , ToIndex );
 }
 
-bool ULFPItemBasicFunction::ProcessUpdateItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const
+bool ULFPItemBasicFunction::ProcessUpdateItem_Implementation ( UPARAM ( ref )FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex )
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicTableData* TableData = GetDataTableRow ( ProcessData.GetItemTag ( ) );
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 
 	//////////////////////////////////////////////////
 
 	const int32 CurrentStack = ItemData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ItemData )
+	                           ? TableData->GetStackAmount ( ItemData , BasicMetaTag )
 	                           : 0;
 	const int32 ProcessStack = ProcessData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ProcessData )
+	                           ? TableData->GetStackAmount ( ProcessData , BasicMetaTag )
 	                           : 0;
 
 	ItemData = ProcessData; // Override
 
-	TableData->SetStackAmount ( ItemData , CurrentStack );
-	TableData->SetStackAmount ( ProcessData , ProcessStack - 1 );
+	TableData->SetStackAmount ( ItemData , BasicMetaTag , CurrentStack );
+	TableData->SetStackAmount ( ProcessData , BasicMetaTag , ProcessStack - 1 );
 
 	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
 	if ( ProcessStack - 1 <= 0 )
@@ -290,24 +290,24 @@ bool ULFPItemBasicFunction::ProcessUpdateItem_Implementation ( UPARAM ( ref )FLF
 	return ProcessStack - 1 <= 0;
 }
 
-bool ULFPItemBasicFunction::ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const
+bool ULFPItemBasicFunction::ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref )FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex )
 {
 	// Get Table Data ///////////////////////////////
 	const FLFPItemBasicTableData* TableData = GetDataTableRow ( ProcessData.GetItemTag ( ) );
 
 	if ( TableData == nullptr )
 	{
-		return true;
+		return false;
 	}
 
 	//////////////////////////////////////////////////
 
 	// Process Stack Function ///////////////////////
 	const int32 CurrentStack = ItemData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ItemData )
+	                           ? TableData->GetStackAmount ( ItemData , BasicMetaTag )
 	                           : 0;
 	const int32 ProcessStack = ProcessData.IsValid ( )
-	                           ? TableData->GetStackAmount ( ProcessData )
+	                           ? TableData->GetStackAmount ( ProcessData , BasicMetaTag )
 	                           : 0;
 
 	const int32 NextStack        = CurrentStack - ProcessStack;
@@ -315,7 +315,7 @@ bool ULFPItemBasicFunction::ProcessFindItem_Implementation ( const FLFPInventory
 	                               ? FMath::Abs ( NextStack )
 	                               : 0;
 
-	TableData->SetStackAmount ( ProcessData , NextProcessStack );
+	TableData->SetStackAmount ( ProcessData , BasicMetaTag , NextProcessStack );
 	////////////////////////////////////////////////
 
 	/* Clear ProcessData Tag If Stack Is Empty To Prevent It Been Treated As 1 Stack */
@@ -349,26 +349,28 @@ bool ULFPItemBasicFunction::CanItemSortHigherThan_Implementation ( const FLFPInv
 		return false;
 	}
 
-	const int32 CurrentStack = AData->GetStackAmount ( ItemDataA );
-	const int32 ProcessStack = BData->GetStackAmount ( ItemDataB );
+	const int32 CurrentStack = AData->GetStackAmount ( ItemDataA , BasicMetaTag );
+	const int32 ProcessStack = BData->GetStackAmount ( ItemDataB , BasicMetaTag );
 
 	return CurrentStack > ProcessStack;
 }
 
 const FLFPItemBasicTableData* ULFPItemBasicFunction::GetDataTableRow ( const FGameplayTag& RowTag ) const
 {
-	uint8* TableRawData = ItemDataTable->FindRowUnchecked ( RowTag.GetTagName ( ) );
-
-	if ( TableRawData == nullptr )
+	if ( IsValid ( ItemDataRegister ) == false )
 	{
-		return nullptr; // Item Not Exist
+		return nullptr;
 	}
 
-	const FLFPItemBasicTableData* TableData = reinterpret_cast < FLFPItemBasicTableData* > ( TableRawData );
+	FDataRegistryId ItemID;
+	ItemID.ItemName     = RowTag.GetTagName ( );
+	ItemID.RegistryType = ItemDataRegister->GetRegistryType ( );
+
+	const FLFPItemBasicTableData* TableData = ItemDataRegister->GetCachedItem < FLFPItemBasicTableData > ( ItemID );
 
 	if ( TableData == nullptr )
 	{
-		return nullptr; // Item Not Same Type
+		return nullptr; // Item Is Different Type
 	}
 
 	return TableData;

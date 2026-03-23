@@ -31,7 +31,8 @@ public class LohFunctionPluginItem : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
-				"LohFunctionPlugin"
+				"LohFunctionPlugin",
+				"DataRegistry"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);

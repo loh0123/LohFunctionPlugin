@@ -9,6 +9,8 @@
 #include "Item/FunctionObject/LFPItemInventoryFunction.h"
 #include "LFPItemBasicFunction.generated.h"
 
+class UDataRegistry;
+
 USTRUCT ( BlueprintType )
 struct FLFPItemBasicData
 {
@@ -27,13 +29,9 @@ struct FLFPItemBasicTableData : public FTableRowBase
 
 protected:
 
-	/* Use To Find Stack Meta In Item */
+	/* Maximum Stack An Item Can Reach, Infinite If Not Found */
 	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Stack" )
-	FGameplayTag StackTag = FGameplayTag ( );
-
-	/* Maximum Stack An Item Can Reach, Use -1 If Infinite */
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Stack" )
-	int32 MaxStack = INDEX_NONE;
+	TMap < FGameplayTag , int32 > MaxStackMap = TMap < FGameplayTag , int32 > ( );
 
 	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Attach" )
 	FGameplayTag AttachSlotsTag = FGameplayTag ( );
@@ -76,36 +74,53 @@ public:
 		return true;
 	}
 
-	FORCEINLINE bool DoItemReachMaxStack ( const FLFPInventoryItem& CurrentData ) const
+	FORCEINLINE bool DoItemReachMaxStack ( const FLFPInventoryItem& CurrentData , const FGameplayTag& MetaTag , const FGameplayTag& StackTag ) const
 	{
-		return MaxStack != INDEX_NONE && StackTag.IsValid ( ) && CurrentData.IsValid ( ) && MaxStack <= GetStackAmount ( CurrentData );
+		if ( MaxStackMap.Contains ( StackTag ) == false )
+		{
+			return false;
+		}
+
+		const int32 MaxStack = FMath::Max ( MaxStackMap.FindChecked ( StackTag ) , 1 );
+
+		return CurrentData.IsValid ( ) && MaxStack <= GetStackAmount ( CurrentData , MetaTag );
 	}
 
-	FORCEINLINE int32 GetStackAmount ( const FLFPInventoryItem& CurrentData ) const
+	FORCEINLINE int32 GetStackAmount ( const FLFPInventoryItem& CurrentData , const FGameplayTag& MetaTag ) const
 	{
-		const auto RawBasicMetaData = CurrentData.GetMetaData ( StackTag );
+		const auto RawBasicMetaData = CurrentData.GetMetaData ( MetaTag );
 
-		const FLFPItemBasicData BasicMetaData = RawBasicMetaData == nullptr ? FLFPItemBasicData ( ) : RawBasicMetaData->Get < FLFPItemBasicData > ( );
+		if ( RawBasicMetaData != nullptr && RawBasicMetaData->GetScriptStruct ( ) != FLFPItemBasicData::StaticStruct ( ) )
+		{
+			return 1;
+		}
 
-		return FMath::Min ( BasicMetaData.StackCount , 1 );
+		const FLFPItemBasicData& BasicMetaData = RawBasicMetaData == nullptr ? FLFPItemBasicData ( ) : RawBasicMetaData->Get < FLFPItemBasicData > ( );
+
+		return FMath::Max ( BasicMetaData.StackCount , 1 );
 	}
 
-	FORCEINLINE void SetStackAmount ( FLFPInventoryItem& CurrentData , const int32 NewStack ) const
+	FORCEINLINE void SetStackAmount ( FLFPInventoryItem& CurrentData , const FGameplayTag& MetaTag , const int32 NewStack ) const
 	{
-		const auto RawBasicMetaData = CurrentData.GetMetaData ( StackTag );
+		const auto RawBasicMetaData = CurrentData.GetMetaData ( MetaTag );
 
 		FLFPItemBasicData BasicMetaData = RawBasicMetaData == nullptr ? FLFPItemBasicData ( ) : RawBasicMetaData->Get < FLFPItemBasicData > ( );
 
 		BasicMetaData.StackCount = NewStack;
 
-		CurrentData.AddMetaData ( StackTag , FInstancedStruct::Make ( BasicMetaData ) );
+		CurrentData.AddMetaData ( MetaTag , FInstancedStruct::Make ( BasicMetaData ) );
 	}
 
-	FORCEINLINE int32 ClampToMaxStack ( const int32 Stack ) const
+	FORCEINLINE int32 ClampToMaxStack ( const int32 Stack , const FGameplayTag& StackTag ) const
 	{
-		return FMath::Max ( MaxStack != INDEX_NONE
-		                    ? FMath::Min ( MaxStack , Stack )
-		                    : Stack , 0 );
+		if ( MaxStackMap.Contains ( StackTag ) == false )
+		{
+			return FMath::Max ( Stack , 0 );
+		}
+
+		const int32 MaxStack = FMath::Max ( MaxStackMap.FindChecked ( StackTag ) , 1 );
+
+		return FMath::Clamp ( Stack , 0 , MaxStack );
 	}
 
 	FORCEINLINE const FGameplayTagContainer& GetAllowInventorySlotNameList ( ) const
@@ -151,17 +166,17 @@ public:
 
 	//// Process Modifier
 
-	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
+	virtual bool ProcessAddItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) override;
 
-	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
+	virtual bool ProcessRemoveItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) override;
 
-	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const override;
+	virtual bool ProcessSwapItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) override;
 
-	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) const override;
+	virtual bool ProcessMergeItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& FromItem , const FLFPInventoryIndex& FromIndex , UPARAM ( ref ) FLFPInventoryItem& ToItem , const FLFPInventoryIndex& ToIndex ) override;
 
-	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
+	virtual bool ProcessUpdateItem_Implementation ( UPARAM ( ref ) FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) override;
 
-	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) const override;
+	virtual bool ProcessFindItem_Implementation ( const FLFPInventoryItem& ItemData , UPARAM ( ref ) FLFPInventoryItem& ProcessData , const FLFPInventoryIndex& InventoryIndex ) override;
 
 	//// Categorize Modifier
 
@@ -175,6 +190,12 @@ protected:
 
 	FORCEINLINE const FLFPItemBasicTableData* GetDataTableRow ( const FGameplayTag& RowTag ) const;
 
-	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "LFPItemBasicFunction | Setting" , meta = ( RowType = "LFPItemBasicData" ) )
-	TObjectPtr < UDataTable > ItemDataTable = nullptr;
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly )
+	TObjectPtr < UDataRegistry > ItemDataRegister = nullptr;
+
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "Setting" )
+	FGameplayTag BasicMetaTag = FGameplayTag ( );
+
+	UPROPERTY ( EditDefaultsOnly , BlueprintReadOnly , Category = "Setting" )
+	FGameplayTag BasicStackTag = FGameplayTag ( );
 };
