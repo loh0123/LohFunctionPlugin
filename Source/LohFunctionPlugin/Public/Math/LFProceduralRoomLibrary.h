@@ -3,7 +3,6 @@
 // Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 // or copy at http://opensource.org/licenses/MIT)
 
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,10 +12,10 @@
 /**
  * 
  */
-UCLASS()
+UCLASS ( )
 class LOHFUNCTIONPLUGIN_API ULFProceduralRoomLibrary : public UBlueprintFunctionLibrary
 {
-	GENERATED_BODY()
+	GENERATED_BODY ( )
 
 	//UFUNCTION(BlueprintCallable, Category = "LFPVectorRoomLibrary")
 	//	static bool BoxSeperate(UPARAM(ref)TArray<FBox>& BoxArray, TArray<FBox>& ReturnData, const int32 Index, const float MiddlePoint, const bool CutX, const bool CutY, const bool CutZ);

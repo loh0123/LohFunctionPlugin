@@ -3,7 +3,6 @@
 // Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 // or copy at http://opensource.org/licenses/MIT)
 
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,82 +10,81 @@
 #include "Components/SceneComponent.h"
 #include "LFPWorldGrid.generated.h"
 
-
-UENUM(BlueprintType)
+UENUM ( BlueprintType )
 enum class ELFPGridType : uint8
 {
-	Rectangular UMETA(DisplayName = "Rectangular"),
-	Hexagon		UMETA(DisplayName = "Hexagon"),
-	Triangle    UMETA(DisplayName = "Triangle"),
+	Rectangular UMETA ( DisplayName = "Rectangular" ) , Hexagon UMETA ( DisplayName = "Hexagon" ) , Triangle UMETA ( DisplayName = "Triangle" ) ,
 };
 
-
-UCLASS( ClassGroup=(LFPlugin), meta=(BlueprintSpawnableComponent) )
+UCLASS ( ClassGroup=(LFPlugin) , meta=(BlueprintSpawnableComponent) )
 class LOHFUNCTIONPLUGIN_API ULFPWorldGrid : public USceneComponent
 {
-	GENERATED_BODY()
-
-public:	
-	// Sets default values for this component's properties
-	ULFPWorldGrid();
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	GENERATED_BODY ( )
 
 public:
 
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		int32 WorldLocationToIndex(const FVector& Location) const;
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FIntVector WorldLocationToGridLocation(const FVector& Location) const;
-
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		bool IsWorldLocationValid(const FVector Location) const { return ULFPGridLibrary::IsGridLocationValid(WorldLocationToGridLocation(Location), GridSize); }
-
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		bool GridLocationToWorldLocation(const FIntVector Location, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		bool IndexToWorldLocation(const int32 Index, const bool AddHalfGap, FVector& ReturnLocation, FRotator& ReturnRotation) const;
-
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		int32 GetGridLength() const { return GridSize.X * GridSize.Y * GridSize.Z; }
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FVector GetVolumeSize(const bool bHalfVolume) const { return FVector(GridSize) * (GridGap * (bHalfVolume ? 0.5 : 1.0)); }
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		bool GetCenterOrigin() const { return bCenterOrigin; }
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FIntVector GetGridSize() const { return GridSize; }
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		FVector GetGridGap() const { return GridGap; }
-
-	UFUNCTION(BlueprintPure, Category = "LFPGridSystem")
-		ELFPGridType GetGridType() const { return GridType; }
+	// Sets default values for this component's properties
+	ULFPWorldGrid ( );
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
-		bool bCenterOrigin = false;
+	// Called when the game starts
+	virtual void BeginPlay ( ) override;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
-		FIntVector GridSize = FIntVector(10);
+public:
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
-		FVector GridGap = FVector(100.0f);
+	// Called every frame
+	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LFPGridSystem | Variable")
-		ELFPGridType GridType = ELFPGridType::Rectangular;
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	int32 ComponentLocationToIndex ( const FVector& Location , const bool bWorldLocation ) const;
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	FIntVector ComponentLocationToGridLocation ( const FVector& Location , const bool bWorldLocation ) const;
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	bool IsComponentLocationValid ( const FVector& Location , const bool bWorldLocation ) const { return ULFPGridLibrary::IsGridLocationValid ( ComponentLocationToGridLocation ( Location , bWorldLocation ) , GridSize ); }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	bool GridLocationToComponentLocation ( const FIntVector Location , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	bool IndexToComponentLocation ( const int32 Index , const bool bAddHalfGap , const bool bWorldLocation , FVector& ReturnLocation , FRotator& ReturnRotation ) const;
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	int32 GetGridLength ( ) const { return GridSize.X * GridSize.Y * GridSize.Z; }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	FVector GetVolumeSize ( const bool bHalfVolume ) const
+	{
+		return FVector ( GridSize ) * ( GridGap * ( bHalfVolume
+		                                            ? 0.5
+		                                            : 1.0 ) );
+	}
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	bool GetCenterOrigin ( ) const { return bCenterOrigin; }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	FIntVector GetGridSize ( ) const { return GridSize; }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	FVector GetGridGap ( ) const { return GridGap; }
+
+	UFUNCTION ( BlueprintPure , Category = "LFPGridSystem" )
+	ELFPGridType GetGridType ( ) const { return GridType; }
+
+protected:
+
+	UPROPERTY ( BlueprintReadOnly , EditAnywhere , Category = "LFPGridSystem | Variable" )
+	bool bCenterOrigin = false;
+
+	UPROPERTY ( BlueprintReadOnly , EditAnywhere , Category = "LFPGridSystem | Variable" )
+	FIntVector GridSize = FIntVector ( 10 );
+
+	UPROPERTY ( BlueprintReadOnly , EditAnywhere , Category = "LFPGridSystem | Variable" )
+	FVector GridGap = FVector ( 100.0f );
+
+	UPROPERTY ( BlueprintReadOnly , EditAnywhere , Category = "LFPGridSystem | Variable" )
+	ELFPGridType GridType = ELFPGridType::Rectangular;
 };

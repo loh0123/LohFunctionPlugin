@@ -1,13 +1,12 @@
 {
-	"BuildId": "33043543",
+	"BuildId": "47537391",
 	"Modules": 
 	{
 		"LohFunctionPlugin": "UnrealEditor-LohFunctionPlugin.dll",
 		"LohFunctionPluginEditor": "UnrealEditor-LohFunctionPluginEditor.dll",
 		"LohFunctionPluginExperience": "UnrealEditor-LohFunctionPluginExperience.dll",
-		"LohFunctionPluginInfomation": "UnrealEditor-LohFunctionPluginInfomation.dll",
+		"LohFunctionPluginInformation": "UnrealEditor-LohFunctionPluginInformation.dll",
 		"LohFunctionPluginItem": "UnrealEditor-LohFunctionPluginItem.dll",
-		"LohFunctionPluginMarching": "UnrealEditor-LohFunctionPluginMarching.dll",
-		"LohFunctionPluginVoxel": "UnrealEditor-LohFunctionPluginVoxel.dll"
+		"LohFunctionPluginMultiLevel": "UnrealEditor-LohFunctionPluginMultiLevel.dll"
 	}
 }

@@ -1,0 +1,317 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Components/LFPChunkedPrimitiveDataComponent.h"
+
+#include "Serialization/ArchiveLoadCompressedProxy.h"
+#include "Serialization/ArchiveSaveCompressedProxy.h"
+
+DEFINE_LOG_CATEGORY ( LogChunkedByteListDataComponent );
+
+
+// Sets default values for this component's properties
+ULFPChunkedPrimitiveDataComponent::ULFPChunkedPrimitiveDataComponent ( )
+{
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = false;
+
+	// ...
+}
+
+
+// Called when the game starts
+void ULFPChunkedPrimitiveDataComponent::BeginPlay ( )
+{
+	Super::BeginPlay ( );
+
+	RegionDataList.SetNum ( RegionIndexSize );
+}
+
+
+// Called every frame
+void ULFPChunkedPrimitiveDataComponent::TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction )
+{
+	Super::TickComponent ( DeltaTime , TickType , ThisTickFunction );
+
+	// ...
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetSize ( const FIntVector& NewSize )
+{
+	RegionIndexSize = NewSize.X;
+	ChunkIndexSize  = NewSize.Y;
+	DataIndexSize   = NewSize.Z;
+
+	RegionDataList.Reset ( );
+	RegionDataList.SetNum ( RegionIndexSize );
+}
+
+void ULFPChunkedPrimitiveDataComponent::LoadRegion ( const int32 RegionIndex , const FLFPChunkedPrimitiveSerializeData& LoadData )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	// Clear region
+	RegionDataList [ RegionIndex ] = FLFPPrimitiveRegionData ( );
+
+	FArchiveLoadCompressedProxy Proxy ( LoadData.DataList , LoadData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
+
+	FLFPPrimitiveRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SaveRegion ( const int32 RegionIndex , FLFPChunkedPrimitiveSerializeData& SaveData )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	FArchiveSaveCompressedProxy Proxy ( SaveData.DataList , SaveData.CompressionName , ECompressionFlags::COMPRESS_BiasMemory );
+
+	FLFPPrimitiveRegionData& RegionData = RegionDataList [ RegionIndex ];
+
+	RegionData.StaticStruct ( )->SerializeItem ( Proxy , &RegionData , nullptr );
+}
+
+void ULFPChunkedPrimitiveDataComponent::InitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	if ( IsChunkInitialized ( RegionIndex , ChunkIndex ) )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Log , TEXT("%hs : Chunk ( %i ) on Region ( %i ) already initialized") , __FUNCTION__ , ChunkIndex , RegionIndex );
+
+		return;
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).InitializeChunkData ( DataIndexSize );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      ChunkIndex ,
+	                                                      INDEX_NONE ,
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
+	                   );
+}
+
+void ULFPChunkedPrimitiveDataComponent::DeinitializeChunk ( const int32 RegionIndex , const int32 ChunkIndex )
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).DeinitializeChunkData ( );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      ChunkIndex ,
+	                                                      INDEX_NONE ,
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
+	                   );
+}
+
+void ULFPChunkedPrimitiveDataComponent::InitializeRegion ( const int32 RegionIndex )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	if ( IsRegionInitialized ( RegionIndex ) )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Log , TEXT("%hs : Region ( %i ) already initialized") , __FUNCTION__ , RegionIndex );
+
+		return;
+	}
+
+	RegionDataList [ RegionIndex ].InitializeRegionData ( ChunkIndexSize );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      INDEX_NONE ,
+	                                                      INDEX_NONE ,
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
+	                   );
+}
+
+void ULFPChunkedPrimitiveDataComponent::DeinitializeRegion ( const int32 RegionIndex )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index") , __FUNCTION__ );
+
+		return;
+	}
+
+	RegionDataList [ RegionIndex ].DeinitializeRegionData ( );
+
+	AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+	                                                      RegionIndex ,
+	                                                      INDEX_NONE ,
+	                                                      INDEX_NONE ,
+	                                                      FInstancedStruct ( ) ,
+	                                                      FInstancedStruct ( ) )
+	                   );
+}
+
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex ) const
+{
+	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
+
+		return EmptyStruct;
+	}
+
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetData ( const int32 RegionIndex , const int32 ChunkIndex , const int32 DataIndex , const FInstancedStruct& NewData , const bool bSendEvent )
+{
+	if ( IsDataIndexValid ( RegionIndex , ChunkIndex , DataIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Warning , TEXT("%hs : Invalid Index ( R : %i , C : %i , D : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex , DataIndex );
+
+		return;
+	}
+
+	if ( NewData == RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) )
+	{
+		return;
+	}
+
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      ChunkIndex ,
+		                                                      DataIndex ,
+		                                                      RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetData ( DataIndex ) ,
+		                                                      NewData )
+		                   );
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetData ( DataIndex , NewData );
+}
+
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetChunkData ( const int32 RegionIndex , const int32 ChunkIndex ) const
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
+
+		return EmptyStruct;
+	}
+
+	return RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetChunkData ( const int32 RegionIndex , const int32 ChunkIndex , const FInstancedStruct& NewData , const bool bSendEvent )
+{
+	if ( IsChunkIndexValid ( RegionIndex , ChunkIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i , C : %i )") , __FUNCTION__ , RegionIndex , ChunkIndex );
+
+		return;
+	}
+
+	if ( NewData == RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( ) )
+	{
+		return;
+	}
+
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      ChunkIndex ,
+		                                                      INDEX_NONE ,
+		                                                      RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).GetChunkData ( ) ,
+		                                                      NewData )
+		                   );
+	}
+
+	RegionDataList [ RegionIndex ].GetChunk ( ChunkIndex ).SetChunkData ( NewData );
+}
+
+const FInstancedStruct& ULFPChunkedPrimitiveDataComponent::GetRegionData ( const int32 RegionIndex ) const
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
+
+		return EmptyStruct;
+	}
+
+	return RegionDataList [ RegionIndex ].GetRegionData ( );
+}
+
+void ULFPChunkedPrimitiveDataComponent::SetRegionData ( const int32 RegionIndex , const FInstancedStruct& NewData , const bool bSendEvent )
+{
+	if ( IsRegionIndexValid ( RegionIndex ) == false )
+	{
+		UE_LOG ( LogChunkedByteListDataComponent , Verbose , TEXT("%hs : Invalid Index ( R : %i )") , __FUNCTION__ , RegionIndex );
+
+		return;
+	}
+
+	if ( NewData == RegionDataList [ RegionIndex ].GetRegionData ( ) )
+	{
+		return;
+	}
+
+	if ( bSendEvent )
+	{
+		AddDataChangeEvent ( FLFPChunkedPrimitiveChangeEvent (
+		                                                      RegionIndex ,
+		                                                      INDEX_NONE ,
+		                                                      INDEX_NONE ,
+		                                                      RegionDataList [ RegionIndex ].GetRegionData ( ) ,
+		                                                      NewData )
+		                   );
+	}
+
+	RegionDataList [ RegionIndex ].SetRegionData ( NewData );
+}
+
+void ULFPChunkedPrimitiveDataComponent::AddDataChangeEvent ( const FLFPChunkedPrimitiveChangeEvent& NewEvent )
+{
+	DataChangeEventList.Add ( NewEvent );
+
+	if ( DataChangeEventHandle.IsValid ( ) == false )
+	{
+		DataChangeEventHandle = GetWorld ( )->GetTimerManager ( ).SetTimerForNextTick ( this , &ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent );
+	}
+}
+
+void ULFPChunkedPrimitiveDataComponent::BroadcastDataChangeEvent ( )
+{
+	OnDataChanged.Broadcast ( DataChangeEventList );
+
+	DataChangeEventList.Reset ( );
+	DataChangeEventHandle.Invalidate ( );
+}
+
+const FInstancedStruct ULFPChunkedPrimitiveDataComponent::EmptyStruct = FInstancedStruct ( );

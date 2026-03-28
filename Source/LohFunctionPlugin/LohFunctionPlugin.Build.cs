@@ -6,59 +6,61 @@ public class LohFunctionPlugin : ModuleRules
 {
 	public LohFunctionPlugin(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
 		PublicIncludePaths.AddRange(
-			new string[] {
+			new string[]
+			{
 				// ... add public include paths required here ...
 			}
-			);
-				
-		
+		);
+
+
 		PrivateIncludePaths.AddRange(
-			new string[] {
+			new string[]
+			{
 				// ... add other private include paths required here ...
 			}
-			);
-			
-		
+		);
+
+
 		PublicDependencyModuleNames.AddRange(
-			new string[]
+			new[]
 			{
 				"Core",
 				"CoreUObject",
 				"Engine",
 				"RenderCore",
 				"RHI",
-                "GameplayTags",
+				"GameplayTags",
 
-                "Networking",
-                "Sockets",
+				"Networking",
+				"Sockets"
 				// ... add other public dependencies that you statically link with here ...
 			}
-			);
-			
-		
+		);
+
+
 		PrivateDependencyModuleNames.AddRange(
-			new string[]
+			new[]
 			{
-                "Core",
-                "CoreUObject",
+				"Core",
+				"CoreUObject",
 				"Engine",
 				"RenderCore",
 				"RHI",
 				"ImageWriteQueue",
-                "GameplayTags",
+				"GameplayTags"
 				// ... add private dependencies that you statically link with here ...	
 			}
-			);
-		
-		
+		);
+
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
 				// ... add any modules that your module loads dynamically here ...
 			}
-			);
+		);
 	}
 }
