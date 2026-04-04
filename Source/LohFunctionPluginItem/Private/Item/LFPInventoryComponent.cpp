@@ -1208,14 +1208,16 @@ void ULFPInventoryComponent::ClearInventoryByIndex ( const FLFPInventoryIndex& I
 		return;
 	}
 
-	InventorySlot.AddPendingEvent ( FLFPInventoryItemOperationData (
-	                                                                ELFPInventoryItemEventType::Inventory_Clear ,
-	                                                                InventoryIndex ,
-	                                                                InventorySlot.GetSlotItemConst ( InventoryInternalIndex ) ,
-	                                                                EventTag
-	                                                               ) , FLFPInventoryInternalIndex ( ) );
+	const FLFPInventoryItemOperationData OperationData (
+	                                                    ELFPInventoryItemEventType::Inventory_Clear ,
+	                                                    InventoryIndex ,
+	                                                    InventorySlot.GetSlotItemConst ( InventoryInternalIndex ) ,
+	                                                    EventTag
+	                                                   );
 
 	InventorySlot.GetSlotItemRef ( InventoryInternalIndex , true ) = FLFPInventoryItem ( );
+
+	InventorySlot.AddPendingEvent ( OperationData , InventoryInternalIndex );
 
 	ApplyInventoryPendingChange ( );
 }
@@ -1236,14 +1238,16 @@ void ULFPInventoryComponent::ClearInventoryBySlotName ( UPARAM ( meta = ( Catego
 			                       return false;
 		                       }
 
-		                       InventorySlot.AddPendingEvent ( FLFPInventoryItemOperationData (
-		                                                                                       ELFPInventoryItemEventType::Inventory_Clear ,
-		                                                                                       InventoryIndex ,
-		                                                                                       InventorySlot.GetSlotItemConst ( InventoryInternalIndex ) ,
-		                                                                                       EventTag
-		                                                                                      ) , FLFPInventoryInternalIndex ( ) );
+		                       const FLFPInventoryItemOperationData OperationData (
+		                                                                           ELFPInventoryItemEventType::Inventory_Clear ,
+		                                                                           InventoryIndex ,
+		                                                                           InventorySlot.GetSlotItemConst ( InventoryInternalIndex ) ,
+		                                                                           EventTag
+		                                                                          );
 
 		                       InventorySlot.GetSlotItemRef ( InventoryInternalIndex , true ) = FLFPInventoryItem ( );
+
+		                       InventorySlot.AddPendingEvent ( OperationData , InventoryInternalIndex );
 
 		                       return false;
 	                       } ,

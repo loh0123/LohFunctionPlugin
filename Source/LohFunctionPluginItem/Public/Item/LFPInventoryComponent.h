@@ -144,6 +144,16 @@ struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryIndex
 	}
 };
 
+#if UE_BUILD_DEBUG
+uint32 GetTypeHash ( const FLFPInventoryIndex& Thing );
+#else // optimize by inlining in shipping and development builds
+FORCEINLINE uint32 GetTypeHash ( const FLFPInventoryIndex& Thing )
+{
+	uint32 Hash = FCrc::MemCrc32 ( &Thing , sizeof ( FLFPInventoryIndex ) );
+	return Hash;
+}
+#endif
+
 USTRUCT ( )
 struct LOHFUNCTIONPLUGINITEM_API FLFPInventoryInternalIndex
 {

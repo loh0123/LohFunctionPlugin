@@ -33,20 +33,14 @@ protected:
 	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Stack" )
 	TMap < FGameplayTag , int32 > MaxStackMap = TMap < FGameplayTag , int32 > ( );
 
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Attach" )
-	FGameplayTag AttachSlotsTag = FGameplayTag ( );
-
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Attach" )
-	int32 MaxAttachSlots = INDEX_NONE;
-
 	/* Check All The Meta Match Other Item ( Can't Use Parent Tag ) */
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default" )
+	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Tag" )
 	FGameplayTagContainer MatchMetaTagList = FGameplayTagContainer ( );
 
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default" )
+	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Tag" )
 	FGameplayTagContainer AllowedInventorySlotNameList = FGameplayTagContainer ( );
 
-	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default" )
+	UPROPERTY ( BlueprintReadWrite , EditDefaultsOnly , Category = "Default|Tag" )
 	FGameplayTagContainer Categorize = FGameplayTagContainer ( );
 
 public:
