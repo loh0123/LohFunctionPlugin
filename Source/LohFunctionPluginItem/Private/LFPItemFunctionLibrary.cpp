@@ -11,8 +11,8 @@ FLFPInventoryItem FLFPInventoryItem::EmptyItem = FLFPInventoryItem ( );
 
 bool ULFPItemFunctionLibrary::IsMetaDataSame ( const FLFPInventoryItem& ItemA , const FLFPInventoryItem& ItemB , const FGameplayTag MetaTag )
 {
-	auto MetaDataA = ItemA.GetMetaData ( MetaTag );
-	auto MetaDataB = ItemB.GetMetaData ( MetaTag );
+	const auto MetaDataA = ItemA.GetMetaData ( MetaTag );
+	const auto MetaDataB = ItemB.GetMetaData ( MetaTag );
 
 	return ( MetaDataA == nullptr
 	         ? FInstancedStruct ( )

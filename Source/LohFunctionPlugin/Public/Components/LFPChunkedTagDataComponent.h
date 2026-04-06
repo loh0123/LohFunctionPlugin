@@ -591,7 +591,7 @@ public:
 
 private:
 
-	//UPROPERTY ( Transient )
+	UPROPERTY ( Transient )
 	TArray < FLFPTaggedRegionData > RegionDataList = TArray < FLFPTaggedRegionData > ( );
 
 protected:
