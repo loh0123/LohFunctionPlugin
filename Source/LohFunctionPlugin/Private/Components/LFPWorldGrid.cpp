@@ -38,7 +38,7 @@ FIntVector ULFPWorldGrid::ComponentLocationToGridLocation ( const FVector& Locat
 
 	FVector LocalLocation = FVector ( 0.0f , 0.0f , 0.0f );
 
-	const FTransform& CurrentTransform = bWorldLocation ? GetComponentTransform ( ) : GetRelativeTransform ( );
+	const FTransform& CurrentTransform = bWorldLocation ? GetComponentTransform ( ) : FTransform::Identity;
 
 	const FVector ComponentLocation = CurrentTransform.GetRotation ( ).UnrotateVector ( Location - CurrentTransform.GetLocation ( ) ) + ( bCenterOrigin ? GetVolumeSize ( true ) : FVector ( 0 ) );
 
