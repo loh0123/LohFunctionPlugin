@@ -86,5 +86,5 @@ void ULFPOctreeActorListComponent::Find ( const FBox& QueryBox , TArray < AActor
 
 void ULFPOctreeActorListComponent::UpdateOctreeBounds ( )
 {
-	ActorOctree = FLFPOctreeActorOctree ( GetComponentLocation ( ) , Bounds.BoxExtent.Size ( ) );
+	ActorOctree = FLFPOctreeActorOctree ( GetComponentLocation ( ) , BoxExtent.Size ( ) );
 }
