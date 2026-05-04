@@ -107,13 +107,13 @@ public:
 protected:
 
 	UFUNCTION ( BlueprintCallable , Category=Default )
-	void Add ( AActor* Actor , const FBox& OctreeBounds , const FLFPOctreeActorOctreeHandle& OutHandle );
+	void AddActor ( AActor* Actor , const FBox& OctreeBounds , const FLFPOctreeActorOctreeHandle& ID );
 
 	UFUNCTION ( BlueprintCallable , Category=Default )
-	void Remove ( const FLFPOctreeActorOctreeHandle& Handle );
+	void RemoveActor ( const FLFPOctreeActorOctreeHandle& Handle );
 
 	UFUNCTION ( BlueprintCallable , Category=Default )
-	void Find ( const FBox& QueryBox , TArray < AActor* >& OutResults ) const;
+	void FindActor ( const FBox& QueryBox , TArray < AActor* >& OutResults ) const;
 
 	//UFUNCTION ( BlueprintCallable , Category=Default )
 	void UpdateOctreeBounds ( );

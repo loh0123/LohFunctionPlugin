@@ -62,17 +62,17 @@ void ULFPOctreeActorListComponent::TickComponent ( float DeltaTime , ELevelTick 
 	// ...
 }
 
-void ULFPOctreeActorListComponent::Add ( AActor* Actor , const FBox& OctreeBounds , const FLFPOctreeActorOctreeHandle& OutHandle )
+void ULFPOctreeActorListComponent::AddActor ( AActor* Actor , const FBox& OctreeBounds , const FLFPOctreeActorOctreeHandle& ID )
 {
-	ActorOctree.AddNode ( OctreeBounds , Actor , OutHandle.SharedOctreeID );
+	ActorOctree.AddNode ( OctreeBounds , Actor , ID.SharedOctreeID );
 }
 
-void ULFPOctreeActorListComponent::Remove ( const FLFPOctreeActorOctreeHandle& Handle )
+void ULFPOctreeActorListComponent::RemoveActor ( const FLFPOctreeActorOctreeHandle& Handle )
 {
 	ActorOctree.RemoveNode ( Handle.SharedOctreeID.Get ( ).ID );
 }
 
-void ULFPOctreeActorListComponent::Find ( const FBox& QueryBox , TArray < AActor* >& OutResults ) const
+void ULFPOctreeActorListComponent::FindActor ( const FBox& QueryBox , TArray < AActor* >& OutResults ) const
 {
 	ActorOctree.FindElementsWithBoundsTest ( QueryBox ,
 	                                         [&OutResults] ( const FLFPOctreeActorElement& Element )
@@ -86,5 +86,20 @@ void ULFPOctreeActorListComponent::Find ( const FBox& QueryBox , TArray < AActor
 
 void ULFPOctreeActorListComponent::UpdateOctreeBounds ( )
 {
+	TArray < FLFPOctreeActorElement > ElementList = TArray < FLFPOctreeActorElement > ( );
+
+	ActorOctree.FindAllElements ( [&] ( const FLFPOctreeActorElement& Element )
+	{
+		if ( Element.Value.IsValid ( ) )
+		{
+			ElementList.Add ( Element );
+		}
+	} );
+
 	ActorOctree = FLFPOctreeActorOctree ( GetComponentLocation ( ) , BoxExtent.Size ( ) );
+
+	for ( const auto& OldElement : ElementList )
+	{
+		ActorOctree.AddNode ( OldElement.Bounds.GetBox ( ) , OldElement.Value.Get ( ) , OldElement.ID );
+	}
 }
