@@ -48,7 +48,7 @@ struct FLFPOctreeActorSemantics
 		return A.Value == B.Value;
 	}
 
-	static void SetElementId ( const FLFPOctreeActorElement& Element , FOctreeElementId2 OctreeElementID )
+	inline static void SetElementId ( const FLFPOctreeActorElement& Element , FOctreeElementId2 OctreeElementID )
 	{
 		Element.ID.Get ( ).ID = OctreeElementID;
 	}
@@ -82,6 +82,13 @@ struct FLFPOctreeActorOctreeHandle
 	}
 
 	FLFPOctreeActorOctreeIDSharedRef SharedOctreeID;
+
+public:
+
+	FORCEINLINE bool IsValid ( ) const
+	{
+		return SharedOctreeID->ID.IsValidId ( );
+	}
 };
 
 UCLASS ( ClassGroup=(Custom) , meta=(BlueprintSpawnableComponent) )
@@ -104,7 +111,7 @@ public:
 	// Called every frame
 	virtual void TickComponent ( float DeltaTime , ELevelTick TickType , FActorComponentTickFunction* ThisTickFunction ) override;
 
-protected:
+public:
 
 	UFUNCTION ( BlueprintCallable , Category=Default )
 	void AddActor ( AActor* Actor , const FBox& OctreeBounds , const FLFPOctreeActorOctreeHandle& ID );
@@ -114,6 +121,8 @@ protected:
 
 	UFUNCTION ( BlueprintCallable , Category=Default )
 	void FindActor ( const FBox& QueryBox , TArray < AActor* >& OutResults ) const;
+
+protected:
 
 	//UFUNCTION ( BlueprintCallable , Category=Default )
 	void UpdateOctreeBounds ( );
