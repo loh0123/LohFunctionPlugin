@@ -503,8 +503,13 @@ bool ULFPInventoryComponent::SwapItem_SlotName_Internal ( const FLFPInventoryInd
 	return ProcessSingleItemOperation (
 	                                   ToSlotNameList ,
 	                                   InventorySlot.GetSlotItemRef ( FromIndexInternal , true ) ,
-	                                   [&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex , FLFPInventoryItem& ItemData )
+	                                   [&] ( const FLFPInventoryIndex& InventoryIndex , const FLFPInventoryInternalIndex& InventoryInternalIndex , const FLFPInventoryItem& ItemData )
 	                                   {
+		                                   if ( ItemData.IsValid ( ) == false && InventorySlot.IsSlotItemValid ( InventoryInternalIndex ) == false )
+		                                   {
+			                                   return false;
+		                                   }
+
 		                                   return SwapItem_Index_Internal ( FromIndexInternal , InventoryInternalIndex , EventTag );
 	                                   } ,
 	                                   true
